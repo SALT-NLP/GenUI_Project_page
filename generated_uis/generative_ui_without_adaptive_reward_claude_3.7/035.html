@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding Image Recognition</title>
+    <style>
+        :root {
+            --primary: #4285f4;
+            --secondary: #34a853;
+            --accent: #ea4335;
+            --light: #fbfbfb;
+            --dark: #333333;
+            --gray: #757575;
+            --light-gray: #e0e0e0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            color: var(--dark);
+            background-color: #fff;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            margin-bottom: 2rem;
+        }
+        
+        .progress-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+        
+        .progress-dots {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: var(--light-gray);
+            transition: background-color 0.3s ease;
+        }
+        
+        .dot.active {
+            background-color: var(--primary);
+        }
+        
+        .main-content {
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+        
+        .step {
+            display: none;
+            padding: 2rem;
+        }
+        
+        .step.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+        }
+        
+        p {
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .highlight {
+            background-color: rgba(66, 133, 244, 0.1);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: help;
+            position: relative;
+        }
+        
+        .tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--dark);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            width: 200px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+            z-index: 10;
+        }
+        
+        .highlight:hover .tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .visual {
+            margin: 2rem 0;
+            text-align: center;
+        }
+        
+        .visual img {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .interactive-demo {
+            background-color: var(--light);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+        }
+        
+        .pixel-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 2px;
+            margin: 1.5rem 0;
+        }
+        
+        .pixel {
+            aspect-ratio: 1;
+            background-color: #ddd;
+            border-radius: 2px;
+            transition: background-color 0.2s;
+            position: relative;
+        }
+        
+        .pixel:hover::after {
+            content: attr(data-value);
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--dark);
+            color: white;
+            padding: 0.3rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+        
+        .slider-container {
+            margin: 1.5rem 0;
+        }
+        
+        .slider {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 8px;
+            border-radius: 4px;
+            background: var(--light-gray);
+            outline: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+        }
+        
+        .demo-zone {
+            background-color: var(--light);
+            padding: 2rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+        }
+        
+        .upload-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .upload-area {
+            width: 100%;
+            max-width: 400px;
+            height: 200px;
+            border: 2px dashed var(--primary);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .upload-area:hover {
+            background-color: rgba(66, 133, 244, 0.05);
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .btn {
+            padding: 0.8rem 1.5rem;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        
+        .btn:hover {
+            background-color: #3367d6;
+        }
+        
+        .btn:active {
+            transform: scale(0.98);
+        }
+        
+        .btn-secondary {
+            background-color: var(--light-gray);
+            color: var(--dark);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #d0d0d0;
+        }
+        
+        .preview-container {
+            display: none;
+            margin-top: 2rem;
+        }
+        
+        .preview-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .result-container {
+            display: none;
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.8rem 0;
+            border-bottom: 1px solid var(--light-gray);
+        }
+        
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        
+        .confidence-bar {
+            height: 8px;
+            background-color: var(--light-gray);
+            border-radius: 4px;
+            overflow: hidden;
+            width: 150px;
+            margin-top: 0.5rem;
+        }
+        
+        .confidence-fill {
+            height: 100%;
+            background-color: var(--secondary);
+            border-radius: 4px;
+        }
+        
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+        }
+        
+        .nav-btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        
+        .prev-btn {
+            background-color: var(--light-gray);
+            color: var(--dark);
+        }
+        
+        .prev-btn:hover {
+            background-color: #d0d0d0;
+        }
+        
+        .next-btn {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .next-btn:hover {
+            background-color: #3367d6;
+        }
+        
+        .nav-btn:active {
+            transform: scale(0.98);
+        }
+        
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .step {
+                padding: 1.5rem;
+            }
+            
+            .navigation {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .nav-btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Understanding Image Recognition</h1>
+            <div class="subtitle">An interactive guide to how computers see and understand images</div>
+            
+            <div class="progress-container">
+                <div class="progress-dots">
+                    <div class="dot active" data-step="1"></div>
+                    <div class="dot" data-step="2"></div>
+                    <div class="dot" data-step="3"></div>
+                    <div class="dot" data-step="4"></div>
+                    <div class="dot" data-step="5"></div>
+                </div>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <!-- Step 1: Introduction -->
+            <div class="step active" id="step1">
+                <h2>What is Image Recognition?</h2>
+                <p>
+                    Image recognition is a technology that enables computers to identify objects, people, text, and scenes in digital images. It's a key component of computer vision, which aims to give machines the ability to "see" and understand the visual world.
+                </p>
+                <p>
+                    Unlike humans who can instantly recognize familiar objects, computers process images as collections of numbers. They must be trained to recognize patterns in these numbers that correspond to different visual elements.
+                </p>
+                
+                <div class="visual">
+                    <img src="https://placehold.co/800x400?text=Image+Recognition+Process" alt="Image Recognition Process Diagram">
+                </div>
+                
+                <p>
+                    In this interactive guide, we'll explore how image recognition works, breaking down the complex process into understandable steps. You'll learn about:
+                </p>
+                <ul style="margin-left: 2rem; margin-bottom: 1.5rem;">
+                    <li>How digital images are represented as pixels</li>
+                    <li>Feature extraction and why it matters</li>
+                    <li>How neural networks learn to recognize patterns</li>
+                    <li>The classification process that identifies objects</li>
+                    <li>Real-world applications of image recognition</li>
+                </ul>
+                
+                <p>
+                    By the end, you'll have a solid understanding of the technology that powers everything from face unlock on your phone to self-driving cars and medical diagnostics.
+                </p>
+            </div>
+            
+            <!-- Step 2: Pixels and Digital Images -->
+            <div class="step" id="step2">
+                <h2>Pixels: The Building Blocks</h2>
+                <p>
+                    Digital images are made up of tiny squares called <span class="highlight">pixels<span class="tooltip">The smallest unit of a digital image, containing color and brightness information.</span></span>. Each pixel contains numerical values representing color and brightness.
+                </p>
+                <p>
+                    For a computer, an image is simply a grid of numbers. For example, a 1000×1000 pixel color image is represented as a million points, each with three values (red, green, and blue intensities).
+                </p>
+                
+                <div class="interactive-demo">
+                    <h3>Interactive: Exploring Pixels</h3>
+                    <p>Hover over the pixels below to see their numerical values (RGB format):</p>
+                    
+                    <div class="pixel-grid" id="pixelGrid">
+                        <!-- Pixels will be generated by JavaScript -->
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label for="zoomSlider">Zoom Level:</label>
+                        <input type="range" min="1" max="4" value="1" class="slider" id="zoomSlider">
+                    </div>
+                </div>
+                
+                <p>
+                    Image recognition algorithms must process these raw pixel values to extract meaningful information. This is challenging because pixel values can vary greatly with changes in lighting, angle, or background.
+                </p>
+                <p>
+                    To overcome these challenges, the first step in image recognition is often preprocessing, which can include:
+                </p>
+                <ul style="margin-left: 2rem; margin-bottom: 1.5rem;">
+                    <li>Resizing images to a standard dimension</li>
+                    <li>Normalizing pixel values (typically to a range between 0 and 1)</li>
+                    <li>Enhancing contrast or applying filters</li>
+                    <li>Converting color images to grayscale to reduce complexity</li>
+                </ul>
+            </div>
+            
+            <!-- Step 3: Feature Extraction -->
+            <div class="step" id="step3">
+                <h2>Feature Extraction: Finding Patterns</h2>
+                <p>
+                    After preprocessing, the next step is <span class="highlight">feature extraction<span class="tooltip">The process of identifying distinctive patterns or characteristics in an image that help in recognition.</span></span>. Instead of working with raw pixels, image recognition systems identify key features like edges, corners, textures, and shapes.
+                </p>
+                <p>
+                    These features are much more useful than raw pixels because they remain relatively consistent despite changes in lighting or angle. Think of how you can recognize a friend's face regardless of whether they're in sunlight or shadow — you're focusing on features, not raw visual data.
+                </p>
+                
+                <div class="visual">
+                    <img src="https://placehold.co/800x300?text=Feature+Extraction+Visualization" alt="Feature Extraction Visualization">
+                </div>
+                
+                <div class="interactive-demo">
+                    <h3>Interactive: Edge Detection</h3>
+                    <p>Move the slider to see how edge detection works — a common feature extraction technique:</p>
+                    
+                    <div class="visual">
+                        <img id="edgeDetectionImage" src="https://placehold.co/600x300?text=Original+Image" alt="Edge Detection Demo">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label for="edgeSlider">Edge Detection Strength:</label>
+                        <input type="range" min="0" max="100" value="0" class="slider" id="edgeSlider">
+                    </div>
+                </div>
+                
+                <p>
+                    Traditional computer vision used hand-crafted feature extraction methods like:
+                </p>
+                <ul style="margin-left: 2rem; margin-bottom: 1.5rem;">
+                    <li><strong>Edge detection:</strong> Identifying boundaries between different areas</li>
+                    <li><strong>SIFT (Scale-Invariant Feature Transform):</strong> Detecting distinctive local features</li>
+                    <li><strong>HOG (Histogram of Oriented Gradients):</strong> Counting occurrences of gradient orientation</li>
+                </ul>
+                <p>
+                    Modern deep learning approaches often perform feature extraction automatically within neural networks, learning the most relevant features for a specific recognition task.
+                </p>
+            </div>
+            
+            <!-- Step 4: Neural Networks and Classification -->
+            <div class="step" id="step4">
+                <h2>Neural Networks: Learning to Recognize</h2>
+                <p>
+                    Modern image recognition relies heavily on <span class="highlight">neural networks<span class="tooltip">A computing system inspired by the human brain, consisting of interconnected nodes (neurons) that process information.</span></span>, particularly Convolutional Neural Networks (CNNs). These networks learn patterns from thousands or millions of example images.
+                </p>
+                <p>
+                    A CNN typically consists of several layers:
+                </p>
+                <ul style="margin-left: 2rem; margin-bottom: 1.5rem;">
+                    <li><strong>Convolutional layers:</strong> Detect features like edges, textures, and patterns</li>
+                    <li><strong>Pooling layers:</strong> Reduce dimensions while preserving important information</li>
+                    <li><strong>Fully connected layers:</strong> Combine features to make final classifications</li>
+                </ul>
+                
+                <div class="visual">
+                    <img src="https://placehold.co/800x400?text=Neural+Network+Architecture" alt="Neural Network Architecture">
+                </div>
+                
+                <p>
+                    During training, the network adjusts its internal parameters (weights) to minimize errors in its predictions. This process, called <span class="highlight">backpropagation<span class="tooltip">An algorithm used to train neural networks by adjusting weights based on the error in output.</span></span>, allows the network to learn from its mistakes.
+                </p>
+                <p>
+                    Once trained, the network can classify new images it has never seen before. The output is typically a set of probabilities indicating the likelihood of the image belonging to each possible class (e.g., 95% dog, 4% wolf, 1% fox).
+                </p>
+                <p>
+                    Transfer learning is a powerful technique where networks pre-trained on millions of images are fine-tuned for specific recognition tasks, saving tremendous computational resources and training time.
+                </p>
+            </div>
+            
+            <!-- Step 5: Demo Zone -->
+            <div class="step" id="step5">
+                <h2>Demo Zone: Try It Yourself</h2>
+                <p>
+                    Now that you understand the basics of image recognition, let's see it in action! Upload an image below, and our simplified model will attempt to recognize objects in it.
+                </p>
+                <p>
+                    <strong>Note:</strong> This is a simplified demonstration running directly in your browser. Professional image recognition systems are much more powerful but follow the same basic principles.
+                </p>
+                
+                <div class="demo-zone">
+                    <div class="upload-container">
+                        <div class="upload-area" id="uploadArea">
+                            <div class="upload-icon">📁</div>
+                            <p>Click or drag an image here</p>
+                            <input type="file" id="fileInput" class="file-input" accept="image/*">
+                        </div>
+                        <button class="btn" id="processBtn" disabled>Process Image</button>
+                    </div>
+                    
+                    <div class="preview-container" id="previewContainer">
+                        <h3>Your Image:</h3>
+                        <img id="previewImage" class="preview-image" alt="Preview">
+                    </div>
+                    
+                    <div class="result-container" id="resultContainer">
+                        <h3>Recognition Results:</h3>
+                        <div class="result-item">
+                            <div>
+                                <strong>Dog</strong>
+                                <div class="confidence-bar">
+                                    <div class="confidence-fill" style="width: 85%;"></div>
+                                </div>
+                            </div>
+                            <span>85%</span>
+                        </div>
+                        <div class="result-item">
+                            <div>
+                                <strong>Wolf</strong>
+                                <div class="confidence-bar">
+                                    <div class="confidence-fill" style="width: 12%;"></div>
+                                </div>
+                            </div>
+                            <span>12%</span>
+                        </div>
+                        <div class="result-item">
+                            <div>
+                                <strong>Fox</strong>
+                                <div class="confidence-bar">
+                                    <div class="confidence-fill" style="width: 3%;"></div>
+                                </div>
+                            </div>
+                            <span>3%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3>Real-World Applications</h3>
+                <p>
+                    Image recognition technology has numerous applications across industries:
+                </p>
+                <ul style="margin-left: 2rem; margin-bottom: 1.5rem;">
+                    <li><strong>Healthcare:</strong> Analyzing medical scans to detect diseases</li>
+                    <li><strong>Automotive:</strong> Enabling self-driving cars to identify road signs, pedestrians, and obstacles</li>
+                    <li><strong>Retail:</strong> Powering cashierless stores and visual search</li>
+                    <li><strong>Security:</strong> Facial recognition and surveillance systems</li>
+                    <li><strong>Agriculture:</strong> Monitoring crop health and detecting pests</li>
+                    <li><strong>Social Media:</strong> Auto-tagging photos and content moderation</li>
+                </ul>
+                <p>
+                    As computing power increases and algorithms improve, image recognition continues to advance, enabling new applications and greater accuracy.
+                </p>
+            </div>
+            
+            <!-- Navigation Buttons -->
+            <div class="navigation">
+                <button class="nav-btn prev-btn" id="prevBtn" disabled>Previous</button>
+                <button class="nav-btn next-btn" id="nextBtn">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Navigation functionality
+        const steps = document.querySelectorAll('.step');
+        const dots = document.querySelectorAll('.dot');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        let currentStep = 1;
+        const totalSteps = steps.length;
+        
+        function updateStep(stepNumber) {
+            // Update step visibility
+            steps.forEach((step, index) => {
+                if (index + 1 === stepNumber) {
+                    step.classList.add('active');
+                } else {
+                    step.classList.remove('active');
+                }
+            });
+            
+            // Update progress dots
+            dots.forEach((dot, index) => {
+                if (index + 1 <= stepNumber) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+            
+            // Update buttons
+            prevBtn.disabled = stepNumber === 1;
+            nextBtn.textContent = stepNumber === totalSteps ? 'Finish' : 'Next';
+            
+            // Update current step tracking
+            currentStep = stepNumber;
+            
+            // Scroll to top of the step
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        prevBtn.addEventListener('click', () => {
+            if (currentStep > 1) {
+                updateStep(currentStep - 1);
+            }
+        });
+        
+        nextBtn.addEventListener('click', () => {
+            if (currentStep < totalSteps) {
+                updateStep(currentStep + 1);
+            } else {
+                // On finish, go back to step 1
+                updateStep(1);
+            }
+        });
+        
+        // Allow clicking on dots to navigate
+        dots.forEach(dot => {
+            dot.addEventListener('click', () => {
+                const stepNumber = parseInt(dot.dataset.step);
+                updateStep(stepNumber);
+            });
+        });
+        
+        // Pixel Grid Demo
+        const pixelGrid = document.getElementById('pixelGrid');
+        const zoomSlider = document.getElementById('zoomSlider');
+        
+        function generatePixelGrid() {
+            pixelGrid.innerHTML = '';
+            const numPixels = 64; // 8x8 grid
+            
+            for (let i = 0; i < numPixels; i++) {
+                const pixel = document.createElement('div');
+                pixel.className = 'pixel';
+                
+                // Generate random RGB values
+                const r = Math.floor(Math.random() * 256);
+                const g = Math.floor(Math.random() * 256);
+                const b = Math.floor(Math.random() * 256);
+                
+                pixel.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+                pixel.dataset.value = `RGB(${r}, ${g}, ${b})`;
+                
+                pixelGrid.appendChild(pixel);
+            }
+        }
+        
+        generatePixelGrid();
+        
+        zoomSlider.addEventListener('input', () => {
+            const zoomLevel = zoomSlider.value;
+            pixelGrid.style.gridTemplateColumns = `repeat(8, ${zoomLevel}fr)`;
+        });
+        
+        // Edge Detection Demo
+        const edgeSlider = document.getElementById('edgeSlider');
+        const edgeDetectionImage = document.getElementById('edgeDetectionImage');
+        
+        edgeSlider.addEventListener('input', () => {
+            const strength = edgeSlider.value;
+            // In a real implementation, this would apply an actual edge detection algorithm
+            // For this demo, we'll simulate it by changing the image source
+            if (strength < 25) {
+                edgeDetectionImage.src = "https://placehold.co/600x300?text=Original+Image";
+            } else if (strength < 50) {
+                edgeDetectionImage.src = "https://placehold.co/600x300?text=Light+Edge+Detection";
+            } else if (strength < 75) {
+                edgeDetectionImage.src = "https://placehold.co/600x300?text=Medium+Edge+Detection";
+            } else {
+                edgeDetectionImage.src = "https://placehold.co/600x300?text=Strong+Edge+Detection";
+            }
+        });
+        
+        // Demo Zone Functionality
+        const fileInput = document.getElementById('fileInput');
+        const uploadArea = document.getElementById('uploadArea');
+        const processBtn = document.getElementById('processBtn');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewImage = document.getElementById('previewImage');
+        const resultContainer = document.getElementById('resultContainer');
+        
+        // Handle file upload
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.backgroundColor = 'rgba(66, 133, 244, 0.1)';
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.backgroundColor = '';
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.backgroundColor = '';
+            
+            if (e.dataTransfer.files.length) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+        
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length) {
+                handleFile(fileInput.files[0]);
+            }
+        });
+        
+        function handleFile(file) {
+            if (!file.type.match('image.*')) {
+                alert('Please select an image file.');
+                return;
+            }
+            
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                previewImage.src = e.target.result;
+                previewContainer.style.display = 'block';
+                processBtn.disabled = false;
+                resultContainer.style.display = 'none';
+            };
+            
+            reader.readAsDataURL(file);
+        }
+        
+        // Process image button
+        processBtn.addEventListener('click', () => {
+            // Simulate processing delay
+            processBtn.disabled = true;
+            processBtn.textContent = 'Processing...';
+            
+            setTimeout(() => {
+                resultContainer.style.display = 'block';
+                processBtn.textContent = 'Process Image';
+                processBtn.disabled = false;
+                
+                // In a real application, this would use an actual model
+                // Here we're just showing mock results
+            }, 1500);
+        });
+    </script>
+</body>
+</html>

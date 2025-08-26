@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding Reinforcement Learning</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400;500;700,0..1,-50..200">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --accent-color: #e74c3c;
+            --background-color: #ffffff;
+            --text-color: #333;
+            --border-color: #ddd;
+            --card-background: #f9f9f9;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --spacing-unit: 16px;
+            --border-radius: 8px;
+            --transition-speed: 0.3s;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 960px;
+            width: 100%;
+            padding: var(--spacing-unit);
+            margin: var(--spacing-unit) auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: calc(2 * var(--spacing-unit));
+        }
+
+        header h1 {
+            color: var(--primary-color);
+            font-size: 2.5em;
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .section {
+            background-color: var(--card-background);
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 5px var(--shadow-color);
+            margin-bottom: var(--spacing-unit);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-unit);
+            background-color: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: 500;
+            transition: background-color var(--transition-speed) ease;
+        }
+
+        .section-header:hover {
+            background-color: #2980b9; /* Darker shade */
+        }
+
+        .section-header .material-symbols-rounded {
+            transition: transform var(--transition-speed) ease;
+        }
+
+        .section-content {
+            padding: var(--spacing-unit);
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height var(--transition-speed) ease-out, padding var(--transition-speed) ease-out;
+            background-color: var(--background-color);
+        }
+
+        .section.expanded .section-content {
+            max-height: 1000px; /* Sufficiently large value */
+            padding: var(--spacing-unit);
+            transition: max-height var(--transition-speed) ease-in, padding var(--transition-speed) ease-in;
+        }
+
+        .section.expanded .section-header .material-symbols-rounded {
+            transform: rotate(180deg);
+        }
+
+        .glossary-term {
+            position: relative;
+            text-decoration: underline dotted var(--primary-color);
+            cursor: help;
+            font-weight: 500;
+        }
+
+        .glossary-tooltip {
+            visibility: hidden;
+            opacity: 0;
+            background-color: var(--text-color);
+            color: var(--background-color);
+            text-align: center;
+            border-radius: 4px;
+            padding: 5px 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%; /* Position above the text */
+            left: 50%;
+            transform: translateX(-50%);
+            transition: opacity var(--transition-speed);
+            white-space: nowrap;
+            font-size: 0.9em;
+        }
+
+        .glossary-tooltip::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--text-color) transparent transparent transparent;
+        }
+
+        .glossary-term:hover .glossary-tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .diagram-area {
+            margin: calc(2 * var(--spacing-unit)) 0;
+            padding: var(--spacing-unit);
+            background-color: var(--card-background);
+            border-radius: var(--border-radius);
+            border: 1px dashed var(--border-color);
+            text-align: center;
+        }
+
+        .diagram-area img {
+            max-width: 100%;
+            height: auto;
+            border-radius: var(--border-radius);
+        }
+
+        .interactive-demo {
+            margin: calc(2 * var(--spacing-unit)) 0;
+            padding: var(--spacing-unit);
+            background-color: var(--card-background);
+            border-radius: var(--border-radius);
+            border: 1px dashed var(--border-color);
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 50px);
+            grid-template-rows: repeat(4, 50px);
+            gap: 2px;
+            margin: var(--spacing-unit) auto;
+            width: fit-content;
+            border: 2px solid var(--border-color);
+        }
+
+        .grid-cell {
+            width: 50px;
+            height: 50px;
+            background-color: #eee;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.8em;
+            border: 1px solid #ccc;
+            transition: background-color var(--transition-speed) ease;
+        }
+
+        .grid-cell.agent {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+        }
+
+        .grid-cell.goal {
+            background-color: var(--secondary-color);
+            color: white;
+            font-weight: bold;
+        }
+
+        .grid-cell.obstacle {
+            background-color: var(--accent-color);
+            color: white;
+            font-weight: bold;
+        }
+
+        .demo-controls {
+            text-align: center;
+            margin-top: var(--spacing-unit);
+        }
+
+        .demo-controls button {
+            padding: 10px 15px;
+            margin: 5px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color var(--transition-speed) ease, transform 0.1s ease;
+        }
+
+        .demo-controls button:hover {
+            background-color: #2980b9; /* Darker shade */
+        }
+
+        .demo-controls button:active {
+            transform: scale(0.98);
+        }
+
+        .demo-info {
+            margin-top: var(--spacing-unit);
+            padding: var(--spacing-unit);
+            background-color: var(--background-color);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            font-size: 0.9em;
+        }
+
+        .demo-info p {
+            margin: 5px 0;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: calc(var(--spacing-unit) / 2);
+            }
+
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .section-header {
+                font-size: 1em;
+            }
+
+            .demo-grid {
+                grid-template-columns: repeat(4, 40px);
+                grid-template-rows: repeat(4, 40px);
+            }
+
+            .grid-cell {
+                width: 40px;
+                height: 40px;
+            }
+
+            .demo-controls button {
+                padding: 8px 12px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Understanding Reinforcement Learning</h1>
+            <p>An interactive guide to the core concepts of Reinforcement Learning.</p>
+        </header>
+
+        <div class="section">
+            <div class="section-header" tabindex="0" role="button" aria-expanded="false">
+                Introduction
+                <span class="material-symbols-rounded">expand_more</span>
+            </div>
+            <div class="section-content">
+                <p>
+                    Reinforcement Learning (RL) is a type of machine learning where an
+                    <span class="glossary-term">agent<span class="glossary-tooltip">The entity that interacts with the environment and learns.</span></span>
+                    learns to make decisions by performing
+                    <span class="glossary-term">actions<span class="glossary-tooltip">The moves or decisions made by the agent.</span></span>
+                    in an
+                    <span class="glossary-term">environment<span class="glossary-tooltip">The external system or world the agent interacts with.</span></span>.
+                    The agent receives
+                    <span class="glossary-term">rewards<span class="glossary-tooltip">Feedback from the environment indicating how good or bad an action was.</span></span>
+                    or penalties based on its actions, and its goal is to learn a
+                    <span class="glossary-term">policy<span class="glossary-tooltip">A strategy or rule that tells the agent what action to take in a given state.</span></span>
+                    that maximizes the cumulative reward over time.
+                </p>
+                <p>
+                    Unlike supervised learning (which learns from labeled data) or unsupervised learning (which finds patterns in unlabeled data), RL learns through trial and error, much like how humans and animals learn. It's particularly well-suited for problems involving sequential decision-making, such as game playing, robotics, and resource management.
+                </p>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header" tabindex="0" role="button" aria-expanded="false">
+                The Core Components
+                <span class="material-symbols-rounded">expand_more</span>
+            </div>
+            <div class="section-content">
+                <p>Reinforcement Learning systems typically involve several key components:</p>
+
+                <h4>The Agent</h4>
+                <p>
+                    The <span class="glossary-term">agent<span class="glossary-tooltip">The entity that interacts with the environment and learns.</span></span>
+                    is the learner or decision-maker. It observes the
+                    <span class="glossary-term">state<span class="glossary-tooltip">A description of the current situation in the environment.</span></span>
+                    of the environment and chooses an
+                    <span class="glossary-term">action<span class="glossary-tooltip">The moves or decisions made by the agent.</span></span>
+                    to take.
+                </p>
+
+                <h4>The Environment</h4>
+                <p>
+                    The <span class="glossary-term">environment<span class="glossary-tooltip">The external system or world the agent interacts with.</span></span>
+                    is everything outside the agent. It receives the agent's actions and transitions to a new
+                    <span class="glossary-term">state<span class="glossary-tooltip">A description of the current situation in the environment.</span></span>,
+                    while also providing a
+                    <span class="glossary-term">reward<span class="glossary-tooltip">Feedback from the environment indicating how good or bad an action was.</span></span>
+                    to the agent.
+                </p>
+
+                <h4>State</h4>
+                <p>
+                    A <span class="glossary-term">state<span class="glossary-tooltip">A description of the current situation in the environment.</span></span>
+                    (<span class="glossary-term">S<span class="glossary-tooltip">Symbol often used to represent a state.</span></span>)
+                    is a complete description of the situation in the environment at a given time. The agent uses the state to decide what action to take.
+                </p>
+
+                <h4>Action</h4>
+                <p>
+                    An <span class="glossary-term">action<span class="glossary-tooltip">The moves or decisions made by the agent.</span></span>
+                    (<span class="glossary-term">A<span class="glossary-tooltip">Symbol often used to represent an action.</span></span>)
+                    is a move or decision made by the agent. The set of possible actions depends on the environment and the state.
+                </p>
+
+                <h4>Reward</h4>
+                <p>
+                    A <span class="glossary-term">reward<span class="glossary-tooltip">Feedback from the environment indicating how good or bad an action was.</span></span>
+                    (<span class="glossary-term">R<span class="glossary-tooltip">Symbol often used to represent a reward.</span></span>)
+                    is a numerical signal given by the environment to the agent after it takes an action. Positive rewards encourage the agent to repeat the action, while negative rewards (penalties) discourage it. The agent's goal is to maximize the total cumulative reward over time.
+                </p>
+
+                <h4>Policy</h4>
+                <p>
+                    The <span class="glossary-term">policy<span class="glossary-tooltip">A strategy or rule that tells the agent what action to take in a given state.</span></span>
+                    (<span class="glossary-term">&pi;<span class="glossary-tooltip">Symbol often used to represent a policy.</span></span>)
+                    is the agent's strategy for deciding what action to take in any given state. It can be deterministic (always choosing the same action for a state) or stochastic (choosing actions based on probabilities).
+                </p>
+
+                 <h4>Value Function</h4>
+                <p>
+                    The <span class="glossary-term">value function<span class="glossary-tooltip">A function that estimates the expected future reward from a given state or state-action pair.</span></span>
+                    (<span class="glossary-term">V<span class="glossary-tooltip">Symbol often used to represent a value function.</span></span>
+                    or <span class="glossary-term">Q<span class="glossary-tooltip">Symbol often used for action-value function (Q-value).</span></span>)
+                    estimates how good a particular state or action is in the long run. It predicts the expected cumulative reward starting from that state or taking that action in that state and following the policy thereafter.
+                </p>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header" tabindex="0" role="button" aria-expanded="false">
+                The Reinforcement Learning Loop
+                <span class="material-symbols-rounded">expand_more</span>
+            </div>
+            <div class="section-content">
+                <p>
+                    The interaction between the agent and the environment forms a loop:
+                </p>
+                <div class="diagram-area">
+                    <p><em>Diagram: The basic RL loop (Agent-Action-Environment-State/Reward)</em></p>
+                    <img src="https://placehold.co/600x200?text=Reinforcement+Learning+Loop+Diagram" alt="Diagram illustrating the Reinforcement Learning loop">
+                    <p>
+                        1.  The agent observes the current <span class="glossary-term">state<span class="glossary-tooltip">A description of the current situation in the environment.</span></span> (St).
+                        2.  Based on its <span class="glossary-term">policy<span class="glossary-tooltip">A strategy or rule that tells the agent what action to take in a given state.</span></span>, the agent chooses an <span class="glossary-term">action<span class="glossary-tooltip">The moves or decisions made by the agent.</span></span> (At).
+                        3.  The environment receives the action and transitions to a new state (St+1).
+                        4.  The environment gives the agent a <span class="glossary-term">reward<span class="glossary-tooltip">Feedback from the environment indicating how good or bad an action was.</span></span> (Rt+1) based on the action and the new state.
+                        5.  The agent uses the reward and the new state to update its policy or value function, learning how to make better decisions in the future.
+                        6.  The loop repeats.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header" tabindex="0" role="button" aria-expanded="false">
+                Interactive Demo: Grid World
+                <span class="material-symbols-rounded">expand_more</span>
+            </div>
+            <div class="section-content">
+                <p>
+                    Let's explore a simple Grid World example. The agent starts at a specific cell and tries to reach the goal cell (+) while avoiding obstacles (X). Each move gives a small negative reward (-1), reaching the goal gives a large positive reward (+10), and hitting an obstacle gives a large negative reward (-10).
+                </p>
+                <div class="interactive-demo">
+                    <h4>Simple Grid World</h4>
+                    <div class="demo-grid" id="grid-world">
+                        <!-- Grid cells will be populated by JavaScript -->
+                    </div>
+                    <div class="demo-controls">
+                        <button data-action="up" aria-label="Move Up">Up</button>
+                        <div>
+                            <button data-action="left" aria-label="Move Left">Left</button>
+                            <button data-action="right" aria-label="Move Right">Right</button>
+                        </div>
+                        <button data-action="down" aria-label="Move Down">Down</button>
+                        <button data-action="reset" aria-label="Reset Demo">Reset</button>
+                    </div>
+                    <div class="demo-info" id="demo-info">
+                        <p><strong>Current State:</strong> <span id="current-state">Start</span></p>
+                        <p><strong>Last Action:</strong> <span id="last-action">None</span></p>
+                        <p><strong>Accumulated Reward:</strong> <span id="accumulated-reward">0</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+         <div class="section">
+            <div class="section-header" tabindex="0" role="button" aria-expanded="false">
+                Key Challenges in RL
+                <span class="material-symbols-rounded">expand_more</span>
+            </div>
+            <div class="section-content">
+                <p>
+                    Reinforcement Learning presents several challenges:
+                </p>
+                <ul>
+                    <li>
+                        <strong>Exploration vs. Exploitation:</strong> The agent must balance exploring new actions to discover potentially higher rewards with exploiting known actions that have yielded good rewards in the past.
+                    </li>
+                    <li>
+                        <strong>Delayed Rewards:</strong> Sometimes, the reward for an action is not received immediately but occurs much later. The agent must learn to associate current actions with future rewards.
+                    </li>
+                    <li>
+                        <strong>Credit Assignment Problem:</strong> When a reward is received, it's not always clear which specific action or sequence of actions led to that reward.
+                    </li>
+                    <li>
+                        <strong>High-Dimensional State/Action Spaces:</strong> In complex environments (like robotics or video games), the number of possible states and actions can be enormous, making it difficult for the agent to learn effectively.
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Accordion functionality
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => {
+                const header = section.querySelector('.section-header');
+                header.addEventListener('click', () => {
+                    const isExpanded = section.classList.contains('expanded');
+                    // Close all other sections
+                    sections.forEach(s => {
+                        if (s !== section && s.classList.contains('expanded')) {
+                            s.classList.remove('expanded');
+                            s.querySelector('.section-header').setAttribute('aria-expanded', 'false');
+                        }
+                    });
+                    // Toggle the clicked section
+                    if (isExpanded) {
+                        section.classList.remove('expanded');
+                        header.setAttribute('aria-expanded', 'false');
+                    } else {
+                        section.classList.add('expanded');
+                        header.setAttribute('aria-expanded', 'true');
+                    }
+                });
+
+                // Allow keyboard interaction for accordion headers
+                header.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        header.click();
+                    }
+                });
+            });
+
+            // Simple Grid World Demo
+            const gridWorld = document.getElementById('grid-world');
+            const demoInfo = document.getElementById('demo-info');
+            const currentStateSpan = document.getElementById('current-state');
+            const lastActionSpan = document.getElementById('last-action');
+            const accumulatedRewardSpan = document.getElementById('accumulated-reward');
+            const controlButtons = document.querySelectorAll('.demo-controls button[data-action]');
+
+            const GRID_SIZE = 4;
+            let agentPosition = { row: 0, col: 0 };
+            const goalPosition = { row: 3, col: 3 };
+            const obstacles = [{ row: 1, col: 1 }, { row: 2, col: 2 }];
+            let accumulatedReward = 0;
+
+            function renderGrid() {
+                gridWorld.innerHTML = ''; // Clear previous grid
+                for (let r = 0; r < GRID_SIZE; r++) {
+                    for (let c = 0; c < GRID_SIZE; c++) {
+                        const cell = document.createElement('div');
+                        cell.classList.add('grid-cell');
+                        cell.dataset.row = r;
+                        cell.dataset.col = c;
+
+                        let content = '';
+                        let isSpecial = false;
+
+                        if (r === agentPosition.row && c === agentPosition.col) {
+                            cell.classList.add('agent');
+                            content = 'A';
+                            isSpecial = true;
+                        } else if (r === goalPosition.row && c === goalPosition.col) {
+                            cell.classList.add('goal');
+                            content = '+';
+                            isSpecial = true;
+                        } else if (obstacles.some(obs => obs.row === r && obs.col === c)) {
+                            cell.classList.add('obstacle');
+                            content = 'X';
+                            isSpecial = true;
+                        }
+
+                        if (!isSpecial) {
+                             // Optional: Add state index for debugging/clarity
+                             // content = `${r * GRID_SIZE + c}`;
+                        }
+
+                        cell.textContent = content;
+                        gridWorld.appendChild(cell);
+                    }
+                }
+            }
+
+            function updateInfoDisplay(action, reward) {
+                currentStateSpan.textContent = `(${agentPosition.row}, ${agentPosition.col})`;
+                lastActionSpan.textContent = action || 'None';
+                accumulatedRewardSpan.textContent = accumulatedReward;
+            }
+
+            function moveAgent(action) {
+                let nextPosition = { ...agentPosition };
+                let reward = -1; // Small penalty for each move
+
+                switch (action) {
+                    case 'up':
+                        nextPosition.row--;
+                        break;
+                    case 'down':
+                        nextPosition.row++;
+                        break;
+                    case 'left':
+                        nextPosition.col--;
+                        break;
+                    case 'right':
+                        nextPosition.col++;
+                        break;
+                }
+
+                // Check for boundary collision
+                if (nextPosition.row < 0 || nextPosition.row >= GRID_SIZE ||
+                    nextPosition.col < 0 || nextPosition.col >= GRID_SIZE) {
+                    // Invalid move, stay in place, larger penalty
+                    reward = -5;
+                    nextPosition = agentPosition; // Revert position
+                }
+
+                // Check for obstacle collision
+                if (obstacles.some(obs => obs.row === nextPosition.row && obs.col === nextPosition.col)) {
+                    // Hit obstacle, larger penalty
+                    reward = -10;
+                    nextPosition = agentPosition; // Revert position
+                }
+
+                agentPosition = nextPosition;
+                accumulatedReward += reward;
+
+                // Check for goal
+                if (agentPosition.row === goalPosition.row && agentPosition.col === goalPosition.col) {
+                    reward = 10; // Goal reward
+                    accumulatedReward += reward;
+                    alert('Goal Reached! Resetting...');
+                    resetDemo();
+                    return; // Exit after reset
+                }
+
+                renderGrid();
+                updateInfoDisplay(action, reward);
+            }
+
+            function resetDemo() {
+                agentPosition = { row: 0, col: 0 };
+                accumulatedReward = 0;
+                renderGrid();
+                updateInfoDisplay('Reset', 0);
+            }
+
+            // Add event listeners for controls
+            controlButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const action = button.dataset.action;
+                    if (action === 'reset') {
+                        resetDemo();
+                    } else {
+                        moveAgent(action);
+                    }
+                });
+            });
+
+            // Initial render
+            renderGrid();
+            updateInfoDisplay();
+        });
+    </script>
+</body>
+</html>

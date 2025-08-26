@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regression Analysis Explanation & Visualization</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --primary-color-dark: #0056b3;
+            --secondary-color: #6c757d;
+            --background-color: #f8f9fa;
+            --surface-color: #ffffff;
+            --text-color: #212529;
+            --text-light-color: #6c757d;
+            --border-color: #dee2e6;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --spacing-unit: 1rem; /* 16px */
+            --border-radius: 0.5rem; /* 8px */
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--surface-color);
+            box-shadow: 0 2px 4px var(--shadow-color);
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            color: var(--primary-color-dark);
+        }
+
+        main {
+            padding: calc(var(--spacing-unit) * 2);
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        section {
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            padding-top: var(--spacing-unit); /* For scroll anchoring */
+        }
+
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: calc(var(--spacing-unit) / 2);
+            margin-bottom: calc(var(--spacing-unit) * 1.5);
+            font-size: 1.6rem;
+        }
+
+        .panel {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin-bottom: var(--spacing-unit);
+            overflow: hidden;
+            box-shadow: 0 1px 3px var(--shadow-color);
+        }
+
+        .panel-header {
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+            background-color: #e9ecef;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        .panel-header:hover {
+            background-color: #dee2e6;
+        }
+
+        .panel-header .material-symbols-rounded {
+            transition: transform 0.3s ease;
+        }
+
+        .panel-header.expanded .material-symbols-rounded {
+            transform: rotate(180deg);
+        }
+
+        .panel-body {
+            padding: 0 calc(var(--spacing-unit) * 1.5);
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out, padding 0.5s ease-in-out;
+        }
+
+        .panel-body.expanded {
+            max-height: 1000px; /* Sufficiently large value */
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+        }
+
+        .panel-body p {
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .panel-body p:last-child {
+            margin-bottom: 0;
+        }
+
+        .interactive-area {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: calc(var(--spacing-unit) * 1.5);
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            box-shadow: 0 1px 3px var(--shadow-color);
+        }
+
+        h3 {
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: var(--spacing-unit);
+            font-size: 1.4rem;
+        }
+
+        .data-input-form {
+            display: flex;
+            gap: var(--spacing-unit);
+            margin-bottom: var(--spacing-unit);
+            align-items: flex-end;
+        }
+
+        .form-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 0.9rem;
+            color: var(--text-light-color);
+            margin-bottom: calc(var(--spacing-unit) / 4);
+        }
+
+        .form-group input[type="number"] {
+            padding: calc(var(--spacing-unit) / 2) var(--spacing-unit);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+
+        .form-group input[type="number"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        button {
+            padding: calc(var(--spacing-unit) / 2) var(--spacing-unit);
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.2s ease-in-out, opacity 0.2s ease-in-out;
+        }
+
+        button:hover {
+            background-color: var(--primary-color-dark);
+        }
+
+        button:disabled {
+            background-color: var(--secondary-color);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 400px; /* Adjust height as needed */
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .chart-info {
+            text-align: center;
+            font-size: 1.1rem;
+            color: var(--text-color);
+        }
+
+        .chart-info p {
+            margin: calc(var(--spacing-unit) / 2) 0;
+        }
+
+        .chart-controls {
+             display: flex;
+             justify-content: center;
+             gap: var(--spacing-unit);
+             margin-top: var(--spacing-unit);
+             flex-wrap: wrap;
+        }
+
+        .glossary-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .glossary-item {
+            margin-bottom: calc(var(--spacing-unit) * 1.5);
+            padding-bottom: var(--spacing-unit);
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .glossary-item dt {
+            font-weight: bold;
+            margin-bottom: calc(var(--spacing-unit) / 2);
+            color: var(--primary-color-dark);
+            font-size: 1.2rem;
+        }
+
+        .glossary-item dd {
+            margin-left: 0;
+            color: var(--text-light-color);
+        }
+
+        footer {
+            background-color: var(--surface-color);
+            color: var(--text-light-color);
+            text-align: center;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            margin-top: calc(var(--spacing-unit) * 3);
+            box-shadow: 0 -2px 4px var(--shadow-color);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            header {
+                padding: var(--spacing-unit);
+            }
+
+            main {
+                padding: var(--spacing-unit);
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            h2 {
+                font-size: 1.4rem;
+            }
+
+            h3 {
+                font-size: 1.2rem;
+            }
+
+            .data-input-form {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .form-group {
+                flex: none;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            .chart-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Regression Analysis Explained</h1>
+        <!-- Mobile menu icon placeholder -->
+        <!-- <div class="menu-icon material-symbols-rounded">menu</div> -->
+    </header>
+
+    <main>
+        <section id="introduction">
+            <h2>Introduction to Regression Analysis</h2>
+            <div class="panel">
+                <div class="panel-header">
+                    What is Regression Analysis?
+                    <span class="material-symbols-rounded">expand_more</span>
+                </div>
+                <div class="panel-body">
+                    <p>Regression analysis is a powerful statistical method used to examine the relationship between two or more variables. The primary goal is to understand how the typical value of the dependent variable (the one you are trying to predict) changes when any one of the independent variables (the predictors) is varied, while the other independent variables are held fixed.</p>
+                    <p>It helps us predict outcomes, understand the strength and direction of relationships, and model complex systems. It's widely used in fields like economics, finance, social sciences, marketing, and machine learning.</p>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="panel-header">
+                    Key Concepts
+                    <span class="material-symbols-rounded">expand_more</span>
+                </div>
+                <div class="panel-body">
+                    <p><strong>Dependent Variable (Y):</strong> This is the variable you are trying to explain or predict. It's sometimes called the response variable, outcome variable, or target variable.</p>
+                    <p><strong>Independent Variable(s) (X):</strong> These are the variables you believe influence the dependent variable. They are also known as predictor variables, explanatory variables, or features.</p>
+                    <p><strong>Model:</strong> A mathematical equation that describes the relationship between the dependent and independent variables.</p>
+                    <p><strong>Residuals:</strong> The differences between the observed values of the dependent variable and the values predicted by the model. They represent the part of the dependent variable that the model cannot explain.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="simple-linear-regression">
+            <h2>Simple Linear Regression</h2>
+            <div class="panel">
+                <div class="panel-header">
+                    Understanding Simple Linear Regression
+                    <span class="material-symbols-rounded">expand_more</span>
+                </div>
+                <div class="panel-body">
+                    <p>Simple linear regression is the simplest form of regression analysis, involving only one independent variable (X) and one dependent variable (Y). It assumes a linear relationship between X and Y, meaning the relationship can be represented by a straight line.</p>
+                    <p>The equation for a simple linear regression model is typically written as:</p>
+                    <p><code>Y = β₀ + β₁X + ε</code></p>
+                    <ul>
+                        <li><code>Y</code>: The dependent variable.</li>
+                        <li><code>X</code>: The independent variable.</li>
+                        <li><code>β₀</code> (Beta-zero): The Y-intercept, representing the expected value of Y when X is 0.</li>
+                        <li><code>β₁</code> (Beta-one): The slope of the line, representing the change in Y for a one-unit increase in X.</li>
+                        <li><code>ε</code> (Epsilon): The error term, representing the random variability in Y that cannot be explained by X.</li>
+                    </ul>
+                    <p>The goal of simple linear regression is to find the best-fitting line (i.e., estimate the values of β₀ and β₁ from your data) that minimizes the sum of the squared residuals (the vertical distances between the data points and the line). This method is called Ordinary Least Squares (OLS).</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="interactive-example">
+            <h2>Visualize Simple Linear Regression</h2>
+            <div class="interactive-area">
+                <h3>Add Your Data Points</h3>
+                <div class="data-input-form">
+                    <div class="form-group">
+                        <label for="x-input">Independent Variable (X)</label>
+                        <input type="number" id="x-input" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="y-input">Dependent Variable (Y)</label>
+                        <input type="number" id="y-input" step="0.1">
+                    </div>
+                    <button id="add-data-btn">Add Data Point</button>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="regressionChart"></canvas>
+                </div>
+
+                <div class="chart-info">
+                    <p id="equation-display">Regression Equation: Not calculated yet</p>
+                    <p id="r-squared-display">R-squared: Not calculated yet</p>
+                </div>
+
+                <div class="chart-controls">
+                    <button id="calculate-btn">Calculate Regression Line</button>
+                    <button id="clear-data-btn">Clear Data</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="multiple-regression">
+            <h2>Multiple Regression</h2>
+            <div class="panel">
+                <div class="panel-header">
+                    Going Beyond Simple Regression
+                    <span class="material-symbols-rounded">expand_more</span>
+                </div>
+                <div class="panel-body">
+                    <p>Multiple regression is an extension of simple linear regression that involves two or more independent variables to predict a single dependent variable. This allows for a more complex and realistic model of how multiple factors might influence an outcome.</p>
+                    <p>The equation for a multiple linear regression model is:</p>
+                    <p><code>Y = β₀ + β₁X₁ + β₂X₂ + ... + βₚXₚ + ε</code></p>
+                    <ul>
+                        <li><code>Y</code>: The dependent variable.</li>
+                        <li><code>X₁, X₂, ..., Xₚ</code>: The <code>p</code> independent variables.</li>
+                        <li><code>β₀</code>: The Y-intercept.</li>
+                        <li><code>β₁, β₂, ..., βₚ</code>: The coefficients for each independent variable, representing the change in Y for a one-unit increase in that specific X variable, holding all other independent variables constant.</li>
+                        <li><code>ε</code>: The error term.</li>
+                    </ul>
+                    <p>Multiple regression helps control for the effects of other variables when examining the relationship between a specific independent variable and the dependent variable. It can also reveal interactions between independent variables.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="assumptions">
+            <h2>Regression Assumptions</h2>
+            <div class="panel">
+                <div class="panel-header">
+                    Important Assumptions for Valid Results
+                    <span class="material-symbols-rounded">expand_more</span>
+                </div>
+                <div class="panel-body">
+                    <p>For the results of a regression analysis to be reliable and valid, several assumptions about the data and the model should be met. While slight violations might be acceptable in some contexts, severe violations can lead to inaccurate conclusions.</p>
+                    <p>Key assumptions for linear regression include:</p>
+                    <ul>
+                        <li><strong>Linearity:</strong> The relationship between the independent and dependent variables is linear.</li>
+                        <li><strong>Independence of Errors:</strong> The residuals are independent of each other.</li>
+                        <li><strong>Homoscedasticity:</strong> The variance of the residuals is constant across all levels of the independent variables. (No heteroscedasticity).</li>
+                        <li><strong>Normality of Errors:</strong> The residuals are normally distributed.</li>
+                        <li><strong>No Multicollinearity:</strong> Independent variables are not too highly correlated with each other (primarily for multiple regression).</li>
+                    </ul>
+                    <p>Violations of these assumptions can often be diagnosed by examining residual plots. There are also statistical tests and techniques to address violations, such as transforming variables or using different regression methods.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="applications">
+            <h2>Applications of Regression Analysis</h2>
+            <div class="panel">
+                <div class="panel-header">
+                    Where is Regression Used?
+                    <span class="material-symbols-rounded">expand_more</span>
+                </div>
+                <div class="panel-body">
+                    <p>Regression analysis is a versatile tool used across numerous disciplines:</p>
+                    <ul>
+                        <li><strong>Business and Economics:</strong> Forecasting sales, predicting stock prices, analyzing factors affecting economic growth, determining pricing strategies.</li>
+                        <li><strong>Social Sciences:</strong> Studying factors influencing educational attainment, analyzing the impact of social programs, understanding voting behavior.</li>
+                        <li><strong>Healthcare:</strong> Predicting patient outcomes based on medical history, analyzing the effectiveness of treatments, identifying risk factors for diseases.</li>
+                        <li><strong>Marketing:</strong> Measuring the effectiveness of advertising campaigns, predicting customer lifetime value, segmenting customers based on behavior.</li>
+                        <li><strong>Environmental Science:</strong> Modeling climate change impacts, predicting pollution levels, analyzing factors affecting species distribution.</li>
+                    </ul>
+                    <p>Its ability to quantify relationships and make predictions makes it indispensable for data-driven decision-making.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="glossary">
+            <h2>Glossary</h2>
+            <dl class="glossary-list">
+                <div class="glossary-item">
+                    <dt>Dependent Variable (Y)</dt>
+                    <dd>The variable being predicted or explained in a regression model.</dd>
+                </div>
+                <div class="glossary-item">
+                    <dt>Independent Variable (X)</dt>
+                    <dd>A variable used to predict or explain the dependent variable.</dd>
+                </div>
+                <div class="glossary-item">
+                    <dt>Ordinary Least Squares (OLS)</dt>
+                    <dd>A method used to estimate the coefficients of a linear regression model by minimizing the sum of the squared differences between the observed and predicted values.</dd>
+                </div>
+                <div class="glossary-item">
+                    <dt>Residuals</dt>
+                    <dd>The difference between an observed value and the value predicted by the regression model.</dd>
+                </div>
+                <div class="glossary-item">
+                    <dt>R-squared (R²)</dt>
+                    <dd>A statistical measure that represents the proportion of the variance for a dependent variable that's explained by an independent variable or variables in a regression model. It indicates how well the model fits the observed data.</dd>
+                </div>
+                <div class="glossary-item">
+                    <dt>Coefficient</dt>
+                    <dd>A numerical value that indicates the strength and direction of the relationship between an independent variable and the dependent variable in a regression model.</dd>
+                </div>
+            </dl>
+        </section>
+
+    </main>
+
+    <footer>
+        <p>&copy; 2023 Regression Analysis Explainer. All rights reserved.</p>
+    </footer>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        // --- Data and State ---
+        let dataPoints = [];
+        let regressionLine = null;
+        let regressionEquation = "Not calculated yet";
+        let rSquared = "Not calculated yet";
+        let regressionChart = null;
+
+        // --- DOM Elements ---
+        const xInput = document.getElementById('x-input');
+        const yInput = document.getElementById('y-input');
+        const addDataBtn = document.getElementById('add-data-btn');
+        const calculateBtn = document.getElementById('calculate-btn');
+        const clearDataBtn = document.getElementById('clear-data-btn');
+        const equationDisplay = document.getElementById('equation-display');
+        const rSquaredDisplay = document.getElementById('r-squared-display');
+        const chartCanvas = document.getElementById('regressionChart');
+
+        // --- Chart Initialization ---
+        function initializeChart() {
+            if (regressionChart) {
+                regressionChart.destroy();
+            }
+
+            const ctx = chartCanvas.getContext('2d');
+            regressionChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Data Points',
+                        data: dataPoints,
+                        backgroundColor: var_to_string('--primary-color'),
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                    },
+                    {
+                        label: 'Regression Line',
+                        data: regressionLine,
+                        borderColor: var_to_string('--primary-color-dark'),
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        fill: false,
+                        showLine: regressionLine !== null && regressionLine.length > 1,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            title: {
+                                display: true,
+                                text: 'Independent Variable (X)'
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Dependent Variable (Y)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                             callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label || '';
+                                    if (label === 'Data Points') {
+                                        const point = context.raw;
+                                        return `${label}: (X: ${point.x.toFixed(2)}, Y: ${point.y.toFixed(2)})`;
+                                    }
+                                    return label;
+                                }
+                            }
+                        },
+                        legend: {
+                            display: true,
+                            labels: {
+                                filter: function(legendItem, chartData) {
+                                    // Hide regression line legend if no line is drawn
+                                    if (legendItem.text === 'Regression Line') {
+                                        return chartData.datasets[1].showLine;
+                                    }
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Helper to get CSS variable value
+        function var_to_string(variableName) {
+            return getComputedStyle(document.documentElement).getPropertyValue(variableName).trim();
+        }
+
+
+        // --- Regression Calculation ---
+        function calculateRegression(data) {
+            if (data.length < 2) {
+                return { slope: NaN, intercept: NaN, rSquared: NaN };
+            }
+
+            const n = data.length;
+            let sumX = 0;
+            let sumY = 0;
+            let sumXY = 0;
+            let sumXX = 0;
+            let sumYY = 0;
+
+            data.forEach(point => {
+                sumX += point.x;
+                sumY += point.y;
+                sumXY += point.x * point.y;
+                sumXX += point.x * point.x;
+                sumYY += point.y * point.y;
+            });
+
+            const meanX = sumX / n;
+            const meanY = sumY / n;
+
+            const numerator = sumXY - n * meanX * meanY;
+            const denominator = sumXX - n * meanX * meanX;
+
+            // Calculate slope (β₁)
+            const slope = denominator === 0 ? 0 : numerator / denominator;
+
+            // Calculate intercept (β₀)
+            const intercept = meanY - slope * meanX;
+
+            // Calculate R-squared
+            let ssTotal = 0; // Total sum of squares
+            let ssResidual = 0; // Residual sum of squares
+
+            data.forEach(point => {
+                const predictedY = intercept + slope * point.x;
+                ssTotal += Math.pow(point.y - meanY, 2);
+                ssResidual += Math.pow(point.y - predictedY, 2);
+            });
+
+            const rSquaredValue = ssTotal === 0 ? 1 : (1 - ssResidual / ssTotal); // Handle case where all Y are the same
+
+            return { slope, intercept, rSquared: rSquaredValue };
+        }
+
+        function updateRegressionDisplay(slope, intercept, rSquaredValue) {
+            if (!isNaN(slope) && !isNaN(intercept)) {
+                regressionEquation = `Regression Equation: Y = ${intercept.toFixed(2)} + ${slope.toFixed(2)} * X`;
+            } else {
+                regressionEquation = "Regression Equation: Not calculated (Need at least 2 points)";
+            }
+
+            if (!isNaN(rSquaredValue)) {
+                 rSquared = `R-squared: ${rSquaredValue.toFixed(4)}`;
+            } else {
+                 rSquared = "R-squared: Not calculated";
+            }
+
+            equationDisplay.textContent = regressionEquation;
+            rSquaredDisplay.textContent = rSquared;
+        }
+
+        function generateRegressionLineData(slope, intercept, data) {
+            if (data.length < 2 || isNaN(slope) || isNaN(intercept)) {
+                return [];
+            }
+
+            // Find min and max X values from the data
+            const minX = Math.min(...data.map(p => p.x));
+            const maxX = Math.max(...data.map(p => p.x));
+
+            // Generate points for the line at the min and max X values
+            const linePoints = [
+                { x: minX, y: intercept + slope * minX },
+                { x: maxX, y: intercept + slope * maxX }
+            ];
+
+            return linePoints;
+        }
+
+        // --- Event Handlers ---
+        addDataBtn.addEventListener('click', () => {
+            const x = parseFloat(xInput.value);
+            const y = parseFloat(yInput.value);
+
+            if (!isNaN(x) && !isNaN(y)) {
+                dataPoints.push({ x: x, y: y });
+                // Sort data points by X for line drawing if needed, though scatter plot doesn't strictly require it
+                // dataPoints.sort((a, b) => a.x - b.x);
+
+                xInput.value = '';
+                yInput.value = '';
+                xInput.focus();
+
+                // Reset regression line and stats until recalculated
+                regressionLine = null;
+                updateRegressionDisplay(NaN, NaN, NaN);
+                updateChart();
+            } else {
+                alert('Please enter valid numbers for both X and Y.');
+            }
+        });
+
+        calculateBtn.addEventListener('click', () => {
+            if (dataPoints.length < 2) {
+                alert('Need at least 2 data points to calculate regression.');
+                return;
+            }
+
+            const { slope, intercept, rSquared } = calculateRegression(dataPoints);
+            regressionLine = generateRegressionLineData(slope, intercept, dataPoints);
+            updateRegressionDisplay(slope, intercept, rSquared);
+            updateChart();
+        });
+
+        clearDataBtn.addEventListener('click', () => {
+            dataPoints = [];
+            regressionLine = null;
+            updateRegressionDisplay(NaN, NaN, NaN);
+            updateChart();
+        });
+
+        // --- Chart Update Function ---
+        function updateChart() {
+            if (regressionChart) {
+                regressionChart.data.datasets[0].data = dataPoints;
+                regressionChart.data.datasets[1].data = regressionLine;
+                regressionChart.data.datasets[1].showLine = regressionLine !== null && regressionLine.length > 1;
+
+                // Update scales to fit new data range if needed (Chart.js handles this somewhat automatically)
+                // You might need to manually adjust if you want padding or specific ranges
+                // regressionChart.options.scales.x.min = Math.min(...dataPoints.map(p => p.x)) * 0.9; // Example adjustment
+                // regressionChart.options.scales.x.max = Math.max(...dataPoints.map(p => p.x)) * 1.1;
+                // regressionChart.options.scales.y.min = Math.min(...dataPoints.map(p => p.y)) * 0.9;
+                // regressionChart.options.scales.y.max = Math.max(...dataPoints.map(p => p.y)) * 1.1;
+
+
+                regressionChart.update();
+            }
+        }
+
+        // --- Panel Toggle Functionality ---
+        document.querySelectorAll('.panel-header').forEach(header => {
+            header.addEventListener('click', () => {
+                const panelBody = header.nextElementSibling;
+                const isExpanded = header.classList.toggle('expanded');
+                panelBody.classList.toggle('expanded');
+
+                // Accessibility: Update ARIA attributes
+                header.setAttribute('aria-expanded', isExpanded);
+                panelBody.setAttribute('aria-hidden', !isExpanded);
+            });
+
+            // Accessibility: Add ARIA attributes initially
+             header.setAttribute('role', 'button');
+             header.setAttribute('aria-controls', header.nextElementSibling.id || `panel-body-${Math.random().toString(36).substr(2, 9)}`); // Add ID if missing
+             header.setAttribute('aria-expanded', 'false');
+             header.nextElementSibling.setAttribute('aria-hidden', 'true');
+             if (!header.nextElementSibling.id) {
+                 header.nextElementSibling.id = `panel-body-${Math.random().toString(36).substr(2, 9)}`;
+             }
+        });
+
+        // --- Smooth Scrolling for Navigation (Placeholder, no nav menu yet) ---
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // --- Initial Setup ---
+        initializeChart();
+        updateRegressionDisplay(NaN, NaN, NaN); // Display initial state
+
+
+    </script>
+
+</body>
+</html>

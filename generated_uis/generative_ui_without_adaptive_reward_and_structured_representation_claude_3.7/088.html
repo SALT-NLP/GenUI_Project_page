@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sleep & Academic Performance Analyzer</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+        :root {
+            --primary-color: #007acc; /* VSCode blue */
+            --primary-color-dark: #005f99;
+            --secondary-color: #666;
+            --background-color: #f4f7f6; /* Light grey background */
+            --surface-color: #ffffff; /* Pure white for cards/panels */
+            --border-color: #e0e0e0;
+            --text-color: #333;
+            --text-color-light: #666;
+            --success-color: #4CAF50;
+            --error-color: #f44336;
+            --warning-color: #ff9800;
+            --spacing-unit: 8px;
+            --border-radius: 8px;
+            --shadow-subtle: 0 2px 4px rgba(0, 0, 0, 0.05);
+            --shadow-medium: 0 4fpx 12px rgba(0, 0, 0, 0.1); /* Corrected typo */
+            --transition-duration: 0.3s;
+            --transition-easing: ease-in-out;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-y: auto; /* Allow scrolling on body */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        header {
+            background-color: var(--surface-color);
+            color: var(--text-color);
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 3);
+            box-shadow: var(--shadow-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0; /* Prevent header from shrinking */
+            z-index: 100; /* Ensure header is on top */
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8em;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        main {
+            flex-grow: 1; /* Allow main content to take available space */
+            display: flex;
+            padding: calc(var(--spacing-unit) * 3);
+            gap: calc(var(--spacing-unit) * 3);
+            overflow: hidden; /* Prevent main from causing scrollbar */
+        }
+
+        aside#control-panel {
+            background-color: var(--surface-color);
+            padding: calc(var(--spacing-unit) * 2);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-subtle);
+            width: 300px;
+            flex-shrink: 0; /* Prevent sidebar from shrinking */
+            overflow-y: auto; /* Allow sidebar to scroll */
+            display: flex;
+            flex-direction: column;
+            gap: calc(var(--spacing-unit) * 2);
+        }
+
+        section#main-content {
+            flex-grow: 1; /* Allow main content area to grow */
+            display: flex;
+            flex-direction: column;
+            gap: calc(var(--spacing-unit) * 3);
+            overflow-y: auto; /* Allow main content area to scroll */
+        }
+
+        .card {
+            background-color: var(--surface-color);
+            padding: calc(var(--spacing-unit) * 3);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-subtle);
+            display: flex;
+            flex-direction: column;
+            gap: calc(var(--spacing-unit) * 2);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--transition-duration) var(--transition-easing), visibility var(--transition-duration) var(--transition-easing);
+        }
+
+        .card.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .card h2 {
+            margin: 0 0 var(--spacing-unit) 0;
+            font-size: 1.4em;
+            font-weight: 500;
+            color: var(--primary-color-dark);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: var(--spacing-unit);
+        }
+
+        /* Form Elements */
+        label {
+            display: block;
+            margin-bottom: var(--spacing-unit);
+            font-weight: 500;
+            color: var(--text-color-light);
+            font-size: 0.95em;
+        }
+
+        input[type="file"],
+        select,
+        button {
+            font-family: 'Inter', sans-serif;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            color: var(--text-color);
+            transition: border-color var(--transition-duration) var(--transition-easing), box-shadow var(--transition-duration) var(--transition-easing);
+            background-color: var(--surface-color); /* Ensure background is white */
+            box-sizing: border-box; /* Include padding and border in element's total width and height */
+            width: 100%; /* Make form elements take full width */
+        }
+
+        input[type="file"] {
+             /* Adjust padding for file input */
+             padding-top: var(--spacing-unit);
+             padding-bottom: var(--spacing-unit);
+        }
+
+        select {
+            appearance: none; /* Remove default arrow */
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23666%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-6.5%200-12.1%203.2-15.6%208.1-3.6%204.9-3.9%2011.1-1%2016.5l128%20153.5c3.5%204.7%209.1%207.6%2015.6%207.6s12.1-2.9%2015.6-7.6l128-153.5c2.9-5.4%202.6-11.6-1-16.5z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: right var(--spacing-unit) center;
+            background-size: 12px;
+            padding-right: calc(var(--spacing-unit) * 3); /* Make space for arrow */
+            cursor: pointer;
+        }
+
+        input[type="file"]:focus,
+        select:focus,
+        button:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2); /* Focus ring */
+        }
+
+        button {
+            cursor: pointer;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            font-weight: 500;
+            transition: background-color var(--transition-duration) var(--transition-easing), opacity var(--transition-duration) var(--transition-easing), transform 0.1s ease;
+            width: auto; /* Buttons within group manage their width */
+        }
+
+        button:hover:not(:disabled) {
+            background-color: var(--primary-color-dark);
+        }
+
+        button:active:not(:disabled) {
+            background-color: var(--primary-color);
+            transform: translateY(1px);
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .button-group {
+            display: flex;
+            gap: var(--spacing-unit);
+            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+        }
+
+        .button-group button {
+            flex-grow: 1; /* Allow buttons to grow */
+            min-width: 120px; /* Minimum width for buttons */
+        }
+
+        button.secondary {
+            background-color: #e0e0e0;
+            color: var(--text-color);
+        }
+
+        button.secondary:hover:not(:disabled) {
+            background-color: #ccc;
+        }
+
+        button.danger {
+            background-color: var(--error-color);
+            color: white;
+        }
+        button.danger:hover:not(:disabled) {
+             background-color: #d32f2f;
+        }
+
+
+        /* Data Table Styling */
+        #data-table-container {
+            max-height: 400px; /* Limit table height */
+            overflow: auto; /* Add scrollbar if table is too tall */
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05); /* Subtle inner shadow */
+        }
+
+        #data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+
+        #data-table th,
+        #data-table td {
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        #data-table th {
+            background-color: #f9f9f9;
+            font-weight: 600;
+            color: var(--text-color);
+            cursor: pointer; /* Indicate sortable */
+            position: sticky; /* Make header sticky */
+            top: 0;
+            z-index: 1; /* Ensure header is above scrolling rows */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            user-select: none; /* Prevent text selection on header click */
+        }
+
+        #data-table th .sort-indicator {
+             font-size: 0.8em;
+             margin-left: var(--spacing-unit);
+             color: var(--secondary-color);
+             transition: color var(--transition-duration) var(--transition-easing);
+        }
+
+        #data-table th.sorted .sort-indicator {
+             color: var(--primary-color);
+        }
+
+        #data-table tbody tr:nth-child(even) {
+            background-color: #fcfcfc; /* Alternating row color */
+        }
+
+        #data-table tbody tr:hover {
+            background-color: #f0f0f0;
+        }
+
+        /* Visualization Area */
+        #visualization-area {
+            position: relative; /* Needed for floating controls */
+            min-height: 400px; /* Ensure chart area has minimum height */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* Add a background or border to make the click area clear */
+            border: 1px dashed var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: #fafafa;
+            cursor: pointer; /* Indicate it's interactive */
+        }
+
+        #visualization-area canvas {
+            max-width: 100%;
+            max-height: 600px; /* Limit chart height */
+        }
+
+        /* Statistical Summary */
+        #stats-summary {
+            padding-top: calc(var(--spacing-unit) * 2);
+        }
+
+        #stats-summary p {
+            margin: var(--spacing-unit) 0;
+            font-size: 1em;
+        }
+
+        #stats-summary strong {
+            color: var(--primary-color-dark);
+        }
+
+        /* Loading and Error Messages */
+        #loading-indicator,
+        #error-message {
+            display: none; /* Hidden by default */
+            text-align: center;
+            padding: var(--spacing-unit);
+            border-radius: var(--border-radius);
+            margin-top: var(--spacing-unit);
+            font-size: 0.9em;
+            transition: opacity var(--transition-duration) var(--transition-easing);
+        }
+
+        #loading-indicator {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        #error-message {
+            background-color: #ffebee; /* Light red */
+            color: var(--error-color);
+            border: 1px solid var(--error-color);
+        }
+
+        /* Floating Chart Controls */
+        .floating-controls {
+            position: absolute;
+            top: var(--spacing-unit);
+            right: var(--spacing-unit);
+            background: rgba(255, 255, 255, 0.95);
+            padding: var(--spacing-unit);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-medium);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all var(--transition-duration) var(--transition-easing);
+            pointer-events: none;
+            z-index: 10; /* Ensure controls are above chart */
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-unit);
+            min-width: 150px; /* Ensure controls have a minimum size */
+        }
+
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .floating-controls label {
+            font-size: 0.85em;
+            margin-bottom: 0; /* Reset margin */
+            color: var(--text-color);
+            font-weight: 400;
+        }
+
+        .floating-controls select,
+        .floating-controls input[type="color"],
+        .floating-controls input[type="checkbox"] {
+            padding: calc(var(--spacing-unit) / 2); /* Corrected division */
+            font-size: 0.85em;
+            margin: 0; /* Reset margin */
+            height: auto; /* Allow height to adjust */
+            width: auto; /* Allow width to adjust */
+            box-sizing: border-box;
+        }
+
+        .floating-controls input[type="color"] {
+            padding: 4px; /* Adjust padding for color picker */
+            height: 30px; /* Match height of select */
+        }
+
+        .floating-controls input[type="checkbox"] {
+            padding: 0;
+            margin-right: var(--spacing-unit);
+            vertical-align: middle;
+            width: auto;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: calc(var(--spacing-unit) / 2); /* Smaller gap within control group */
+        }
+
+        .control-group.inline {
+            flex-direction: row;
+            align-items: center;
+            gap: var(--spacing-unit);
+        }
+         .control-group.inline label {
+             margin-bottom: 0;
+         }
+
+
+        /* Initial state message */
+        #initial-message {
+            text-align: center;
+            padding: calc(var(--spacing-unit) * 4);
+            color: var(--text-color-light);
+            font-size: 1.1em;
+            flex-grow: 1; /* Center message vertically */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+         #initial-message p {
+             margin: var(--spacing-unit) 0;
+         }
+
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            main {
+                flex-direction: column;
+                padding: calc(var(--spacing-unit) * 2); /* Corrected multiplication */
+                gap: calc(var(--spacing-unit) * 2); /* Corrected multiplication */
+            }
+
+            aside#control-panel {
+                width: 100%;
+                max-height: none; /* Remove max height on mobile */
+                order: -1; /* Place control panel at the top */
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .button-group button {
+                width: 100%;
+                min-width: auto;
+            }
+
+            .floating-controls {
+                 position: fixed; /* Use fixed position on small screens */
+                 top: auto;
+                 bottom: calc(var(--spacing-unit) * 2); /* Corrected multiplication */
+                 left: calc(var(--spacing-unit) * 2); /* Corrected multiplication */
+                 right: calc(var(--spacing-unit) * 2); /* Corrected multiplication */
+                 width: auto; /* Allow controls to take full width */
+                 transform: translateY(10px); /* Adjust initial transform */
+                 padding: calc(var(--spacing-unit) * 1.5); /* Corrected multiplication */
+                 gap: calc(var(--spacing-unit) * 1.5); /* Corrected multiplication */
+            }
+
+             .floating-controls.active {
+                transform: translateY(0);
+            }
+
+            .floating-controls .control-group.inline {
+                 flex-direction: column; /* Stack inline controls on mobile */
+                 align-items: flex-start;
+            }
+             .floating-controls .control-group.inline label {
+                 margin-bottom: calc(var(--spacing-unit)/2); /* Corrected division */
+             }
+             .floating-controls .control-group.inline input[type="checkbox"] {
+                 margin-right: 0;
+                 margin-bottom: calc(var(--spacing-unit)/2); /* Corrected division */
+             }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Sleep & Academic Performance Analyzer</h1>
+        <!-- Optional: Add logo or user info here -->
+    </header>
+
+    <main>
+        <aside id="control-panel" aria-label="Analysis Controls">
+            <h2>Controls</h2>
+            <div class="control-group">
+                <label for="file-upload">Upload Data (.csv)</label>
+                <input type="file" id="file-upload" accept=".csv" aria-describedby="file-upload-desc">
+                <p id="file-upload-desc" style="font-size: 0.9em; color: var(--text-color-light); margin-top: var(--spacing-unit);">Accepts CSV files. Ensure data is structured with columns for variables.</p>
+            </div>
+
+            <div class="button-group">
+                <button id="load-data-btn" aria-label="Load Data from file">Load Data</button>
+                <button id="clear-data-btn" class="danger" aria-label="Clear all loaded data">Clear Data</button>
+            </div>
+
+            <hr style="border: none; border-top: 1px solid var(--border-color); margin: calc(var(--spacing-unit) * 2) 0;">
+
+            <div class="control-group">
+                <label for="x-variable-select">Select X Variable:</label>
+                <select id="x-variable-select" disabled aria-label="Select X Variable">
+                    <option value="">-- Select Variable --</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="y-variable-select">Select Y Variable:</label>
+                <select id="y-variable-select" disabled aria-label="Select Y Variable">
+                    <option value="">-- Select Variable --</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="chart-type-select">Select Chart Type:</label>
+                <select id="chart-type-select" disabled aria-label="Select Chart Type">
+                    <option value="">-- Select Chart Type --</option>
+                    <option value="scatter">Scatter Plot</option>
+                    <option value="bar">Bar Chart</option>
+                    <option value="histogram">Histogram</option>
+                    <option value="box">Box Plot</option>
+                </select>
+            </div>
+
+            <div class="button-group">
+                <button id="visualize-btn" disabled aria-label="Generate Visualization">Visualize Data</button>
+                <button id="calculate-stats-btn" disabled aria-label="Calculate Statistics">Calculate Statistics</button>
+            </div>
+
+            <div id="loading-indicator" role="status" aria-live="polite">Processing...</div>
+            <div id="error-message" role="alert" aria-live="assertive"></div>
+        </aside>
+
+        <section id="main-content" aria-label="Data and Analysis Results">
+            <div id="initial-message">
+                <p>Upload a CSV file to get started.</p>
+                <p>Once loaded, you can view your data, select variables, and generate visualizations and statistics.</p>
+            </div>
+
+            <div id="data-table-card" class="card" aria-hidden="true">
+                <h2>Raw Data</h2>
+                <div id="data-table-container" tabindex="0" role="region" aria-label="Raw Data Table">
+                    <table id="data-table" role="table">
+                        <thead>
+                            <tr role="row">
+                                <!-- Table headers will be populated here -->
+                            </tr>
+                        </thead>
+                        <tbody role="rowgroup">
+                            <!-- Table rows will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="visualization-card" class="card" aria-hidden="true">
+                <h2>Data Visualization</h2>
+                <div id="visualization-area" role="img" aria-label="Data Visualization Chart Area" tabindex="0">
+                    <canvas id="data-chart" role="presentation"></canvas>
+                     <!-- Floating control panel for chart -->
+                    <div class="floating-controls" id="chart-controls">
+                        <div class="control-group">
+                            <label for="chart-color-picker">Data Color:</label>
+                            <input type="color" id="chart-color-picker" value="#007acc" aria-label="Select chart color">
+                        </div>
+                         <div class="control-group inline">
+                            <input type="checkbox" id="legend-toggle" checked aria-label="Toggle legend visibility">
+                            <label for="legend-toggle">Show Legend</label>
+                        </div>
+                         <!-- Add more controls here as needed -->
+                    </div>
+                </div>
+            </div>
+
+            <div id="stats-card" class="card" aria-hidden="true">
+                <h2>Statistical Summary</h2>
+                <div id="stats-summary" role="region" aria-label="Statistical Summary">
+                    <!-- Statistics will be displayed here -->
+                    <p>Select variables and click "Calculate Statistics" to see results.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script type="module">
+        import Papa from 'https://esm.sh/papaparse';
+        import { Chart } from 'https://esm.sh/chart.js/auto';
+        import { BoxAndViolinController, BoxPlot } from 'https://esm.sh/chartjs-chart-box-and-violin-plot';
+
+        // Register the box plot controller and element
+        Chart.register(BoxAndViolinController, BoxPlot);
+
+
+        let rawData = []; // Array of objects from CSV
+        let columnNames = []; // Array of column names
+        let currentChart = null; // Store the current Chart.js instance
+        let sortDirection = {}; // Store sort direction for table columns
+
+        const fileUpload = document.getElementById('file-upload');
+        const loadDataBtn = document.getElementById('load-data-btn');
+        const clearDataBtn = document.getElementById('clear-data-btn');
+        const xVariableSelect = document.getElementById('x-variable-select');
+        const yVariableSelect = document.getElementById('y-variable-select');
+        const chartTypeSelect = document.getElementById('chart-type-select');
+        const visualizeBtn = document.getElementById('visualize-btn');
+        const calculateStatsBtn = document.getElementById('calculate-stats-btn');
+        const dataTableCard = document.getElementById('data-table-card');
+        const dataTableHead = document.querySelector('#data-table thead tr');
+        const dataTableBody = document.querySelector('#data-table tbody');
+        const visualizationCard = document.getElementById('visualization-card');
+        const statsCard = document.getElementById('stats-card');
+        const statsSummary = document.getElementById('stats-summary');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const errorMessage = document.getElementById('error-message');
+        const initialMessage = document.getElementById('initial-message');
+        const chartCanvas = document.getElementById('data-chart');
+        const chartControls = document.getElementById('chart-controls');
+        const chartColorPicker = document.getElementById('chart-color-picker');
+        const legendToggle = document.getElementById('legend-toggle');
+        const visualizationArea = document.getElementById('visualization-area');
+
+
+        // --- Event Listeners ---
+
+        loadDataBtn.addEventListener('click', handleLoadData);
+        clearDataBtn.addEventListener('click', clearAllData);
+        visualizeBtn.addEventListener('click', handleVisualize);
+        calculateStatsBtn.addEventListener('click', handleCalculateStats);
+
+        // Toggle chart controls visibility on chart area click
+        visualizationArea.addEventListener('click', (e) => {
+             // Only toggle if click is within the visualization area itself
+             // Avoid toggling if clicking on the floating controls or the canvas
+             if (e.target === visualizationArea) {
+                 chartControls.classList.toggle('active');
+             }
+        });
+
+         // Hide chart controls when clicking outside the chart area or controls
+        document.addEventListener('click', (e) => {
+            const isClickInsideChartArea = visualizationArea.contains(e.target);
+            const isClickInsideControls = chartControls.contains(e.target);
+
+            if (!isClickInsideChartArea && !isClickInsideControls) {
+                chartControls.classList.remove('active');
+            }
+        });
+
+        // Hide controls on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                chartControls.classList.remove('active');
+            }
+        });
+
+
+        // Chart controls update listener
+        chartColorPicker.addEventListener('input', updateChartAppearance);
+        legendToggle.addEventListener('change', updateChartAppearance);
+
+
+        // --- Data Handling and Parsing ---
+
+        function handleLoadData() {
+            const file = fileUpload.files[0];
+            if (!file) {
+                displayError('Please select a CSV file to upload.');
+                return;
+            }
+
+            showLoading('Loading and parsing data...');
+            hideError();
+            hideInitialMessage();
+            clearAllData(false); // Clear previous data but keep initial message hidden
+
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                dynamicTyping: true, // Attempt to convert numbers and booleans
+                complete: function(results) {
+                    hideLoading();
+                    if (results.errors.length > 0) {
+                        console.error('Parsing errors:', results.errors);
+                        // Display errors but attempt to process data if available
+                        const errorMessages = results.errors.map(err => `Row ${err.row}: ${err.message}`).join('<br>');
+                         displayError(`Error parsing CSV file:<br>${errorMessages}`);
+                    }
+
+                    if (results.data.length === 0 || Object.keys(results.data[0] || {}).length === 0) {
+                         displayError('CSV file is empty or contains no valid data rows/columns.');
+                         clearAllData();
+                    } else {
+                        // Filter out rows that are completely empty or just headers after parsing
+                         const validData = results.data.filter(row =>
+                             row && Object.values(row).some(value => value !== null && value !== undefined && value !== '')
+                         );
+
+                         if (validData.length === 0) {
+                             displayError('No valid data rows found after parsing.');
+                             clearAllData();
+                         } else {
+                             processData(validData);
+                         }
+                    }
+                },
+                error: function(error) {
+                    hideLoading();
+                    console.error('PapaParse error:', error);
+                    displayError('An error occurred during file parsing.');
+                    clearAllData();
+                }
+            });
+        }
+
+        function processData(data) {
+            rawData = data;
+            if (rawData.length > 0) {
+                columnNames = Object.keys(rawData[0]);
+                renderTable(rawData);
+                populateVariableSelects(columnNames);
+                enableControls();
+                showCard(dataTableCard); // Show table card
+            } else {
+                 // This case should ideally be caught by the check in handleLoadData
+                 displayError('No data rows found after parsing.');
+                 clearAllData();
+            }
+        }
+
+        function clearAllData(showInitial = true) {
+            rawData = [];
+            columnNames = [];
+            sortDirection = {}; // Reset sort direction
+            dataTableBody.innerHTML = '';
+            dataTableHead.innerHTML = '';
+            xVariableSelect.innerHTML = '<option value="">-- Select Variable --</option>';
+            yVariableSelect.innerHTML = '<option value="">-- Select Variable --</option>';
+            chartTypeSelect.value = '';
+            statsSummary.innerHTML = '<p>Select variables and click "Calculate Statistics" to see results.</p>';
+            destroyChart();
+            disableControls();
+            hideCard(dataTableCard);
+            hideCard(visualizationCard);
+            hideCard(statsCard);
+            hideLoading();
+            hideError();
+            if (showInitial) {
+                 showInitialMessage();
+            }
+            // Reset file input
+            fileUpload.value = '';
+        }
+
+        // --- UI Updates ---
+
+        function showCard(cardElement) {
+             cardElement.classList.add('visible');
+             cardElement.setAttribute('aria-hidden', 'false');
+        }
+
+        function hideCard(cardElement) {
+             cardElement.classList.remove('visible');
+             cardElement.setAttribute('aria-hidden', 'true');
+        }
+
+
+        function renderTable(data) {
+            dataTableHead.innerHTML = ''; // Clear previous headers
+            dataTableBody.innerHTML = ''; // Clear previous rows
+
+            if (data.length === 0) return;
+
+            // Create headers
+            columnNames.forEach(col => {
+                const th = document.createElement('th');
+                th.textContent = col;
+                th.setAttribute('data-column', col);
+                th.setAttribute('aria-sort', sortDirection[col] || 'none'); // ARIA sort state
+                // Add span for indicator, using material symbols
+                th.innerHTML = `${col} <span class="sort-indicator material-symbols-rounded">${getSortIndicator(sortDirection[col])}</span>`;
+                th.addEventListener('click', () => sortTable(col));
+                 th.setAttribute('role', 'columnheader'); // ARIA role
+                 th.setAttribute('tabindex', '0'); // Make headers focusable
+                 th.addEventListener('keydown', (e) => {
+                     if (e.key === 'Enter' || e.key === ' ') {
+                         e.preventDefault();
+                         sortTable(col);
+                     }
+                 });
+                dataTableHead.appendChild(th);
+            });
+
+            // Create rows
+            data.forEach((row, rowIndex) => {
+                const tr = document.createElement('tr');
+                 tr.setAttribute('aria-rowindex', rowIndex + 2); // ARIA row index (1 for header)
+                 tr.setAttribute('role', 'row'); // ARIA role
+                columnNames.forEach((col, colIndex) => {
+                    const td = document.createElement('td');
+                    // Display null/undefined as empty string
+                    td.textContent = row[col] !== null && row[col] !== undefined ? row[col] : '';
+                    td.setAttribute('aria-colindex', colIndex + 1); // ARIA column index
+                    td.setAttribute('role', 'cell'); // ARIA role
+                    tr.appendChild(td);
+                });
+                dataTableBody.appendChild(tr);
+            });
+        }
+
+         function getSortIndicator(direction) {
+             if (direction === 'asc') return 'arrow_upward';
+             if (direction === 'desc') return 'arrow_downward';
+             return ''; // No indicator
+         }
+
+
+        function sortTable(column) {
+             // Determine sort direction
+             const currentDirection = sortDirection[column];
+             const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
+
+             // Reset sort direction for all columns except the current one
+             for (const col in sortDirection) {
+                 if (col !== column) {
+                     sortDirection[col] = 'none';
+                 }
+             }
+             sortDirection[column] = newDirection; // Set for current column
+
+             // Sort the raw data array
+             rawData.sort((a, b) => {
+                 const valA = a[column];
+                 const valB = b[column];
+
+                 // Handle null/undefined values - treat them as smaller
+                 const aIsNull = valA === null || valA === undefined || valA === '';
+                 const bIsNull = valB === null || valB === undefined || valB === '';
+
+                 if (aIsNull && bIsNull) return 0;
+                 if (aIsNull) return newDirection === 'asc' ? -1 : 1;
+                 if (bIsNull) return newDirection === 'asc' ? 1 : -1;
+
+                 // Attempt numeric comparison first
+                 const numA = Number(valA);
+                 const numB = Number(valB);
+
+                 if (!isNaN(numA) && !isNaN(numB)) {
+                     return newDirection === 'asc' ? numA - numB : numB - numA;
+                 } else { // Fallback to string comparison
+                     const stringA = String(valA).toLowerCase();
+                     const stringB = String(valB).toLowerCase();
+                     if (stringA < stringB) return newDirection === 'asc' ? -1 : 1;
+                     if (stringA > stringB) return newDirection === 'asc' ? 1 : -1;
+                     return 0;
+                 }
+             });
+
+             // Re-render the table with sorted data
+             renderTable(rawData);
+        }
+
+
+        function populateVariableSelects(columns) {
+            xVariableSelect.innerHTML = '<option value="">-- Select X Variable --</option>';
+            yVariableSelect.innerHTML = '<option value="">-- Select Y Variable --</option>';
+
+            columns.forEach(col => {
+                const optionX = document.createElement('option');
+                optionX.value = col;
+                optionX.textContent = col;
+                xVariableSelect.appendChild(optionX);
+
+                const optionY = document.createElement('option');
+                optionY.value = col;
+                optionY.textContent = col;
+                yVariableSelect.appendChild(optionY);
+            });
+        }
+
+        function enableControls() {
+            xVariableSelect.disabled = false;
+            yVariableSelect.disabled = false;
+            chartTypeSelect.disabled = false;
+            visualizeBtn.disabled = false;
+            calculateStatsBtn.disabled = false;
+            clearDataBtn.disabled = false;
+
+             // Update ARIA disabled state
+            xVariableSelect.setAttribute('aria-disabled', 'false');
+            yVariableSelect.setAttribute('aria-disabled', 'false');
+            chartTypeSelect.setAttribute('aria-disabled', 'false');
+            visualizeBtn.setAttribute('aria-disabled', 'false');
+            calculateStatsBtn.setAttribute('aria-disabled', 'false');
+            clearDataBtn.setAttribute('aria-disabled', 'false');
+
+             // Make controls keyboard focusable
+             xVariableSelect.setAttribute('tabindex', '0');
+             yVariableSelect.setAttribute('tabindex', '0');
+             chartTypeSelect.setAttribute('tabindex', '0');
+             visualizeBtn.setAttribute('tabindex', '0');
+             calculateStatsBtn.setAttribute('tabindex', '0');
+             clearDataBtn.setAttribute('tabindex', '0');
+        }
+
+        function disableControls() {
+            xVariableSelect.disabled = true;
+            yVariableSelect.disabled = true;
+            chartTypeSelect.disabled = true;
+            visualizeBtn.disabled = true;
+            calculateStatsBtn.disabled = true;
+            clearDataBtn.disabled = true;
+
+            // Update ARIA disabled state
+            xVariableSelect.setAttribute('aria-disabled', 'true');
+            yVariableSelect.setAttribute('aria-disabled', 'true');
+            chartTypeSelect.setAttribute('aria-disabled', 'true');
+            visualizeBtn.setAttribute('aria-disabled', 'true');
+            calculateStatsBtn.setAttribute('aria-disabled', 'true');
+            clearDataBtn.setAttribute('aria-disabled', 'true');
+
+             // Remove controls from tab order when disabled
+             xVariableSelect.setAttribute('tabindex', '-1');
+             yVariableSelect.setAttribute('tabindex', '-1');
+             chartTypeSelect.setAttribute('tabindex', '-1');
+             visualizeBtn.setAttribute('tabindex', '-1');
+             calculateStatsBtn.setAttribute('tabindex', '-1');
+             clearDataBtn.setAttribute('tabindex', '-1');
+        }
+
+        function showLoading(message) {
+            loadingIndicator.textContent = message;
+            loadingIndicator.style.display = 'block';
+        }
+
+        function hideLoading() {
+            loadingIndicator.style.display = 'none';
+        }
+
+        function displayError(message) {
+            errorMessage.innerHTML = message; // Use innerHTML to allow <br>
+            errorMessage.style.display = 'block';
+        }
+
+        function hideError() {
+            errorMessage.style.display = 'none';
+            errorMessage.textContent = '';
+        }
+
+        function showInitialMessage() {
+             initialMessage.style.display = 'flex'; // Use flex to center content
+        }
+
+        function hideInitialMessage() {
+             initialMessage.style.display = 'none';
+        }
+
+
+        // --- Visualization ---
+
+        function handleVisualize() {
+            const xVar = xVariableSelect.value;
+            const yVar = yVariableSelect.value;
+            const chartType = chartTypeSelect.value;
+
+            if (!chartType) {
+                displayError('Please select a chart type.');
+                return;
+            }
+
+            // Basic validation based on chart type
+            if (chartType === 'scatter' && (!xVar || !yVar)) {
+                 displayError('Scatter plot requires both X and Y variables.');
+                 return;
+            }
+             if ((chartType === 'bar' || chartType === 'histogram' || chartType === 'box') && !xVar && !yVar) {
+                  displayError(`${chartType.charAt(0).toUpperCase() + chartType.slice(1)} requires selecting at least one variable (X or Y).`);
+                  return;
+             }
+
+
+            hideError();
+            showLoading('Generating chart...');
+            destroyChart(); // Destroy previous chart
+
+            try {
+                const chartData = prepareChartData(chartType, xVar, yVar, rawData);
+                if (chartData && chartData.datasets.length > 0 && chartData.datasets[0].data.length > 0) {
+                     renderChart(chartType, chartData, xVar, yVar);
+                     showCard(visualizationCard); // Show visualization card
+                } else {
+                     displayError('Could not prepare data for the selected chart type and variables. Check data types and selections, or if there are enough valid data points.');
+                     hideCard(visualizationCard); // Hide card if no data
+                }
+            } catch (e) {
+                console.error("Error rendering chart:", e);
+                displayError('An error occurred while rendering the chart.');
+                destroyChart();
+                hideCard(visualizationCard); // Hide card on error
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function prepareChartData(chartType, xVar, yVar, data) {
+             let labels = [];
+             let datasetData = [];
+             let chartJsType = '';
+             let primaryVariable = xVar || yVar; // Variable used for histogram or single box plot
+
+             // Helper to check if a value is numeric
+             const isNumeric = (value) => typeof value === 'number' && !isNaN(value);
+
+            switch (chartType) {
+                case 'scatter':
+                    chartJsType = 'scatter';
+                    // Scatter needs pairs of numeric data
+                    datasetData = data
+                        .map(row => ({ x: row[xVar], y: row[yVar] }))
+                        .filter(pair => isNumeric(pair.x) && isNumeric(pair.y));
+                    break;
+
+                case 'bar':
+                     chartJsType = 'bar';
+                     if (xVar && yVar) {
+                         // Bar chart comparing average Y across X categories
+                         // Use raw data for categories, filter Y for numeric
+                         const groupedData = data.reduce((acc, row) => {
+                             const category = String(row[xVar] === null || row[xVar] === undefined ? 'N/A' : row[xVar]);
+                             const yVal = row[yVar];
+                             if (isNumeric(yVal)) {
+                                 if (!acc[category]) {
+                                     acc[category] = { sum: 0, count: 0 };
+                                 }
+                                 acc[category].sum += yVal;
+                                 acc[category].count++;
+                             } else {
+                                 // Ensure category exists even if no numeric Y, but don't affect sum/count
+                                 if (!acc[category]) {
+                                      acc[category] = { sum: 0, count: 0 };
+                                 }
+                             }
+                             return acc;
+                         }, {});
+
+                         labels = Object.keys(groupedData);
+                         // Sort labels alphabetically for consistency
+                         labels.sort();
+                         datasetData = labels.map(label => groupedData[label].count > 0 ? groupedData[label].sum / groupedData[label].count : 0); // Calculate average, default to 0 if no numeric Y
+                         // Filter out labels with no data if desired, but keeping them shows empty categories
+                         // labels = labels.filter(label => groupedData[label].count > 0);
+                         // datasetData = datasetData.filter((_, i) => groupedData[labels[i]].count > 0);
+
+
+                     } else if (primaryVariable) {
+                          // Bar chart of a single variable
+                          const values = data.map(row => row[primaryVariable]);
+                          const isPrimaryNumeric = values.some(isNumeric);
+
+                          if (isPrimaryNumeric) {
+                              // Bar chart of numeric values (e.g., plotting each score)
+                              datasetData = values.filter(isNumeric);
+                              labels = datasetData.map((_, i) => `Data Point ${i + 1}`); // Simple labels
+                          } else {
+                              // Bar chart counting occurrences of categorical values
+                              const counts = values.reduce((acc, val) => {
+                                  const key = String(val === null || val === undefined ? 'N/A' : val);
+                                  acc[key] = (acc[key] || 0) + 1;
+                                  return acc;
+                              }, {});
+                               labels = Object.keys(counts);
+                               // Sort labels alphabetically
+                               labels.sort();
+                               datasetData = labels.map(label => counts[label]);
+                          }
+                     } else {
+                         return null; // Need at least one variable for bar chart
+                     }
+                     break;
+
+                 case 'histogram':
+                     chartJsType = 'bar'; // Chart.js uses bar type for histograms
+                     if (!primaryVariable) {
+                         return null;
+                     }
+
+                     const histValues = data.map(row => row[primaryVariable]).filter(isNumeric);
+                     if (histValues.length === 0) {
+                          console.warn("No numeric data for histogram variable.");
+                          return null;
+                     }
+
+                     // Simple binning logic
+                     const numBins = 10; // Can make this configurable
+                     const minVal = Math.min(...histValues);
+                     const maxVal = Math.max(...histValues);
+                     const range = maxVal - minVal;
+                     // Avoid division by zero if all values are the same
+                     const binSize = range === 0 ? 1 : range / numBins;
+
+
+                     const bins = Array(numBins).fill(0);
+                     labels = [];
+
+                     for(let i = 0; i < numBins; i++) {
+                         const lowerBound = minVal + i * binSize;
+                         const upperBound = (i === numBins - 1) ? maxVal : minVal + (i + 1) * binSize; // Include max in last bin
+                         labels.push(`${lowerBound.toFixed(2)}-${upperBound.toFixed(2)}`);
+
+                         histValues.forEach(value => {
+                             // Check if value falls within the bin range
+                             if (value >= lowerBound && (value < upperBound || (i === numBins - 1 && value === upperBound))) {
+                                 bins[i]++;
+                             }
+                         });
+                     }
+                     datasetData = bins;
+                     break;
+
+                case 'box':
+                    chartJsType = 'box'; // Use the registered box type
+                     if (!primaryVariable) {
+                         return null;
+                     }
+
+                     // Check if X is categorical and Y is numeric for grouped box plots
+                     const xValues = data.map(row => row[xVar]);
+                     const isXCategorical = xVar && !xValues.some(isNumeric);
+
+                     if (isXCategorical && yVar) {
+                         // Grouped box plots: Y values grouped by X categories
+                         const groupedData = data.reduce((acc, row) => {
+                             const category = String(row[xVar] === null || row[xVar] === undefined ? 'N/A' : row[xVar]);
+                             const yVal = row[yVar];
+                             if (isNumeric(yVal)) {
+                                 if (!acc[category]) {
+                                     acc[category] = [];
+                                 }
+                                 acc[category].push(yVal);
+                             }
+                             return acc;
+                         }, {});
+
+                         labels = Object.keys(groupedData);
+                          // Sort labels alphabetically
+                         labels.sort();
+
+                         datasetData = labels.map(label => {
+                             const values = groupedData[label];
+                             if (!values || values.length < 5) { // Need at least 5 points for a meaningful box plot
+                                  console.warn(`Not enough numeric data points (${values ? values.length : 0}) for box plot of "${yVar}" in category "${label}". Skipping.`);
+                                  return null; // Skip categories with insufficient data
+                             }
+                             // Calculate box plot stats for the group
+                             return calculateBoxPlotStats(values);
+                         }).filter(d => d !== null); // Filter out categories with insufficient data
+
+                         if (datasetData.length === 0) {
+                             displayError(`Not enough valid numeric data points for box plots of "${yVar}" grouped by "${xVar}".`);
+                             return null;
+                         }
+
+                     } else if (primaryVariable) {
+                         // Single box plot: Values of the primary variable
+                         const boxValues = data.map(row => row[primaryVariable]).filter(isNumeric);
+                         if (boxValues.length < 5) { // Need at least 5 points for a meaningful box plot
+                              displayError(`Not enough valid numeric data points (${boxValues.length}) for a box plot of "${primaryVariable}". Need at least 5.`);
+                              return null;
+                         }
+                         // Calculate box plot stats for the single variable
+                         datasetData = [calculateBoxPlotStats(boxValues)];
+                         labels = [primaryVariable]; // Label for the single box plot
+
+                     } else {
+                         return null; // Need at least one variable for box plot
+                     }
+                     break;
+
+                default:
+                    console.error('Unknown chart type:', chartType);
+                    return null;
+            }
+
+            // Default dataset structure
+            const datasets = [{
+                label: `${yVar || xVar || 'Value'}`, // Use Y or X as label
+                data: datasetData,
+                backgroundColor: "var('--primary-color')" + 'b3', // Default primary color with opacity
+                borderColor: "var('--primary-color')",
+                borderWidth: 1,
+                pointRadius: chartType === 'scatter' ? 5 : 0, // Show points for scatter
+                tension: 0.1 // For line charts if added later
+            }];
+
+             // Special handling for box plot label if grouped
+             if (chartType === 'box' && isXCategorical && yVar) {
+                  datasets[0].label = yVar; // Label is the numeric variable being plotted
+             }
+
+
+            return {
+                labels: labels,
+                datasets: datasets
+            };
+        }
+
+         function calculateBoxPlotStats(values) {
+             values.sort((a, b) => a - b);
+             const n = values.length;
+             const median = calculateMedian(values);
+             const q1 = calculateMedian(values.slice(0, Math.floor(n / 2)));
+             const q3 = calculateMedian(values.slice(Math.ceil(n / 2)));
+             const iqr = q3 - q1;
+             const lowerFence = q1 - 1.5 * iqr;
+             const upperFence = q3 + 1.5 * iqr;
+
+             const outliers = values.filter(val => val < lowerFence || val > upperFence);
+             const nonOutliers = values.filter(val => val >= lowerFence && val <= upperFence);
+             const min = nonOutliers.length > 0 ? Math.min(...nonOutliers) : q1; // Whisker min
+             const max = nonOutliers.length > 0 ? Math.max(...nonOutliers) : q3; // Whisker max
+
+             return {
+                 min: min,
+                 max: max,
+                 q1: q1,
+                 median: median,
+                 q3: q3,
+                 outliers: outliers
+             };
+         }
+
+
+        function renderChart(chartType, chartData, xVarLabel, yVarLabel) {
+            const ctx = chartCanvas.getContext('2d');
+
+            const options = {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 800, // Animation duration
+                    easing: 'easeInOutQuart' // Easing function
+                },
+                plugins: {
+                    legend: {
+                        display: legendToggle.checked, // Use toggle state
+                        labels: {
+                            font: { size: 14, family: 'Inter' }
+                        }
+                    },
+                    tooltip: {
+                         backgroundColor: 'rgba(0,0,0,0.8)',
+                         titleFont: { size: 14, weight: 'bold', family: 'Inter' },
+                         bodyFont: { size: 12, family: 'Inter' },
+                         callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+
+                                if (chartType === 'scatter') {
+                                     // Ensure values are formatted nicely
+                                     const xVal = isNumeric(context.raw.x) ? context.raw.x.toFixed(2) : context.raw.x;
+                                     const yVal = isNumeric(context.raw.y) ? context.raw.y.toFixed(2) : context.raw.y;
+                                     label += `(${xVarLabel}: ${xVal}, ${yVarLabel}: ${yVal})`;
+                                } else if (chartType === 'box') {
+                                     // Tooltip for box plot data
+                                     const boxData = context.raw;
+                                     if (boxData) {
+                                         label = `${context.label || ''}`; // Use category label if grouped
+                                         label += `\nMin: ${isNumeric(boxData.min) ? boxData.min.toFixed(2) : 'N/A'}`;
+                                         label += `\nQ1: ${isNumeric(boxData.q1) ? boxData.q1.toFixed(2) : 'N/A'}`;
+                                         label += `\nMedian: ${isNumeric(boxData.median) ? boxData.median.toFixed(2) : 'N/A'}`;
+                                         label += `\nQ3: ${isNumeric(boxData.q3) ? boxData.q3.toFixed(2) : 'N/A'}`;
+                                         label += `\nMax: ${isNumeric(boxData.max) ? boxData.max.toFixed(2) : 'N/A'}`;
+                                         if (boxData.outliers && boxData.outliers.length > 0) {
+                                             label += `\nOutliers: ${boxData.outliers.map(o => isNumeric(o) ? o.toFixed(2) : String(o)).join(', ')}`;
+                                         }
+                                     }
+                                }
+                                else if (chartType === 'histogram') {
+                                     label = `Range: ${context.label}`;
+                                     label += `\nFrequency: ${context.raw}`;
+                                }
+                                else {
+                                     // For Bar (single variable counts or averages)
+                                     label = `${context.label}: ${isNumeric(context.raw) ? context.raw.toFixed(2) : context.raw}`;
+                                }
+                                return label;
+                            }
+                             // Custom title for grouped bar/box charts
+                            , title: function(context) {
+                                 if (chartType === 'bar' && xVarLabel && yVarLabel) {
+                                     return `${xVarLabel}: ${context[0].label}`; // Category label
+                                 }
+                                  if (chartType === 'box' && xVarLabel && yVarLabel) {
+                                     return `${xVarLabel}: ${context[0].label}`; // Category label
+                                 }
+                                 return context[0].dataset.label; // Default title (dataset label)
+                             }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                         title: {
+                            display: !!xVarLabel || (chartType === 'histogram' && !!(xVarLabel || yVarLabel)), // Show X title if X selected or for histogram (variable name)
+                            text: xVarLabel || (chartType === 'histogram' ? (xVarLabel || yVarLabel) + ' Bins' : ''),
+                            font: { size: 14, weight: 'bold', family: 'Inter' }
+                        },
+                        ticks: { font: { family: 'Inter' } }
+                    },
+                    y: {
+                        title: {
+                            display: !!yVarLabel || chartType === 'histogram' || (chartType === 'box' && !(xVarLabel && yVarLabel)), // Show Y title for Y, Histogram (Frequency), Box (Value if not grouped)
+                            text: yVarLabel || (chartType === 'histogram' ? 'Frequency' : (chartType === 'box' ? (xVarLabel || yVarLabel) + ' Value' : '')),
+                             font: { size: 14, weight: 'bold', family: 'Inter' }
+                        },
+                        beginAtZero: chartType !== 'scatter', // Start Y at zero for bar/histogram/box
+                        ticks: { font: { family: 'Inter' } }
+                    }
+                }
+            };
+
+             if (chartType === 'histogram') {
+                 // Adjust histogram options
+                 options.scales.x.stacked = true;
+                 options.scales.y.stacked = true;
+                 chartData.datasets[0].categoryPercentage = 1.0;
+                 chartData.datasets[0].barPercentage = 1.0;
+                 // Adjust Y-axis for frequency, ensure integer ticks if possible
+                  options.scales.y.ticks.stepSize = 1;
+             }
+
+             if (chartType === 'box') {
+                 // Adjust box plot options
+                 options.scales.x.grid = { display: false }; // Hide x-axis grid lines
+                 options.scales.y.grid = { display: true };
+                 options.scales.x.ticks.display = true; // Show x-axis labels (categories or variable name)
+                 options.scales.y.beginAtZero = true; // Ensure y-axis starts at 0
+                 // If grouped box plot, X axis is categorical, Y is numeric
+                 if (xVarLabel && yVarLabel && !rawData.map(row => row[xVarLabel]).some(isNumeric)) {
+                      options.scales.x.title.text = xVarLabel;
+                      options.scales.y.title.text = yVarLabel;
+                 } else {
+                      // Single box plot, X axis is just the variable name, Y is the value axis
+                       options.scales.x.title.text = ''; // No title needed on X for single box
+                       options.scales.y.title.text = xVarLabel || yVarLabel;
+                 }
+
+             }
+
+
+            currentChart = new Chart(ctx, {
+                type: chartType === 'histogram' ? 'bar' : chartType, // Use 'bar' type for histogram, 'box' for box plot
+                data: chartData,
+                options: options
+            });
+
+             // Set initial color picker value from chart
+             if (chartData.datasets.length > 0) {
+                 const color = chartData.datasets[0].backgroundColor;
+                 if (color) {
+                     // Attempt to get a hex-like color string
+                     const hexColorMatch = String(color).match(/^#([0-9a-f]{6})/i);
+                     if (hexColorMatch && hexColorMatch[1]) {
+                          chartColorPicker.value = '#' + hexColorMatch[1];
+                     } else {
+                         // Fallback to default if color isn't easily parsed as hex
+                         chartColorPicker.value = "var('--primary-color')";
+                     }
+                 }
+             }
+             // Set initial legend toggle state
+             if (currentChart.options.plugins.legend) {
+                legendToggle.checked = currentChart.options.plugins.legend.display;
+             } else {
+                 legendToggle.checked = false; // Hide toggle if chart type doesn't support legend
+             }
+             // Hide color picker for chart types where color doesn't apply meaningfully (e.g., multi-color scatter)
+             // For now, keep it simple and apply to the single dataset.
+
+        }
+
+        function destroyChart() {
+            if (currentChart) {
+                currentChart.destroy();
+                currentChart = null;
+                chartControls.classList.remove('active'); // Hide controls
+            }
+        }
+
+        function updateChartAppearance() {
+             if (currentChart && currentChart.data.datasets.length > 0) {
+                 const newColor = chartColorPicker.value;
+                 const showLegend = legendToggle.checked;
+
+                 // Apply color with some opacity for fill, solid for border
+                 currentChart.data.datasets.forEach(dataset => {
+                     // Check if the dataset object structure is compatible (e.g., for box plot)
+                     if (currentChart.config.type === 'box' && Array.isArray(dataset.data) && dataset.data.every(d => typeof d === 'object' && d !== null && 'q1' in d)) {
+                          // This is likely box plot data
+                          dataset.backgroundColor = newColor + 'b3'; // Apply to the box fill
+                          dataset.borderColor = newColor; // Apply to box border
+                           // Note: Outlier color is often controlled by plugin options, not dataset color
+                     } else {
+                         // Standard chart types (bar, scatter)
+                         dataset.backgroundColor = newColor + 'b3'; // Add 70% opacity
+                         dataset.borderColor = newColor;
+                     }
+                 });
+
+                 // Update legend visibility
+                 if (currentChart.options.plugins.legend) {
+                    currentChart.options.plugins.legend.display = showLegend;
+                 }
+
+                 currentChart.update();
+             }
+        }
+
+        // Helper function to check if a value is numeric
+         function isNumeric(value) {
+             return typeof value === 'number' && !isNaN(value);
+         }
+
+
+        // --- Statistical Analysis ---
+
+        function handleCalculateStats() {
+            const xVar = xVariableSelect.value;
+            const yVar = yVariableSelect.value;
+
+            if (!xVar || !yVar) {
+                displayError('Please select both X and Y variables to calculate statistics (e.g., correlation).');
+                return;
+            }
+
+            hideError();
+            showLoading('Calculating statistics...');
+            statsSummary.innerHTML = ''; // Clear previous stats
+
+            try {
+                // Filter data to include only numeric values for selected variables
+                const numericPairs = rawData
+                    .map(row => ({ x: row[xVar], y: row[yVar] }))
+                    .filter(pair => isNumeric(pair.x) && isNumeric(pair.y));
+
+                if (numericPairs.length < 2) {
+                     displayError('Not enough valid numeric data points to calculate statistics for the selected variables.');
+                     statsSummary.innerHTML = '<p>Not enough valid numeric data points for calculation.</p>';
+                     showCard(statsCard); // Show card with message
+                     return;
+                }
+
+                const xValues = numericPairs.map(p => p.x);
+                const yValues = numericPairs.map(p => p.y);
+
+                // Calculate Pearson Correlation Coefficient
+                const correlation = calculatePearsonCorrelation(xValues, yValues);
+
+                // Calculate Means and Standard Deviations
+                const meanX = calculateMean(xValues);
+                const stdDevX = calculateStandardDeviation(xValues, meanX);
+                const meanY = calculateMean(yValues);
+                const stdDevY = calculateStandardDeviation(yValues, meanY);
+
+
+                displayStats(xVar, yVar, correlation, meanX, stdDevX, meanY, stdDevY);
+                showCard(statsCard); // Show stats card
+
+            } catch (e) {
+                console.error("Error calculating statistics:", e);
+                displayError('An error occurred while calculating statistics.');
+                 statsSummary.innerHTML = '<p>Error calculating statistics.</p>';
+                 showCard(statsCard); // Show card with error message
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function calculateMean(data) {
+            if (data.length === 0) return NaN;
+            const sum = data.reduce((acc, val) => acc + val, 0);
+            return sum / data.length;
+        }
+
+        function calculateStandardDeviation(data, mean) {
+             if (data.length < 2) return NaN; // Need at least two points for sample std dev
+             const variance = data.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / (data.length - 1); // Sample Standard Deviation
+             return Math.sqrt(variance);
+        }
+
+         // Helper function for median calculation (used in box plot)
+         function calculateMedian(sortedData) {
+             if (sortedData.length === 0) return NaN;
+             const mid = Math.floor(sortedData.length / 2);
+             if (sortedData.length % 2 === 0) {
+                 return (sortedData[mid - 1] + sortedData[mid]) / 2;
+             } else {
+                 return sortedData[mid];
+             }
+         }
+
+
+        function calculatePearsonCorrelation(xData, yData) {
+            if (xData.length !== yData.length || xData.length < 2) {
+                return NaN; // Cannot calculate correlation
+            }
+
+            const n = xData.length;
+            const meanX = calculateMean(xData);
+            const meanY = calculateMean(yData);
+
+            let numerator = 0;
+            let denominatorX = 0;
+            let denominatorY = 0;
+
+            for (let i = 0; i < n; i++) {
+                const dx = xData[i] - meanX;
+                const dy = yData[i] - meanY;
+                numerator += dx * dy;
+                denominatorX += dx * dx;
+                denominatorY += dy * dy;
+            }
+
+            const denominator = Math.sqrt(denominatorX * denominatorY);
+
+            if (denominator === 0) {
+                // If denominator is 0, it means one or both variables have no variance.
+                // Correlation is undefined in the strict mathematical sense,
+                // but often treated as 0 or 1/-1 if values are constant.
+                // Returning 0 here as a practical approach if no variance.
+                return 0;
+            }
+
+            return numerator / denominator;
+        }
+
+
+        function displayStats(xVar, yVar, correlation, meanX, stdDevX, meanY, stdDevY) {
+            statsSummary.innerHTML = `
+                <p><strong>Variables Analyzed:</strong> ${xVar} and ${yVar}</p>
+                <p><strong>Pearson Correlation Coefficient (r):</strong> ${!isNaN(correlation) ? correlation.toFixed(4) : 'N/A'}</p>
+                <p><strong>Mean of ${xVar}:</strong> ${!isNaN(meanX) ? meanX.toFixed(2) : 'N/A'}</p>
+                <p><strong>Standard Deviation of ${xVar}:</strong> ${!isNaN(stdDevX) ? stdDevX.toFixed(2) : 'N/A'}</p>
+                <p><strong>Mean of ${yVar}:</strong> ${!isNaN(meanY) ? meanY.toFixed(2) : 'N/A'}</p>
+                <p><strong>Standard Deviation of ${yVar}:</strong> ${!isNaN(stdDevY) ? stdDevY.toFixed(2) : 'N/A'}</p>
+                <!-- Add interpretation guidance based on r value? -->
+            `;
+        }
+
+        // --- Initial State ---
+        disableControls(); // Disable controls until data is loaded
+        showInitialMessage(); // Show initial instructions
+
+    </script>
+</body>
+</html>

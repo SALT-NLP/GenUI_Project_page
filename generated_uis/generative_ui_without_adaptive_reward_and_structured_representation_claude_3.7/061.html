@@ -1,0 +1,1845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GlobalDoc - Enterprise Documentation Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #007acc; /* VSCode blue-ish */
+            --primary-color-dark: #005f99;
+            --secondary-color: #673ab7; /* Purple */
+            --background-color: #f4f7f6; /* Light grey background */
+            --surface-color: #ffffff; /* Pure white for cards/panels */
+            --text-color: #333;
+            --text-color-light: #666;
+            --border-color: #ddd;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --danger-color: #f44336;
+            --info-color: #2196f3; /* Blue for info/comments */
+            --spacing-unit: 8px;
+            --border-radius: 8px;
+            --box-shadow-subtle: 0 2px 4px rgba(0, 0, 0, 0.05);
+            --box-shadow-medium: 0 4px 8px rgba(0, 0, 0, 0.1);
+            --transition-speed: 0.2s;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: grid;
+            grid-template-rows: auto 1fr;
+            height: 100vh;
+            overflow: hidden; /* Prevent body scroll, let content scroll */
+        }
+
+        header {
+            background-color: var(--surface-color);
+            box-shadow: var(--box-shadow-subtle);
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 3);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
+            min-height: 56px; /* Ensure minimum height */
+        }
+
+        .header-title {
+            font-size: 1.5em;
+            font-weight: 500;
+            color: var(--primary-color-dark);
+            display: flex;
+            align-items: center;
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+
+        .header-title .material-icons-round {
+            margin-right: var(--spacing-unit);
+            font-size: 1.2em;
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            background-color: var(--background-color);
+            border-radius: var(--border-radius);
+            padding: calc(var(--spacing-unit) / 2) var(--spacing-unit);
+            border: 1px solid var(--border-color);
+            width: 300px;
+            transition: border-color var(--transition-speed) ease;
+            margin: 0 calc(var(--spacing-unit) * 3); /* Space around search */
+        }
+
+        .search-bar:focus-within {
+             border-color: var(--primary-color);
+             box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+        }
+
+        .search-bar input {
+            border: none;
+            outline: none;
+            background: none;
+            flex-grow: 1;
+            padding: calc(var(--spacing-unit) / 2);
+            font-size: 1em;
+            color: var(--text-color);
+        }
+
+        .search-bar .material-icons-round {
+            color: var(--text-color-light);
+            margin-right: var(--spacing-unit);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            padding: var(--spacing-unit); /* Add padding for larger click area */
+            border-radius: var(--border-radius);
+            transition: background-color var(--transition-speed) ease;
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+
+        .user-info:hover {
+            background-color: var(--background-color);
+        }
+
+        .user-info .material-icons-round {
+            margin-right: var(--spacing-unit);
+            color: var(--primary-color);
+        }
+
+        .user-info span {
+            font-weight: 500;
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            height: calc(100vh - 56px); /* Adjust based on header height */
+        }
+
+        aside.sidebar {
+            background-color: var(--surface-color);
+            padding: calc(var(--spacing-unit) * 2) 0;
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .sidebar nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar nav ul li {
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .sidebar nav a {
+            display: flex;
+            align-items: center;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 3);
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 400;
+            transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
+            border-left: 4px solid transparent; /* For active indicator */
+        }
+
+        .sidebar nav a .material-icons-round {
+            margin-right: var(--spacing-unit);
+        }
+
+        .sidebar nav a:hover {
+            background-color: var(--background-color);
+            color: var(--primary-color-dark);
+        }
+
+        .sidebar nav a.active {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+            font-weight: 500;
+            border-left-color: var(--secondary-color); /* Accent color for active */
+        }
+
+        .sidebar nav a.active .material-icons-round {
+             color: var(--surface-color);
+        }
+
+
+        main.content-area {
+            padding: calc(var(--spacing-unit) * 3);
+            overflow-y: auto;
+            position: relative; /* Needed for potential absolute positioned elements */
+        }
+
+        .view {
+            display: none; /* Hide all views by default */
+            opacity: 0;
+            transition: opacity var(--transition-speed) ease;
+        }
+
+        .view.active {
+            display: block; /* Show active view */
+            opacity: 1;
+        }
+
+        /* Dashboard Styles */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: calc(var(--spacing-unit) * 3);
+        }
+
+        .dashboard-card {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow-subtle);
+            padding: calc(var(--spacing-unit) * 3);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dashboard-card h3 {
+            margin-top: 0;
+            font-size: 1.2em;
+            color: var(--text-color-light);
+            margin-bottom: calc(var(--spacing-unit) * 2);
+        }
+
+        .dashboard-card .metric-value {
+            font-size: 2em;
+            font-weight: 700;
+            color: var(--primary-color-dark);
+        }
+
+        .dashboard-card .metric-description {
+            font-size: 0.9em;
+            color: var(--text-color-light);
+        }
+
+        .chart-container {
+            flex-grow: 1;
+            position: relative; /* Needed for chart responsiveness */
+            min-height: 200px; /* Minimum height for charts */
+        }
+
+        /* Content List Styles */
+        .content-list-view h2,
+        .terminology-view h2,
+        .users-view h2,
+        .reports-view h2 {
+             margin-top: 0;
+             margin-bottom: calc(var(--spacing-unit) * 3);
+             color: var(--primary-color-dark);
+        }
+
+        .content-table,
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--surface-color);
+            box-shadow: var(--box-shadow-subtle);
+            border-radius: var(--border-radius);
+            overflow: hidden; /* Ensures rounded corners clip content */
+        }
+
+        .content-table th,
+        .data-table th {
+            background-color: var(--background-color);
+            text-align: left;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            font-size: 0.9em;
+            color: var(--text-color-light);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .content-table td,
+        .data-table td {
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .content-table tbody tr {
+            transition: background-color var(--transition-speed) ease;
+        }
+
+        .content-table tr:last-child td,
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .content-table tbody tr:hover,
+        .data-table tbody tr:hover {
+            background-color: var(--background-color);
+            cursor: pointer;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            padding: calc(var(--spacing-unit) / 2) var(--spacing-unit);
+            border-radius: var(--border-radius);
+            font-size: 0.8em;
+            font-weight: 500;
+            color: var(--surface-color);
+        }
+
+        .status-indicator.todo { background-color: var(--warning-color); }
+        .status-indicator.in-progress { background-color: var(--primary-color); }
+        .status-indicator.in-review { background-color: var(--secondary-color); }
+        .status-indicator.approved { background-color: var(--success-color); }
+        .status-indicator.rejected { background-color: var(--danger-color); }
+
+
+        /* Editor Styles */
+        .editor-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr 300px; /* Source, Target, Side Panel */
+            gap: calc(var(--spacing-unit) * 3);
+            height: calc(100vh - 56px - (var(--spacing-unit) * 6)); /* Adjust for header and padding */
+        }
+
+        .editor-panel {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow-subtle);
+            padding: calc(var(--spacing-unit) * 2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Hide overflow from content */
+        }
+
+        .editor-panel h3 {
+            margin-top: 0;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            font-size: 1.1em;
+            color: var(--text-color-light);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: var(--spacing-unit);
+        }
+
+        .editor-content {
+            flex-grow: 1;
+            overflow-y: auto; /* Enable scrolling for content */
+            padding-right: var(--spacing-unit); /* Space for scrollbar */
+        }
+
+        .segment {
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            padding: var(--spacing-unit);
+            border: 1px solid transparent;
+            border-radius: var(--border-radius);
+            transition: border-color var(--transition-speed) ease, background-color var(--transition-speed) ease;
+            position: relative; /* For comment/flag indicators */
+            cursor: pointer;
+        }
+
+        .segment:hover {
+            border-color: var(--border-color);
+        }
+
+        .segment.active {
+             background-color: var(--background-color);
+             border-color: var(--primary-color);
+        }
+
+        .segment p {
+            margin: 0;
+        }
+
+        .target-segment textarea {
+            width: 100%;
+            min-height: 80px; /* Adjust as needed */
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-unit);
+            font-family: 'Roboto', sans-serif;
+            font-size: 1em;
+            resize: vertical;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+        }
+
+        .target-segment textarea:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+        }
+
+        .segment-controls {
+            margin-top: var(--spacing-unit);
+            display: flex;
+            gap: var(--spacing-unit);
+            flex-wrap: wrap; /* Allow controls to wrap */
+        }
+
+        .segment-controls button {
+            padding: calc(var(--spacing-unit) / 2) var(--spacing-unit);
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color var(--transition-speed) ease, opacity var(--transition-speed) ease;
+            display: flex;
+            align-items: center;
+            outline: none; /* Handled by focus-visible */
+        }
+
+        .segment-controls button .material-icons-round {
+             font-size: 1.1em;
+             margin-right: calc(var(--spacing-unit) / 2);
+        }
+
+        .segment-controls button:focus-visible {
+             outline: 2px solid var(--primary-color);
+             outline-offset: 2px;
+        }
+
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-color-dark);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: var(--surface-color);
+        }
+         .btn-secondary:hover {
+            background-color: #5e35b1; /* Darker purple */
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+        .btn-outline:hover {
+            background-color: var(--background-color);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: var(--surface-color);
+        }
+        .btn-success:hover {
+             background-color: #43a047; /* Darker green */
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: var(--surface-color);
+        }
+        .btn-danger:hover {
+             background-color: #e53935; /* Darker red */
+        }
+
+        .btn-info {
+             background-color: var(--info-color);
+             color: var(--surface-color);
+        }
+         .btn-info:hover {
+             background-color: #1e88e5; /* Darker blue */
+        }
+
+        .btn-sm {
+            padding: calc(var(--spacing-unit) / 4) calc(var(--spacing-unit));
+            font-size: 0.8em;
+        }
+
+
+        /* Side Panel (Terminology/Cultural Flagging/Comments) */
+        .side-panel {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow-subtle);
+            padding: calc(var(--spacing-unit) * 2);
+            flex-shrink: 0; /* Prevent shrinking */
+            overflow-y: auto;
+            display: flex; /* Use flex to stack sections */
+            flex-direction: column;
+            gap: calc(var(--spacing-unit) * 3); /* Space between sections */
+        }
+
+        .side-panel-section h3 {
+            margin-top: 0;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            font-size: 1.1em;
+            color: var(--primary-color-dark);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: var(--spacing-unit);
+        }
+
+        .terminology-item,
+        .cultural-flag-item,
+        .comment-item {
+            margin-bottom: var(--spacing-unit) * 2;
+            padding: var(--spacing-unit);
+            border-radius: var(--border-radius);
+            font-size: 0.9em;
+        }
+
+        .terminology-item {
+            border: 1px solid var(--border-color);
+            background-color: var(--background-color);
+        }
+        .terminology-item strong {
+            color: var(--primary-color);
+        }
+
+        .cultural-flag-item {
+             border: 1px solid var(--warning-color);
+            background-color: #fff3e0; /* Light orange background */
+        }
+
+        .cultural-flag-item strong {
+            color: var(--warning-color);
+        }
+
+        .cultural-flag-item p {
+            margin: var(--spacing-unit) 0 0 0;
+            font-style: italic;
+            color: var(--text-color-light);
+        }
+
+        .comment-item {
+             border: 1px solid var(--info-color);
+             background-color: #e3f2fd; /* Light blue background */
+        }
+         .comment-item strong {
+            color: var(--info-color);
+        }
+         .comment-item p {
+            margin: var(--spacing-unit) 0 0 0;
+            color: var(--text-color);
+        }
+        .comment-item .comment-meta {
+             font-size: 0.8em;
+             color: var(--text-color-light);
+             margin-top: var(--spacing-unit);
+             text-align: right;
+        }
+
+        /* Indicator icons on segments */
+        .segment .indicator {
+            position: absolute;
+            top: var(--spacing-unit);
+            right: var(--spacing-unit);
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: color var(--transition-speed) ease;
+        }
+
+        .segment .indicator.flag { color: var(--warning-color); }
+        .segment .indicator.comment { color: var(--info-color); }
+
+        .segment .indicator:hover {
+            color: var(--primary-color-dark);
+        }
+
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--transition-speed) ease, visibility var(--transition-speed) ease;
+        }
+
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: var(--surface-color);
+            padding: calc(var(--spacing-unit) * 3);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow-medium);
+            max-width: 500px;
+            width: 90%;
+            transform: translateY(-20px);
+            transition: transform var(--transition-speed) ease;
+        }
+
+        .modal-overlay.visible .modal-content {
+             transform: translateY(0);
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            color: var(--primary-color-dark);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: var(--spacing-unit);
+        }
+
+        .modal-content form > div {
+            margin-bottom: var(--spacing-unit) * 2;
+        }
+
+        .modal-content label {
+            display: block;
+            margin-bottom: calc(var(--spacing-unit) / 2);
+            font-weight: 500;
+            color: var(--text-color-light);
+        }
+
+        .modal-content input[type="text"],
+        .modal-content input[type="email"],
+        .modal-content select,
+        .modal-content textarea {
+            width: 100%;
+            padding: var(--spacing-unit);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            box-sizing: border-box; /* Include padding in width */
+            font-family: 'Roboto', sans-serif;
+            font-size: 1em;
+            transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+            outline: none;
+        }
+
+         .modal-content input[type="text"]:focus,
+        .modal-content input[type="email"]:focus,
+        .modal-content select:focus,
+        .modal-content textarea:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+        }
+
+        .modal-buttons {
+            margin-top: calc(var(--spacing-unit) * 3);
+            display: flex;
+            justify-content: flex-end;
+            gap: var(--spacing-unit);
+        }
+
+        /* Utility Classes */
+        .flex-container {
+            display: flex;
+        }
+
+        .flex-grow {
+            flex-grow: 1;
+        }
+
+        .p-3 { padding: calc(var(--spacing-unit) * 3); }
+        .mt-3 { margin-top: calc(var(--spacing-unit) * 3); }
+        .mb-3 { margin-bottom: calc(var(--spacing-unit) * 3); }
+        .mr-3 { margin-right: calc(var(--spacing-unit) * 3); }
+        .ml-3 { margin-left: calc(var(--spacing-unit) * 3); }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--background-color);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-color-light);
+        }
+
+         /* Accessibility: Visible focus outline */
+        *:focus-visible {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+         /* Hide default outline for elements handled manually */
+        button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [tabindex="0"]:focus-visible {
+             outline: none;
+        }
+
+        /* Responsiveness */
+        @media (max-width: 1024px) {
+            .main-container {
+                grid-template-columns: 200px 1fr; /* Slightly smaller sidebar */
+            }
+            .editor-layout {
+                grid-template-columns: 1fr 1fr 250px; /* Smaller side panel */
+                gap: calc(var(--spacing-unit) * 2);
+            }
+             header {
+                 padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+             }
+             .search-bar {
+                 width: 250px;
+                 margin: 0 calc(var(--spacing-unit) * 2);
+             }
+             main.content-area {
+                 padding: calc(var(--spacing-unit) * 2);
+             }
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            }
+             .header-title {
+                 margin-bottom: var(--spacing-unit);
+             }
+             .search-bar {
+                 width: 100%; /* Full width */
+                 margin: var(--spacing-unit) 0;
+             }
+             .user-info {
+                 margin-top: var(--spacing-unit);
+             }
+
+            .main-container {
+                grid-template-columns: 1fr; /* Stack layout */
+                grid-template-rows: auto 1fr;
+                height: calc(100vh - 90px); /* Adjust for taller header */
+            }
+
+            aside.sidebar {
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+                overflow-x: auto;
+                overflow-y: hidden;
+                white-space: nowrap; /* Prevent wrapping */
+            }
+             .sidebar nav ul {
+                 display: flex; /* Horizontal nav */
+                 gap: calc(var(--spacing-unit) * 2);
+             }
+             .sidebar nav ul li {
+                 margin-bottom: 0;
+             }
+              .sidebar nav a {
+                 padding: var(--spacing-unit);
+                 border-left: none;
+                 border-bottom: 4px solid transparent;
+              }
+               .sidebar nav a.active {
+                 border-left-color: transparent;
+                 border-bottom-color: var(--secondary-color);
+               }
+              .sidebar nav a .material-icons-round {
+                 margin-right: calc(var(--spacing-unit) / 2);
+              }
+
+
+            main.content-area {
+                padding: calc(var(--spacing-unit) * 2);
+            }
+
+            .editor-layout {
+                grid-template-columns: 1fr; /* Stack editor panels */
+                grid-template-rows: repeat(2, 1fr) auto; /* Source, Target, Side Panel */
+                gap: calc(var(--spacing-unit) * 2);
+                height: auto; /* Allow content to define height */
+                min-height: calc(100vh - 90px - (var(--spacing-unit) * 4)); /* Ensure min height */
+            }
+             .side-panel {
+                 min-height: 300px; /* Give side panel some height when stacked */
+             }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr; /* Stack dashboard cards */
+            }
+             .dashboard-card {
+                 padding: calc(var(--spacing-unit) * 2);
+             }
+             .dashboard-card[style*="grid-column: span"] {
+                 grid-column: span 1 !important; /* Override span on smaller screens */
+             }
+        }
+
+         @media (max-width: 480px) {
+             header {
+                 padding: var(--spacing-unit);
+             }
+             .search-bar {
+                 padding: calc(var(--spacing-unit) / 2);
+             }
+             .user-info {
+                 padding: var(--spacing-unit) calc(var(--spacing-unit) / 2);
+             }
+             .sidebar nav ul {
+                 gap: var(--spacing-unit);
+             }
+             .sidebar nav a {
+                 padding: var(--spacing-unit) calc(var(--spacing-unit) / 2);
+             }
+             main.content-area {
+                 padding: var(--spacing-unit);
+             }
+             .editor-layout {
+                 gap: var(--spacing-unit);
+             }
+             .editor-panel, .side-panel {
+                 padding: var(--spacing-unit);
+             }
+             .dashboard-grid {
+                 gap: calc(var(--spacing-unit) * 2);
+             }
+         }
+
+
+        /* Visually hidden class for accessibility */
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            margin: -1px;
+            padding: 0;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
+
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-title">
+            <span class="material-icons-round" aria-hidden="true">translate</span>
+            GlobalDoc
+        </div>
+        <div class="search-bar">
+            <span class="material-icons-round" aria-hidden="true">search</span>
+            <label for="global-search" class="visually-hidden">Search</label>
+            <input type="text" id="global-search" placeholder="Search documents, terms, users..." aria-label="Search documents, terms, users">
+        </div>
+        <div class="user-info" role="button" tabindex="0" aria-label="User Account: John Doe, Project Manager">
+            <span class="material-icons-round" aria-hidden="true">account_circle</span>
+            <span>John Doe (Project Manager)</span>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <aside class="sidebar">
+            <nav aria-label="Main Navigation">
+                <ul>
+                    <li><a href="#" class="nav-link active" data-view="dashboard-view" role="menuitem"><span class="material-icons-round" aria-hidden="true">dashboard</span> Dashboard</a></li>
+                    <li><a href="#" class="nav-link" data-view="content-list-view" role="menuitem"><span class="material-icons-round" aria-hidden="true">folder_open</span> Content</a></li>
+                    <li><a href="#" class="nav-link" data-view="terminology-view" role="menuitem"><span class="material-icons-round" aria-hidden="true">book</span> Terminology</a></li>
+                    <li><a href="#" class="nav-link" data-view="users-view" role="menuitem"><span class="material-icons-round" aria-hidden="true">group</span> Users</a></li>
+                    <li><a href="#" class="nav-link" data-view="reports-view" role="menuitem"><span class="material-icons-round" aria-hidden="true">bar_chart</span> Reports</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="content-area">
+            <!-- Dashboard View -->
+            <section id="dashboard-view" class="view active" role="region" aria-labelledby="dashboard-heading">
+                <h2 id="dashboard-heading">Dashboard Overview</h2>
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <h3>Total Documents</h3>
+                        <div class="metric-value">125</div>
+                        <div class="metric-description">Across all projects and languages</div>
+                    </div>
+                     <div class="dashboard-card">
+                        <h3>Segments Pending Translation</h3>
+                        <div class="metric-value">8,760</div>
+                        <div class="metric-description">Ready for assignment</div>
+                    </div>
+                     <div class="dashboard-card">
+                        <h3>Segments In Review</h3>
+                        <div class="metric-value">1,420</div>
+                        <div class="metric-description">Waiting for approval</div>
+                    </div>
+                     <div class="dashboard-card">
+                        <h3>Cultural Flags Raised</h3>
+                        <div class="metric-value">45</div>
+                        <div class="metric-description">Require attention</div>
+                    </div>
+                     <div class="dashboard-card">
+                        <h3>Approved Segments (Last 7 Days)</h3>
+                        <div class="metric-value">3,105</div>
+                        <div class="metric-description">Translation velocity</div>
+                    </div>
+                     <div class="dashboard-card">
+                        <h3>Active Users</h3>
+                        <div class="metric-value">18</div>
+                        <div class="metric-description">Translators, Reviewers, PMs</div>
+                    </div>
+                    <!-- Charts -->
+                    <div class="dashboard-card" style="grid-column: span 2;">
+                        <h3>Translation Progress by Language</h3>
+                        <div class="chart-container">
+                            <canvas id="progressChart" aria-label="Translation progress by language chart"></canvas>
+                        </div>
+                    </div>
+                     <div class="dashboard-card" style="grid-column: span 1;">
+                        <h3>Segments by Status</h3>
+                        <div class="chart-container">
+                            <canvas id="statusChart" aria-label="Segments by status chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Content List View -->
+            <section id="content-list-view" class="view" role="region" aria-labelledby="content-heading">
+                <h2 id="content-heading">Documentation Content</h2>
+                 <table class="content-table" aria-describedby="content-heading">
+                    <thead>
+                        <tr>
+                            <th scope="col">Document Title</th>
+                            <th scope="col">Source Language</th>
+                            <th scope="col">Target Language</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Assigned To</th>
+                            <th scope="col">Last Updated</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr data-doc-id="doc-1" tabindex="0" role="link" aria-label="Open User Manual v1.2 for German translation">
+                            <td>User Manual v1.2</td>
+                            <td>English (US)</td>
+                            <td>German (DE)</td>
+                            <td><span class="status-indicator in-progress">In Progress</span></td>
+                            <td>Alice Smith</td>
+                            <td>2023-10-26</td>
+                        </tr>
+                         <tr data-doc-id="doc-2" tabindex="0" role="link" aria-label="Open Technical Spec v2.0 for Japanese translation">
+                            <td>Technical Spec v2.0</td>
+                            <td>English (US)</td>
+                            <td>Japanese (JP)</td>
+                            <td><span class="status-indicator in-review">In Review</span></td>
+                            <td>Bob Johnson</td>
+                            <td>2023-10-25</td>
+                        </tr>
+                         <tr data-doc-id="doc-3" tabindex="0" role="link" aria-label="Open Troubleshooting Guide for French translation">
+                            <td>Troubleshooting Guide</td>
+                            <td>English (US)</td>
+                            <td>French (FR)</td>
+                            <td><span class="status-indicator approved">Approved</span></td>
+                            <td>-</td>
+                            <td>2023-10-20</td>
+                        </tr>
+                         <tr data-doc-id="doc-4" tabindex="0" role="link" aria-label="Open Installation Guide for Korean translation">
+                            <td>Installation Guide</td>
+                            <td>English (US)</td>
+                            <td>Korean (KR)</td>
+                            <td><span class="status-indicator todo">To Translate</span></td>
+                            <td>Unassigned</td>
+                            <td>2023-10-26</td>
+                        </tr>
+                         <tr data-doc-id="doc-5" tabindex="0" role="link" aria-label="Open API Reference for German translation">
+                            <td>API Reference</td>
+                            <td>English (US)</td>
+                            <td>German (DE)</td>
+                            <td><span class="status-indicator rejected">Rejected</span></td>
+                            <td>Alice Smith</td>
+                            <td>2023-10-24</td>
+                        </tr>
+                    </tbody>
+                 </table>
+            </section>
+
+            <!-- Translation/Review Editor View -->
+            <section id="editor-view" class="view flex-container" role="region" aria-labelledby="editor-heading">
+                <h2 id="editor-heading" class="visually-hidden">Translation Editor</h2>
+                 <div class="editor-layout flex-grow">
+                     <div class="editor-panel" role="group" aria-labelledby="source-heading">
+                         <h3 id="source-heading">Source (English US)</h3>
+                         <div class="editor-content">
+                             <div class="segment" data-segment-id="seg-1" tabindex="0" role="textbox" aria-label="Source segment 1: Click the File menu and select Save As.">
+                                 <p>1. Click the "File" menu and select "Save As".</p>
+                             </div>
+                             <div class="segment" data-segment-id="seg-2" tabindex="0" role="textbox" aria-label="Source segment 2: Choose your desired location and enter a filename.">
+                                 <p>2. Choose your desired location and enter a filename.</p>
+                             </div>
+                             <div class="segment" data-segment-id="seg-3" tabindex="0" role="textbox" aria-label="Source segment 3: Ensure the file type is set to PDF Document.">
+                                 <p>3. Ensure the file type is set to "PDF Document".</p>
+                             </div>
+                             <div class="segment" data-segment-id="seg-4" tabindex="0" role="textbox" aria-label="Source segment 4: Click Save to export the document. Note: This feature requires administrator privileges.">
+                                 <p>4. Click "Save" to export the document.</p>
+                                 <p>Note: This feature requires administrator privileges.</p>
+                                  <span class="material-icons-round indicator flag" title="Cultural Flag" aria-label="Cultural flag on segment 4">flag</span>
+                             </div>
+                             <div class="segment" data-segment-id="seg-5" tabindex="0" role="textbox" aria-label="Source segment 5: For optimal performance, use the latest version of the software.">
+                                 <p>5. For optimal performance, use the latest version of the software.</p>
+                             </div>
+                             <!-- More segments... -->
+                         </div>
+                     </div>
+                     <div class="editor-panel" role="group" aria-labelledby="target-heading">
+                         <h3 id="target-heading">Target (German DE)</h3>
+                         <div class="editor-content">
+                             <div class="segment target-segment" data-segment-id="seg-1">
+                                 <label for="translation-seg-1" class="visually-hidden">Translation for segment 1</label>
+                                 <textarea id="translation-seg-1" placeholder="Enter translation..." aria-label="Translation for segment 1">1. Klicken Sie auf das Menü "Datei" und wählen Sie "Speichern unter".</textarea>
+                                  <div class="segment-controls">
+                                     <button class="btn-success btn-sm" aria-label="Approve segment 1"><span class="material-icons-round" aria-hidden="true">check</span> Approve</button>
+                                     <button class="btn-danger btn-sm" aria-label="Reject segment 1"><span class="material-icons-round" aria-hidden="true">close</span> Reject</button>
+                                     <button class="btn-outline btn-sm add-comment-btn" data-segment-id="seg-1" aria-label="Add comment to segment 1"><span class="material-icons-round" aria-hidden="true">comment</span> Comment</button>
+                                     <button class="btn-outline btn-sm add-flag-btn" data-segment-id="seg-1" aria-label="Flag cultural issue on segment 1"><span class="material-icons-round" aria-hidden="true">flag</span> Flag Cultural Issue</button>
+                                 </div>
+                             </div>
+                             <div class="segment target-segment" data-segment-id="seg-2">
+                                 <label for="translation-seg-2" class="visually-hidden">Translation for segment 2</label>
+                                 <textarea id="translation-seg-2" placeholder="Enter translation..." aria-label="Translation for segment 2">2. Wählen Sie den gewünschten Speicherort und geben Sie einen Dateinamen ein.</textarea>
+                                  <div class="segment-controls">
+                                     <button class="btn-success btn-sm" aria-label="Approve segment 2"><span class="material-icons-round" aria-hidden="true">check</span> Approve</button>
+                                     <button class="btn-danger btn-sm" aria-label="Reject segment 2"><span class="material-icons-round" aria-hidden="true">close</span> Reject</button>
+                                     <button class="btn-outline btn-sm add-comment-btn" data-segment-id="seg-2" aria-label="Add comment to segment 2"><span class="material-icons-round" aria-hidden="true">comment</span> Comment</button>
+                                     <button class="btn-outline btn-sm add-flag-btn" data-segment-id="seg-2" aria-label="Flag cultural issue on segment 2"><span class="material-icons-round" aria-hidden="true">flag</span> Flag Cultural Issue</button>
+                                 </div>
+                             </div>
+                             <div class="segment target-segment" data-segment-id="seg-3">
+                                 <label for="translation-seg-3" class="visually-hidden">Translation for segment 3</label>
+                                 <textarea id="translation-seg-3" placeholder="Enter translation..." aria-label="Translation for segment 3">3. Stellen Sie sicher, dass der Dateityp auf "PDF-Dokument" eingestellt ist.</textarea>
+                                  <div class="segment-controls">
+                                     <button class="btn-success btn-sm" aria-label="Approve segment 3"><span class="material-icons-round" aria-hidden="true">check</span> Approve</button>
+                                     <button class="btn-danger btn-sm" aria-label="Reject segment 3"><span class="material-icons-round" aria-hidden="true">close</span> Reject</button>
+                                     <button class="btn-outline btn-sm add-comment-btn" data-segment-id="seg-3" aria-label="Add comment to segment 3"><span class="material-icons-round" aria-hidden="true">comment</span> Comment</button>
+                                     <button class="btn-outline btn-sm add-flag-btn" data-segment-id="seg-3" aria-label="Flag cultural issue on segment 3"><span class="material-icons-round" aria-hidden="true">flag</span> Flag Cultural Issue</button>
+                                 </div>
+                             </div>
+                             <div class="segment target-segment" data-segment-id="seg-4">
+                                 <label for="translation-seg-4" class="visually-hidden">Translation for segment 4</label>
+                                 <textarea id="translation-seg-4" placeholder="Enter translation..." aria-label="Translation for segment 4">4. Klicken Sie auf "Speichern", um das Dokument zu exportieren.
+Hinweis: Diese Funktion erfordert Administratorrechte.</textarea>
+                                  <div class="segment-controls">
+                                     <button class="btn-success btn-sm" aria-label="Approve segment 4"><span class="material-icons-round" aria-hidden="true">check</span> Approve</button>
+                                     <button class="btn-danger btn-sm" aria-label="Reject segment 4"><span class="material-icons-round" aria-hidden="true">close</span> Reject</button>
+                                     <button class="btn-outline btn-sm add-comment-btn" data-segment-id="seg-4" aria-label="Add comment to segment 4"><span class="material-icons-round" aria-hidden="true">comment</span> Comment</button>
+                                     <button class="btn-outline btn-sm add-flag-btn" data-segment-id="seg-4" aria-label="Flag cultural issue on segment 4"><span class="material-icons-round" aria-hidden="true">flag</span> Flag Cultural Issue</button>
+                                 </div>
+                             </div>
+                              <div class="segment target-segment" data-segment-id="seg-5">
+                                 <label for="translation-seg-5" class="visually-hidden">Translation for segment 5</label>
+                                 <textarea id="translation-seg-5" placeholder="Enter translation..." aria-label="Translation for segment 5">5. Für optimale Leistung verwenden Sie die neueste Version der Software.</textarea>
+                                  <div class="segment-controls">
+                                     <button class="btn-success btn-sm" aria-label="Approve segment 5"><span class="material-icons-round" aria-hidden="true">check</span> Approve</button>
+                                     <button class="btn-danger btn-sm" aria-label="Reject segment 5"><span class="material-icons-round" aria-hidden="true">close</span> Reject</button>
+                                     <button class="btn-outline btn-sm add-comment-btn" data-segment-id="seg-5" aria-label="Add comment to segment 5"><span class="material-icons-round" aria-hidden="true">comment</span> Comment</button>
+                                     <button class="btn-outline btn-sm add-flag-btn" data-segment-id="seg-5" aria-label="Flag cultural issue on segment 5"><span class="material-icons-round" aria-hidden="true">flag</span> Flag Cultural Issue</button>
+                                 </div>
+                             </div>
+                             <!-- More segments... -->
+                         </div>
+                     </div>
+                 </div>
+                 <!-- Terminology/Cultural/Comments Panel -->
+                 <div class="side-panel" role="complementary" aria-label="Terminology, Cultural Flags, and Comments">
+                     <div class="side-panel-section">
+                        <h3>Terminology</h3>
+                        <div id="terminology-list">
+                             <!-- Terminology items will be loaded here -->
+                             <div class="terminology-item" data-segment-id="seg-1 seg-2 seg-3">
+                                 <strong>Menu</strong> (EN)
+                                 <br>Menü (DE)
+                             </div>
+                             <div class="terminology-item" data-segment-id="seg-1 seg-2 seg-3">
+                                 <strong>File</strong> (EN)
+                                 <br>Datei (DE)
+                             </div>
+                             <div class="terminology-item" data-segment-id="seg-1 seg-2 seg-3">
+                                 <strong>Save As</strong> (EN)
+                                 <br>Speichern unter (DE)
+                             </div>
+                              <div class="terminology-item" data-segment-id="seg-4">
+                                 <strong>Administrator privileges</strong> (EN)
+                                 <br>Administratorrechte (DE)
+                             </div>
+                             <!-- More terms -->
+                        </div>
+                        <button class="btn-outline btn-sm mt-3" onclick="showModal('addTermModal')" aria-haspopup="dialog"><span class="material-icons-round" aria-hidden="true">add</span> Add Term</button>
+                     </div>
+
+                      <div class="side-panel-section">
+                         <h3>Cultural Flags</h3>
+                         <div id="cultural-flags-list">
+                             <!-- Cultural flag items will be loaded here -->
+                              <div class="cultural-flag-item" data-segment-id="seg-4">
+                                 <strong>Cultural Flag (Seg 4)</strong>
+                                 <p>Note about administrator privileges might need adaptation depending on regional IT structures or privacy laws.</p>
+                             </div>
+                         </div>
+                         <button class="btn-outline btn-sm mt-3 add-flag-btn" data-segment-id="active-segment" aria-haspopup="dialog"><span class="material-icons-round" aria-hidden="true">add</span> Add Flag</button>
+                     </div>
+
+                      <div class="side-panel-section">
+                         <h3>Comments</h3>
+                         <div id="comments-list">
+                             <!-- Comment items will be loaded here -->
+                              <div class="comment-item" data-segment-id="seg-1">
+                                 <p>Suggest using "Speichern als" instead of "Speichern unter" for better consistency with other software.</p>
+                                 <div class="comment-meta">Comment by Alice Smith (Translator)</div>
+                             </div>
+                         </div>
+                         <button class="btn-outline btn-sm mt-3 add-comment-btn" data-segment-id="active-segment" aria-haspopup="dialog"><span class="material-icons-round" aria-hidden="true">add</span> Add Comment</button>
+                     </div>
+                 </div>
+            </section>
+
+             <!-- Terminology Management View -->
+            <section id="terminology-view" class="view" role="region" aria-labelledby="terminology-heading">
+                <h2 id="terminology-heading">Terminology Management</h2>
+                 <table class="data-table" aria-describedby="terminology-heading">
+                    <thead>
+                        <tr>
+                            <th scope="col">Term (EN)</th>
+                            <th scope="col">German (DE)</th>
+                            <th scope="col">Japanese (JP)</th>
+                            <th scope="col">French (FR)</th>
+                            <th scope="col">Korean (KR)</th>
+                             <th scope="col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Dashboard</td>
+                            <td>Dashboard</td>
+                            <td>ダッシュボード</td>
+                            <td>Tableau de bord</td>
+                            <td>대시보드</td>
+                            <td><button class="btn-outline btn-sm" aria-label="Edit Dashboard term">Edit</button></td>
+                        </tr>
+                         <tr>
+                            <td>Workflow</td>
+                            <td>Workflow</td>
+                            <td>ワークフロー</td>
+                            <td>Flux de travail</td>
+                            <td>워크플로우</td>
+                             <td><button class="btn-outline btn-sm" aria-label="Edit Workflow term">Edit</button></td>
+                        </tr>
+                         <tr>
+                            <td>Segment</td>
+                            <td>Segment</td>
+                            <td>セグメント</td>
+                            <td>Segment</td>
+                            <td>세그먼트</td>
+                             <td><button class="btn-outline btn-sm" aria-label="Edit Segment term">Edit</button></td>
+                        </tr>
+                         <tr>
+                            <td>Reviewer</td>
+                            <td>Prüfer</td>
+                            <td>レビュー担当者</td>
+                            <td>Relecteur</td>
+                            <td>검토자</td>
+                             <td><button class="btn-outline btn-sm" aria-label="Edit Reviewer term">Edit</button></td>
+                        </tr>
+                    </tbody>
+                 </table>
+                 <button class="btn-primary mt-3" onclick="showModal('addTermModal')" aria-haspopup="dialog"><span class="material-icons-round" aria-hidden="true">add</span> Add New Term</button>
+            </section>
+
+             <!-- Users Management View -->
+            <section id="users-view" class="view" role="region" aria-labelledby="users-heading">
+                <h2 id="users-heading">User and Role Management</h2>
+                 <table class="data-table" aria-describedby="users-heading">
+                    <thead>
+                        <tr>
+                            <th scope="col">Name</th>
+                            <th scope="col">Email</th>
+                            <th scope="col">Role</th>
+                            <th scope="col">Languages</th>
+                             <th scope="col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Alice Smith</td>
+                            <td>alice.s@example.com</td>
+                            <td>Translator, Reviewer</td>
+                            <td>EN > DE, DE > EN</td>
+                             <td><button class="btn-outline btn-sm" aria-label="Edit Alice Smith user">Edit</button></td>
+                        </tr>
+                         <tr>
+                            <td>Bob Johnson</td>
+                            <td>bob.j@example.com</td>
+                            <td>Reviewer, Regional Expert</td>
+                            <td>EN > JP, JP > EN</td>
+                             <td><button class="btn-outline btn-sm" aria-label="Edit Bob Johnson user">Edit</button></td>
+                        </tr>
+                         <tr>
+                            <td>Charlie Lee</td>
+                            <td>charlie.l@example.com</td>
+                            <td>Translator</td>
+                            <td>EN > KR</td>
+                             <td><button class="btn-outline btn-sm" aria-label="Edit Charlie Lee user">Edit</button></td>
+                        </tr>
+                         <tr>
+                            <td>Diana Garcia</td>
+                            <td>diana.g@example.com</td>
+                            <td>Project Manager</td>
+                            <td>All</td>
+                             <td><button class="btn-outline btn-sm" aria-label="Edit Diana Garcia user">Edit</button></td>
+                        </tr>
+                    </tbody>
+                 </table>
+                 <button class="btn-primary mt-3" onclick="showModal('addUserModal')" aria-haspopup="dialog"><span class="material-icons-round" aria-hidden="true">add</span> Add New User</button>
+            </section>
+
+             <!-- Reports View -->
+            <section id="reports-view" class="view" role="region" aria-labelledby="reports-heading">
+                <h2 id="reports-heading">Reports</h2>
+                <p>Reports section coming soon...</p>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Add New Term Modal -->
+    <div id="addTermModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="add-term-heading">
+        <div class="modal-content">
+            <h3 id="add-term-heading">Add New Term</h3>
+            <form id="addTermForm">
+                <div>
+                    <label for="term-en">Term (English):</label>
+                    <input type="text" id="term-en" name="term-en" required>
+                </div>
+                <div>
+                    <label for="term-de">Translation (German):</label>
+                    <input type="text" id="term-de" name="term-de">
+                </div>
+                 <div>
+                    <label for="term-jp">Translation (Japanese):</label>
+                    <input type="text" id="term-jp" name="term-jp">
+                </div>
+                 <div>
+                    <label for="term-fr">Translation (French):</label>
+                    <input type="text" id="term-fr" name="term-fr">
+                </div>
+                 <div>
+                    <label for="term-kr">Translation (Korean):</label>
+                    <input type="text" id="term-kr" name="term-kr">
+                </div>
+            </form>
+            <div class="modal-buttons">
+                <button class="btn-outline" onclick="hideModal('addTermModal')">Cancel</button>
+                <button class="btn-primary" onclick="submitAddTerm()">Add Term</button>
+            </div>
+        </div>
+    </div>
+
+     <!-- Add New User Modal -->
+    <div id="addUserModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="add-user-heading">
+        <div class="modal-content">
+            <h3 id="add-user-heading">Add New User</h3>
+             <form id="addUserForm">
+                <div>
+                    <label for="user-name">Name:</label>
+                    <input type="text" id="user-name" name="user-name" required>
+                </div>
+                 <div>
+                    <label for="user-email">Email:</label>
+                    <input type="email" id="user-email" name="user-email" required>
+                </div>
+                 <div>
+                    <label for="user-role">Role:</label>
+                    <select id="user-role" name="user-role" required>
+                        <option value="">Select Role</option>
+                        <option value="translator">Translator</option>
+                        <option value="reviewer">Reviewer</option>
+                        <option value="project-manager">Project Manager</option>
+                         <option value="regional-expert">Regional Expert</option>
+                    </select>
+                </div>
+                 <div>
+                    <label for="user-languages">Languages (e.g., EN > DE, JP > EN):</label>
+                    <input type="text" id="user-languages" name="user-languages">
+                </div>
+            </form>
+            <div class="modal-buttons">
+                <button class="btn-outline" onclick="hideModal('addUserModal')">Cancel</button>
+                <button class="btn-primary" onclick="submitAddUser()">Add User</button>
+            </div>
+        </div>
+    </div>
+
+     <!-- Add Comment Modal -->
+    <div id="addCommentModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="add-comment-heading">
+        <div class="modal-content">
+            <h3 id="add-comment-heading">Add Comment to Segment <span id="comment-segment-id"></span></h3>
+            <form id="addCommentForm">
+                <div>
+                    <label for="comment-text">Comment:</label>
+                    <textarea id="comment-text" name="comment-text" rows="4" required></textarea>
+                </div>
+            </form>
+            <div class="modal-buttons">
+                <button class="btn-outline" onclick="hideModal('addCommentModal')">Cancel</button>
+                <button class="btn-primary" onclick="submitAddComment()">Add Comment</button>
+            </div>
+        </div>
+    </div>
+
+     <!-- Add Cultural Flag Modal -->
+    <div id="addFlagModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="add-flag-heading">
+        <div class="modal-content">
+            <h3 id="add-flag-heading">Add Cultural Flag to Segment <span id="flag-segment-id"></span></h3>
+            <form id="addFlagForm">
+                <div>
+                    <label for="flag-description">Description:</label>
+                    <textarea id="flag-description" name="flag-description" rows="4" required></textarea>
+                </div>
+                 <div>
+                    <label for="flag-type">Type:</label>
+                    <select id="flag-type" name="flag-type">
+                        <option value="cultural">Cultural</option>
+                        <option value="technical">Technical</option>
+                        <option value="linguistic">Linguistic</option>
+                    </select>
+                </div>
+            </form>
+            <div class="modal-buttons">
+                <button class="btn-outline" onclick="hideModal('addFlagModal')">Cancel</button>
+                <button class="btn-primary" onclick="submitAddFlag()">Add Flag</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const views = document.querySelectorAll('.content-area .view');
+            const contentTableRows = document.querySelectorAll('.content-table tbody tr');
+            const modals = document.querySelectorAll('.modal-overlay');
+            const editorSegments = document.querySelectorAll('.editor-content .segment');
+            const terminologyItems = document.querySelectorAll('#terminology-list .terminology-item');
+            const culturalFlagItems = document.querySelectorAll('#cultural-flags-list .cultural-flag-item');
+            const commentItems = document.querySelectorAll('#comments-list .comment-item');
+            const addCommentButtons = document.querySelectorAll('.add-comment-btn');
+            const addFlagButtons = document.querySelectorAll('.add-flag-btn');
+
+
+            let activeModal = null; // Track active modal for focus management
+            let activeSegmentId = null; // Track the currently selected segment in the editor
+
+            // Function to switch views
+            function showView(viewId) {
+                views.forEach(view => {
+                    view.classList.remove('active');
+                    view.setAttribute('aria-hidden', 'true'); // Hide from screen readers
+                });
+                const activeView = document.getElementById(viewId);
+                if (activeView) {
+                    activeView.classList.add('active');
+                    activeView.setAttribute('aria-hidden', 'false'); // Show to screen readers
+                    // Optional: Focus the heading of the new view for accessibility
+                    const heading = activeView.querySelector('h2, h3');
+                    if (heading) {
+                         heading.setAttribute('tabindex', '-1'); // Make focusable
+                         heading.focus();
+                         heading.removeAttribute('tabindex'); // Remove from tab order
+                    }
+                }
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.dataset.view === viewId) {
+                        link.classList.add('active');
+                    }
+                });
+
+                 // Handle specific view initialization
+                if (viewId === 'dashboard-view') {
+                    renderDashboardCharts();
+                } else {
+                    // Destroy charts when leaving dashboard to prevent memory leaks
+                    destroyDashboardCharts();
+                }
+            }
+
+            // Handle navigation clicks
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const viewId = link.dataset.view;
+                    if (viewId) {
+                        showView(viewId);
+                    }
+                });
+                 // Add keyboard support for navigation links
+                link.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        link.click(); // Simulate click
+                    }
+                });
+            });
+
+            // Handle content table row clicks (simulate opening editor)
+            contentTableRows.forEach(row => {
+                row.addEventListener('click', () => {
+                    // In a real app, this would load the specific document data
+                    // For this example, we just switch to the editor view
+                    showView('editor-view');
+                    // Optional: Highlight the selected row or update editor title
+                    console.log('Clicked on document:', row.dataset.docId);
+                    // Simulate selecting the first segment in the loaded document
+                     const firstSegment = document.querySelector('#editor-view .editor-content .segment');
+                     if(firstSegment) {
+                         selectSegment(firstSegment);
+                     }
+                });
+                 // Add keyboard support for table rows
+                 row.addEventListener('keydown', (e) => {
+                     if (e.key === 'Enter' || e.key === ' ') {
+                         e.preventDefault();
+                         row.click(); // Simulate click
+                     }
+                 });
+            });
+
+            // Function to select an editor segment and update side panel
+            function selectSegment(segmentElement) {
+                 // Remove active class from all segments
+                editorSegments.forEach(s => s.classList.remove('active'));
+                // Add active class to the clicked segment
+                segmentElement.classList.add('active');
+                activeSegmentId = segmentElement.dataset.segmentId;
+                console.log('Selected segment:', activeSegmentId);
+
+                // Update side panel content based on activeSegmentId
+                updateSidePanel(activeSegmentId);
+
+                // Optional: Focus the textarea in the target segment
+                const targetTextarea = segmentElement.closest('.target-segment')?.querySelector('textarea');
+                if (targetTextarea) {
+                    targetTextarea.focus();
+                }
+            }
+
+            // Handle editor segment clicks (simulate selection/focus)
+            editorSegments.forEach(segment => {
+                segment.addEventListener('click', () => {
+                    selectSegment(segment);
+                });
+                 // Add keyboard support for segments
+                 segment.addEventListener('keydown', (e) => {
+                     if (e.key === 'Enter' || e.key === ' ') {
+                         e.preventDefault();
+                         selectSegment(segment); // Simulate click
+                     }
+                 });
+            });
+
+            // Function to update the side panel based on the active segment
+            function updateSidePanel(segmentId) {
+                // Hide all items initially
+                terminologyItems.forEach(item => item.style.display = 'none');
+                culturalFlagItems.forEach(item => item.style.display = 'none');
+                commentItems.forEach(item => item.style.display = 'none');
+
+                // Show items related to the active segment
+                terminologyItems.forEach(item => {
+                    if (item.dataset.segmentId && item.dataset.segmentId.includes(segmentId)) {
+                        item.style.display = 'block';
+                    }
+                });
+                 culturalFlagItems.forEach(item => {
+                    if (item.dataset.segmentId && item.dataset.segmentId.includes(segmentId)) {
+                        item.style.display = 'block';
+                    }
+                });
+                 commentItems.forEach(item => {
+                    if (item.dataset.segmentId && item.dataset.segmentId.includes(segmentId)) {
+                        item.style.display = 'block';
+                    }
+                });
+
+                 // Update Add button data-segment-id
+                 addCommentButtons.forEach(btn => btn.dataset.segmentId = segmentId);
+                 addFlagButtons.forEach(btn => btn.dataset.segmentId = segmentId);
+
+                 // Update modal titles
+                 document.getElementById('comment-segment-id').textContent = segmentId;
+                 document.getElementById('flag-segment-id').textContent = segmentId;
+            }
+
+
+             // Handle modal display
+            window.showModal = function(modalId, triggerElement = null) {
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.classList.add('visible');
+                    modal.setAttribute('aria-hidden', 'false');
+                    activeModal = modal;
+                    // Store the element that triggered the modal
+                    modal.triggerElement = triggerElement || document.activeElement;
+
+                    // Optional: Focus the first interactive element in the modal
+                    const firstFocusable = modal.querySelector('input, button, select, textarea');
+                    if (firstFocusable) {
+                        firstFocusable.focus();
+                    }
+                }
+            }
+
+             window.hideModal = function(modalId) {
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.classList.remove('visible');
+                    modal.setAttribute('aria-hidden', 'true');
+                    // Return focus to the element that opened the modal
+                    if (modal.triggerElement) {
+                        modal.triggerElement.focus();
+                        modal.triggerElement = null; // Clear stored element
+                    }
+                    activeModal = null;
+                    // Reset forms within modals
+                    const form = modal.querySelector('form');
+                    if (form) {
+                        form.reset();
+                    }
+                }
+            }
+
+            // Close modal when clicking outside content
+            modals.forEach(modal => {
+                 modal.addEventListener('click', (e) => {
+                     if (e.target === modal) {
+                         hideModal(modal.id);
+                     }
+                 });
+                 // Close modal with Escape key
+                 modal.addEventListener('keydown', (e) => {
+                     if (e.key === 'Escape') {
+                         hideModal(modal.id);
+                     }
+                 });
+            });
+
+
+            // Example modal form submissions (placeholders)
+            window.submitAddTerm = function() {
+                const form = document.getElementById('addTermForm');
+                if (form.checkValidity()) {
+                    console.log('Submitting Add Term form...');
+                    // Process form data
+                    const formData = new FormData(form);
+                    const termData = {};
+                    formData.forEach((value, key) => { termData[key] = value; });
+                    console.log('Term Data:', termData);
+                    // In a real app, send this to backend and update terminology list
+                    hideModal('addTermModal');
+                } else {
+                    // Trigger browser validation messages
+                    form.reportValidity();
+                }
+            }
+
+             window.submitAddUser = function() {
+                const form = document.getElementById('addUserForm');
+                 if (form.checkValidity()) {
+                    console.log('Submitting Add User form...');
+                    // Process form data
+                     const formData = new FormData(form);
+                    const userData = {};
+                    formData.forEach((value, key) => { userData[key] = value; });
+                    console.log('User Data:', userData);
+                    // In a real app, send this to backend and update user list
+                    hideModal('addUserModal');
+                } else {
+                    // Trigger browser validation messages
+                    form.reportValidity();
+                }
+            }
+
+             window.submitAddComment = function() {
+                const form = document.getElementById('addCommentForm');
+                const segmentId = document.getElementById('comment-segment-id').textContent;
+                 if (form.checkValidity()) {
+                    console.log(`Submitting Add Comment for segment ${segmentId}...`);
+                    // Process form data
+                    const commentText = document.getElementById('comment-text').value;
+                    console.log('Comment:', commentText);
+                    // In a real app, send this to backend and update comments list for the segment
+                    hideModal('addCommentModal');
+                    // Simulate adding the comment to the UI (for the current segment)
+                    const commentsList = document.getElementById('comments-list');
+                     const newComment = document.createElement('div');
+                     newComment.classList.add('comment-item');
+                     newComment.dataset.segmentId = segmentId; // Assign to the segment
+                     newComment.innerHTML = `<p>${commentText}</p><div class="comment-meta">Comment by You (Now)</div>`;
+                     commentsList.appendChild(newComment);
+                     updateSidePanel(activeSegmentId); // Refresh side panel visibility
+                } else {
+                    form.reportValidity();
+                }
+            }
+
+             window.submitAddFlag = function() {
+                const form = document.getElementById('addFlagForm');
+                const segmentId = document.getElementById('flag-segment-id').textContent;
+                 if (form.checkValidity()) {
+                    console.log(`Submitting Add Flag for segment ${segmentId}...`);
+                    // Process form data
+                    const flagDescription = document.getElementById('flag-description').value;
+                    const flagType = document.getElementById('flag-type').value;
+                    console.log('Flag:', { description: flagDescription, type: flagType });
+                     // In a real app, send this to backend and update flags list for the segment
+                    hideModal('addFlagModal');
+                     // Simulate adding the flag to the UI (for the current segment)
+                     const flagsList = document.getElementById('cultural-flags-list');
+                     const newFlag = document.createElement('div');
+                     newFlag.classList.add('cultural-flag-item');
+                     newFlag.dataset.segmentId = segmentId; // Assign to the segment
+                     newFlag.innerHTML = `<strong>${flagType.charAt(0).toUpperCase() + flagType.slice(1)} Flag (Seg ${segmentId.split('-')[1]})</strong><p>${flagDescription}</p>`;
+                     flagsList.appendChild(newFlag);
+                     updateSidePanel(activeSegmentId); // Refresh side panel visibility
+
+                     // Simulate adding indicator to the source segment
+                     const sourceSegment = document.querySelector(`#editor-view .editor-content .segment[data-segment-id="${segmentId}"]`);
+                     if (sourceSegment && !sourceSegment.querySelector('.indicator.flag')) {
+                         const flagIndicator = document.createElement('span');
+                         flagIndicator.classList.add('material-icons-round', 'indicator', 'flag');
+                         flagIndicator.title = 'Cultural Flag';
+                         flagIndicator.setAttribute('aria-label', `Cultural flag on segment ${segmentId.split('-')[1]}`);
+                         flagIndicator.textContent = 'flag';
+                         sourceSegment.appendChild(flagIndicator);
+                     }
+                } else {
+                    form.reportValidity();
+                }
+            }
+
+
+            // Add basic keyboard navigation for modals (trap focus)
+            document.addEventListener('keydown', (e) => {
+                if (activeModal) {
+                    const focusableElements = activeModal.querySelectorAll('input, button, select, textarea, [tabindex]:not([tabindex="-1"])');
+                    const firstFocusable = focusableElements[0];
+                    const lastFocusable = focusableElements[focusableElements.length - 1];
+
+                    if (e.key === 'Tab') {
+                        if (focusableElements.length === 0) {
+                            e.preventDefault(); // Prevent tabbing out if no focusable elements
+                            return;
+                        }
+                        if (e.shiftKey) { // Shift + Tab
+                            if (document.activeElement === firstFocusable) {
+                                lastFocusable.focus();
+                                e.preventDefault();
+                            }
+                        } else { // Tab
+                            if (document.activeElement === lastFocusable) {
+                                firstFocusable.focus();
+                                e.preventDefault();
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Handle click on Add Comment/Flag buttons within editor segments
+            document.querySelectorAll('.segment-controls .add-comment-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent segment click event
+                    const segmentId = button.dataset.segmentId;
+                    document.getElementById('comment-segment-id').textContent = segmentId.split('-')[1]; // Display just the number
+                    showModal('addCommentModal', button);
+                });
+            });
+
+             document.querySelectorAll('.segment-controls .add-flag-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent segment click event
+                    const segmentId = button.dataset.segmentId;
+                    document.getElementById('flag-segment-id').textContent = segmentId.split('-')[1]; // Display just the number
+                    showModal('addFlagModal', button);
+                });
+            });
+
+             // Handle click on Add Comment/Flag buttons in side panel
+             document.querySelectorAll('.side-panel .add-comment-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    // Use the currently active segment ID
+                    if (activeSegmentId) {
+                         document.getElementById('comment-segment-id').textContent = activeSegmentId.split('-')[1];
+                         showModal('addCommentModal', button);
+                    } else {
+                        alert('Please select a segment first.'); // Or show a notification
+                    }
+                });
+            });
+
+             document.querySelectorAll('.side-panel .add-flag-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    // Use the currently active segment ID
+                     if (activeSegmentId) {
+                        document.getElementById('flag-segment-id').textContent = activeSegmentId.split('-')[1];
+                        showModal('addFlagModal', button);
+                    } else {
+                         alert('Please select a segment first.'); // Or show a notification
+                    }
+                });
+            });
+
+
+            // --- Charting ---
+            let progressChart = null;
+            let statusChart = null;
+
+            function renderDashboardCharts() {
+                // Placeholder Data
+                const progressData = {
+                    labels: ['German (DE)', 'Japanese (JP)', 'French (FR)', 'Korean (KR)'],
+                    datasets: [{
+                        label: 'Segments Approved',
+                        data: [2500, 1800, 3100, 500],
+                        backgroundColor: [
+                            'rgba(0, 122, 204, 0.7)', // primary-color
+                            'rgba(103, 58, 183, 0.7)', // secondary-color
+                            'rgba(76, 175, 80, 0.7)', // success-color
+                            'rgba(255, 152, 0, 0.7)' // warning-color
+                        ],
+                        borderColor: [
+                             'rgba(0, 122, 204, 1)',
+                            'rgba(103, 58, 183, 1)',
+                            'rgba(76, 175, 80, 1)',
+                            'rgba(255, 152, 0, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                };
+
+                const statusData = {
+                    labels: ['To Translate', 'In Progress', 'In Review', 'Approved', 'Rejected'],
+                    datasets: [{
+                        label: 'Number of Segments',
+                        data: [8760, 5500, 1420, 6000, 300],
+                         backgroundColor: [
+                            'rgba(255, 152, 0, 0.7)', // warning-color
+                            'rgba(0, 122, 204, 0.7)', // primary-color
+                            'rgba(103, 58, 183, 0.7)', // secondary-color
+                            'rgba(76, 175, 80, 0.7)', // success-color
+                            'rgba(244, 67, 54, 0.7)' // danger-color
+                        ],
+                        borderColor: [
+                            'rgba(255, 152, 0, 1)',
+                            'rgba(0, 122, 204, 1)',
+                            'rgba(103, 58, 183, 1)',
+                            'rgba(76, 175, 80, 1)',
+                            'rgba(244, 67, 54, 1)'
+                        ],
+                         borderWidth: 1
+                    }]
+                };
+
+                const chartOptions = {
+                     responsive: true,
+                     maintainAspectRatio: false,
+                     plugins: {
+                         legend: {
+                             position: 'top',
+                             labels: {
+                                 font: {
+                                     family: 'Roboto, sans-serif'
+                                 }
+                             }
+                         },
+                         title: {
+                             display: false, // Title is in the card h3
+                         }
+                     },
+                     scales: {
+                         y: {
+                             beginAtZero: true,
+                             ticks: {
+                                 font: {
+                                      family: 'Roboto, sans-serif'
+                                 }
+                             }
+                         },
+                         x: {
+                             ticks: {
+                                 font: {
+                                      family: 'Roboto, sans-serif'
+                                 }
+                             }
+                         }
+                     }
+                };
+
+                const progressCtx = document.getElementById('progressChart')?.getContext('2d');
+                if (progressCtx) {
+                    progressChart = new Chart(progressCtx, {
+                        type: 'bar',
+                        data: progressData,
+                        options: chartOptions
+                    });
+                }
+
+                const statusCtx = document.getElementById('statusChart')?.getContext('2d');
+                 if (statusCtx) {
+                    statusChart = new Chart(statusCtx, {
+                        type: 'pie', // Pie chart for status
+                        data: statusData,
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    labels: {
+                                        font: {
+                                            family: 'Roboto, sans-serif'
+                                        }
+                                    }
+                                },
+                                title: {
+                                    display: false,
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            function destroyDashboardCharts() {
+                if (progressChart) {
+                    progressChart.destroy();
+                    progressChart = null;
+                }
+                if (statusChart) {
+                    statusChart.destroy();
+                    statusChart = null;
+                }
+            }
+
+
+            // Initialize view (show dashboard on load)
+            showView('dashboard-view');
+        });
+    </script>
+
+</body>
+</html>

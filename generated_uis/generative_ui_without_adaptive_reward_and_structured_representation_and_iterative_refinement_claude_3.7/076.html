@@ -1,0 +1,847 @@
+As a professional UI engineer, my expertise lies in creating user interfaces, not in providing specific technical guidance on machine learning approaches or feature extraction techniques for speech data analysis.
+
+However, I can certainly help you build a robust and intuitive user interface to support your research process, based on the requirements we previously analyzed. This UI can provide sections for managing data, configuring feature extraction, building models, and visualizing results, which are crucial steps in your workflow.
+
+Based on the requirements analysis, I can create a UI with the following structure and components:
+
+1.  **Header:** Application title and navigation toggle.
+2.  **Side Navigation:** Collapsible menu to switch between sections (Dashboard, Data, Feature Extraction, Model Building, Evaluation).
+3.  **Main Content Area:** Displays the content for the selected section.
+4.  **Dashboard:** Overview panels for key metrics.
+5.  **Data Management:** Table to list subjects, potentially with actions to view details or features.
+6.  **Feature Extraction:** Form for configuration, button to trigger the process, maybe a status indicator.
+7.  **Model Building:** Form for configuration, button to trigger training, status indicator.
+8.  **Evaluation:** Area to display metrics and visualizations (placeholders for charts).
+
+I will implement this UI using semantic HTML, modern CSS (Flexbox/Grid, flat design), and vanilla JavaScript for interactivity, adhering to the specified design preferences and technical requirements.
+
+Here is the HTML, CSS, and JavaScript code for the initial structure of this application UI:
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroSpeech Analyzer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --background-color: #e9ecef; /* Light grey background */
+            --surface-color: #ffffff;   /* Pure white card/panel background */
+            --border-color: #dee2e6;
+            --text-color: #212529;
+            --text-secondary-color: #6c757d;
+            --hover-color: rgba(0, 123, 255, 0.1);
+            --active-color: rgba(0, 123, 255, 0.2);
+            --spacing-unit: 8px;
+            --border-radius: 8px;
+            --shadow-light: 0 2px 4px rgba(0, 0, 0, 0.05);
+            --shadow-medium: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+        }
+
+        .header {
+            background-color: var(--primary-color);
+            color: var(--light-color);
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 3);
+            display: flex;
+            align-items: center;
+            box-shadow: var(--shadow-medium);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            height: 60px; /* Fixed header height */
+            box-sizing: border-box;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: 500;
+        }
+
+        .menu-toggle {
+            background: none;
+            border: none;
+            color: var(--light-color);
+            font-size: 1.8em;
+            cursor: pointer;
+            margin-right: var(--spacing-unit) * 2;
+            display: none; /* Hide by default on desktop */
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: var(--dark-color);
+            color: var(--light-color);
+            padding-top: 60px; /* Space for fixed header */
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            overflow-y: auto;
+            transition: transform 0.3s ease-in-out;
+            z-index: 900;
+            box-shadow: var(--shadow-medium);
+            box-sizing: border-box;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-250px);
+        }
+
+        .sidebar nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar nav ul li {
+            margin: 0;
+        }
+
+        .sidebar nav ul li a {
+            display: flex;
+            align-items: center;
+            padding: var(--spacing-unit) * 1.5 calc(var(--spacing-unit) * 3);
+            color: var(--light-color);
+            text-decoration: none;
+            font-size: 1.1em;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .sidebar nav ul li a .material-symbols-rounded {
+            margin-right: var(--spacing-unit);
+            font-size: 1.3em;
+        }
+
+        .sidebar nav ul li a:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar nav ul li a.active {
+            background-color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: calc(var(--spacing-unit) * 3);
+            padding-top: calc(60px + var(--spacing-unit) * 3); /* Space for fixed header */
+            margin-left: 250px; /* Space for sidebar */
+            transition: margin-left 0.3s ease-in-out;
+        }
+
+        .main-content.sidebar-collapsed {
+            margin-left: 0;
+        }
+
+        .section {
+            display: none; /* Hide sections by default */
+        }
+
+        .section.active {
+            display: block; /* Show active section */
+        }
+
+        .card {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            padding: calc(var(--spacing-unit) * 3);
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            box-shadow: var(--shadow-light);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            color: var(--primary-color);
+            font-size: 1.8em;
+            margin-bottom: calc(var(--spacing-unit) * 3);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: calc(var(--spacing-unit) * 3);
+        }
+
+        .metric-card {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            padding: calc(var(--spacing-unit) * 2);
+            box-shadow: var(--shadow-light);
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .metric-card h3 {
+            margin-top: 0;
+            color: var(--text-secondary-color);
+            font-size: 1em;
+            font-weight: 400;
+        }
+
+        .metric-card p {
+            margin: var(--spacing-unit) 0 0 0;
+            font-size: 2em;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: calc(var(--spacing-unit) * 2);
+        }
+
+        th, td {
+            padding: calc(var(--spacing-unit) * 1.5);
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--light-color);
+            font-weight: 500;
+            color: var(--text-secondary-color);
+        }
+
+        tbody tr:hover {
+            background-color: var(--hover-color);
+            cursor: pointer;
+        }
+
+        button {
+            padding: var(--spacing-unit) * 1.5 calc(var(--spacing-unit) * 3);
+            background-color: var(--primary-color);
+            color: var(--light-color);
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.2s ease, opacity 0.2s ease;
+            font-weight: 500;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button:active {
+            background-color: #004085;
+        }
+
+        button:disabled {
+            background-color: var(--secondary-color);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .button-secondary {
+            background-color: var(--secondary-color);
+        }
+        .button-secondary:hover {
+            background-color: #545b62;
+        }
+         .button-secondary:active {
+            background-color: #3e4246;
+        }
+
+        form label {
+            display: block;
+            margin-bottom: var(--spacing-unit);
+            font-weight: 500;
+            color: var(--text-secondary-color);
+        }
+
+        form input[type="text"],
+        form input[type="number"],
+        form select,
+        form textarea {
+            display: block;
+            width: 100%;
+            padding: var(--spacing-unit) * 1.5;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            box-sizing: border-box;
+        }
+
+        form input[type="text"]:focus,
+        form input[type="number"]:focus,
+        form select:focus,
+        form textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        .form-group {
+            margin-bottom: calc(var(--spacing-unit) * 3);
+        }
+
+        .loading-indicator {
+            display: flex;
+            align-items: center;
+            color: var(--primary-color);
+            font-weight: 500;
+            margin-top: var(--spacing-unit) * 3;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--primary-color);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin-right: var(--spacing-unit);
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-top: calc(var(--spacing-unit) * 3);
+            background-color: var(--surface-color); /* Ensure chart background is white */
+            padding: var(--spacing-unit) * 2;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-250px);
+            }
+
+            .sidebar.collapsed {
+                 transform: translateX(0); /* Show sidebar when collapsed class is present on smaller screens */
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .main-content.sidebar-collapsed {
+                margin-left: 0; /* Always 0 on smaller screens */
+            }
+
+            .menu-toggle {
+                display: block; /* Show toggle button */
+            }
+
+            .header {
+                padding: var(--spacing-unit) * 1.5;
+            }
+
+            .sidebar {
+                width: 200px;
+            }
+
+            .sidebar.collapsed {
+                 transform: translateX(0); /* Show sidebar when collapsed class is present on smaller screens */
+            }
+
+            .main-content {
+                 padding-top: calc(60px + var(--spacing-unit) * 2); /* Adjust padding for smaller screens */
+            }
+
+            .card {
+                padding: calc(var(--spacing-unit) * 2);
+            }
+
+            table, thead, tbody, th, td, tr {
+                display: block;
+            }
+            thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+            tr { border: 1px solid var(--border-color); margin-bottom: var(--spacing-unit) * 2; border-radius: var(--border-radius);}
+            td {
+                border: none;
+                border-bottom: 1px solid var(--border-color);
+                position: relative;
+                padding-left: 50%;
+                text-align: right;
+            }
+            td:before {
+                position: absolute;
+                top: 6px;
+                left: 6px;
+                width: 45%;
+                padding-right: 10px;
+                white-space: nowrap;
+                content: attr(data-label); /* Use data-label for column headers */
+                font-weight: bold;
+                color: var(--text-secondary-color);
+                text-align: left;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <button class="menu-toggle" id="menuToggle" aria-label="Toggle Menu">
+             <span class="material-symbols-rounded">menu</span>
+        </button>
+        <h1>NeuroSpeech Analyzer</h1>
+    </header>
+
+    <aside class="sidebar" id="sidebar">
+        <nav>
+            <ul>
+                <li><a href="#dashboard" class="nav-link active" data-section="dashboard">
+                    <span class="material-symbols-rounded">dashboard</span> Dashboard
+                </a></li>
+                <li><a href="#data" class="nav-link" data-section="data">
+                    <span class="material-symbols-rounded">folder_open</span> Data Management
+                </a></li>
+                <li><a href="#features" class="nav-link" data-section="features">
+                    <span class="material-symbols-rounded">tune</span> Feature Extraction
+                </a></li>
+                <li><a href="#models" class="nav-link" data-section="models">
+                    <span class="material-symbols-rounded">model_training</span> Model Building
+                </a></li>
+                <li><a href="#evaluation" class="nav-link" data-section="evaluation">
+                    <span class="material-symbols-rounded">assessment</span> Evaluation
+                </a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="main-content" id="mainContent">
+
+        <section id="dashboard" class="section active">
+            <div class="card">
+                <h2>Dashboard Overview</h2>
+                <div class="dashboard-grid">
+                    <div class="metric-card">
+                        <h3>Total Subjects</h3>
+                        <p>200</p>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Features Extracted</h3>
+                        <p>Yes</p>
+                    </div>
+                     <div class="metric-card">
+                        <h3>Model Status</h3>
+                        <p>Trained</p>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Last Run</h3>
+                        <p>2023-10-27</p>
+                    </div>
+                </div>
+            </div>
+             <div class="card">
+                <h2>Recent Activity</h2>
+                <p>No recent activity to display.</p>
+            </div>
+        </section>
+
+        <section id="data" class="section">
+            <div class="card">
+                <h2>Subject Data</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Subject ID</th>
+                            <th>Status</th>
+                            <th>Features Extracted</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td data-label="Subject ID">SUB-001</td>
+                            <td data-label="Status">Healthy</td>
+                            <td data-label="Features Extracted">Yes</td>
+                            <td data-label="Actions"><button class="button-secondary">View Details</button></td>
+                        </tr>
+                         <tr>
+                            <td data-label="Subject ID">SUB-002</td>
+                            <td data-label="Status">Early Stage</td>
+                            <td data-label="Features Extracted">Yes</td>
+                            <td data-label="Actions"><button class="button-secondary">View Details</button></td>
+                        </tr>
+                         <tr>
+                            <td data-label="Subject ID">SUB-003</td>
+                            <td data-label="Status">Healthy</td>
+                            <td data-label="Features Extracted">No</td>
+                            <td data-label="Actions"><button class="button-secondary">View Details</button></td>
+                        </tr>
+                        <!-- Add more rows as needed -->
+                    </tbody>
+                </table>
+            </div>
+             <div class="card">
+                <h2>Upload New Data</h2>
+                 <form>
+                     <div class="form-group">
+                         <label for="dataFile">Select Audio Data File(s):</label>
+                         <input type="file" id="dataFile" multiple accept=".wav,.mp3">
+                     </div>
+                     <button type="submit">Upload Data</button>
+                 </form>
+             </div>
+        </section>
+
+        <section id="features" class="section">
+            <div class="card">
+                <h2>Feature Extraction Configuration</h2>
+                <form id="featureExtractionForm">
+                    <div class="form-group">
+                        <label for="featureSet">Feature Set:</label>
+                        <select id="featureSet" name="featureSet">
+                            <option value="mfcc">MFCC</option>
+                            <option value="prosodic">Prosodic Features</option>
+                            <option value="spectral">Spectral Features</option>
+                            <option value="combined">Combined</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="windowSize">Window Size (ms):</label>
+                        <input type="number" id="windowSize" name="windowSize" value="25" min="1">
+                    </div>
+                     <div class="form-group">
+                        <label for="stepSize">Step Size (ms):</label>
+                        <input type="number" id="stepSize" name="stepSize" value="10" min="1">
+                    </div>
+                    <button type="submit">Run Feature Extraction</button>
+                </form>
+                 <div id="featureExtractionStatus" class="loading-indicator" style="display: none;">
+                     <div class="spinner"></div>
+                     <span>Processing...</span>
+                 </div>
+            </div>
+            <div class="card">
+                <h2>View Extracted Features</h2>
+                <p>Select a subject from the Data Management section to view extracted features here.</p>
+                <!-- Placeholder for feature visualization/tables -->
+            </div>
+        </section>
+
+        <section id="models" class="section">
+            <div class="card">
+                <h2>Model Building Configuration</h2>
+                <form id="modelBuildingForm">
+                    <div class="form-group">
+                        <label for="modelType">Model Type:</label>
+                        <select id="modelType" name="modelType">
+                            <option value="svm">Support Vector Machine (SVM)</option>
+                            <option value="randomForest">Random Forest</option>
+                            <option value="lstm">LSTM (Limited Data)</option>
+                            <option value="transferLearning">Transfer Learning (Limited Data)</option>
+                        </select>
+                    </div>
+                     <div class="form-group">
+                        <label for="hyperparameters">Hyperparameters (JSON):</label>
+                        <textarea id="hyperparameters" name="hyperparameters" rows="5" placeholder='{"C": 1.0, "kernel": "rbf"}'></textarea>
+                    </div>
+                     <div class="form-group">
+                        <label for="trainingData">Training Data:</label>
+                        <select id="trainingData" name="trainingData">
+                            <option value="all">All Subjects (if features extracted)</option>
+                            <option value="subset">Select Subset...</option> <!-- Placeholder -->
+                        </select>
+                    </div>
+                    <button type="submit">Train Model</button>
+                </form>
+                 <div id="modelTrainingStatus" class="loading-indicator" style="display: none;">
+                     <div class="spinner"></div>
+                     <span>Training Model...</span>
+                 </div>
+            </div>
+             <div class="card">
+                <h2>Model Status & History</h2>
+                <p>Details about trained models will appear here.</p>
+                <!-- Placeholder for model list/status -->
+            </div>
+        </section>
+
+        <section id="evaluation" class="section">
+            <div class="card">
+                <h2>Model Evaluation Results</h2>
+                 <div id="evaluationResults">
+                     <p>Run a model training process to see evaluation results here.</p>
+                     <!-- Placeholder for metrics like Accuracy, Precision, Recall, F1 -->
+                 </div>
+
+                 <div class="chart-container" id="confusionMatrixChartContainer" style="display: none;">
+                     <h3>Confusion Matrix</h3>
+                     <canvas id="confusionMatrixChart"></canvas>
+                     <!-- Floating controls placeholder -->
+                     <div class="floating-controls" id="confusionMatrixControls">
+                         <!-- Controls for confusion matrix -->
+                     </div>
+                 </div>
+
+                 <div class="chart-container" id="rocCurveChartContainer" style="display: none;">
+                     <h3>ROC Curve</h3>
+                     <canvas id="rocCurveChart"></canvas>
+                      <!-- Floating controls placeholder -->
+                     <div class="floating-controls" id="rocCurveControls">
+                         <!-- Controls for ROC curve -->
+                     </div>
+                 </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script type="module">
+        // Basic UI Navigation Logic
+        const navLinks = document.querySelectorAll('.nav-link');
+        const sections = document.querySelectorAll('.section');
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        const menuToggle = document.getElementById('menuToggle');
+
+        function showSection(sectionId) {
+            sections.forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionId).classList.add('active');
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+            });
+            document.querySelector(`.nav-link[data-section="${sectionId}"]`).classList.add('active');
+
+            // Update URL hash
+            history.pushState(null, '', `#${sectionId}`);
+
+            // Collapse sidebar on smaller screens after selection
+            if (window.innerWidth <= 768) {
+                 sidebar.classList.add('collapsed');
+                 mainContent.classList.remove('sidebar-collapsed'); // Ensure main content takes full width
+            }
+        }
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const sectionId = link.getAttribute('data-section');
+                showSection(sectionId);
+            });
+        });
+
+        // Handle initial load based on hash
+        const initialSection = window.location.hash ? window.location.hash.substring(1) : 'dashboard';
+        if (document.getElementById(initialSection)) {
+             showSection(initialSection);
+        } else {
+             showSection('dashboard'); // Default to dashboard
+        }
+
+
+        // Sidebar toggle logic
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            // On desktop, shift main content; on mobile, sidebar overlays
+            if (window.innerWidth > 768) {
+                 mainContent.classList.toggle('sidebar-collapsed');
+            } else {
+                 // No change to main content margin on mobile, sidebar overlays
+            }
+        });
+
+        // Adjust layout on window resize
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                // Ensure sidebar is visible and main content is shifted on desktop
+                sidebar.classList.remove('collapsed');
+                mainContent.classList.remove('sidebar-collapsed');
+            } else {
+                // Ensure sidebar is collapsed and main content is full width on mobile
+                 sidebar.classList.add('collapsed');
+                 mainContent.classList.remove('sidebar-collapsed');
+            }
+        });
+
+        // Initial layout adjustment on load
+        if (window.innerWidth <= 768) {
+             sidebar.classList.add('collapsed');
+             mainContent.classList.remove('sidebar-collapsed');
+        }
+
+
+        // --- Placeholder Form Submission and Loading Indicators ---
+
+        const featureExtractionForm = document.getElementById('featureExtractionForm');
+        const featureExtractionStatus = document.getElementById('featureExtractionStatus');
+
+        featureExtractionForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            // Simulate processing
+            featureExtractionStatus.style.display = 'flex';
+            featureExtractionForm.querySelector('button[type="submit"]').disabled = true;
+
+            setTimeout(() => {
+                featureExtractionStatus.style.display = 'none';
+                featureExtractionForm.querySelector('button[type="submit"]').disabled = false;
+                alert('Feature extraction simulated!');
+            }, 2000); // Simulate a 2-second process
+        });
+
+        const modelBuildingForm = document.getElementById('modelBuildingForm');
+        const modelTrainingStatus = document.getElementById('modelTrainingStatus');
+        const evaluationResults = document.getElementById('evaluationResults');
+        const confusionMatrixChartContainer = document.getElementById('confusionMatrixChartContainer');
+        const rocCurveChartContainer = document.getElementById('rocCurveChartContainer');
+
+
+        modelBuildingForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            // Simulate processing
+            modelTrainingStatus.style.display = 'flex';
+            modelBuildingForm.querySelector('button[type="submit"]').disabled = true;
+            evaluationResults.innerHTML = '<p>Training model...</p>';
+            confusionMatrixChartContainer.style.display = 'none';
+            rocCurveChartContainer.style.display = 'none';
+
+
+            setTimeout(() => {
+                modelTrainingStatus.style.display = 'none';
+                modelBuildingForm.querySelector('button[type="submit"]').disabled = false;
+
+                // Simulate evaluation results
+                evaluationResults.innerHTML = `
+                    <h3>Evaluation Metrics (Simulated)</h3>
+                    <p><strong>Accuracy:</strong> 0.85</p>
+                    <p><strong>Precision:</strong> 0.82</p>
+                    <p><strong>Recall:</strong> 0.88</p>
+                    <p><strong>F1-Score:</strong> 0.85</p>
+                `;
+
+                // Show chart containers (placeholders - actual charts would need Chart.js)
+                confusionMatrixChartContainer.style.display = 'block';
+                rocCurveChartContainer.style.display = 'block';
+
+                // --- Placeholder for Chart.js Initialization ---
+                // In a real application, you would initialize Chart.js here
+                // using data from your model evaluation.
+                // Example structure (requires Chart.js library):
+                /*
+                import { Chart } from "https://esm.sh/chart.js/auto";
+
+                const ctxCM = document.getElementById('confusionMatrixChart').getContext('2d');
+                const confusionMatrixChart = new Chart(ctxCM, {
+                    type: 'bar', // or 'matrix' if using a plugin
+                    data: {
+                        labels: ['Predicted Negative', 'Predicted Positive'],
+                        datasets: [
+                            {
+                                label: 'Actual Negative',
+                                data: [150, 10], // Example: TN, FP
+                                backgroundColor: ['#28a745', '#dc3545']
+                            },
+                             {
+                                label: 'Actual Positive',
+                                data: [15, 25], // Example: FN, TP
+                                backgroundColor: ['#dc3545', '#28a745']
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: false, // Title handled by H3
+                            }
+                        },
+                         scales: {
+                            x: { stacked: true },
+                            y: { stacked: true }
+                        }
+                    }
+                });
+
+                const ctxROC = document.getElementById('rocCurveChart').getContext('2d');
+                 const rocCurveChart = new Chart(ctxROC, {
+                    type: 'line',
+                    data: {
+                        labels: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0], // FPR
+                        datasets: [{
+                            label: 'ROC Curve',
+                            data: [0.0, 0.3, 0.5, 0.7, 0.8, 0.85, 0.9, 0.92, 0.95, 0.98, 1.0], // TPR (example data)
+                            borderColor: var('--primary-color'),
+                            tension: 0.1,
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                         plugins: {
+                            title: {
+                                display: false, // Title handled by H3
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'False Positive Rate (FPR)'
+                                },
+                                min: 0,
+                                max: 1
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'True Positive Rate (TPR)'
+                                },
+                                min: 0,
+                                max: 1
+                            }
+                        }
+                    }
+                });
+                */
+
+            }, 3000); // Simulate a 3-second training process
+        });
+
+
+    </script>
+
+</body>
+</html>

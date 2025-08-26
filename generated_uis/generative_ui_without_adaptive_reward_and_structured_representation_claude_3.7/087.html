@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mixed-Methods Analysis Tool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4a90e2; /* A clean blue */
+            --secondary-color: #50e3c2; /* A vibrant teal */
+            --background-color: #ffffff; /* Pure white */
+            --surface-color: #f8f9fa; /* Light grey for cards/panels */
+            --text-color-dark: #212529; /* Dark grey for main text */
+            --text-color-light: #6c757d; /* Lighter grey for secondary text */
+            --border-color: #dee2e6; /* Light grey for borders */
+            --shadow-color: rgba(0, 0, 0, 0.08); /* Subtle shadow */
+            --spacing-unit: 8px;
+            --border-radius: 8px;
+            --transition-duration: 0.2s;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color-dark);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+            font-size: 16px; /* Base font size */
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--text-color-dark);
+            margin-top: 0;
+            margin-bottom: var(--spacing-unit) * 2;
+            font-weight: 600;
+        }
+
+        h1 { font-size: 2em; }
+        h2 { font-size: 1.8em; }
+        h3 { font-size: 1.4em; }
+
+        .app-header {
+            background-color: var(--primary-color);
+            color: var(--background-color);
+            padding: var(--spacing-unit) * 2 var(--spacing-unit) * 3;
+            box-shadow: 0 2px 4px var(--shadow-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .app-header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: 600;
+            color: inherit; /* Inherit color from parent */
+        }
+
+        .layout-container {
+            display: flex;
+            flex: 1;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: var(--surface-color);
+            padding: var(--spacing-unit) * 2 0;
+            box-shadow: 2px 0 4px var(--shadow-color);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .sidebar nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar nav li {
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .sidebar nav a {
+            display: block;
+            padding: var(--spacing-unit) 1.5 * var(--spacing-unit);
+            color: var(--text-color-dark);
+            text-decoration: none;
+            font-weight: 500;
+            transition: background-color var(--transition-duration) ease, color var(--transition-duration) ease, border-left-color var(--transition-duration) ease;
+            border-left: 4px solid transparent;
+            outline: none; /* Remove default outline */
+        }
+
+        .sidebar nav a:hover {
+            background-color: var(--border-color);
+            color: var(--primary-color);
+        }
+
+        .sidebar nav a:focus {
+             outline: 2px solid var(--primary-color);
+             outline-offset: -2px;
+        }
+
+        .sidebar nav a.active {
+            background-color: var(--primary-color);
+            color: var(--background-color);
+            border-left-color: var(--secondary-color);
+        }
+
+        .main-content {
+            flex: 1;
+            padding: var(--spacing-unit) * 3;
+            overflow-y: auto;
+        }
+
+        .content-section {
+            display: none; /* Hidden by default */
+            margin-bottom: var(--spacing-unit) * 4;
+        }
+
+        .content-section.active {
+            display: block; /* Shown when active */
+        }
+
+        .content-section h2 {
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: var(--spacing-unit) * 3;
+            font-size: 1.8em;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: var(--spacing-unit);
+        }
+
+        .card {
+            background-color: var(--background-color);
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 8px var(--shadow-color);
+            padding: var(--spacing-unit) * 3;
+            margin-bottom: var(--spacing-unit) * 3;
+            border: 1px solid var(--border-color);
+            transition: transform var(--transition-duration) ease, box-shadow var(--transition-duration) ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow-color);
+        }
+
+        .form-group {
+            margin-bottom: var(--spacing-unit) * 2;
+        }
+
+        label {
+            display: block;
+            margin-bottom: var(--spacing-unit);
+            font-weight: 500;
+            color: var(--text-color-dark);
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="file"],
+        textarea,
+        select {
+            width: 100%;
+            padding: var(--spacing-unit) 1.5 * var(--spacing-unit);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            box-sizing: border-box; /* Include padding in width */
+            transition: border-color var(--transition-duration) ease, box-shadow var(--transition-duration) ease;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-color-dark);
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        textarea:focus,
+        select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(74, 144, 226, 0.25);
+            outline: none;
+        }
+
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        button {
+            display: inline-block;
+            padding: var(--spacing-unit) * 1.5 var(--spacing-unit) * 3;
+            background-color: var(--primary-color);
+            color: var(--background-color);
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color var(--transition-duration) ease, transform 0.1s ease, opacity var(--transition-duration) ease;
+            font-weight: 500;
+            outline: none;
+        }
+
+        button:hover {
+            background-color: #3a7bcd; /* Darker shade */
+        }
+
+        button:focus {
+            outline: 2px solid var(--secondary-color);
+            outline-offset: 2px;
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        button:disabled {
+            background-color: var(--text-color-light);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .file-upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-unit) * 4;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color var(--transition-duration) ease, background-color var(--transition-duration) ease;
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--primary-color);
+            background-color: var(--surface-color);
+        }
+
+        .file-upload-area input[type="file"] {
+            display: none;
+        }
+
+        .file-upload-area p {
+            margin: 0;
+            color: var(--text-color-light);
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            background-color: var(--border-color);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            margin-top: var(--spacing-unit) * 2;
+            height: var(--spacing-unit) * 2.5;
+            display: flex; /* Use flex for centering text */
+            align-items: center;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--secondary-color);
+            width: 0%;
+            transition: width 0.3s ease;
+            text-align: center;
+            line-height: var(--spacing-unit) * 2.5;
+            color: var(--text-color-dark);
+            font-size: 0.8em;
+            white-space: nowrap; /* Prevent text wrapping */
+            overflow: hidden;
+            justify-content: center; /* Center text */
+            align-items: center;
+            display: flex;
+        }
+
+        .data-table-container {
+            margin-top: var(--spacing-unit) * 3;
+            overflow-x: auto; /* Allow horizontal scrolling for wide tables */
+            border: 1px solid var(--border-color); /* Add border around container */
+            border-radius: var(--border-radius);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            border: 1px solid var(--border-color);
+            padding: var(--spacing-unit) 1.5 * var(--spacing-unit);
+            text-align: left;
+            font-size: 0.95em;
+        }
+
+        .data-table th {
+            background-color: var(--surface-color);
+            font-weight: 600;
+            cursor: pointer; /* Indicate sortable */
+            transition: background-color var(--transition-duration) ease;
+        }
+
+        .data-table th:hover {
+            background-color: var(--border-color);
+        }
+
+        .data-table tbody tr:nth-child(even) {
+            background-color: var(--surface-color);
+        }
+
+        .data-table tbody tr:hover {
+            background-color: var(--border-color);
+            cursor: pointer; /* Indicate clickable for detail view */
+        }
+
+        .qualitative-editor {
+            margin-top: var(--spacing-unit) * 3;
+        }
+
+        .code-list {
+            list-style: none;
+            padding: 0;
+            margin-top: var(--spacing-unit) * 2;
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-unit);
+        }
+
+        .code-item {
+            background-color: var(--secondary-color);
+            color: var(--text-color-dark);
+            padding: var(--spacing-unit) var(--spacing-unit) * 1.5;
+            border-radius: var(--border-radius);
+            font-size: 0.9em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity var(--transition-duration) ease, background-color var(--transition-duration) ease;
+            outline: none;
+        }
+
+        .code-item:hover {
+            opacity: 0.9;
+            background-color: #42c5ab; /* Slightly darker teal */
+        }
+
+         .code-item:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+
+        .chart-container {
+            margin-top: var(--spacing-unit) * 3;
+            height: 400px; /* Fixed height for charts */
+            position: relative;
+            background-color: var(--background-color);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-unit) * 2;
+            box-shadow: 0 2px 8px var(--shadow-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .floating-controls {
+            position: absolute;
+            top: var(--spacing-unit) * 2;
+            right: var(--spacing-unit) * 2;
+            background: rgba(255, 255, 255, 0.95);
+            padding: var(--spacing-unit) * 2;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 8px var(--shadow-color);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all var(--transition-duration) ease;
+            pointer-events: none;
+            z-index: 10; /* Ensure controls are above chart */
+            min-width: 200px;
+            border: 1px solid var(--border-color);
+        }
+
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .control-group {
+            margin-bottom: var(--spacing-unit) * 1.5;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-unit);
+        }
+
+        .control-group label {
+            margin-bottom: 0; /* Adjust label margin */
+            font-size: 0.9em;
+            font-weight: 400;
+            color: var(--text-color-light);
+        }
+
+         .control-group input[type="color"] {
+            padding: var(--spacing-unit); /* Smaller padding for color input */
+            height: 38px; /* Match height of other inputs */
+        }
+
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 200;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.6); /* Darker overlay */
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background-color: var(--background-color);
+            margin: auto;
+            padding: var(--spacing-unit) * 4;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 12px var(--shadow-color);
+            max-width: 800px;
+            width: 90%;
+            position: relative;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .close-button {
+            color: var(--text-color-light);
+            position: absolute;
+            top: var(--spacing-unit) * 2;
+            right: var(--spacing-unit) * 2;
+            font-size: 1.8em; /* Larger close button */
+            font-weight: bold;
+            cursor: pointer;
+            transition: color var(--transition-duration) ease;
+            outline: none;
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: var(--text-color-dark);
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+            border-bottom: 1px dotted var(--text-color-light); /* Indicate tooltip */
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--text-color-dark);
+            color: var(--background-color);
+            text-align: center;
+            border-radius: var(--border-radius);
+            padding: var(--spacing-unit);
+            position: absolute;
+            z-index: 10; /* Ensure tooltip is above other elements */
+            bottom: 125%; /* Position above the tooltip icon */
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.9em;
+            box-shadow: 0 2px 8px var(--shadow-color);
+        }
+
+         .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--text-color-dark) transparent transparent transparent;
+        }
+
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Utility classes */
+        .mt-3 { margin-top: var(--spacing-unit) * 3; }
+        .mb-3 { margin-bottom: var(--spacing-unit) * 3; }
+        .p-3 { padding: var(--spacing-unit) * 3; }
+        .text-center { text-align: center; }
+        .flex-container { display: flex; gap: var(--spacing-unit) * 2; }
+        .flex-item { flex: 1; }
+        .w-full { width: 100%; }
+
+    </style>
+</head>
+<body>
+    <header class="app-header">
+        <h1>Mixed-Methods Analysis Tool</h1>
+        <!-- User profile or settings could go here -->
+    </header>
+
+    <div class="layout-container">
+        <aside class="sidebar">
+            <nav>
+                <ul>
+                    <li><a href="#data-import" class="nav-link active">Data Import</a></li>
+                    <li><a href="#quantitative-analysis" class="nav-link">Quantitative Analysis</a></li>
+                    <li><a href="#qualitative-analysis" class="nav-link">Qualitative Analysis</a></li>
+                    <li><a href="#synthesis" class="nav-link">Synthesis</a></li>
+                    <li><a href="#reporting" class="nav-link">Reporting</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <section id="data-import" class="content-section active">
+                <h2>Data Import</h2>
+                <div class="card">
+                    <h3>Upload Your Data Files</h3>
+                    <p>Upload your quantitative and qualitative data files below. Supported formats include CSV, Excel (.xlsx, .xls) for quantitative data, and TXT, DOCX, PDF for qualitative data.</p>
+                    <div class="form-group mt-3">
+                        <label for="quantitative-file">Quantitative Data (CSV, Excel)</label>
+                        <div class="file-upload-area" id="quantitative-upload-area" tabindex="0" role="button" aria-label="Drag and drop quantitative file or click to select">
+                            <p>Drag & drop quantitative file here, or click to select.</p>
+                            <input type="file" id="quantitative-file" accept=".csv, .xlsx, .xls">
+                        </div>
+                        <div class="progress-bar-container mt-3" id="quantitative-progress-container" style="display: none;">
+                            <div class="progress-bar" id="quantitative-progress" style="width: 0%;">0%</div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="qualitative-file">Qualitative Data (TXT, DOCX, PDF)</label>
+                        <div class="file-upload-area" id="qualitative-upload-area" tabindex="0" role="button" aria-label="Drag and drop qualitative file or click to select">
+                            <p>Drag & drop qualitative file here, or click to select.</p>
+                            <input type="file" id="qualitative-file" accept=".txt, .docx, .pdf">
+                        </div>
+                         <div class="progress-bar-container mt-3" id="qualitative-progress-container" style="display: none;">
+                            <div class="progress-bar" id="qualitative-progress" style="width: 0%;">0%</div>
+                        </div>
+                    </div>
+                    <button id="upload-button" aria-label="Upload selected data files">Upload Data</button>
+                </div>
+            </section>
+
+            <section id="quantitative-analysis" class="content-section">
+                <h2>Quantitative Analysis</h2>
+                <div class="card">
+                    <h3>Data Table View</h3>
+                     <p>Review and filter your quantitative data. Click on a row for detailed information.</p>
+                    <div class="form-group flex-container" style="gap: var(--spacing-unit);">
+                         <input type="text" id="table-filter" placeholder="Filter table..." aria-label="Filter table data">
+                         <button>Apply Filter</button>
+                    </div>
+                    <div class="data-table-container">
+                        <table class="data-table" role="grid">
+                            <thead>
+                                <tr>
+                                    <th data-sort="participant-id" role="columnheader" aria-sort="none">Participant ID <span class="tooltip">? <span class="tooltiptext">Unique identifier for each participant. Click to sort.</span></span></th>
+                                    <th data-sort="age" role="columnheader" aria-sort="none">Age <span class="tooltip">? <span class="tooltiptext">Participant's age in years. Click to sort.</span></span></th>
+                                    <th data-sort="social-media-hours" role="columnheader" aria-sort="none">Social Media Hours/Day <span class="tooltip">? <span class="tooltiptext">Self-reported hours spent on social media daily. Click to sort.</span></span></th>
+                                    <th data-sort="anxiety-score" role="columnheader" aria-sort="none">Anxiety Score <span class="tooltip">? <span class="tooltiptext">Score from a standardized anxiety questionnaire. Click to sort.</span></span></th>
+                                    <th data-sort="depression-score" role="columnheader" aria-sort="none">Depression Score <span class="tooltip">? <span class="tooltiptext">Score from a standardized depression questionnaire. Click to sort.</span></span></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Example Data Rows -->
+                                <tr tabindex="0" role="row"><td>101</td><td>15</td><td>3.5</td><td>18</td><td>22</td></tr>
+                                <tr tabindex="0" role="row"><td>102</td><td>17</td><td>5.0</td><td>25</td><td>30</td></tr>
+                                <tr tabindex="0" role="row"><td>103</td><td>14</td><td>1.0</td><td>10</td><td>15</td></tr>
+                                <tr tabindex="0" role="row"><td>104</td><td>16</td><td>4.0</td><td>20</td><td>25</td></tr>
+                                <tr tabindex="0" role="row"><td>105</td><td>18</td><td>2.5</td><td>15</td><td>18</td></tr>
+                                <!-- More rows would be dynamically loaded -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                 <div class="card mt-3">
+                    <h3>Quantitative Visualizations</h3>
+                     <p>Generate and explore charts based on your quantitative data.</p>
+                    <div class="chart-container" id="quantitative-chart-area">
+                        <!-- Chart.js or D3.js charts would be rendered here -->
+                        <p class="text-center">Quantitative charts will appear here after data analysis.</p>
+                         <!-- Floating control panel placeholder -->
+                        <div class="floating-controls" id="quantitative-chart-controls">
+                            <div class="control-group">
+                                <label for="chart-type">Chart Type</label>
+                                <select id="chart-type" aria-label="Select chart type">
+                                    <option value="bar">Bar Chart</option>
+                                    <option value="line">Line Chart</option>
+                                    <option value="scatter">Scatter Plot</option>
+                                </select>
+                            </div>
+                             <div class="control-group">
+                                <label for="x-axis-var">X-Axis Variable</label>
+                                <select id="x-axis-var" aria-label="Select variable for X-axis">
+                                    <option value="">-- Select --</option>
+                                     <option value="age">Age</option>
+                                    <option value="social-media-hours">Social Media Hours/Day</option>
+                                    <option value="anxiety-score">Anxiety Score</option>
+                                    <option value="depression-score">Depression Score</option>
+                                </select>
+                            </div>
+                             <div class="control-group">
+                                <label for="y-axis-var">Y-Axis Variable</label>
+                                <select id="y-axis-var" aria-label="Select variable for Y-axis">
+                                    <option value="">-- Select --</option>
+                                     <option value="age">Age</option>
+                                    <option value="social-media-hours">Social Media Hours/Day</option>
+                                    <option value="anxiety-score">Anxiety Score</option>
+                                    <option value="depression-score">Depression Score</option>
+                                </select>
+                            </div>
+                            <button class="w-full" aria-label="Generate chart">Generate Chart</button>
+                        </div>
+                    </div>
+                 </div>
+            </section>
+
+            <section id="qualitative-analysis" class="content-section">
+                <h2>Qualitative Analysis</h2>
+                 <div class="card">
+                    <h3>Interview Transcripts / Text Data</h3>
+                     <p>View and annotate your qualitative data. Select text to apply codes.</p>
+                    <div class="qualitative-editor">
+                        <textarea placeholder="Load qualitative data here..." aria-label="Qualitative data editor"></textarea>
+                        <!-- Rich text editor features (highlighting, annotation) would be added -->
+                    </div>
+                 </div>
+                 <div class="card mt-3">
+                    <h3>Qualitative Coding & Themes</h3>
+                    <p>Define your qualitative codes and themes below. Click on a code to see its details or usage.</p>
+                    <div class="form-group">
+                        <label for="new-code">Add New Code/Theme</label>
+                        <input type="text" id="new-code" placeholder="e.g., 'Social Comparison', 'Online Harassment'" aria-label="Enter new code or theme name">
+                        <button class="mt-3" id="add-code-button" aria-label="Add new code or theme">Add Code</button>
+                    </div>
+                    <ul class="code-list" role="list">
+                        <!-- Example Codes -->
+                        <li class="code-item" tabindex="0" role="listitem">Social Comparison</li>
+                        <li class="code-item" tabindex="0" role="listitem">Online Harassment</li>
+                        <li class="code-item" tabindex="0" role="listitem">Fear of Missing Out (FOMO)</li>
+                        <li class="code-item" tabindex="0" role="listitem">Seeking Validation</li>
+                        <!-- More codes would be dynamically added -->
+                    </ul>
+                 </div>
+            </section>
+
+            <section id="synthesis" class="content-section">
+                <h2>Synthesis</h2>
+                 <div class="card">
+                    <h3>Linking Quantitative Findings to Qualitative Themes</h3>
+                    <p>Visually map connections between statistical results and qualitative insights.</p>
+                    <div class="synthesis-mapping-area chart-container">
+                         <!-- Node-link diagram or matrix view visualization here -->
+                        <p class="text-center">Synthesis visualizations will appear here.</p>
+                    </div>
+                 </div>
+                 <div class="card mt-3">
+                    <h3>Define Variables & Connections</h3>
+                    <p>Select quantitative variables and qualitative themes to define relationships for synthesis.</p>
+                    <div class="form-group">
+                        <label for="quant-variable">Select Quantitative Variable</label>
+                        <select id="quant-variable" aria-label="Select quantitative variable">
+                            <option value="">-- Select --</option>
+                            <option value="age">Age</option>
+                            <option value="social-media-hours">Social Media Hours/Day</option>
+                            <option value="anxiety-score">Anxiety Score</option>
+                            <option value="depression-score">Depression Score</option>
+                        </select>
+                    </div>
+                     <div class="form-group">
+                        <label for="qual-theme">Select Qualitative Theme</label>
+                        <select id="qual-theme" aria-label="Select qualitative theme">
+                            <option value="">-- Select --</option>
+                             <!-- Options populated from defined codes/themes -->
+                            <option value="social-comparison">Social Comparison</option>
+                            <option value="online-harassment">Online Harassment</option>
+                             <option value="fomo">Fear of Missing Out (FOMO)</option>
+                              <option value="seeking-validation">Seeking Validation</option>
+                        </select>
+                    </div>
+                    <button aria-label="Link selected variable and theme">Link Selected</button>
+                 </div>
+            </section>
+
+            <section id="reporting" class="content-section">
+                <h2>Reporting</h2>
+                 <div class="card">
+                    <h3>Generate & Export Findings</h3>
+                    <p>Prepare your synthesized findings for reporting and export them in various formats.</p>
+                    <div class="flex-container mt-3">
+                        <button class="flex-item" aria-label="Generate summary report">Generate Summary Report</button>
+                        <button class="flex-item" aria-label="Export quantitative data as CSV">Export Quantitative Data (CSV)</button>
+                        <button class="flex-item" aria-label="Export qualitative codes as JSON">Export Qualitative Codes (JSON)</button>
+                        <button class="flex-item" aria-label="Export synthesis map as image or JSON">Export Synthesis Map (Image/JSON)</button>
+                    </div>
+                 </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Example Modal for Detail View -->
+    <div id="detailModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-content">
+            <span class="close-button" tabindex="0" role="button" aria-label="Close modal">&times;</span>
+            <h3 id="modal-title">Detail View</h3>
+            <div id="modal-body-content">
+                <!-- Content for detailed data point or qualitative excerpt -->
+                <p>This is a placeholder for detailed information about a selected data point or qualitative excerpt.</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import Chart.js (placeholder - actual chart rendering logic would go here)
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const navLinks = document.querySelectorAll('.sidebar .nav-link');
+            const sections = document.querySelectorAll('.main-content .content-section');
+            const uploadAreas = document.querySelectorAll('.file-upload-area');
+            const uploadInputs = document.querySelectorAll('.file-upload-area input[type="file"]');
+            const quantitativeProgress = document.getElementById('quantitative-progress');
+            const qualitativeProgress = document.getElementById('qualitative-progress');
+            const quantitativeProgressContainer = document.getElementById('quantitative-progress-container');
+            const qualitativeProgressContainer = document.getElementById('qualitative-progress-container');
+            const uploadButton = document.getElementById('upload-button');
+            const modal = document.getElementById('detailModal');
+            const closeButton = document.querySelector('.modal .close-button');
+            const modalBodyContent = document.getElementById('modal-body-content');
+            const dataTableRows = document.querySelectorAll('.data-table tbody tr');
+            const codeItems = document.querySelectorAll('.code-list .code-item');
+            const addCodeButton = document.getElementById('add-code-button');
+            const newCodeInput = document.getElementById('new-code');
+            const codeList = document.querySelector('.code-list');
+            const quantitativeChartArea = document.getElementById('quantitative-chart-area');
+            const quantitativeChartControls = document.getElementById('quantitative-chart-controls');
+
+            // --- Navigation ---
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = link.getAttribute('href').substring(1);
+
+                    // Remove active class from all links and sections
+                    navLinks.forEach(l => {
+                        l.classList.remove('active');
+                        l.setAttribute('aria-current', 'false');
+                    });
+                    sections.forEach(s => {
+                        s.classList.remove('active');
+                        s.setAttribute('aria-hidden', 'true');
+                    });
+
+                    // Add active class to the clicked link and corresponding section
+                    link.classList.add('active');
+                    link.setAttribute('aria-current', 'page');
+                    const targetSection = document.getElementById(targetId);
+                    targetSection.classList.add('active');
+                    targetSection.setAttribute('aria-hidden', 'false');
+
+                    // Scroll to top of main content when navigating
+                    document.querySelector('.main-content').scrollTop = 0;
+                });
+            });
+
+             // Set initial aria-hidden state for sections
+            sections.forEach(s => {
+                if (!s.classList.contains('active')) {
+                    s.setAttribute('aria-hidden', 'true');
+                } else {
+                     s.setAttribute('aria-hidden', 'false');
+                }
+            });
+             // Set initial aria-current state for nav links
+             navLinks.forEach(l => {
+                if (l.classList.contains('active')) {
+                    l.setAttribute('aria-current', 'page');
+                } else {
+                     l.setAttribute('aria-current', 'false');
+                }
+             });
+
+
+            // --- File Upload ---
+            uploadAreas.forEach(area => {
+                const input = area.querySelector('input[type="file"]');
+
+                // Click to open file dialog
+                area.addEventListener('click', () => {
+                    input.click();
+                });
+                 // Keyboard support for file area
+                area.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        input.click();
+                    }
+                });
+
+                // Drag and drop feedback
+                area.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    area.style.borderColor = "var(--primary-color)";
+                    area.style.backgroundColor = "var(--surface-color)";
+                });
+
+                 area.addEventListener('dragleave', (e) => {
+                    e.preventDefault();
+                    area.style.borderColor = "var(--border-color)";
+                    area.style.backgroundColor = "transparent";
+                });
+
+                area.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    area.style.borderColor = "var(--border-color)";
+                    area.style.backgroundColor = "transparent";
+                    if (e.dataTransfer.files.length > 0) {
+                         input.files = e.dataTransfer.files;
+                         // Trigger change event manually
+                         const event = new Event('change', { bubbles: true });
+                         input.dispatchEvent(event);
+                    }
+                });
+
+                // Handle file selection
+                input.addEventListener('change', (e) => {
+                    const files = e.target.files;
+                    const area = input.closest('.file-upload-area');
+                    const paragraph = area.querySelector('p');
+
+                    if (files.length > 0) {
+                        console.log(`Selected file for ${input.id}: ${files[0].name}`);
+                        paragraph.textContent = `File selected: ${files[0].name}`;
+                        // Check if both files are selected to enable upload button
+                        checkUploadButtonStatus();
+                    } else {
+                         // Reset text if file selection is cancelled
+                         if (input.id === 'quantitative-file') {
+                            paragraph.textContent = 'Drag & drop quantitative file here, or click to select.';
+                         } else {
+                             paragraph.textContent = 'Drag & drop qualitative file here, or click to select.';
+                         }
+                         checkUploadButtonStatus();
+                    }
+                });
+            });
+
+            // Check if both files are selected
+            function checkUploadButtonStatus() {
+                 const quantitativeFileSelected = document.getElementById('quantitative-file').files.length > 0;
+                 const qualitativeFileSelected = document.getElementById('qualitative-file').files.length > 0;
+                 uploadButton.disabled = !(quantitativeFileSelected && qualitativeFileSelected);
+            }
+
+             // Initial check for upload button status
+             checkUploadButtonStatus();
+
+
+             uploadButton.addEventListener('click', () => {
+                console.log('Simulating file upload...');
+
+                // Reset progress bars
+                quantitativeProgress.style.width = '0%';
+                quantitativeProgress.textContent = '0%';
+                qualitativeProgress.style.width = '0%';
+                qualitativeProgress.textContent = '0%';
+                quantitativeProgressContainer.style.display = 'flex'; // Use flex to center text
+                qualitativeProgressContainer.style.display = 'flex'; // Use flex to center text
+
+
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 5; // Smaller increments for smoother animation
+                    if (progress <= 100) {
+                         const displayProgress = Math.min(progress, 100); // Cap at 100
+                         quantitativeProgress.style.width = `${displayProgress}%`;
+                         quantitativeProgress.textContent = `${displayProgress}%`;
+                         qualitativeProgress.style.width = `${displayProgress}%`;
+                         qualitativeProgress.textContent = `${displayProgress}%`;
+                    } else {
+                        clearInterval(interval);
+                        console.log('Upload complete!');
+                         quantitativeProgress.textContent = `Upload Complete!`;
+                         qualitativeProgress.textContent = `Upload Complete!`;
+                         // Optionally hide progress bars after a delay or show success state
+                         // setTimeout(() => {
+                         //     quantitativeProgressContainer.style.display = 'none';
+                         //     qualitativeProgressContainer.style.display = 'none';
+                         // }, 2000);
+                         uploadButton.disabled = true; // Disable after upload
+                    }
+                }, 100); // Faster interval
+            });
+
+            // --- Modal Interaction ---
+            function openModal(title, contentHtml) {
+                 document.getElementById('modal-title').textContent = title;
+                 modalBodyContent.innerHTML = contentHtml;
+                 modal.classList.add('active');
+                 modal.setAttribute('aria-hidden', 'false');
+                 // Focus on the close button when modal opens for accessibility
+                 closeButton.focus();
+            }
+
+            function closeModal() {
+                modal.classList.remove('active');
+                modal.setAttribute('aria-hidden', 'true');
+                 // Optionally return focus to the element that opened the modal
+                 // (Requires storing the triggering element)
+            }
+
+            // Open modal when clicking a data row
+            dataTableRows.forEach(row => {
+                row.addEventListener('click', () => {
+                    // In a real app, populate modal with actual data based on row ID
+                    const participantId = row.cells[0].textContent;
+                    const age = row.cells[1].textContent;
+                    const smHours = row.cells[2].textContent;
+                    const anxiety = row.cells[3].textContent;
+                    const depression = row.cells[4].textContent;
+
+                    const content = `
+                        <p><strong>Participant ID:</strong> ${participantId}</p>
+                        <p><strong>Age:</strong> ${age}</p>
+                        <p><strong>Social Media Hours/Day:</strong> ${smHours}</p>
+                        <p><strong>Anxiety Score:</strong> ${anxiety}</p>
+                        <p><strong>Depression Score:</strong> ${depression}</p>
+                        <p class="mt-3"><em>Qualitative excerpts linked to this participant would appear here.</em></p>
+                    `;
+                    openModal('Participant Details', content);
+                });
+                 // Keyboard support for data rows
+                row.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                         row.click(); // Trigger click event
+                    }
+                });
+            });
+
+             // Open modal when clicking a qualitative code
+             codeItems.forEach(codeItem => {
+                codeItem.addEventListener('click', () => {
+                     // In a real app, populate modal with code definition or related excerpts
+                    const codeText = codeItem.textContent;
+                    const content = `
+                        <p><strong>Code/Theme:</strong> ${codeText}</p>
+                        <p class="mt-3">This section would show the definition of the code/theme and potentially list linked qualitative excerpts from transcripts.</p>
+                    `;
+                    openModal('Code/Theme Details', content);
+                });
+                 // Keyboard support for code items
+                codeItem.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                         codeItem.click(); // Trigger click event
+                    }
+                });
+            });
+
+
+            closeButton.addEventListener('click', closeModal);
+            closeButton.addEventListener('keydown', (e) => {
+                 if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    closeModal();
+                 }
+            });
+
+
+            // Close modal when clicking outside
+            window.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+
+             // Close modal with Escape key
+            window.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && modal.classList.contains('active')) {
+                    closeModal();
+                }
+            });
+
+
+            // --- Qualitative Coding ---
+            addCodeButton.addEventListener('click', () => {
+                 const newCodeText = newCodeInput.value.trim();
+                 if (newCodeText) {
+                     const newCodeItem = document.createElement('li');
+                     newCodeItem.classList.add('code-item');
+                     newCodeItem.setAttribute('tabindex', '0');
+                     newCodeItem.setAttribute('role', 'listitem');
+                     newCodeItem.textContent = newCodeText;
+                     codeList.appendChild(newCodeItem);
+                     newCodeInput.value = '';
+                     console.log(`Added new code: ${newCodeText}`);
+
+                     // Add event listeners to the new code item
+                     newCodeItem.addEventListener('click', () => {
+                         const content = `
+                            <p><strong>Code/Theme:</strong> ${newCodeItem.textContent}</p>
+                            <p class="mt-3">This section would show the definition of the code/theme and potentially list linked qualitative excerpts from transcripts.</p>
+                        `;
+                        openModal('Code/Theme Details', content);
+                     });
+                     newCodeItem.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            newCodeItem.click();
+                        }
+                    });
+
+                    // Add new code to the Synthesis select dropdown (placeholder)
+                    const qualThemeSelect = document.getElementById('qual-theme');
+                    const newOption = document.createElement('option');
+                    newOption.value = newCodeText.toLowerCase().replace(/\s+/g, '-');
+                    newOption.textContent = newCodeText;
+                    qualThemeSelect.appendChild(newOption);
+
+                 } else {
+                     alert('Please enter a code or theme name.');
+                 }
+            });
+            // Allow adding code with Enter key in input
+            newCodeInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addCodeButton.click();
+                }
+            });
+
+
+            // --- Quantitative Table Sorting (Placeholder) ---
+            document.querySelectorAll('.data-table th[data-sort]').forEach(header => {
+                header.addEventListener('click', () => {
+                    const sortKey = header.getAttribute('data-sort');
+                    const currentSort = header.getAttribute('aria-sort');
+                    let newSort = 'ascending';
+
+                    if (currentSort === 'ascending') {
+                        newSort = 'descending';
+                    } else if (currentSort === 'descending') {
+                        newSort = 'none'; // Or cycle back to ascending/default
+                    }
+
+                    // Reset other headers
+                    document.querySelectorAll('.data-table th[data-sort]').forEach(th => {
+                        if (th !== header) {
+                            th.setAttribute('aria-sort', 'none');
+                        }
+                    });
+
+                    header.setAttribute('aria-sort', newSort);
+                    console.log(`Sorting table by ${sortKey} in ${newSort} order.`);
+
+                    // TODO: Implement actual sorting logic here
+                });
+            });
+
+             // --- Quantitative Chart Controls Toggle (Placeholder) ---
+             // Show controls when clicking the chart area (placeholder)
+            quantitativeChartArea.addEventListener('click', (e) => {
+                // Prevent closing if clicking inside controls
+                if (!e.target.closest('.floating-controls')) {
+                    quantitativeChartControls.classList.toggle('active');
+                }
+            });
+
+            // Close controls when clicking outside the chart area or controls
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.chart-container')) {
+                    quantitativeChartControls.classList.remove('active');
+                }
+            });
+
+            // Prevent click on controls from closing the controls
+            quantitativeChartControls.addEventListener('click', (e) => {
+                 e.stopPropagation();
+            });
+
+
+            // Placeholder for chart generation logic
+            document.querySelector('#quantitative-chart-controls button').addEventListener('click', () => {
+                 const chartType = document.getElementById('chart-type').value;
+                 const xAxis = document.getElementById('x-axis-var').value;
+                 const yAxis = document.getElementById('y-axis-var').value;
+
+                 if (!xAxis || !yAxis) {
+                     alert('Please select both X and Y axis variables.');
+                     return;
+                 }
+
+                 console.log(`Simulating chart generation: Type=${chartType}, X=${xAxis}, Y=${yAxis}`);
+                 // TODO: Implement Chart.js instantiation and data loading here
+                 const chartPlaceholder = quantitativeChartArea.querySelector('p');
+                 if (chartPlaceholder) {
+                     chartPlaceholder.textContent = `Generating ${chartType} chart for ${yAxis} vs ${xAxis}...`;
+                 }
+                 // In a real app, you would clear the placeholder and draw the chart.
+            });
+
+
+        });
+    </script>
+</body>
+</html>

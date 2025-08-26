@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technical Manual Localization Tool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007acc; /* VSCode blue */
+            --primary-color-dark: #005f99;
+            --secondary-color: #5cb85c; /* Success green */
+            --accent-color: #f0ad4e; /* Warning orange */
+            --background-color: #f4f7f6; /* Light grey background */
+            --surface-color: #ffffff; /* White surfaces */
+            --text-color: #333;
+            --text-color-light: #666;
+            --border-color: #ddd;
+            --sidebar-width: 280px;
+            --sidebar-collapsed-width: 60px;
+            --header-height: 60px;
+            --panel-width: 350px;
+            --spacing-unit: 8px;
+            --transition-speed: 0.3s;
+            --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            overflow: hidden; /* Prevent body scroll */
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .layout-container {
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr;
+            grid-template-rows: var(--header-height) 1fr;
+            height: 100%;
+            transition: grid-template-columns var(--transition-speed) ease;
+        }
+
+        .layout-container.sidebar-collapsed {
+            grid-template-columns: var(--sidebar-collapsed-width) 1fr;
+        }
+
+        header {
+            grid-column: 1 / -1;
+            grid-row: 1;
+            background-color: var(--surface-color);
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            padding: 0 calc(var(--spacing-unit) * 2);
+            z-index: 10;
+            position: relative;
+        }
+
+        .header-left,
+        .header-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .header-left {
+            flex-grow: 1;
+        }
+
+        .logo {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-right: calc(var(--spacing-unit) * 2);
+            white-space: nowrap;
+        }
+
+        .document-title {
+            font-size: 1.1em;
+            font-weight: 500;
+            color: var(--text-color-light);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-right: var(--spacing-unit); /* Add spacing */
+        }
+
+        .header-right > * {
+            margin-left: var(--spacing-unit);
+        }
+
+        button {
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 500;
+            transition: background-color var(--transition-speed) ease, opacity var(--transition-speed) ease, transform var(--transition-speed) ease;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-unit);
+            white-space: nowrap;
+        }
+
+        button .material-icons-round {
+            font-size: 18px;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        button:not(:disabled):active {
+             transform: scale(0.98);
+        }
+
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:not(:disabled):hover {
+            background-color: var(--primary-color-dark);
+        }
+
+        .btn-secondary {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:not(:disabled):hover {
+            background-color: #e0e0e0;
+            border-color: #c0c0c0;
+        }
+
+        .language-toggle {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+        }
+
+        .language-toggle:not(:disabled):hover {
+            background-color: var(--background-color);
+        }
+
+        aside {
+            grid-row: 2;
+            grid-column: 1;
+            background-color: var(--surface-color);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            padding: var(--spacing-unit) 0;
+            width: var(--sidebar-width); /* Base width */
+            flex-shrink: 0;
+            box-sizing: border-box;
+        }
+
+         .layout-container.sidebar-collapsed aside {
+            width: var(--sidebar-collapsed-width); /* Collapsed width */
+            overflow: hidden; /* Hide content */
+         }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 calc(var(--spacing-unit) * 2) var(--spacing-unit);
+            height: 40px; /* Match toggle button height */
+        }
+        .layout-container.sidebar-collapsed .sidebar-header {
+             justify-content: center;
+             padding: 0 var(--spacing-unit) var(--spacing-unit);
+        }
+
+        .sidebar-title {
+            font-size: 1.1em;
+            font-weight: 500;
+            margin: 0;
+             white-space: nowrap;
+             overflow: hidden;
+             text-overflow: ellipsis;
+             transition: opacity var(--transition-speed) ease;
+        }
+         .layout-container.sidebar-collapsed .sidebar-title {
+             opacity: 0; /* Hide title when collapsed */
+             width: 0; /* Collapse width */
+             padding: 0;
+             margin: 0;
+         }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: var(--spacing-unit);
+            border-radius: 4px;
+            transition: background-color var(--transition-speed) ease, transform var(--transition-speed) ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+             width: 40px; /* Fixed size for toggle button */
+             height: 40px;
+        }
+         .layout-container.sidebar-collapsed .sidebar-toggle {
+             transform: rotate(180deg);
+         }
+
+        .sidebar-toggle:hover {
+            background-color: var(--background-color);
+        }
+
+        .sidebar-nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-nav li {
+            margin: 0;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            text-decoration: none;
+            color: var(--text-color);
+            transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
+            font-size: 0.95em;
+             white-space: nowrap;
+             overflow: hidden;
+             text-overflow: ellipsis;
+             min-height: 40px; /* Ensure clickable area */
+        }
+         .layout-container.sidebar-collapsed .sidebar-nav a {
+             justify-content: center;
+             padding: var(--spacing-unit);
+         }
+
+
+        .sidebar-nav a:hover {
+            background-color: var(--background-color);
+        }
+
+        .sidebar-nav a.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+         .layout-container.sidebar-collapsed .sidebar-nav a.active {
+             background-color: var(--primary-color);
+         }
+
+        .sidebar-nav a .progress-indicator {
+            margin-left: auto;
+            font-size: 0.8em;
+            color: var(--text-color-light);
+            transition: opacity var(--transition-speed) ease;
+        }
+         .layout-container.sidebar-collapsed .sidebar-nav a .progress-indicator {
+             opacity: 0; /* Hide progress when collapsed */
+             width: 0; /* Collapse width */
+             padding: 0;
+             margin: 0;
+         }
+
+        .sidebar-nav a.active .progress-indicator {
+             color: rgba(255, 255, 255, 0.8);
+        }
+
+
+        main {
+            grid-row: 2;
+            grid-column: 2;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Prevent main content scroll affecting body */
+            position: relative; /* Needed for panel positioning */
+        }
+
+        .editor-toolbar {
+            background-color: var(--surface-color);
+            padding: var(--spacing-unit);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            gap: var(--spacing-unit);
+            flex-wrap: wrap;
+            z-index: 5;
+            flex-shrink: 0; /* Prevent toolbar from shrinking */
+        }
+
+        .editor-toolbar button {
+            padding: var(--spacing-unit);
+            border: 1px solid var(--border-color);
+            background-color: transparent;
+            color: var(--text-color);
+            border-radius: 4px;
+            font-size: 1em; /* Adjust size */
+            line-height: 1;
+            height: 32px; /* Fixed height for buttons */
+            width: 32px; /* Fixed width for buttons */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+            position: relative; /* For tooltip */
+        }
+
+        .editor-toolbar button .material-icons-round {
+            font-size: 20px; /* Adjust icon size */
+        }
+
+         .editor-toolbar button:not(:disabled):hover {
+            background-color: var(--background-color);
+            border-color: #ccc;
+         }
+
+
+        .bilingual-editor {
+            flex-grow: 1;
+            display: flex;
+            overflow: hidden; /* Allow editor panes to scroll */
+        }
+
+        .editor-pane {
+            flex: 1;
+            padding: calc(var(--spacing-unit) * 2);
+            overflow-y: auto; /* Enable scrolling */
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .editor-pane:first-child {
+            border-left: none;
+        }
+
+        .editor-pane h3 {
+            margin-top: 0;
+            margin-bottom: var(--spacing-unit);
+            font-size: 1em;
+            font-weight: 500;
+            color: var(--text-color-light);
+            flex-shrink: 0; /* Prevent heading from shrinking */
+        }
+
+        .editor-content {
+            flex-grow: 1;
+            outline: none;
+            min-height: calc(100% - 1.6em - var(--spacing-unit)); /* Ensure contenteditable fills space below heading */
+            padding-bottom: 100px; /* Add padding to scroll past last line */
+             /* Basic Rich Text Styles */
+             & p { margin-bottom: var(--spacing-unit); }
+             & strong { font-weight: bold; }
+             & em { font-style: italic; }
+             & ul, & ol { margin-bottom: var(--spacing-unit); padding-left: calc(var(--spacing-unit) * 3); }
+             & li { margin-bottom: var(--spacing-unit) * 0.5; }
+        }
+
+        .editor-content:empty::before {
+            content: attr(data-placeholder);
+            color: var(--text-color-light);
+            opacity: 0.6;
+        }
+
+        /* Panel Styles */
+        .panel {
+            position: fixed;
+            top: var(--header-height);
+            right: 0;
+            bottom: 0;
+            width: var(--panel-width);
+            background-color: var(--surface-color);
+            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+            transform: translateX(var(--panel-width));
+            transition: transform var(--transition-speed) ease-in-out;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel.open {
+            transform: translateX(0);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .panel-title {
+            font-size: 1.2em;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .panel-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: var(--spacing-unit);
+            border-radius: 4px;
+            transition: background-color var(--transition-speed) ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+             width: 40px; /* Fixed size */
+             height: 40px;
+        }
+
+        .panel-close:hover {
+            background-color: var(--background-color);
+        }
+
+        .panel-content {
+            flex-grow: 1;
+            padding: calc(var(--spacing-unit) * 2);
+            overflow-y: auto;
+        }
+
+        /* Specific Panel Content Styles */
+        #glossary-panel .panel-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+        }
+        #glossary-panel .panel-content th,
+        #glossary-panel .panel-content td {
+            border: 1px solid var(--border-color);
+            padding: var(--spacing-unit);
+            text-align: left;
+            font-size: 0.9em;
+        }
+         #glossary-panel .panel-content th {
+             background-color: var(--background-color);
+             font-weight: 500;
+         }
+         #glossary-panel .panel-content td {
+             word-break: break-word; /* Prevent long words from overflowing */
+         }
+
+
+        #cultural-notes-panel .panel-content div {
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            padding-bottom: calc(var(--spacing-unit) * 2);
+            border-bottom: 1px dashed var(--border-color);
+        }
+         #cultural-notes-panel .panel-content div:last-child {
+             border-bottom: none;
+         }
+
+        #cultural-notes-panel .panel-content h4 {
+            margin-top: 0;
+            margin-bottom: var(--spacing-unit);
+            font-size: 1em;
+            font-weight: 500;
+        }
+         #cultural-notes-panel .panel-content p {
+             font-size: 0.9em;
+             color: var(--text-color-light);
+         }
+
+        #review-panel .panel-content .review-item {
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            padding: var(--spacing-unit);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--accent-color);
+            border-radius: 4px;
+            background-color: var(--background-color);
+        }
+         #review-panel .panel-content .review-item p {
+             margin: 0 0 var(--spacing-unit);
+             font-size: 0.9em;
+             color: var(--text-color);
+         }
+         #review-panel .panel-content .review-item strong {
+             color: var(--text-color-light);
+         }
+         #review-panel .panel-content .review-item .actions {
+             display: flex;
+             gap: var(--spacing-unit);
+             margin-top: var(--spacing-unit);
+         }
+         #review-panel .panel-content .review-item .actions button {
+             padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+             font-size: 0.8em;
+             height: auto;
+             width: auto;
+         }
+         #review-panel .panel-content .review-item .actions .btn-secondary {
+             background-color: var(--surface-color);
+         }
+         #review-panel .panel-content .review-item .actions .btn-secondary:hover {
+             background-color: #eee;
+         }
+
+
+        /* Contextual Help Tooltip */
+        [data-tooltip] {
+             position: relative; /* Needed for pseudo-element positioning */
+        }
+
+        [data-tooltip]:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            background-color: rgba(51, 51, 51, 0.9); /* Dark background */
+            color: white;
+            padding: var(--spacing-unit);
+            border-radius: 4px;
+            font-size: 0.8em;
+            bottom: 100%; /* Position above element */
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            z-index: 30;
+            margin-bottom: var(--spacing-unit);
+            pointer-events: none; /* Allow interaction with element below */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--transition-speed) ease, visibility var(--transition-speed) ease;
+        }
+
+        [data-tooltip]:hover::after,
+        [data-tooltip]:focus::after {
+             opacity: 1;
+             visibility: visible;
+        }
+
+
+        /* Overall Progress Indicator */
+        .overall-progress {
+            display: flex;
+            align-items: center;
+            margin-left: calc(var(--spacing-unit) * 2);
+            font-size: 0.9em;
+            color: var(--text-color-light);
+            white-space: nowrap;
+        }
+
+        .progress-bar-container {
+            width: 100px;
+            height: 8px;
+            background-color: var(--border-color);
+            border-radius: 4px;
+            margin-left: var(--spacing-unit);
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%; /* Will be set by JS */
+            background-color: var(--secondary-color);
+            transition: width var(--transition-speed) ease;
+        }
+         #overall-progress-text {
+             margin-left: var(--spacing-unit);
+             font-weight: 500;
+             color: var(--text-color);
+         }
+
+        /* Scrollbar Styling (Webkit, Firefox) */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--background-color);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Firefox scrollbar */
+        * {
+            scrollbar-width: thin; /* "auto" or "thin" */
+            scrollbar-color: #888 var(--background-color); /* thumb track */
+        }
+         *:hover {
+             scrollbar-color: #555 var(--background-color);
+         }
+
+
+        /* Mobile/Tablet Responsiveness */
+        @media (max-width: 768px) {
+            .layout-container {
+                grid-template-columns: 1fr; /* Stack layout */
+                grid-template-rows: var(--header-height) auto 1fr;
+                height: 100%; /* Ensure container takes full height */
+            }
+
+            header {
+                 padding: 0 var(--spacing-unit); /* Reduce header padding */
+            }
+
+            .logo {
+                 margin-right: var(--spacing-unit);
+            }
+
+            .document-title {
+                 font-size: 1em;
+                 margin-right: var(--spacing-unit);
+            }
+
+            .overall-progress {
+                 margin-left: var(--spacing-unit);
+                 font-size: 0.8em;
+            }
+             .progress-bar-container {
+                 width: 60px; /* Smaller progress bar */
+             }
+            #overall-progress-text {
+                font-size: 1em;
+            }
+
+            .header-right > * {
+                 margin-left: var(--spacing-unit) * 0.5; /* Reduce spacing */
+            }
+
+            button {
+                 padding: var(--spacing-unit) calc(var(--spacing-unit) * 1); /* Reduce button padding */
+                 gap: var(--spacing-unit) * 0.5;
+            }
+             button .material-icons-round {
+                 font-size: 16px; /* Smaller icons */
+             }
+             .language-toggle {
+                 padding: var(--spacing-unit) calc(var(--spacing-unit) * 1);
+             }
+
+
+            aside {
+                grid-row: 2; /* Sidebar below header */
+                grid-column: 1;
+                width: 100%;
+                height: auto; /* Auto height for collapsed/expanded */
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                overflow-y: hidden; /* Prevent scroll on collapsed sidebar */
+                max-height: var(--header-height); /* Collapsed height */
+                transition: max-height var(--transition-speed) ease-in-out;
+            }
+
+             aside.expanded {
+                 max-height: 80vh; /* Example expanded height */
+                 overflow-y: auto;
+             }
+
+            .sidebar-header {
+                padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+                justify-content: space-between; /* Always show toggle */
+            }
+             .layout-container.sidebar-collapsed .sidebar-header {
+                 justify-content: space-between;
+                 padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+             }
+
+            .sidebar-title {
+                 display: block; /* Always show title on mobile */
+                 opacity: 1;
+                 width: auto;
+                 padding: 0;
+                 margin: 0;
+                 flex-grow: 1; /* Allow title to take space */
+                 margin-right: var(--spacing-unit);
+            }
+            .layout-container.sidebar-collapsed .sidebar-title {
+                 opacity: 1;
+                 width: auto;
+                 margin-right: var(--spacing-unit);
+            }
+
+            .sidebar-toggle {
+                 transform: none; /* Reset rotation */
+            }
+             aside.expanded .sidebar-toggle {
+                 transform: rotate(180deg); /* Rotate when expanded */
+             }
+             .layout-container.sidebar-collapsed .sidebar-toggle {
+                 transform: none;
+             }
+
+
+            .sidebar-nav {
+                 max-height: 0;
+                 overflow: hidden;
+                 transition: max-height var(--transition-speed) ease-in-out;
+            }
+             aside.expanded .sidebar-nav {
+                 max-height: calc(80vh - var(--header-height)); /* Fill remaining space */
+                 overflow-y: auto;
+             }
+
+            .sidebar-nav a {
+                justify-content: flex-start;
+                 padding: var(--spacing-unit) calc(var(--spacing-unit) * 2); /* Restore padding */
+            }
+             .layout-container.sidebar-collapsed .sidebar-nav a {
+                 justify-content: flex-start;
+             }
+
+             .sidebar-nav a .progress-indicator {
+                 opacity: 1; /* Show progress on mobile */
+                 width: auto;
+                 padding: 0;
+                 margin-left: auto;
+             }
+             .layout-container.sidebar-collapsed .sidebar-nav a .progress-indicator {
+                 opacity: 1;
+             }
+
+
+            main {
+                grid-row: 3; /* Main content below sidebar */
+                grid-column: 1;
+            }
+
+            .editor-toolbar {
+                 padding: var(--spacing-unit) * 0.5; /* Reduce toolbar padding */
+                 gap: var(--spacing-unit) * 0.5;
+                 justify-content: center; /* Center buttons if they wrap */
+            }
+             .editor-toolbar button {
+                 width: 30px; /* Smaller buttons */
+                 height: 30px;
+             }
+             .editor-toolbar button .material-icons-round {
+                 font-size: 18px; /* Smaller icons */
+             }
+
+
+            .bilingual-editor {
+                flex-direction: column; /* Stack panes vertically */
+            }
+
+            .editor-pane {
+                border-left: none;
+                border-bottom: 1px solid var(--border-color);
+                padding: var(--spacing-unit); /* Reduce pane padding */
+            }
+
+            .editor-pane:last-child {
+                border-bottom: none;
+            }
+
+            .panel {
+                width: 90%; /* Wider panels on mobile */
+                right: 5%;
+                left: 5%;
+                transform: translateX(110%); /* Adjust slide-in position */
+                 top: var(--header-height);
+                 bottom: 0;
+                 height: auto; /* Auto height */
+            }
+
+            .panel.open {
+                transform: translateX(0);
+            }
+
+             .panel-header {
+                 padding: var(--spacing-unit); /* Reduce panel header padding */
+             }
+             .panel-content {
+                 padding: var(--spacing-unit); /* Reduce panel content padding */
+             }
+        }
+         @media (max-width: 480px) {
+             .header-left {
+                 flex-direction: column;
+                 align-items: flex-start;
+             }
+             .logo {
+                 margin-bottom: var(--spacing-unit) * 0.5;
+                 margin-right: 0;
+             }
+             .document-title {
+                 font-size: 0.9em;
+                 margin-right: 0;
+             }
+             .overall-progress {
+                 margin-left: 0;
+                 margin-top: var(--spacing-unit) * 0.5;
+                 font-size: 0.7em;
+             }
+             .header-right {
+                 flex-direction: column;
+                 align-items: flex-end;
+             }
+             .header-right > * {
+                 margin-left: 0;
+                 margin-top: var(--spacing-unit) * 0.5;
+             }
+             button {
+                 width: 100%; /* Full width buttons */
+                 justify-content: center;
+             }
+             .language-toggle, .btn-secondary, .btn-primary {
+                 width: auto; /* Auto width for better look */
+                 justify-content: center;
+             }
+         }
+    </style>
+</head>
+<body>
+    <div class="layout-container">
+        <header>
+            <div class="header-left">
+                <div class="logo">TechTranslate</div>
+                <div class="document-title">User Manual v1.0</div>
+                <div class="overall-progress">
+                    Progress:
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" style="width: 45%;"></div>
+                    </div>
+                    <span id="overall-progress-text">45%</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="language-toggle" aria-label="Toggle Language View">English / Español</button>
+                <button class="btn-secondary" aria-label="Save Document"><span class="material-icons-round">save</span> Save</button>
+                <button class="btn-primary" aria-label="Export Document"><span class="material-icons-round">download</span> Export</button>
+            </div>
+        </header>
+
+        <aside id="sidebar">
+            <div class="sidebar-header">
+                <h2 class="sidebar-title">Sections</h2>
+                <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle Sidebar" aria-expanded="true">
+                    <span class="material-icons-round">chevron_left</span>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#section-1" class="active" aria-current="page">1. Safety Warnings <span class="progress-indicator">100%</span></a></li>
+                    <li><a href="#section-2">2. Installation <span class="progress-indicator">75%</span></a></li>
+                    <li><a href="#section-3">3. Operation <span class="progress-indicator">30%</span></a></li>
+                    <li><a href="#section-4">4. Maintenance <span class="progress-indicator">0%</span></a></li>
+                    <li><a href="#section-5">5. Troubleshooting <span class="progress-indicator">0%</span></a></li>
+                    <li><a href="#section-6">6. Specifications <span class="progress-indicator">100%</span></a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main>
+            <div class="editor-toolbar" role="toolbar" aria-label="Rich Text Editor Toolbar">
+                <button data-tooltip="Bold" aria-label="Bold"><span class="material-icons-round">format_bold</span></button>
+                <button data-tooltip="Italic" aria-label="Italic"><span class="material-icons-round">format_italic</span></button>
+                <button data-tooltip="Underline" aria-label="Underline"><span class="material-icons-round">format_underline</span></button>
+                <button data-tooltip="Bulleted List" aria-label="Bulleted List"><span class="material-icons-round">format_list_bulleted</span></button>
+                <button data-tooltip="Numbered List" aria-label="Numbered List"><span class="material-icons-round">format_list_numbered</span></button>
+                <button data-tooltip="Link Glossary Term" id="open-glossary-panel" aria-label="Open Glossary Panel"><span class="material-icons-round">book</span></button>
+                <button data-tooltip="Add Cultural Note" id="open-cultural-notes-panel" aria-label="Open Cultural Notes Panel"><span class="material-icons-round">flag</span></button>
+                <button data-tooltip="Review Comments" id="open-review-panel" aria-label="Open Review Panel"><span class="material-icons-round">comment</span></button>
+            </div>
+            <div class="bilingual-editor">
+                <div class="editor-pane english-pane">
+                    <h3>English Source</h3>
+                    <div class="editor-content" contenteditable="false" data-placeholder="Load English content here..." aria-label="English Source Text (Read-only)">
+                        <p><strong>Safety Warnings:</strong> Read all instructions before using the device. Keep away from water. Use only approved power adapters.</p>
+                        <p><strong>Installation:</strong> Connect the power cable. Press the power button. The indicator light will turn on.</p>
+                        <p><strong>Operation:</strong> Use the remote control. Navigate the menu. Select the desired option.</p>
+                    </div>
+                </div>
+                <div class="editor-pane spanish-pane">
+                    <h3>Spanish Translation (Mexico)</h3>
+                    <div class="editor-content" contenteditable="true" data-placeholder="Translate content here..." aria-label="Spanish Translation Text (Editable)">
+                         <p><strong>Advertencias de Seguridad:</strong> Lea todas las instrucciones antes de usar el dispositivo. Manténgase alejado del agua. Utilice únicamente adaptadores de corriente aprobados.</p>
+                        <p><strong>Instalación:</strong> Conecte el cable de alimentación. Presione el botón de encendido. La luz indicadora se encenderá.</p>
+                        <p><strong>Operación:</strong> Utilice el control remoto. Navegue por el menú. Seleccione la opción deseada.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Panels -->
+        <div id="glossary-panel" class="panel" role="dialog" aria-labelledby="glossary-panel-title" aria-hidden="true">
+            <div class="panel-header">
+                <h3 id="glossary-panel-title" class="panel-title">Glossary</h3>
+                <button class="panel-close" data-panel-id="glossary-panel" aria-label="Close Glossary Panel"><span class="material-icons-round">close</span></button>
+            </div>
+            <div class="panel-content">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>English Term</th>
+                            <th>Spanish (MX)</th>
+                            <th>Definition</th>
+                            <th>Context/Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Power Adapter</td>
+                            <td>Adaptador de corriente</td>
+                            <td>Device that converts AC to DC power for the product.</td>
+                            <td>Use 'corriente', not 'energía'.</td>
+                        </tr>
+                         <tr>
+                            <td>Indicator Light</td>
+                            <td>Luz indicadora</td>
+                            <td>A light that shows the status of the device.</td>
+                            <td>Standard term.</td>
+                        </tr>
+                        <tr>
+                            <td>Remote Control</td>
+                            <td>Control remoto</td>
+                            <td>Device used to operate the product wirelessly.</td>
+                            <td>Common term in MX.</td>
+                        </tr>
+                        <tr>
+                            <td>Power Button</td>
+                            <td>Botón de encendido</td>
+                            <td>Button to turn the device on/off.</td>
+                            <td>Standard term.</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button class="btn-primary" style="margin-top: calc(var(--spacing-unit) * 2);" aria-label="Add New Glossary Term"><span class="material-icons-round">add</span> Add New Term</button>
+            </div>
+        </div>
+
+        <div id="cultural-notes-panel" class="panel" role="dialog" aria-labelledby="cultural-notes-panel-title" aria-hidden="true">
+            <div class="panel-header">
+                <h3 id="cultural-notes-panel-title" class="panel-title">Cultural Notes (Mexico)</h3>
+                <button class="panel-close" data-panel-id="cultural-notes-panel" aria-label="Close Cultural Notes Panel"><span class="material-icons-round">close</span></button>
+            </div>
+            <div class="panel-content">
+                <div>
+                    <h4>Safety Warnings Tone</h4>
+                    <p>Ensure warnings are direct but not overly alarming. Mexican consumers appreciate clear, concise instructions. Avoid overly technical jargon where simpler terms suffice.</p>
+                </div>
+                 <div>
+                    <h4>Units of Measurement</h4>
+                    <p>Always use the metric system (meters, kilograms, Celsius) as it is standard in Mexico. If imperial units are in the source, provide metric equivalents.</p>
+                </div>
+                 <div>
+                    <h4>Formal vs. Informal Address</h4>
+                    <p>Use formal address (usted/ustedes) in instructions and warnings unless the brand specifically targets a very young audience with an informal tone. Formal is safer for technical manuals.</p>
+                </div>
+                <button class="btn-primary" style="margin-top: calc(var(--spacing-unit) * 2);" aria-label="Add New Cultural Note"><span class="material-icons-round">add</span> Add New Note</button>
+            </div>
+        </div>
+
+        <div id="review-panel" class="panel" role="dialog" aria-labelledby="review-panel-title" aria-hidden="true">
+            <div class="panel-header">
+                <h3 id="review-panel-title" class="panel-title">Review Comments</h3>
+                <button class="panel-close" data-panel-id="review-panel" aria-label="Close Review Panel"><span class="material-icons-round">close</span></button>
+            </div>
+            <div class="panel-content">
+                <div class="review-item">
+                    <p><strong>Comment from Reviewer A:</strong> Suggest changing "adaptadores de energía" to "adaptadores de corriente" for Section 1, paragraph 1. 'Corriente' is more common for electrical power in MX.</p>
+                    <div class="actions">
+                        <button class="btn-secondary" aria-label="Accept Suggestion">Accept</button>
+                        <button class="btn-secondary" aria-label="Reject Suggestion">Reject</button>
+                        <button class="btn-secondary" aria-label="Reply to Comment">Reply</button>
+                    </div>
+                </div>
+                 <div class="review-item">
+                    <p><strong>Comment from Reviewer B:</strong> Check consistency of the term "indicator light". It appears as "luz indicadora" here, but was "led de estado" in a previous version of the manual.</p>
+                    <div class="actions">
+                        <button class="btn-secondary" aria-label="Accept Suggestion">Accept</button>
+                        <button class="btn-secondary" aria-label="Reject Suggestion">Reject</button>
+                        <button class="btn-secondary" aria-label="Reply to Comment">Reply</button>
+                    </div>
+                </div>
+                <p style="text-align: center; color: var(--text-color-light);">No more comments.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const layoutContainer = document.querySelector('.layout-container');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggle = document.getElementById('sidebar-toggle');
+            const sidebarNavLinks = document.querySelectorAll('.sidebar-nav a');
+            const panels = document.querySelectorAll('.panel');
+            const panelCloseButtons = document.querySelectorAll('.panel-close');
+            const openPanelButtons = document.querySelectorAll('.editor-toolbar button[id^="open-"]');
+            const spanishEditor = document.querySelector('.spanish-pane .editor-content');
+            const englishEditor = document.querySelector('.english-pane .editor-content');
+            const overallProgressBar = document.querySelector('.progress-bar');
+            const overallProgressText = document.getElementById('overall-progress-text');
+
+            // --- Sidebar Toggle ---
+            const toggleSidebar = () => {
+                const isCollapsed = layoutContainer.classList.toggle('sidebar-collapsed');
+                const isMobile = window.innerWidth <= 768;
+
+                // Toggle ARIA expanded state
+                sidebarToggle.setAttribute('aria-expanded', !isCollapsed);
+
+                if (isMobile) {
+                    // On mobile, toggle sidebar expansion via max-height
+                    sidebar.classList.toggle('expanded', !isCollapsed); // Expanded when NOT collapsed
+                } else {
+                    // On desktop, rely on grid template columns
+                    sidebar.classList.remove('expanded'); // Ensure expanded class is off on desktop
+                }
+            };
+
+            sidebarToggle.addEventListener('click', toggleSidebar);
+
+            // Adjust sidebar state on window resize
+            window.addEventListener('resize', () => {
+                 const isMobile = window.innerWidth <= 768;
+                 const isCollapsed = layoutContainer.classList.contains('sidebar-collapsed');
+
+                 if (isMobile) {
+                     // If resizing to mobile and sidebar is currently expanded (desktop state), collapse it
+                     if (!isCollapsed && sidebar.classList.contains('expanded')) {
+                          sidebar.classList.remove('expanded');
+                     }
+                     // On mobile, sidebar collapse/expand is controlled by the 'expanded' class
+                     // The layoutContainer class might still be 'sidebar-collapsed' if toggled on desktop
+                     // but the mobile grid ignores it. Ensure ARIA state is correct.
+                     sidebarToggle.setAttribute('aria-expanded', sidebar.classList.contains('expanded'));
+
+                 } else {
+                     // If resizing to desktop, remove mobile-specific expanded class
+                     sidebar.classList.remove('expanded');
+                     // On desktop, sidebar collapse/expand is controlled by layoutContainer class
+                     sidebarToggle.setAttribute('aria-expanded', !layoutContainer.classList.contains('sidebar-collapsed'));
+                 }
+            });
+
+            // Initial ARIA state based on default load state
+            sidebarToggle.setAttribute('aria-expanded', !layoutContainer.classList.contains('sidebar-collapsed'));
+
+
+            // --- Sidebar Navigation (Placeholder) ---
+            sidebarNavLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault(); // Prevent default hash link behavior
+
+                    // Remove active class and aria-current from all links
+                    sidebarNavLinks.forEach(nav => {
+                        nav.classList.remove('active');
+                        nav.removeAttribute('aria-current');
+                    });
+
+                    // Add active class and aria-current to clicked link
+                    link.classList.add('active');
+                    link.setAttribute('aria-current', 'page');
+
+                    // In a real app, this would scroll the main editor to the section
+                    console.log(`Navigating to section: ${link.textContent.trim()}`);
+
+                    // On mobile, collapse sidebar after selection
+                    if (window.innerWidth <= 768) {
+                         sidebar.classList.remove('expanded');
+                         sidebarToggle.setAttribute('aria-expanded', 'false');
+                         // Note: layoutContainer.classList.toggle('sidebar-collapsed') is not needed here for mobile grid
+                    }
+                });
+            });
+
+            // --- Panel Management ---
+            const openPanel = (panelId) => {
+                // Close any currently open panel first
+                panels.forEach(p => {
+                    p.classList.remove('open');
+                    p.setAttribute('aria-hidden', 'true');
+                });
+
+                const panelToOpen = document.getElementById(panelId);
+                if (panelToOpen) {
+                    panelToOpen.classList.add('open');
+                    panelToOpen.setAttribute('aria-hidden', 'false');
+                    // Optional: Set focus to the panel for accessibility
+                    panelToOpen.focus();
+                }
+            };
+
+            const closePanel = (panelId) => {
+                const panelToClose = document.getElementById(panelId);
+                if (panelToClose) {
+                    panelToClose.classList.remove('open');
+                    panelToClose.setAttribute('aria-hidden', 'true');
+                     // Optional: Return focus to the button that opened it
+                     const openerButton = document.getElementById(`open-${panelId}`);
+                     if (openerButton) {
+                         openerButton.focus();
+                     }
+                }
+            };
+
+            openPanelButtons.forEach(button => {
+                 button.addEventListener('click', () => {
+                     const panelId = button.id.replace('open-', '');
+                     openPanel(panelId);
+                 });
+            });
+
+
+            panelCloseButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const panelId = e.target.closest('.panel-close').dataset.panelId;
+                    closePanel(panelId);
+                });
+            });
+
+            // Close panels when clicking outside or pressing Escape
+            document.addEventListener('click', (e) => {
+                // Check if the click is outside any panel AND outside any button that opens a panel
+                let clickedInsidePanel = false;
+                panels.forEach(p => {
+                    if (p.contains(e.target)) {
+                        clickedInsidePanel = true;
+                    }
+                });
+
+                let clickedOpenButton = false;
+                openPanelButtons.forEach(btn => {
+                    if (btn.contains(e.target)) {
+                        clickedOpenButton = true;
+                    }
+                });
+
+                if (!clickedInsidePanel && !clickedOpenButton) {
+                    panels.forEach(p => {
+                        if (p.classList.contains('open')) {
+                             closePanel(p.id);
+                        }
+                    });
+                }
+            });
+
+             document.addEventListener('keydown', (e) => {
+                 if (e.key === 'Escape') {
+                     panels.forEach(p => {
+                         if (p.classList.contains('open')) {
+                             closePanel(p.id);
+                         }
+                     });
+                 }
+             });
+
+
+            // --- Editor Scrolling Synchronization (Basic) ---
+            // Note: Perfect sync with varying content heights is complex
+            // This basic version syncs scroll position based on percentage
+            const syncScroll = (scrollingPane, targetPane) => {
+                // Prevent infinite loop
+                if (targetPane._isScrolling) return;
+
+                scrollingPane._isScrolling = true;
+                const scrollingPercentage = scrollingPane.scrollTop / (scrollingPane.scrollHeight - scrollingPane.clientHeight);
+                targetPane.scrollTop = scrollingPercentage * (targetPane.scrollHeight - targetPane.clientHeight);
+
+                 // Allow slight delay before enabling scrolling again
+                 setTimeout(() => {
+                     scrollingPane._isScrolling = false;
+                 }, 50); // Adjust delay if needed
+            };
+
+            englishEditor.addEventListener('scroll', () => {
+                syncScroll(englishEditor, spanishEditor);
+            });
+
+            spanishEditor.addEventListener('scroll', () => {
+                syncScroll(spanishEditor, englishEditor);
+            });
+
+            // --- Placeholder for Rich Text Editor Functionality ---
+            // In a real application, you would use a library like Quill, TinyMCE, etc.
+            // These buttons would trigger commands like document.execCommand('bold', false, null);
+            // or use the library's API.
+            document.querySelectorAll('.editor-toolbar button').forEach(button => {
+                // Prevent contenteditable from losing focus when button is clicked
+                button.addEventListener('mousedown', (e) => e.preventDefault());
+
+                // Basic formatting (works with contenteditable)
+                if (button.querySelector('.material-icons-round') && button.querySelector('.material-icons-round').textContent.includes('format_')) {
+                     button.addEventListener('click', () => {
+                         const command = button.querySelector('.material-icons-round').textContent.replace('format_', '');
+                         // Ensure the Spanish editor is focused before executing command
+                         spanishEditor.focus();
+                         document.execCommand(command, false, null);
+                     });
+                }
+                // Glossary/Notes/Review buttons handled by panel logic
+            });
+
+             // --- Placeholder for Editor Interactions (Highlighting Terms/Notes) ---
+             // This is a conceptual placeholder. Real implementation requires parsing content,
+             // identifying terms/notes, and applying spans/styles.
+             spanishEditor.addEventListener('click', (e) => {
+                 // Example: If a clicked element or its parent has a specific class (e.g., 'glossary-term')
+                 const target = e.target;
+                 if (target.classList.contains('glossary-term')) {
+                     console.log('Clicked a glossary term:', target.textContent);
+                     // In a real app, open the glossary panel and filter/scroll to this term
+                     openPanel('glossary-panel');
+                 } else if (target.classList.contains('cultural-note-marker')) {
+                      console.log('Clicked a cultural note marker.');
+                      // In a real app, open the cultural notes panel and filter/scroll to the note
+                      openPanel('cultural-notes-panel');
+                 }
+             });
+
+
+            // --- Update Overall Progress Text ---
+            const updateOverallProgress = (percentage) => {
+                const clampedPercentage = Math.max(0, Math.min(100, percentage));
+                overallProgressBar.style.width = `${clampedPercentage}%`;
+                overallProgressText.textContent = `${clampedPercentage}%`;
+            };
+
+            // Example usage (replace with real calculation logic)
+            // updateOverallProgress(60); // Simulate progress update
+
+            // Initial update based on HTML style
+            updateOverallProgress(parseInt(overallProgressBar.style.width, 10) || 0);
+
+
+            // --- Initial Load / Setup ---
+             // Ensure panels are hidden initially
+             panels.forEach(p => p.setAttribute('aria-hidden', 'true'));
+
+             // Set initial focus state for editors (optional, might depend on workflow)
+             // spanishEditor.focus();
+        });
+    </script>
+</body>
+</html>

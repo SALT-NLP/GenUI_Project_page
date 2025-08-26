@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recommendation System</title>
+    <style>
+        :root {
+            --color-primary: #4a90e2; /* Soft Blue */
+            --color-accent: #50e3c2; /* Soft Green */
+            --color-text-dark: #333333; /* Dark Gray */
+            --color-text-medium: #666666; /* Medium Gray */
+            --color-text-light: #ffffff; /* White */
+            --color-background-page: #f4f7f6; /* Light Gray */
+            --color-background-card: #ffffff; /* White */
+            --color-border: #cccccc; /* Medium Gray */
+            --color-shadow: rgba(0, 0, 0, 0.08); /* Subtle Shadow */
+            --spacing-small: 8px;
+            --spacing-medium: 16px;
+            --spacing-large: 24px;
+            --border-radius: 8px;
+            --max-width-container: 1000px;
+            --font-family-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+        }
+
+        body {
+            font-family: var(--font-family-sans);
+            line-height: 1.6;
+            color: var(--color-text-dark);
+            background-color: var(--color-background-page);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--color-background-card);
+            box-shadow: 0 2px 4px var(--color-shadow);
+            padding: var(--spacing-medium) var(--spacing-large);
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+            color: var(--color-primary);
+            font-size: 1.8em;
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: var(--max-width-container);
+            margin: var(--spacing-large) auto;
+            padding: 0 var(--spacing-medium);
+            flex-grow: 1;
+        }
+
+        section {
+            background-color: var(--color-background-card);
+            padding: var(--spacing-large);
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 8px var(--color-shadow);
+            margin-bottom: var(--spacing-large);
+        }
+
+        h2 {
+            color: var(--color-primary);
+            margin-top: 0;
+            margin-bottom: var(--spacing-large);
+            font-size: 1.5em;
+            font-weight: 600;
+            border-bottom: 2px solid var(--color-accent);
+            padding-bottom: var(--spacing-small);
+            display: inline-block; /* Make border-bottom only span text */
+        }
+
+        .input-group {
+            margin-bottom: var(--spacing-large);
+        }
+
+        label {
+            display: block;
+            margin-bottom: var(--spacing-small);
+            font-weight: 600;
+            color: var(--color-text-medium);
+        }
+
+        textarea {
+            width: 100%;
+            padding: var(--spacing-medium);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            font-family: var(--font-family-sans);
+            font-size: 1em;
+            min-height: 150px;
+            resize: vertical;
+            box-sizing: border-box; /* Include padding and border in element's total width and height */
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2); /* Soft focus ring */
+        }
+
+        button {
+            display: inline-block;
+            background-color: var(--color-primary);
+            color: var(--color-text-light);
+            padding: var(--spacing-medium) var(--spacing-large);
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, opacity 0.2s ease-in-out;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #3a7bd5; /* Slightly darker blue */
+        }
+
+        button:active:not(:disabled) {
+            background-color: #2e64b0; /* Even darker blue */
+        }
+
+        button:disabled {
+            background-color: var(--color-border);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .loading-indicator {
+            display: none; /* Hidden by default */
+            text-align: center;
+            margin-top: var(--spacing-large);
+            color: var(--color-primary);
+            font-size: 1.2em;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+
+        .results-section {
+            display: none; /* Hidden by default */
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .results-section.visible {
+            display: block;
+            opacity: 1;
+        }
+
+        .recommendation-grid {
+            display: grid;
+            gap: var(--spacing-medium);
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* Responsive grid */
+        }
+
+        .recommendation-card {
+            background-color: var(--color-background-page); /* Slightly different background for cards */
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-medium);
+            box-shadow: 0 1px 4px var(--color-shadow);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* Push button/score to bottom if needed */
+        }
+
+        .recommendation-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px var(--color-shadow);
+        }
+
+        .card-title {
+            color: var(--color-primary);
+            font-size: 1.2em;
+            margin-top: 0;
+            margin-bottom: var(--spacing-small);
+            font-weight: 600;
+        }
+
+        .card-description {
+            color: var(--color-text-medium);
+            font-size: 0.95em;
+            margin-bottom: var(--spacing-medium);
+            flex-grow: 1; /* Allow description to take up space */
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: var(--spacing-small);
+        }
+
+        .score-indicator {
+            font-weight: 600;
+            color: var(--color-accent);
+            font-size: 1em;
+        }
+
+        .card-action-button {
+            background-color: transparent;
+            color: var(--color-primary);
+            padding: var(--spacing-small) var(--spacing-medium);
+            border: 1px solid var(--color-primary);
+            border-radius: var(--border-radius);
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+        }
+
+        .card-action-button:hover {
+            background-color: var(--color-primary);
+            color: var(--color-text-light);
+        }
+
+        footer {
+            text-align: center;
+            padding: var(--spacing-medium) var(--spacing-large);
+            margin-top: var(--spacing-large);
+            color: var(--color-text-medium);
+            font-size: 0.9em;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.5em;
+            }
+
+            .container {
+                padding: 0 var(--spacing-small);
+            }
+
+            section {
+                padding: var(--spacing-medium);
+            }
+
+            h2 {
+                font-size: 1.3em;
+            }
+
+            textarea {
+                min-height: 100px;
+            }
+
+            button {
+                width: 100%;
+                padding: var(--spacing-small) var(--spacing-medium);
+                font-size: 1em;
+            }
+
+            .recommendation-grid {
+                grid-template-columns: 1fr; /* Stack cards on small screens */
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Recommendation System</h1>
+    </header>
+
+    <main class="container">
+        <section>
+            <h2>Input Data</h2>
+            <div class="input-group">
+                <label for="userData">Enter your criteria or data:</label>
+                <textarea id="userData" rows="6" placeholder="e.g., List of movies I like, preferences for a product, etc." aria-label="User input for recommendations"></textarea>
+            </div>
+            <button id="getRecommendationsBtn" aria-label="Get Recommendations">Get Recommendations</button>
+        </section>
+
+        <div id="loadingIndicator" class="loading-indicator" aria-live="polite" aria-hidden="true">
+            Processing...
+        </div>
+
+        <section id="resultsSection" class="results-section" aria-hidden="true">
+            <h2>Recommendations</h2>
+            <div id="recommendationGrid" class="recommendation-grid">
+                <!-- Recommendation cards will be inserted here by JavaScript -->
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2023 Recommendation System</p>
+    </footer>
+
+    <script>
+        const userDataTextarea = document.getElementById('userData');
+        const getRecommendationsBtn = document.getElementById('getRecommendationsBtn');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const resultsSection = document.getElementById('resultsSection');
+        const recommendationGrid = document.getElementById('recommendationGrid');
+
+        getRecommendationsBtn.addEventListener('click', handleGetRecommendations);
+
+        function handleGetRecommendations() {
+            const userData = userDataTextarea.value.trim();
+
+            if (!userData) {
+                alert('Please enter some data to get recommendations.');
+                return;
+            }
+
+            // Show loading state
+            loadingIndicator.style.display = 'block';
+            loadingIndicator.setAttribute('aria-hidden', 'false');
+            resultsSection.classList.remove('visible');
+            resultsSection.setAttribute('aria-hidden', 'true');
+            getRecommendationsBtn.disabled = true;
+
+            // Simulate API call or processing delay
+            setTimeout(() => {
+                // Hide loading state
+                loadingIndicator.style.display = 'none';
+                loadingIndicator.setAttribute('aria-hidden', 'true');
+                getRecommendationsBtn.disabled = false;
+
+                // Simulate getting recommendations
+                const recommendations = simulateRecommendations(userData);
+
+                // Display recommendations
+                displayRecommendations(recommendations);
+
+                // Show results section
+                resultsSection.classList.add('visible');
+                resultsSection.setAttribute('aria-hidden', 'false');
+
+            }, 2000); // Simulate a 2-second delay
+        }
+
+        function simulateRecommendations(userData) {
+            // Basic simulation: generate some dummy recommendations
+            // In a real system, this would involve sending userData to a backend API
+            console.log("Simulating recommendations for:", userData);
+
+            const dummyData = [
+                { title: 'Recommended Item 1', description: 'A concise description of the first recommended item.', score: '95%' },
+                { title: 'Recommended Item 2', description: 'Details about the second item, highlighting its key features.', score: '88%' },
+                { title: 'Recommended Item 3', description: 'Summary of the third recommendation and why it matches.', score: '82%' },
+                { title: 'Recommended Item 4', description: 'More information about the fourth item in the list.', score: '76%' },
+                { title: 'Recommended Item 5', description: 'Final recommendation details.', score: '70%' },
+            ];
+
+             // Simple logic to vary results based on input length (just for demo)
+             if (userData.length > 50) {
+                 dummyData.unshift({ title: 'Top Match!', description: 'Based on your detailed input, this is a highly relevant match.', score: '99%' });
+             }
+
+            return dummyData;
+        }
+
+        function displayRecommendations(recommendations) {
+            recommendationGrid.innerHTML = ''; // Clear previous results
+
+            if (recommendations.length === 0) {
+                recommendationGrid.innerHTML = '<p>No recommendations found based on your input.</p>';
+                return;
+            }
+
+            recommendations.forEach(rec => {
+                const card = document.createElement('div');
+                card.classList.add('recommendation-card');
+                card.innerHTML = `
+                    <h3 class="card-title">${rec.title}</h3>
+                    <p class="card-description">${rec.description}</p>
+                    <div class="card-footer">
+                        <span class="score-indicator">Score: ${rec.score}</span>
+                        <button class="card-action-button" aria-label="View details for ${rec.title}">View Details</button>
+                    </div>
+                `;
+                recommendationGrid.appendChild(card);
+            });
+
+            // Add event listeners to action buttons if needed
+            recommendationGrid.querySelectorAll('.card-action-button').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const cardTitle = event.target.closest('.recommendation-card').querySelector('.card-title').textContent;
+                    alert(`Viewing details for: ${cardTitle}`);
+                    // In a real app, this would navigate to a details page or open a modal
+                });
+            });
+        }
+    </script>
+</body>
+</html>

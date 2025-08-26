@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Architecture Explorer</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --accent-color: #e74c3c;
+            --text-color: #333;
+            --background-color: #f9f9f9;
+            --card-color: #fff;
+            --border-color: #e0e0e0;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --hover-color: #f5f5f5;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        header {
+            grid-column: 1 / -1;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px var(--shadow-color);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo svg {
+            width: 32px;
+            height: 32px;
+            fill: white;
+        }
+
+        .search-bar {
+            flex: 0 1 400px;
+            position: relative;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: none;
+            font-size: 14px;
+        }
+
+        .search-bar input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background-color: var(--card-color);
+            border-right: 1px solid var(--border-color);
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+        }
+
+        .architecture-list {
+            list-style: none;
+        }
+
+        .architecture-item {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .architecture-item:hover {
+            background-color: var(--hover-color);
+        }
+
+        .architecture-item.active {
+            background-color: rgba(52, 152, 219, 0.1);
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .architecture-item svg {
+            width: 20px;
+            height: 20px;
+            fill: var(--primary-color);
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .diagram-container {
+            background-color: var(--card-color);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px var(--shadow-color);
+            position: relative;
+            min-height: 400px;
+        }
+
+        .diagram-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .diagram-title {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .diagram-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .diagram-controls button {
+            padding: 8px 15px;
+            background-color: white;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .diagram-controls button:hover {
+            background-color: var(--hover-color);
+        }
+
+        .diagram-controls button svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .diagram-canvas {
+            width: 100%;
+            height: 400px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Components */
+        .component {
+            position: absolute;
+            background-color: white;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px;
+            width: 120px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 5px var(--shadow-color);
+        }
+
+        .component:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px var(--shadow-color);
+        }
+
+        .component.selected {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.3);
+        }
+
+        .component-icon {
+            margin-bottom: 5px;
+        }
+
+        .component-icon svg {
+            width: 30px;
+            height: 30px;
+        }
+
+        .component-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .connector {
+            position: absolute;
+            background-color: var(--border-color);
+            z-index: -1;
+        }
+
+        /* Info Panel */
+        .info-panel {
+            background-color: var(--card-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px var(--shadow-color);
+            margin-top: 1rem;
+            transition: all 0.3s;
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+        }
+
+        .info-panel.active {
+            max-height: 800px;
+            opacity: 1;
+            margin-top: 2rem;
+        }
+
+        .info-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .info-icon {
+            width: 40px;
+            height: 40px;
+            background-color: rgba(52, 152, 219, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .info-icon svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--primary-color);
+        }
+
+        .info-title {
+            font-size: 1.3rem;
+            color: var(--text-color);
+        }
+
+        .info-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .info-description {
+            line-height: 1.8;
+        }
+
+        .info-description h3 {
+            margin-bottom: 0.8rem;
+            color: var(--primary-color);
+        }
+
+        .info-description p {
+            margin-bottom: 1rem;
+        }
+
+        .info-details {
+            background-color: rgba(52, 152, 219, 0.05);
+            border-radius: 6px;
+            padding: 1.5rem;
+        }
+
+        .detail-item {
+            margin-bottom: 1rem;
+        }
+
+        .detail-item h4 {
+            font-size: 0.9rem;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .detail-item p {
+            font-size: 0.9rem;
+        }
+
+        /* Guided Learning */
+        .guided-learning {
+            background-color: var(--card-color);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-top: 2rem;
+            box-shadow: 0 2px 10px var(--shadow-color);
+        }
+
+        .guided-learning h2 {
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .step-container {
+            display: flex;
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .step-line {
+            position: absolute;
+            top: 30px;
+            left: 15px;
+            width: calc(100% - 30px);
+            height: 2px;
+            background-color: var(--border-color);
+            z-index: 0;
+        }
+
+        .steps {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100px;
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: white;
+            border: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+            transition: all 0.2s;
+        }
+
+        .step.active .step-number {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .step.completed .step-number {
+            background-color: var(--secondary-color);
+            color: white;
+            border-color: var(--secondary-color);
+        }
+
+        .step-label {
+            font-size: 0.8rem;
+            text-align: center;
+        }
+
+        .step-content {
+            background-color: rgba(52, 152, 219, 0.05);
+            border-radius: 6px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .step-content h3 {
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .step-content p {
+            margin-bottom: 1rem;
+            line-height: 1.8;
+        }
+
+        .step-actions {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .step-button {
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .step-button.next {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+        }
+
+        .step-button.next:hover {
+            background-color: #2980b9;
+        }
+
+        .step-button.prev {
+            background-color: white;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .step-button.prev:hover {
+            background-color: var(--hover-color);
+        }
+
+        /* Glossary */
+        .glossary {
+            background-color: var(--card-color);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-top: 2rem;
+            box-shadow: 0 2px 10px var(--shadow-color);
+        }
+
+        .glossary h2 {
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .glossary-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .glossary-item {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1.5rem;
+            transition: all 0.2s;
+        }
+
+        .glossary-item:hover {
+            box-shadow: 0 4px 10px var(--shadow-color);
+        }
+
+        .glossary-term {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .glossary-term svg {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.2s;
+        }
+
+        .glossary-item.expanded .glossary-term svg {
+            transform: rotate(180deg);
+        }
+
+        .glossary-definition {
+            font-size: 0.9rem;
+            line-height: 1.6;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .glossary-item.expanded .glossary-definition {
+            max-height: 200px;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            max-width: 200px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 250px 1fr;
+            }
+
+            .info-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .diagram-controls {
+                flex-wrap: wrap;
+            }
+            
+            .steps {
+                overflow-x: auto;
+                padding-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z" />
+                </svg>
+                <h1>Cloud Architecture Explorer</h1>
+            </div>
+            <div class="search-bar">
+                <input type="text" placeholder="Search cloud components...">
+            </div>
+        </header>
+
+        <div class="sidebar">
+            <h2>Architecture Patterns</h2>
+            <ul class="architecture-list">
+                <li class="architecture-item active">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12,5.5A3.5,3.5 0 0,1 15.5,9A3.5,3.5 0 0,1 12,12.5A3.5,3.5 0 0,1 8.5,9A3.5,3.5 0 0,1 12,5.5M5,8C5.56,8 6.08,8.15 6.53,8.42C6.38,9.85 6.8,11.27 7.66,12.38C7.16,13.34 6.16,14 5,14A3,3 0 0,1 2,11A3,3 0 0,1 5,8M19,8A3,3 0 0,1 22,11A3,3 0 0,1 19,14C17.84,14 16.84,13.34 16.34,12.38C17.2,11.27 17.62,9.85 17.47,8.42C17.92,8.15 18.44,8 19,8M5.5,18.25C5.5,16.18 8.41,14.5 12,14.5C15.59,14.5 18.5,16.18 18.5,18.25V20H5.5V18.25M0,20V18.5C0,17.11 1.89,15.94 4.45,15.6C3.86,16.28 3.5,17.22 3.5,18.25V20H0M24,20H20.5V18.25C20.5,17.22 20.14,16.28 19.55,15.6C22.11,15.94 24,17.11 24,18.5V20Z" />
+                    </svg>
+                    Web Application
+                </li>
+                <li class="architecture-item">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M7.5,10.5A1.5,1.5 0 0,1 9,12A1.5,1.5 0 0,1 7.5,13.5A1.5,1.5 0 0,1 6,12A1.5,1.5 0 0,1 7.5,10.5M16.5,10.5A1.5,1.5 0 0,1 18,12A1.5,1.5 0 0,1 16.5,13.5A1.5,1.5 0 0,1 15,12A1.5,1.5 0 0,1 16.5,10.5M4.22,2H19.78C21,2 22,3 22,4.22V19.78C22,21 21,22 19.78,22H4.22C3,22 2,21 2,19.78V4.22C2,3 3,2 4.22,2M12,4C7.58,4 4,7.58 4,12C4,16.42 7.58,20 12,20C16.42,20 20,16.42 20,12C20,7.58 16.42,4 12,4Z" />
+                    </svg>
+                    Microservices
+                </li>
+                <li class="architecture-item">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M4,6H20V16H4M20,18A2,2 0 0,0 22,16V6C22,4.89 21.1,4 20,4H4C2.89,4 2,4.89 2,6V16A2,2 0 0,0 4,18H0V20H24V18H20Z" />
+                    </svg>
+                    Serverless
+                </li>
+                <li class="architecture-item">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M3,1H19A1,1 0 0,1 20,2V6A1,1 0 0,1 19,7H3A1,1 0 0,1 2,6V2A1,1 0 0,1 3,1M3,9H19A1,1 0 0,1 20,10V14A1,1 0 0,1 19,15H3A1,1 0 0,1 2,14V10A1,1 0 0,1 3,9M3,17H19A1,1 0 0,1 20,18V22A1,1 0 0,1 19,23H3A1,1 0 0,1 2,22V18A1,1 0 0,1 3,17Z" />
+                    </svg>
+                    Data Lake
+                </li>
+                <li class="architecture-item">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M4,2H20A2,2 0 0,1 22,4V16A2,2 0 0,1 20,18H16L12,22L8,18H4A2,2 0 0,1 2,16V4A2,2 0 0,1 4,2M4,4V16H8.83L12,19.17L15.17,16H20V4H4M6,7H18V9H6V7M6,11H16V13H6V11Z" />
+                    </svg>
+                    Hybrid Cloud
+                </li>
+            </ul>
+        </div>
+
+        <div class="main-content">
+            <div class="diagram-container">
+                <div class="diagram-header">
+                    <h2 class="diagram-title">Web Application Architecture</h2>
+                    <div class="diagram-controls">
+                        <button>
+                            <svg viewBox="0 0 24 24">
+                                <path d="M10,21V19H6.41L10.91,14.5L9.5,13.09L5,17.59V14H3V21H10M14.5,10.91L19,6.41V10H21V3H14V5H17.59L13.09,9.5L14.5,10.91Z" />
+                            </svg>
+                            Zoom
+                        </button>
+                        <button>
+                            <svg viewBox="0 0 24 24">
+                                <path d="M15,5H17V3H15M15,21H17V19H15M11,5H13V3H11M19,5H21V3H19M19,9H21V7H19M19,21H21V19H19M19,13H21V11H19M19,17H21V15H19M3,5H5V3H3M3,9H5V7H3M3,13H5V11H3M3,17H5V15H3M3,21H5V19H3M11,21H13V19H11M7,21H9V19H7M7,5H9V3H7V5Z" />
+                            </svg>
+                            Grid
+                        </button>
+                        <button>
+                            <svg viewBox="0 0 24 24">
+                                <path d="M17,17H7V7H17M21,5V19A2,2 0 0,1 19,21H5A2,2 0 0,1 3,19V5A2,2 0 0,1 5,3H19A2,2 0 0,1 21,5Z" />
+                            </svg>
+                            Reset
+                        </button>
+                    </div>
+                </div>
+                <div class="diagram-canvas">
+                    <!-- User Component -->
+                    <div class="component" style="top: 50px; left: 50px;" data-component="user">
+                        <div class="component-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
+                            </svg>
+                        </div>
+                        <div class="component-name">User</div>
+                    </div>
+
+                    <!-- Load Balancer Component -->
+                    <div class="component" style="top: 50px; left: 230px;" data-component="load-balancer">
+                        <div class="component-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12,3C7.58,3 4,4.79 4,7V17C4,19.21 7.59,21 12,21C16.41,21 20,19.21 20,17V7C20,4.79 16.42,3 12,3M18,17C18,17.5 15.87,19 12,19C8.13,19 6,17.5 6,17V14.77C7.61,15.55 9.72,16 12,16C14.28,16 16.39,15.55 18,14.77V17M18,12.45C16.7,13.4 14.42,14 12,14C9.58,14 7.3,13.4 6,12.45V9.64C7.47,10.47 9.61,11 12,11C14.39,11 16.53,10.47 18,9.64V12.45M12,9C8.13,9 6,7.5 6,7C6,6.5 8.13,5 12,5C15.87,5 18,6.5 18,7C18,7.5 15.87,9 12,9Z" />
+                            </svg>
+                        </div>
+                        <div class="component-name">Load Balancer</div>
+                    </div>
+
+                    <!-- Web Server Component -->
+                    <div class="component" style="top: 170px; left: 230px;" data-component="web-server">
+                        <div class="component-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M4,1H20A1,1 0 0,1 21,2V6A1,1 0 0,1 20,7H4A1,1 0 0,1 3,6V2A1,1 0 0,1 4,1M4,9H20A1,1 0 0,1 21,10V14A1,1 0 0,1 20,15H4A1,1 0 0,1 3,14V10A1,1 0 0,1 4,9M4,17H20A1,1 0 0,1 21,18V22A1,1 0 0,1 20,23H4A1,1 0 0,1 3,22V18A1,1 0 0,1 4,17M9,5H10V3H9V5M9,13H10V11H9V13M9,21H10V19H9V21M5,3V5H7V3H5M5,11V13H7V11H5M5,19V21H7V19H5Z" />
+                            </svg>
+                        </div>
+                        <div class="component-name">Web Server</div>
+                    </div>
+
+                    <!-- App Server Component -->
+                    <div class="component" style="top: 290px; left: 230px;" data-component="app-server">
+                        <div class="component-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M15,20A1,1 0 0,0 16,19V4H8A1,1 0 0,0 7,5V16H5V5A3,3 0 0,1 8,2H19A3,3 0 0,1 22,5V19A3,3 0 0,1 19,22H15V20M1,15H3V19H1V15M5,15H7V19H5V15M9,15H11V19H9V15M13,15H15V19H13V15Z" />
+                            </svg>
+                        </div>
+                        <div class="component-name">App Server</div>
+                    </div>
+
+                    <!-- Database Component -->
+                    <div class="component" style="top: 290px; left: 410px;" data-component="database">
+                        <div class="component-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12,3C8.59,3 5.69,4.07 4.54,5.57L9.79,10.82C10.5,10.93 11.22,11 12,11C16.42,11 20,9.21 20,7C20,4.79 16.42,3 12,3M3.92,7.08L2.5,8.5L5,11H5C5,13.17 7.9,15.04 12,15.71V20H14V15.71C15.32,15.5 16.53,15.16 17.55,14.7L20.11,17.26L21.53,15.84L3.92,7.08M12,13C7.58,13 4,11.21 4,9V9.79L10.2,16C10.77,16 11.38,15.97 12,15.92C16.41,15.5 20,13.73 20,11.5V8.3L13.15,13.03C12.76,13.01 12.38,13 12,13Z" />
+                            </svg>
+                        </div>
+                        <div class="component-name">Database</div>
+                    </div>
+
+                    <!-- Storage Component -->
+                    <div class="component" style="top: 170px; left: 410px;" data-component="storage">
+                        <div class="component-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M13,9H18.5L13,3.5V9M6,2H14L20,8V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V4C4,2.89 4.89,2 6,2M15,18V16H6V18H15M18,14V12H6V14H18Z" />
+                            </svg>
+                        </div>
+                        <div class="component-name">Storage</div>
+                    </div>
+
+                    <!-- Connectors -->
+                    <div class="connector" style="left: 120px; top: 65px; width: 110px; height: 2px;"></div>
+                    <div class="connector" style="left: 290px; top: 95px; width: 2px; height: 75px;"></div>
+                    <div class="connector" style="left: 290px; top: 215px; width: 2px; height: 75px;"></div>
+                    <div class="connector" style="left: 350px; top: 305px; width: 60px; height: 2px;"></div>
+                    <div class="connector" style="left: 350px; top: 185px; width: 60px; height: 2px;"></div>
+                    <div class="connector" style="left: 470px; top: 215px; width: 2px; height: 75px;"></div>
+
+                    <!-- Tooltip -->
+                    <div class="tooltip" id="tooltip"></div>
+                </div>
+            </div>
+
+            <div class="info-panel" id="info-panel">
+                <div class="info-header">
+                    <div class="info-icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M4,1H20A1,1 0 0,1 21,2V6A1,1 0 0,1 20,7H4A1,1 0 0,1 3,6V2A1,1 0 0,1 4,1M4,9H20A1,1 0 0,1 21,10V14A1,1 0 0,1 20,15H4A1,1 0 0,1 3,14V10A1,1 0 0,1 4,9M4,17H20A1,1 0 0,1 21,18V22A1,1 0 0,1 20,23H4A1,1 0 0,1 3,22V18A1,1 0 0,1 4,17M9,5H10V3H9V5M9,13H10V11H9V13M9,21H10V19H9V21M5,3V5H7V3H5M5,11V13H7V11H5M5,19V21H7V19H5Z" />
+                        </svg>
+                    </div>
+                    <h2 class="info-title">Web Server</h2>
+                </div>
+                <div class="info-content">
+                    <div class="info-description">
+                        <h3>Overview</h3>
+                        <p>A web server is a critical component in cloud architecture that handles HTTP requests from clients (typically web browsers) and returns HTML pages, images, files, and other web content. In a cloud environment, web servers are often deployed across multiple availability zones for high availability.</p>
+                        
+                        <h3>Common Implementations</h3>
+                        <p>Popular web server technologies include Nginx, Apache HTTP Server, Microsoft IIS, and specialized cloud services like AWS Elastic Beanstalk, Google App Engine, or Azure App Service.</p>
+                    </div>
+                    <div class="info-details">
+                        <div class="detail-item">
+                            <h4>Key Features</h4>
+                            <p>Request handling, static content serving, load distribution, SSL/TLS termination, caching, compression, and request routing.</p>
+                        </div>
+                        <div class="detail-item">
+                            <h4>Scalability</h4>
+                            <p>Web servers can be horizontally scaled by adding more instances behind a load balancer to handle increased traffic.</p>
+                        </div>
+                        <div class="detail-item">
+                            <h4>Security Considerations</h4>
+                            <p>Web Application Firewalls (WAF), DDoS protection, regular security updates, and proper configuration to prevent common vulnerabilities.</p>
+                        </div>
+                        <div class="detail-item">
+                            <h4>Cloud Service Examples</h4>
+                            <p>AWS: EC2, Elastic Beanstalk<br>Azure: App Service, Virtual Machines<br>GCP: App Engine, Compute Engine</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="guided-learning">
+                <h2>Guided Learning: Web Application Architecture</h2>
+                <div class="step-container">
+                    <div class="step-line"></div>
+                    <div class="steps">
+                        <div class="step completed">
+                            <div class="step-number">1</div>
+                            <div class="step-label">Overview</div>
+                        </div>
+                        <div class="step active">
+                            <div class="step-number">2</div>
+                            <div class="step-label">Front-End</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div class="step-label">Back-End</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">4</div>
+                            <div class="step-label">Database</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">5</div>
+                            <div class="step-label">Security</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-content">
+                    <h3>Step 2: Front-End Components</h3>
+                    <p>The front-end layer of a cloud web application typically consists of static content delivery mechanisms and dynamic user interfaces. Key components include:</p>
+                    <ol>
+                        <li><strong>Content Delivery Network (CDN):</strong> Distributes static content (images, CSS, JavaScript) across global edge locations to reduce latency.</li>
+                        <li><strong>Load Balancer:</strong> Distributes incoming traffic across multiple web servers to ensure high availability and fault tolerance.</li>
+                        <li><strong>Web Application Firewall (WAF):</strong> Protects against common web vulnerabilities and attacks by filtering and monitoring HTTP traffic.</li>
+                        <li><strong>Static Storage:</strong> Services like Amazon S3, Azure Blob Storage, or Google Cloud Storage for hosting static website assets.</li>
+                    </ol>
+                    <p>In modern cloud architectures, front-end components are often deployed as serverless or managed services to reduce operational overhead and improve scalability.</p>
+                    <div class="step-actions">
+                        <button class="step-button prev">Previous</button>
+                        <button class="step-button next">Next</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glossary">
+                <h2>Cloud Architecture Glossary</h2>
+                <div class="glossary-list">
+                    <div class="glossary-item">
+                        <div class="glossary-term">
+                            Load Balancer
+                            <svg viewBox="0 0 24 24">
+                                <path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z" />
+                            </svg>
+                        </div>
+                        <div class="glossary-definition">
+                            A device or service that distributes network traffic across multiple servers to ensure no single server becomes overwhelmed, improving reliability and performance.
+                        </div>
+                    </div>
+                    <div class="glossary-item">
+                        <div class="glossary-term">
+                            Auto Scaling
+                            <svg viewBox="0 0 24 24">
+                                <path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z" />
+                            </svg>
+                        </div>
+                        <div class="glossary-definition">
+                            A cloud feature that automatically adjusts the number of compute resources based on the current demand, helping maintain performance during traffic spikes while minimizing costs during low usage.
+                        </div>
+                    </div>
+                    <div class="glossary-item">
+                        <div class="glossary-term">
+                            CDN (Content Delivery Network)
+                            <svg viewBox="0 0 24 24">
+                                <path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z" />
+                            </svg>
+                        </div>
+                        <div class="glossary-definition">
+                            A geographically distributed network of proxy servers that delivers content to users based on their location, reducing latency and improving page load times.
+                        </div>
+                    </div>
+                    <div class="glossary-item">
+                        <div class="glossary-term">
+                            API Gateway
+                            <svg viewBox="0 0 24 24">
+                                <path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z" />
+                            </svg>
+                        </div>
+                        <div class="glossary-definition">
+                            A service that acts as an entry point for clients to access backend services, handling tasks such as request routing, composition, and protocol translation.
+                        </div>
+                    </div>
+                    <div class="glossary-item">
+                        <div class="glossary-term">
+                            Availability Zone
+                            <svg viewBox="0 0 24 24">
+                                <path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z" />
+                            </svg>
+                        </div>
+                        <div class="glossary-definition">
+                            A distinct location within a cloud region that is isolated from failures in other availability zones, providing high availability and fault tolerance.
+                        </div>
+                    </div>
+                    <div class="glossary-item">
+                        <div class="glossary-term">
+                            Containerization
+                            <svg viewBox="0 0 24 24">
+                                <path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z" />
+                            </svg>
+                        </div>
+                        <div class="glossary-definition">
+                            A lightweight form of virtualization that packages an application and its dependencies into a standardized unit (container) for deployment across different computing environments.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Component selection
+        const components = document.querySelectorAll('.component');
+        const infoPanel = document.getElementById('info-panel');
+        const tooltip = document.getElementById('tooltip');
+
+        components.forEach(component => {
+            component.addEventListener('click', () => {
+                // Remove selected class from all components
+                components.forEach(c => c.classList.remove('selected'));
+                
+                // Add selected class to clicked component
+                component.classList.add('selected');
+                
+                // Show info panel
+                infoPanel.classList.add('active');
+                
+                // Update info panel content based on component
+                const componentType = component.getAttribute('data-component');
+                updateInfoPanel(componentType);
+            });
+
+            // Tooltip functionality
+            component.addEventListener('mouseenter', (e) => {
+                const componentType = component.getAttribute('data-component');
+                showTooltip(e, getTooltipContent(componentType));
+            });
+
+            component.addEventListener('mousemove', (e) => {
+                positionTooltip(e);
+            });
+
+            component.addEventListener('mouseleave', () => {
+                hideTooltip();
+            });
+        });
+
+        function updateInfoPanel(componentType) {
+            const infoIcon = document.querySelector('.info-icon svg');
+            const infoTitle = document.querySelector('.info-title');
+            const infoDescription = document.querySelector('.info-description');
+            const infoDetails = document.querySelector('.info-details');
+            
+            // Component-specific content
+            const componentInfo = {
+                'user': {
+                    icon: '<path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />',
+                    title: 'End Users',
+                    description: `<h3>Overview</h3>
+                                <p>End users are the consumers of your web application, accessing it through various devices and browsers. Understanding their needs, behaviors, and access patterns is crucial for designing an effective cloud architecture.</p>
+                                
+                                <h3>Considerations</h3>
+                                <p>When designing for end users, consider factors like geographic distribution, device types, bandwidth limitations, and accessibility requirements.</p>`,
+                    details: `<div class="detail-item">
+                                <h4>Access Patterns</h4>
+                                <p>Users may access your application from various locations, devices, and network conditions.</p>
+                            </div>
+                            <div class="detail-item">
+                                <h4>Performance Expectations</h4>
+                                <p>Users typically expect page loads under 2-3 seconds and responsive interactions.</p>
+                            </div>
+                            <div class="detail-item">
+                                <h4>Architectural Impact</h4>
+                                <p>User distribution may influence CDN deployment, regional replication, and edge computing strategies.</p>
+                            </div>
+                            <div class="detail-item">
+                                <h4>Monitoring Considerations</h4>
+                                <p>Real User Monitoring (RUM) and synthetic testing can help ensure a consistent experience.</p>
+                            </div>`
+                },
+                'load-balancer': {
+                    icon: '<path d="M12,3C7.58,3 4,4.79 4,7V17C4,19.21 7.59,21 12,21C16.41,21 20,19.21 20,17V7C20,4.79 16.42,3 12,3M18,17C18,17.5 15.87,19 12,19C8.13,19 6,17.5 6,17V14.77C7.61,15.55 9.72,16 12,16C14.28,16 16.39,15.55 18,14.77V17M18,12.45C16.7,13.4 14.42,14 12,14C9.58,14 7.3,13.4 6,12.45V9.64C7.47,10.47 9.61,11 12,11C14.39,11 16.53,10.47 18,9.64V12.45M12,9C8.13,9 6,7.5 6,7C6,6.5 8.13,5 12,5C15.87,5 18,6.5 18,7C18,7.5 15.87,9 12,9Z" />',
+                    title: 'Load Balancer',
+                    description: `<h3>Overview</h3>
+                                <p>A load balancer distributes incoming application traffic across multiple servers to ensure no single server bears too much demand. This improves both the availability and scalability of your application.</p>
+                                
+                                <h3>Types of Load Balancers</h3>
+                                <p>Cloud providers offer various types of load balancers including Application Load Balancers (Layer 7), Network Load Balancers (Layer 4), and Global Load Balancers for multi-region distribution.</p>`,
+                    details: `<div class="detail-item">
+                                <h4>Key Features</h4>
+                                <p>Health checks, session persistence, SSL termination, automatic scaling, and traffic distribution algorithms.</p>
+                            </div>
+                            <div class="detail-item">
+                                <h4>Distribution Methods</h4>
+                                <p>Round robin, least connections, IP hash, weighted distribution, and more advanced methods.</p>
+                            </div>
+                            <div class="detail-item">
+                                <h4>Cloud Service Examples</h4>
+                                <p>AWS: Elastic Load Balancing (ALB, NLB, CLB)<br>Azure: Application Gateway, Load Balancer<br>GCP: Cloud Load Balancing</p>
+                            </div>
+                            <div class="detail-item">
+                                <h4>Best Practices</h4>
+                                <p>Deploy across multiple availability zones, implement proper health checks, and configure appropriate timeouts.</p>
+                            </div>`
+                },
+                'web-server': {
+                    icon: '<path d="M4,1H20A1,1 0 0,1 21,2V6A1,1 0 0,1 20,7H4A1,1 0 0,1 3,6V2A1,1 0 0,1 4,1M4,9H20A1,1 0 0,1 21,10V14A1,1 0 0,1 20,15H4A1,1 0 0,1 3,14V10A1,1 0 0,1 4,9M4,17H20A1,1 0 0,1 21,18V22A1,1 0 0,1 20,23H4A1,1 0 0,1 3,22V18A1,1 0 0,1 4,17M9,5H10V3H9V5M9,13H10V11H9V13M9,21H10V19H9V21M5,3V5H7V3H5M5,11V13H7V11H5M5,19V21H7V19H5Z" />',
+                    title: 'Web Server',
+                    description: `<h3>Overview</h3>
+                                <p>A web server is a critical component in cloud architecture that handles HTTP requests from clients (typically web browsers) and returns HTML pages, images, files, and other web content. In a cloud environment, web servers are often deployed across multiple availability zones for high availability.</p>
+                                
+                                <h3>Common Implementations</h3>
+                                <p>Popular web server technologies include Nginx, Apache HTTP Server, Microsoft IIS, and specialized cloud services like AWS Elastic Beanstalk, Google App Engine, or Azure App Service.</p>`,
+                    details: `<div class="detail-item">
+                                <h4>Key Features</h4>
+                                <p>Request handling, static content serving, load distribution, SSL/TLS termination, caching, compression, and request routing.</p>
+                            </div>
+                            <div class="detail-item">
+                                <h4>Scalability</h4>
+                                <p>Web servers can be horizontally scaled by adding more instances behind a load balancer to handle increased traffic.</p>
+                            </div>
+                            <div class="detail-item">
+                                <h4>Security Considerations</h4>
+                                <p>Web Application Firewalls (WAF), DDoS protection, regular security updates, and proper configuration to prevent common vulnerabilities.</p>
+                            </div>
+                            <div class="detail-item">
+                                <h4>Cloud Service Examples</h4>
+                                <p>AWS: EC2, Elastic Beanstalk<br>Azure: App Service, Virtual Machines<br>GCP: App Engine, Compute Engine</p>
+                            </div>`
+                },
+                'app-server': {
+                    icon: '<path d="M15,20A1,1 0 0,0 16,19V4H8A1,1 0 0,0 7,5V16H5V5A3,3 0 0,1 8,2H19A3,3 0 0,1 22,5V19A3,3 0 0,1 19,22H15V20M1,15H3V19H1V15M5,15H7V19H5V15M9,15H11V19H9V15M13,15H15V19H13V15Z" />',
+                    title: 'Application Server',
+                    description: `<h3>Overview</h3>
+                                <p>Application servers host the business logic and application code that processes client requests, interacts with databases, and generates dynamic content. In cloud architectures, app servers are typically deployed in auto-scaling groups to handle varying loads.</p>
+                                
+                                <h3>Implementation Approaches</h3>
+                                <p>App servers can be deployed as virtual machines, containers, or serverless functions depending on the application requirements, scaling needs, and operational preferences.</p>`,
+                    details: `<div class="detail-item">
+                                <h4>Key Features</h4>
+                                <p>Business logic execution, API handling, authentication/authorization, data processing, and service integration.</p>
+                            </div>
+                            <div class="detail-item">
+                                <h4>Deployment Options</h4>
+                                <p>Virtual machines for traditional apps, containers for microservices, and serverless for event-driven workloads.</p>
+                            </div>
+                            <div class="detail-item">
+                                <h4>Cloud Service Examples</h4>
+                                <p>AWS: EC2, ECS, Lambda<br>Azure: Virtual Machines, App Service, Functions<br>GCP: Compute Engine, Cloud Run, Cloud Functions</p>
+                            </div>
+                            <div class="detail-item">
+                                <h4>Scaling Considerations</h4>
+                                <p>Horizontal scaling for handling increased load, auto-scaling based on metrics like CPU, memory, or request count.</p>
+                            </div>`
+                },
+                'database': {
+                    icon: '<path d="M12,3C8.59,3 5.69,4.07 4.54,5.57L9.79,10.82C10.5,10.93 11.22,11 12,11C16.42,11 20,9.21 20,7C20,4.79 16.42,3 12,3M3.92,7.08L2.5,8.5L5,11H5C5,13.17 7.9,15.04 12,15.71V20H14V15.71C15.32,15.5 16.53,15.16 17.55,14.7L20.11,17.26L21.53,15.84L3.92,7.08M12,13C7.58,13 4,11.21 4,9V9.79L10.2,16C10.77,16 11.38,15.97 12,15.92C16.41,15.5 20,13.73 20,11.5V8.3L13.15,13.03C12.76,13.01 12.38,13 12,13Z" />',
+                    title: 'Database',
+                    description: `<h3>Overview</h3>
+                                <p>Databases store and manage the application data in a structured way. Cloud platforms offer various database services ranging from traditional relational databases to NoSQL, in-memory, and specialized purpose-built databases.</p>
+                                
+                                <h3>Database Types</h3>
+                                <p>The choice of database depends on your data model, consistency requirements, scaling needs, and query patterns. Options include relational (SQL), document, key-value, graph, and time-series databases.</p>`,
+                    details: `<div class="detail-item">
+                                <h4>Key Considerations</h4>
+                                <p>Data consistency, durability, availability, scalability, query performance, and cost efficiency.</p>
+                            </div>
+                            <div class="detail-item">
+                                <h4>Cloud Service Examples</h4>
+                                <p>AWS: RDS, DynamoDB, DocumentDB<br>Azure: SQL Database, Cosmos DB<br>GCP: Cloud SQL, Firestore, BigTable</p>
+                            </div>
+                            <div class="detail-item">
+                                <h4>High Availability</h4>
+                                <p>Multi-AZ deployments, read replicas, automatic backups, and point-in-time recovery.</p>
+                            </div>
+                            <div class="detail-item">
+                                <h4>Performance Optimization</h4>
+                                <p>Indexing strategies, query optimization, connection pooling, and caching layers.</p>
+                            </div>`
+                },
+                'storage': {
+                    icon: '<path d="M13,9H18.5L13,3.5V9M6,2H14L20,8V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V4C4,2.89 4.89,2 6,2M15,18V16H6V18H15M18,14V12H6V14H18Z" />',
+                    title: 'Storage',
+                    description: `<h3>Overview</h3>
+                                <p>Cloud storage services provide scalable and durable storage for various types of data, from static assets to application files, backups, and archives. Different storage classes offer varying levels of durability, availability, and access performance.</p>
+                                
+                                <h3>Storage Types</h3>
+                                <p>Cloud providers offer object storage (for unstructured data), block storage (for virtual machines), file storage (for shared access), and specialized storage for specific use cases.</p>`,
+                    details: `<div class="detail-item">
+                                <h4>Key Features</h4>
+                                <p>Scalability, durability, versioning, lifecycle policies, encryption, access controls, and CDN integration.</p>
+                            </div>
+                            <div class="detail-item">
+                                <h4>Cloud Service Examples</h4>
+                                <p>AWS: S3, EBS, EFS<br>Azure: Blob Storage, Disk Storage, Files<br>GCP: Cloud Storage, Persistent Disk, Filestore</p>
+                            </div>
+                            <div class="detail-item">
+                                <h4>Storage Classes</h4>
+                                <p>Hot storage for frequent access, cool storage for infrequent access, and archive storage for long-term retention.</p>
+                            </div>
+                            <div class="detail-item">
+                                <h4>Cost Optimization</h4>
+                                <p>Implement lifecycle policies to automatically transition objects between storage classes based on age or access patterns.</p>
+                            </div>`
+                }
+            };
+            
+            // Update content
+            if (componentInfo[componentType]) {
+                infoIcon.innerHTML = componentInfo[componentType].icon;
+                infoTitle.textContent = componentInfo[componentType].title;
+                infoDescription.innerHTML = componentInfo[componentType].description;
+                infoDetails.innerHTML = componentInfo[componentType].details;
+            }
+        }
+
+        function showTooltip(e, content) {
+            tooltip.innerHTML = content;
+            tooltip.style.opacity = '1';
+            positionTooltip(e);
+        }
+
+        function positionTooltip(e) {
+            tooltip.style.left = (e.pageX + 15) + 'px';
+            tooltip.style.top = (e.pageY + 15) + 'px';
+        }
+
+        function hideTooltip() {
+            tooltip.style.opacity = '0';
+        }
+
+        function getTooltipContent(componentType) {
+            const tooltips = {
+                'user': 'End users accessing the application',
+                'load-balancer': 'Distributes traffic across multiple servers',
+                'web-server': 'Handles HTTP requests and serves web content',
+                'app-server': 'Processes business logic and application code',
+                'database': 'Stores and manages application data',
+                'storage': 'Provides scalable storage for files and assets'
+            };
+            
+            return tooltips[componentType] || 'Component';
+        }
+
+        // Glossary interaction
+        const glossaryItems = document.querySelectorAll('.glossary-item');
+        
+        glossaryItems.forEach(item => {
+            item.addEventListener('click', () => {
+                item.classList.toggle('expanded');
+            });
+        });
+
+        // Step navigation
+        const prevButton = document.querySelector('.step-button.prev');
+        const nextButton = document.querySelector('.step-button.next');
+        const steps = document.querySelectorAll('.step');
+        let currentStep = 1; // 0-based index, so step 2 is index 1
+        
+        prevButton.addEventListener('click', () => {
+            if (currentStep > 0) {
+                steps[currentStep].classList.remove('active');
+                currentStep--;
+                steps[currentStep].classList.add('active');
+                steps[currentStep].classList.remove('completed');
+                updateStepContent(currentStep);
+            }
+        });
+        
+        nextButton.addEventListener('click', () => {
+            if (currentStep < steps.length - 1) {
+                steps[currentStep].classList.remove('active');
+                steps[currentStep].classList.add('completed');
+                currentStep++;
+                steps[currentStep].classList.add('active');
+                updateStepContent(currentStep);
+            }
+        });
+        
+        function updateStepContent(stepIndex) {
+            const stepContent = document.querySelector('.step-content');
+            const stepTitles = [
+                'Overview of Web Application Architecture',
+                'Front-End Components',
+                'Back-End Components',
+                'Database and Storage',
+                'Security and Compliance'
+            ];
+            
+            const stepContents = [
+                `<h3>Step 1: Overview of Web Application Architecture</h3>
+                <p>Modern web applications in the cloud typically follow a multi-tier architecture pattern that separates concerns and enables independent scaling of different components. The key layers include:</p>
+                <ol>
+                    <li><strong>Presentation Layer:</strong> User interfaces, static content, and client-side code.</li>
+                    <li><strong>Application Layer:</strong> Business logic, API services, and processing.</li>
+                    <li><strong>Data Layer:</strong> Databases, storage, and caching systems.</li>
+                </ol>
+                <p>Cloud-based web architectures benefit from services like content delivery networks (CDNs), load balancers, auto-scaling groups, and managed services that reduce operational overhead while improving reliability and performance.</p>`,
+                
+                `<h3>Step 2: Front-End Components</h3>
+                <p>The front-end layer of a cloud web application typically consists of static content delivery mechanisms and dynamic user interfaces. Key components include:</p>
+                <ol>
+                    <li><strong>Content Delivery Network (CDN):</strong> Distributes static content (images, CSS, JavaScript) across global edge locations to reduce latency.</li>
+                    <li><strong>Load Balancer:</strong> Distributes incoming traffic across multiple web servers to ensure high availability and fault tolerance.</li>
+                    <li><strong>Web Application Firewall (WAF):</strong> Protects against common web vulnerabilities and attacks by filtering and monitoring HTTP traffic.</li>
+                    <li><strong>Static Storage:</strong> Services like Amazon S3, Azure Blob Storage, or Google Cloud Storage for hosting static website assets.</li>
+                </ol>
+                <p>In modern cloud architectures, front-end components are often deployed as serverless or managed services to reduce operational overhead and improve scalability.</p>`,
+                
+                `<h3>Step 3: Back-End Components</h3>
+                <p>The back-end layer handles the business logic, authentication, data processing, and service integration. Key components include:</p>
+                <ol>
+                    <li><strong>Application Servers:</strong> Process business logic and handle client requests, often deployed in auto-scaling groups.</li>
+                    <li><strong>API Gateway:</strong> Manages, secures, and routes API requests to the appropriate backend services.</li>
+                    <li><strong>Authentication Services:</strong> Handle user identity, authentication, and authorization.</li>
+                    <li><strong>Queue Services:</strong> Decouple components and enable asynchronous processing for improved resilience.</li>
+                    <li><strong>Caching Layer:</strong> Improves performance by storing frequently accessed data in memory.</li>
+                </ol>
+                <p>Modern cloud architectures often implement microservices or serverless approaches for backend components to improve scalability and development agility.</p>`,
+                
+                `<h3>Step 4: Database and Storage</h3>
+                <p>The data layer manages persistent storage and retrieval of application data. Key components include:</p>
+                <ol>
+                    <li><strong>Relational Databases:</strong> For structured data with complex relationships and transaction requirements.</li>
+                    <li><strong>NoSQL Databases:</strong> For flexible schemas, high throughput, and specific data models like documents, key-value, or graphs.</li>
+                    <li><strong>Object Storage:</strong> For unstructured data like files, images, and backups.</li>
+                    <li><strong>Data Warehouses:</strong> For analytics and reporting on large datasets.</li>
+                    <li><strong>Caching Services:</strong> Like Redis or Memcached to reduce database load and improve response times.</li>
+                </ol>
+                <p>Cloud providers offer managed database services that handle replication, backups, scaling, and high availability with minimal operational overhead.</p>`,
+                
+                `<h3>Step 5: Security and Compliance</h3>
+                <p>Security is a critical aspect of cloud architecture that must be implemented at all layers. Key security components include:</p>
+                <ol>
+                    <li><strong>Identity and Access Management (IAM):</strong> Controls who can access what resources and with what permissions.</li>
+                    <li><strong>Network Security:</strong> Including VPCs, security groups, NACLs, and private endpoints.</li>
+                    <li><strong>Encryption:</strong> For data at rest and in transit using protocols like TLS/SSL.</li>
+                    <li><strong>DDoS Protection:</strong> Services that detect and mitigate distributed denial of service attacks.</li>
+                    <li><strong>Compliance Frameworks:</strong> Implementations that meet industry-specific regulations like GDPR, HIPAA, or PCI DSS.</li>
+                </ol>
+                <p>Cloud security follows a shared responsibility model where the provider secures the infrastructure while you're responsible for securing your applications and data.</p>`
+            ];
+            
+            const title = `<h3>${stepTitles[stepIndex]}</h3>`;
+            stepContent.innerHTML = stepContents[stepIndex];
+            
+            // Update buttons visibility
+            if (stepIndex === 0) {
+                prevButton.style.visibility = 'hidden';
+            } else {
+                prevButton.style.visibility = 'visible';
+            }
+            
+            if (stepIndex === steps.length - 1) {
+                nextButton.style.visibility = 'hidden';
+            } else {
+                nextButton.style.visibility = 'visible';
+            }
+        }
+
+        // Architecture pattern selection
+        const architectureItems = document.querySelectorAll('.architecture-item');
+        
+        architectureItems.forEach(item => {
+            item.addEventListener('click', () => {
+                architectureItems.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                
+                // Update diagram title
+                const patternName = item.textContent.trim();
+                document.querySelector('.diagram-title').textContent = patternName + ' Architecture';
+                
+                // Here you would update the diagram components based on the selected pattern
+                // This is a simplified example
+                infoPanel.classList.remove('active');
+                components.forEach(c => c.classList.remove('selected'));
+            });
+        });
+    </script>
+</body>
+</html>

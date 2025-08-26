@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REST vs GraphQL</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --accent-color: #28a745;
+            --background-color: #ffffff;
+            --text-color: #343a40;
+            --heading-color: #212529;
+            --card-background: #f8f9fa;
+            --code-background: #e9ecef;
+            --border-color: #dee2e6;
+            --shadow-color: rgba(0, 0, 0, 0.08); /* Slightly more prominent shadow */
+            --tooltip-background: #343a40;
+            --tooltip-text: #ffffff;
+            --animation-duration: 0.5s;
+            --focus-outline-color: #0056b3; /* Darker primary for focus */
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 8px var(--shadow-color); /* Enhanced shadow */
+        }
+
+        header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+            gap: 1rem; /* Space between logo and nav */
+        }
+
+        .logo {
+            font-size: 1.6rem; /* Slightly larger */
+            font-weight: 700;
+            color: white;
+            text-decoration: none;
+            padding: 0.25rem 0.5rem; /* Add padding for click area */
+            border-radius: 4px;
+            transition: opacity var(--animation-duration) ease;
+        }
+
+        .logo:hover,
+        .logo:focus {
+             opacity: 0.9;
+            outline: 2px solid var(--focus-outline-color);
+            outline-offset: 2px;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 1.8rem; /* Increased gap */
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            transition: opacity var(--animation-duration) ease;
+            padding: 0.25rem 0.5rem; /* Add padding for click area */
+            border-radius: 4px;
+        }
+
+        nav a:hover,
+        nav a:focus {
+            opacity: 0.9; /* Slightly less opaque */
+            outline: 2px solid var(--focus-outline-color);
+            outline-offset: 2px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        section {
+            padding: 5rem 0; /* Increased padding */
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        section:last-child {
+            border-bottom: none;
+        }
+
+        h1, h2, h3, h4 {
+            color: var(--heading-color);
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+
+        h1 {
+            font-size: 2.8rem; /* Slightly larger */
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h2 {
+            font-size: 2.2rem; /* Slightly larger */
+            text-align: center;
+            margin-bottom: 3.5rem; /* Increased margin */
+        }
+
+        h3 {
+            font-size: 1.6rem; /* Slightly larger */
+            margin-top: 2.5rem; /* Increased margin */
+            margin-bottom: 1.2rem;
+        }
+
+        h4 {
+             font-size: 1.2rem;
+             margin-bottom: 1rem;
+             text-align: center;
+        }
+
+        p {
+            margin-bottom: 1.2rem; /* Increased margin */
+        }
+
+        ul {
+            margin-bottom: 1.5rem;
+            padding-left: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .code-block {
+            background-color: var(--code-background);
+            border-radius: 8px;
+            padding: 1.2rem; /* Increased padding */
+            overflow-x: auto;
+            margin: 2rem 0; /* Increased margin */
+            position: relative;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1); /* Subtle inner shadow */
+        }
+
+        .code-block pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .code-block code {
+            font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+            font-size: 0.95rem; /* Slightly larger */
+            color: var(--text-color);
+            display: block; /* Ensures padding/margin work correctly */
+            padding: 0.5rem 0; /* Add some internal padding */
+        }
+
+        .button {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.8rem 1.8rem; /* Increased padding */
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color var(--animation-duration) ease, transform 0.1s ease, box-shadow var(--animation-duration) ease;
+            text-decoration: none;
+            text-align: center;
+            box-shadow: 0 2px 4px var(--shadow-color);
+             min-width: 150px; /* Ensure minimum size */
+        }
+
+        .button:hover {
+            background-color: #0056b3;
+            box-shadow: 0 4px 8px var(--shadow-color); /* Lift on hover */
+        }
+
+        .button:focus {
+             background-color: #0056b3;
+             outline: 2px solid var(--focus-outline-color);
+             outline-offset: 2px;
+             box-shadow: 0 4px 8px var(--shadow-color);
+        }
+
+        .button:active {
+            transform: scale(0.98);
+            box-shadow: 0 1px 2px var(--shadow-color);
+        }
+
+        .button-secondary {
+            background-color: var(--secondary-color);
+        }
+
+        .button-secondary:hover {
+            background-color: #545b62;
+        }
+         .button-secondary:focus {
+            background-color: #545b62;
+             outline: 2px solid var(--focus-outline-color);
+             outline-offset: 2px;
+        }
+
+        .diagram-area {
+            margin: 3rem 0; /* Increased margin */
+            padding: 2.5rem; /* Increased padding */
+            background-color: var(--card-background);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem; /* Increased gap */
+            box-shadow: 0 4px 8px var(--shadow-color); /* Added shadow */
+        }
+
+        .diagram-area h3 {
+            margin-top: 0;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .diagram-flow {
+            display: flex;
+            align-items: center;
+            gap: 2rem; /* Increased gap */
+            width: 100%;
+            justify-content: center;
+            flex-wrap: wrap; /* Allow wrapping */
+        }
+
+        .diagram-node {
+            background-color: white;
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+            padding: 1.2rem 1.5rem; /* Increased padding */
+            text-align: center;
+            font-weight: 600;
+            box-shadow: 0 2px 4px var(--shadow-color);
+            flex-shrink: 0;
+            min-width: 120px; /* Minimum width */
+        }
+
+        .diagram-arrow {
+            width: 50px; /* Increased width */
+            height: 3px; /* Increased thickness */
+            background-color: var(--text-color);
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .diagram-arrow::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: -6px; /* Adjusted position */
+            transform: translateY(-50%) rotate(45deg);
+            width: 12px; /* Increased size */
+            height: 12px; /* Increased size */
+            border-top: 3px solid var(--text-color); /* Increased thickness */
+            border-right: 3px solid var(--text-color); /* Increased thickness */
+        }
+
+         /* Arrow for vertical layout */
+        .diagram-flow.vertical .diagram-arrow {
+             width: 3px;
+             height: 50px;
+        }
+
+         .diagram-flow.vertical .diagram-arrow::after {
+            top: unset;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%) rotate(135deg);
+         }
+
+
+        .diagram-payload {
+            background-color: #fff3cd; /* Warning color */
+            border: 2px dashed #ffc107; /* Warning color */
+            border-radius: 8px;
+            padding: 1.2rem; /* Increased padding */
+            margin-top: 1.5rem; /* Increased margin */
+            text-align: center;
+            font-size: 0.95rem; /* Slightly larger */
+            width: 90%; /* Increased width */
+            max-width: 600px; /* Increased max-width */
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .diagram-payload p {
+            margin-bottom: 0.5rem;
+        }
+
+        .diagram-payload p:last-child {
+            margin-bottom: 0;
+        }
+
+        .diagram-payload.over-fetch {
+            background-color: #f8d7da; /* Danger color */
+            border-color: #dc3545; /* Danger color */
+            color: #721c24; /* Darker text for contrast */
+        }
+
+        .diagram-payload.precise-fetch {
+             background-color: #d4edda; /* Success color */
+            border-color: #28a745; /* Success color */
+            color: #155724; /* Darker text for contrast */
+        }
+
+
+        #comparison .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); /* Adjusted minmax */
+            gap: 2.5rem; /* Increased gap */
+        }
+
+        .comparison-card {
+            background-color: var(--card-background);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 2rem; /* Increased padding */
+            box-shadow: 0 4px 8px var(--shadow-color); /* Added shadow */
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .comparison-card:hover {
+            transform: translateY(-8px); /* Increased lift */
+            box-shadow: 0 8px 16px var(--shadow-color); /* More prominent shadow on hover */
+        }
+
+        .comparison-card h3 {
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 1.2rem; /* Increased margin */
+            text-align: center;
+        }
+
+        .comparison-card p {
+             margin-bottom: 1rem;
+             text-align: left; /* Align text left within card */
+             width: 100%; /* Take full width */
+        }
+
+        .comparison-card p strong {
+            color: var(--heading-color);
+             display: block; /* Make strong a block element for better separation */
+             margin-bottom: 0.4rem;
+        }
+
+        .simulation-area {
+            margin: 4rem 0; /* Increased margin */
+            padding: 3rem; /* Increased padding */
+            background-color: var(--card-background);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 2rem; /* Increased gap */
+            align-items: center;
+            box-shadow: 0 4px 8px var(--shadow-color); /* Added shadow */
+        }
+
+        .simulation-area h4 {
+            margin-bottom: 1.5rem;
+        }
+
+        .simulation-controls {
+            display: flex;
+            gap: 1.5rem; /* Increased gap */
+            margin-bottom: 2rem; /* Increased margin */
+            flex-wrap: wrap; /* Allow wrapping */
+            justify-content: center;
+        }
+
+        .simulation-display {
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-start;
+            gap: 3rem; /* Increased gap */
+             flex-wrap: wrap; /* Allow wrapping */
+        }
+
+        .simulation-box {
+            flex: 1;
+            min-width: 300px; /* Ensure minimum width */
+             display: flex;
+             flex-direction: column;
+        }
+
+        .simulation-box h4 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: var(--heading-color);
+        }
+
+        .simulation-request,
+        .simulation-response {
+            background-color: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.2rem; /* Increased padding */
+            margin-bottom: 1.5rem; /* Increased margin */
+            min-height: 120px; /* Increased min-height */
+            overflow-x: auto;
+            font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+            font-size: 0.9rem; /* Slightly larger */
+            color: var(--text-color);
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05); /* Subtle inner shadow */
+        }
+
+        .simulation-label {
+            font-weight: 600;
+            margin-bottom: 0.8rem; /* Increased margin */
+            display: block;
+            color: var(--heading-color);
+        }
+
+        .simulation-animation {
+            width: 100%;
+            max-width: 600px; /* Limit animation width */
+            height: 10px; /* Thinner bar */
+            background-color: var(--code-background);
+            border-radius: 5px; /* Rounded corners */
+            margin: 2rem 0; /* Increased margin */
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .simulation-animation .data-flow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5%; /* Thinner flow indicator */
+            height: 100%;
+            background-color: var(--accent-color); /* Default to GraphQL color */
+            animation: flow 2s ease-in-out forwards; /* Use forwards to stay at end */
+            display: none; /* Hidden by default */
+             border-radius: 5px;
+        }
+
+        @keyframes flow {
+            0% { left: 0%; }
+            100% { left: 95%; } /* Move almost to the end */
+        }
+
+         /* Tooltip styles */
+        [data-tooltip] {
+            position: relative;
+            cursor: help;
+            /* Style the element itself if needed */
+             border-bottom: 1px dashed var(--text-color); /* Indicate it's interactive */
+        }
+
+        [data-tooltip]:hover::after,
+        [data-tooltip]:focus::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--tooltip-background);
+            color: var(--tooltip-text);
+            padding: 0.6rem 1rem; /* Increased padding */
+            border-radius: 4px;
+            white-space: nowrap;
+            font-size: 0.9rem;
+            margin-bottom: 12px; /* Increased space */
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            z-index: 10;
+            pointer-events: none; /* Don't block mouse events */
+             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); /* Added shadow */
+        }
+
+         [data-tooltip]::after {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 992px) { /* Tablet breakpoint */
+             h1 { font-size: 2.4rem; }
+             h2 { font-size: 2rem; }
+             h3 { font-size: 1.5rem; }
+             section { padding: 4rem 0; }
+             .comparison-grid { gap: 2rem; }
+             .simulation-display { gap: 2rem; }
+        }
+
+
+        @media (max-width: 768px) { /* Mobile breakpoint */
+            header .container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            nav ul {
+                flex-direction: column;
+                gap: 0.8rem; /* Adjusted gap */
+                text-align: center;
+                width: 100%; /* Take full width */
+            }
+
+            nav li {
+                width: 100%;
+            }
+
+            nav a {
+                display: block; /* Make links block for better click area */
+                padding: 0.5rem; /* Adjust padding */
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            h2 {
+                font-size: 1.75rem;
+                margin-bottom: 2.5rem;
+            }
+
+            h3 {
+                font-size: 1.3rem;
+                margin-top: 2rem;
+            }
+
+            section {
+                padding: 3rem 0;
+            }
+
+            .diagram-flow {
+                flex-direction: column;
+                gap: 1.5rem; /* Adjusted gap */
+            }
+
+            .diagram-arrow {
+                width: 3px;
+                height: 40px;
+            }
+
+            .diagram-arrow::after {
+                top: unset;
+                bottom: -5px;
+                left: 50%;
+                transform: translateX(-50%) rotate(135deg);
+            }
+
+            .diagram-node {
+                 padding: 1rem;
+                 min-width: unset; /* Remove min-width */
+                 width: 80%; /* Take more width */
+                 max-width: 250px; /* Max width */
+            }
+
+            .diagram-payload {
+                 width: 95%; /* Take more width */
+                 font-size: 0.9rem;
+            }
+
+            .simulation-display {
+                flex-direction: column;
+                gap: 2rem; /* Adjusted gap */
+            }
+
+            .simulation-box {
+                 min-width: unset; /* Remove min-width */
+                 width: 100%; /* Take full width */
+            }
+
+             .simulation-controls {
+                 flex-direction: column;
+                 gap: 1rem;
+             }
+
+             .button {
+                 width: 100%; /* Full width buttons */
+                 max-width: 250px; /* Max width for buttons */
+             }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <a href="#" class="logo">API Architectures</a>
+            <nav aria-label="Main navigation">
+                <ul>
+                    <li><a href="#intro">Intro</a></li>
+                    <li><a href="#rest">REST</a></li>
+                    <li><a href="#graphql">GraphQL</a></li>
+                    <li><a href="#comparison">Compare</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main-content">
+        <section id="intro" aria-labelledby="intro-heading">
+            <div class="container">
+                <h2 id="intro-heading">Understanding Web APIs</h2>
+                <p>Web APIs (Application Programming Interfaces) are sets of rules and protocols for building and interacting with software applications. They allow different software systems to communicate with each other over the internet. Two popular architectural styles for building web APIs are REST and GraphQL.</p>
+                <p>Choosing the right API architecture is crucial for performance, flexibility, and maintainability. This page explores the key differences between REST and GraphQL to help you understand which might be suitable for different use cases.</p>
+            </div>
+        </section>
+
+        <section id="rest" aria-labelledby="rest-heading">
+            <div class="container">
+                <h2 id="rest-heading">REST (Representational State Transfer)</h2>
+                <p>REST is an architectural style that defines a set of constraints for creating web services. It's based on stateless communication and the concept of resources, which are accessed via unique URIs (Uniform Resource Identifiers).</p>
+                <p>Key principles of REST include:</p>
+                <ul>
+                    <li><strong>Stateless:</strong> Each request from client to server must contain all the information needed to understand the request.</li>
+                    <li><strong>Client-Server:</strong> Separation of concerns between client and server.</li>
+                    <li><strong>Cacheable:</strong> Responses can be cached to improve performance.</li>
+                    <li><strong>Layered System:</strong> Intermediary servers can be used between client and server.</li>
+                    <li><strong>Uniform Interface:</strong> A standardized way of interacting with resources (e.g., using HTTP methods like GET, POST, PUT, DELETE).</li>
+                    <li><strong>Code on Demand (Optional):</strong> Servers can temporarily extend or customize client functionality by transferring executable code.</li>
+                </ul>
+
+                <h3>Data Fetching in REST</h3>
+                <p>In REST, you typically fetch data by accessing specific endpoints that represent resources or collections of resources. For example, to get a list of users, you might call <code>/api/users</code>, and to get a specific user, you might call <code>/api/users/123</code>.</p>
+                <p>A common issue with REST is <strong>over-fetching</strong>, where the API response includes more data than the client actually needs, or <strong>under-fetching</strong>, requiring multiple requests to get all necessary related data.</p>
+
+                <h4>Example: Fetching User Data (REST)</h4>
+                <p>Let's say you need a user's name and email, but the user endpoint <code>/api/users/123</code> returns their name, email, address, phone number, and a list of their orders.</p>
+                <div class="code-block">
+                    <p class="simulation-label">REST Request (GET /api/users/123)</p>
+                    <pre><code class="language-http">GET /api/users/123 HTTP/1.1
+Host: api.example.com
+Accept: application/json</code></pre>
+                </div>
+                 <div class="code-block">
+                    <p class="simulation-label">REST Response (Full User Data)</p>
+                    <pre><code class="language-json" data-tooltip="Notice the extra data like 'address' and 'orders' that might not be needed. This is over-fetching.">{
+  "id": 123,
+  "name": "Alice Smith",
+  "email": "alice.smith@example.com",
+  "address": {
+    "street": "123 Main St",
+    "city": "Anytown",
+    "zip": "12345"
+  },
+  "phone": "555-1234",
+  "orders": [
+    { "orderId": 1, "total": 50.00 },
+    { "orderId": 2, "total": 75.50 }
+  ]
+}</code></pre>
+                </div>
+
+                 <h3>REST Data Flow Diagram</h3>
+                 <div class="diagram-area">
+                     <h3>REST Data Flow</h3>
+                     <div class="diagram-flow">
+                         <div class="diagram-node">Client</div>
+                         <div class="diagram-arrow"></div>
+                         <div class="diagram-node">Server (API Endpoint)</div>
+                     </div>
+                     <div class="diagram-payload over-fetch">
+                         <p><strong>Response Payload:</strong> Full User Data (includes name, email, address, phone, orders)</p>
+                         <p><em>Potential Over-fetching:</em> Client only needed name and email.</p>
+                     </div>
+                 </div>
+            </div>
+        </section>
+
+        <section id="graphql" aria-labelledby="graphql-heading">
+            <div class="container">
+                <h2 id="graphql-heading">GraphQL</h2>
+                <p>GraphQL is a query language for APIs and a runtime for fulfilling those queries with your existing data. It was developed by Facebook and is often seen as an alternative to REST.</p>
+                <p>Unlike REST, which uses multiple endpoints to access different resources, GraphQL typically exposes a single endpoint. Clients send queries to this endpoint, specifying exactly what data they need.</p>
+
+                 <h3>Data Fetching in GraphQL</h3>
+                <p>With GraphQL, the client defines the structure of the data required. The server responds with only the requested data, eliminating over-fetching and reducing the need for multiple requests (under-fetching) in many cases.</p>
+
+                <h4>Example: Fetching User Data (GraphQL)</h4>
+                <p>Using GraphQL, you can request only the user's name and email from the single API endpoint (e.g., <code>/graphql</code>).</p>
+                <div class="code-block">
+                    <p class="simulation-label">GraphQL Request (POST /graphql)</p>
+                    <pre><code class="language-http">POST /graphql HTTP/1.1
+Host: api.example.com
+Content-Type: application/json
+
+<span class="language-json">{
+  "query": "query GetUserNameAndEmail { user(id: \"123\") { name email } }"
+}</span></code></pre>
+                </div>
+                 <div class="code-block">
+                    <p class="simulation-label">GraphQL Response (Precise User Data)</p>
+                    <pre><code class="language-json" data-tooltip="The response contains only the 'name' and 'email' fields explicitly requested in the query.">{
+  "data": {
+    "user": {
+      "name": "Alice Smith",
+      "email": "alice.smith@example.com"
+    }
+  }
+}</code></pre>
+                </div>
+
+                <h3>GraphQL Data Flow Diagram</h3>
+                 <div class="diagram-area">
+                     <h3>GraphQL Data Flow</h3>
+                     <div class="diagram-flow">
+                         <div class="diagram-node">Client (Query)</div>
+                         <div class="diagram-arrow"></div>
+                         <div class="diagram-node">Server (Single Endpoint)</div>
+                     </div>
+                      <div class="diagram-payload precise-fetch">
+                         <p><strong>Response Payload:</strong> User Name and Email (only requested fields)</p>
+                         <p><em>Precise Fetching:</em> Client receives only the data it needs.</p>
+                     </div>
+                 </div>
+            </div>
+        </section>
+
+        <section id="comparison" aria-labelledby="comparison-heading">
+            <div class="container">
+                <h2 id="comparison-heading">REST vs GraphQL: Key Differences</h2>
+                <p>Here's a summary of the main distinctions between REST and GraphQL:</p>
+
+                <div class="comparison-grid">
+                    <div class="comparison-card">
+                        <h3>Endpoints</h3>
+                        <p><strong>REST:</strong> Multiple endpoints, each representing a resource (e.g., <code>/users</code>, <code>/products/123</code>, <code>/orders</code>).</p>
+                        <p><strong>GraphQL:</strong> Typically a single endpoint (e.g., <code>/graphql</code>) to which all queries are sent.</p>
+                    </div>
+                     <div class="comparison-card">
+                        <h3>Data Fetching</h3>
+                        <p><strong>REST:</strong> Fetches predefined data structures from endpoints. Can lead to over-fetching (getting too much data) or under-fetching (requiring multiple requests).</p>
+                        <p><strong>GraphQL:</strong> Client specifies exactly what data it needs in the query. Server responds with only the requested data, avoiding over-fetching and reducing under-fetching.</p>
+                    </div>
+                     <div class="comparison-card">
+                        <h3>Flexibility</h3>
+                        <p><strong>REST:</strong> Less flexible for clients needing varying data sets. Changes to required data often require server-side endpoint modifications.</p>
+                        <p><strong>GraphQL:</strong> Highly flexible for clients. Clients can request different data structures from the same endpoint without server changes (as long as the data is defined in the schema).</p>
+                    </div>
+                     <div class="comparison-card">
+                        <h3>Versioning</h3>
+                        <p><strong>REST:</strong> Common to version APIs (e.g., <code>/api/v1/users</code>). Can lead to maintaining multiple versions.</p>
+                        <p><strong>GraphQL:</strong> Schema-based approach makes versioning less common. Changes can often be additive without breaking existing clients.</p>
+                    </div>
+                </div>
+
+                <h3>Interactive Fetching Simulation</h3>
+                <div class="simulation-area">
+                    <h4>Simulate Data Fetching</h4>
+                    <p>Click the buttons below to see a simplified simulation of how data is requested and received in REST and GraphQL.</p>
+                    <div class="simulation-controls">
+                        <button class="button" id="simulateRest" aria-controls="simulationAnimation restResponse graphqlResponse">Simulate REST Fetch</button>
+                        <button class="button button-secondary" id="simulateGraphql" aria-controls="simulationAnimation restResponse graphqlResponse">Simulate GraphQL Fetch</button>
+                    </div>
+                    <div class="simulation-display">
+                        <div class="simulation-box">
+                            <h4>REST</h4>
+                            <span class="simulation-label">Request:</span>
+                            <div class="simulation-request" id="restRequest">GET /api/users/123</div>
+                             <span class="simulation-label">Response:</span>
+                            <div class="simulation-response" id="restResponse">Awaiting simulation...</div>
+                        </div>
+                         <div class="simulation-box">
+                            <h4>GraphQL</h4>
+                            <span class="simulation-label">Request (Query):</span>
+                             <div class="simulation-request" id="graphqlRequest">query GetUserNameAndEmail { user(id: "123") { name email } }</div>
+                             <span class="simulation-label">Response:</span>
+                            <div class="simulation-response" id="graphqlResponse">Awaiting simulation...</div>
+                        </div>
+                    </div>
+                     <div class="simulation-animation" id="simulationAnimation" aria-hidden="true">
+                         <div class="data-flow" id="dataFlowAnimation"></div>
+                     </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Smooth scrolling for navigation
+        document.querySelectorAll('nav a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                     targetElement.scrollIntoView({
+                         behavior: 'smooth'
+                     });
+                      // Update focus for accessibility
+                     targetElement.setAttribute('tabindex', '-1'); // Make target focusable
+                     targetElement.focus();
+                     targetElement.removeAttribute('tabindex'); // Remove tabindex after focus
+                }
+            });
+        });
+
+        // Simulation Logic
+        const restResponseDiv = document.getElementById('restResponse');
+        const graphqlResponseDiv = document.getElementById('graphqlResponse');
+        const simulateRestButton = document.getElementById('simulateRest');
+        const simulateGraphqlButton = document.getElementById('simulateGraphql');
+        const dataFlowAnimation = document.getElementById('dataFlowAnimation');
+        const simulationAnimationContainer = document.getElementById('simulationAnimation');
+
+
+        const restFullData = `{
+  "id": 123,
+  "name": "Alice Smith",
+  "email": "alice.smith@example.com",
+  "address": {
+    "street": "123 Main St",
+    "city": "Anytown",
+    "zip": "12345"
+  },
+  "phone": "555-1234",
+  "orders": [
+    { "orderId": 1, "total": 50.00 },
+    { "orderId": 2, "total": 75.50 }
+  ]
+}`;
+
+        const graphqlPreciseData = `{
+  "data": {
+    "user": {
+      "name": "Alice Smith",
+      "email": "alice.smith@example.com"
+    }
+  }
+}`;
+
+        // Helper function to get CSS variable value
+        function getCssVar(name) {
+            return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        }
+
+        function simulateFetch(type) {
+            // Disable buttons during simulation
+            simulateRestButton.disabled = true;
+            simulateGraphqlButton.disabled = true;
+
+            // Reset displays
+            restResponseDiv.textContent = 'Fetching...';
+            graphqlResponseDiv.textContent = 'Fetching...';
+
+            // Show and reset animation
+            simulationAnimationContainer.setAttribute('aria-hidden', 'false');
+            dataFlowAnimation.style.display = 'block';
+            dataFlowAnimation.style.animation = 'none'; // Reset animation property
+
+            // Set animation color based on type
+             dataFlowAnimation.style.backgroundColor = type === 'rest'
+                ? getCssVar("--primary-color")
+                : getCssVar("--accent-color");
+
+            // Force reflow to restart animation from the beginning
+            void dataFlowAnimation.offsetWidth;
+
+            // Start animation
+            dataFlowAnimation.style.animation = `flow 2s ease-in-out forwards`;
+
+            // Simulate network delay and update results after animation
+            setTimeout(() => {
+                if (type === 'rest') {
+                    restResponseDiv.textContent = restFullData;
+                    graphqlResponseDiv.textContent = 'Not requested via GraphQL';
+                } else {
+                    restResponseDiv.textContent = 'Not requested via REST';
+                    graphqlResponseDiv.textContent = graphqlPreciseData;
+                }
+
+                // Hide animation element and re-enable buttons
+                dataFlowAnimation.style.display = 'none';
+                 simulationAnimationContainer.setAttribute('aria-hidden', 'true');
+                simulateRestButton.disabled = false;
+                simulateGraphqlButton.disabled = false;
+
+            }, 2000); // Match animation duration
+        }
+
+        simulateRestButton.addEventListener('click', () => simulateFetch('rest'));
+        simulateGraphqlButton.addEventListener('click', () => simulateFetch('graphql'));
+
+         // Tooltip logic (CSS handles hover/focus, no complex JS needed)
+         // Ensure elements with data-tooltip are focusable if they are not naturally interactive
+         document.querySelectorAll('[data-tooltip]').forEach(element => {
+             if (element.tagName !== 'A' && element.tagName !== 'BUTTON' && element.tagName !== 'INPUT') {
+                 element.setAttribute('tabindex', '0'); // Make non-interactive elements focusable
+             }
+         });
+
+    </script>
+</body>
+</html>

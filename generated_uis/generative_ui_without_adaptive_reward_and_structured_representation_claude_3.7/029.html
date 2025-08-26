@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fitness Tracker</title>
+    <!-- Google Fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <!-- Material Symbols Icons -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+        :root {
+            --primary-color: #4CAF50; /* Green */
+            --primary-color-dark: #388E3C;
+            --accent-color: #2196F3; /* Blue */
+            --accent-color-dark: #1976D2;
+            --text-color: #333;
+            --text-color-light: #666;
+            --background-color: #f4f7f6; /* Light grey */
+            --card-background: #ffffff; /* White */
+            --border-color: #ddd;
+            --subtle-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); /* More subtle shadow */
+            --spacing-small: 8px;
+            --spacing-medium: 16px;
+            --spacing-large: 24px;
+            --border-radius: 12px;
+            --transition-speed: 0.3s;
+            --tap-feedback-color: rgba(0, 0, 0, 0.05); /* Subtle tap feedback */
+            --error-color: #f44336; /* Red */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            overflow: hidden; /* Prevent body scroll, content scrolls within sections */
+            -webkit-tap-highlight-color: transparent; /* Remove default tap highlight */
+            font-display: swap; /* Improve font loading */
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 450px; /* Simulate mobile width */
+            margin: 0 auto;
+            border-left: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            box-shadow: 0 0 20px var(--subtle-shadow);
+            background-color: var(--background-color);
+        }
+
+        .header {
+            padding: var(--spacing-medium);
+            text-align: center;
+            background-color: var(--card-background);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--subtle-shadow);
+            z-index: 10;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            color: var(--primary-color-dark);
+        }
+
+        .content-area {
+            flex-grow: 1;
+            overflow-y: auto; /* Enable scrolling for content */
+            padding: var(--spacing-medium);
+            padding-bottom: 80px; /* Space for bottom nav */
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+            position: relative; /* Needed for potential absolute/fixed elements within sections */
+        }
+
+        .section {
+            display: none; /* Hide sections by default */
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity var(--transition-speed) ease-in-out, transform var(--transition-speed) ease-in-out;
+        }
+
+        .section.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+             /* Ensure active section is focusable if it contains no focusable elements */
+             outline: none; /* Remove default outline if focusing section */
+        }
+
+        h2 {
+            font-size: 1.3em;
+            color: var(--text-color);
+            margin-top: 0;
+            margin-bottom: var(--spacing-medium);
+        }
+
+        /* Dashboard Styles */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--spacing-medium);
+        }
+
+        .dashboard-card {
+            background-color: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-medium);
+            box-shadow: var(--subtle-shadow);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+            cursor: pointer; /* Indicate interactivity */
+             outline-offset: 4px; /* Add space for outline */
+        }
+
+        .dashboard-card:hover {
+             transform: translateY(-2px);
+             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+         .dashboard-card:active {
+             transform: scale(0.98);
+             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+         }
+        .dashboard-card:focus {
+             outline: 2px solid var(--accent-color);
+        }
+
+
+        .card-title {
+            font-size: 1em;
+            font-weight: 600;
+            margin-bottom: var(--spacing-small);
+            color: var(--text-color-light);
+            display: flex;
+            align-items: center;
+        }
+
+        .card-title .material-symbols-rounded {
+             margin-right: var(--spacing-small);
+             font-size: 1.2em;
+             color: var(--accent-color);
+        }
+
+        .card-value {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: var(--primary-color-dark);
+            margin-bottom: var(--spacing-small);
+        }
+
+        .card-subtitle {
+             font-size: 0.9em;
+             color: var(--text-color-light);
+             margin-bottom: var(--spacing-medium);
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            background-color: #eee;
+            border-radius: 5px;
+            overflow: hidden;
+            height: 8px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 0%; /* Will be set by JS */
+            transition: width 0.5s ease-in-out;
+        }
+
+        /* Activity Logging Styles */
+        .activity-form label {
+            display: block;
+            margin-bottom: var(--spacing-small);
+            font-weight: 500;
+            color: var(--text-color-light);
+            font-size: 0.9em;
+        }
+
+        .activity-form input[type="text"],
+        .activity-form input[type="number"],
+        .activity-form input[type="date"],
+        .activity-form input[type="time"],
+        .activity-form select {
+            width: 100%;
+            padding: var(--spacing-small);
+            margin-bottom: var(--spacing-small); /* Reduced margin */
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            box-sizing: border-box; /* Include padding in width */
+            transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+        }
+
+         .activity-form input[type="text"]:focus,
+        .activity-form input[type="number"]:focus,
+        .activity-form input[type="date"]:focus,
+        .activity-form input[type="time"]:focus,
+        .activity-form select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2); /* Accent color glow */
+        }
+
+        .activity-form .input-group {
+             margin-bottom: var(--spacing-medium); /* Add margin below input group */
+        }
+
+        .error-message {
+             color: var(--error-color);
+             font-size: 0.8em;
+             margin-top: 4px;
+             min-height: 1em; /* Reserve space even when empty */
+             display: block; /* Ensure it takes up space */
+        }
+
+         .activity-form input.invalid,
+         .activity-form select.invalid {
+             border-color: var(--error-color); /* Red for invalid */
+         }
+
+         .activity-form input.invalid:focus,
+         .activity-form select.invalid:focus {
+             border-color: var(--error-color);
+             box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.2);
+         }
+
+
+        .activity-form button[type="submit"] {
+            display: block;
+            width: 100%;
+            padding: var(--spacing-medium);
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color var(--transition-speed) ease, transform 0.1s ease;
+            box-shadow: var(--subtle-shadow);
+             outline-offset: 4px; /* Add space for outline */
+        }
+
+        .activity-form button[type="submit"]:hover,
+        .activity-form button[type="submit"]:focus {
+            background-color: var(--primary-color-dark);
+            outline: 2px solid var(--accent-color);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+         .activity-form button[type="submit"]:active {
+             transform: scale(0.98);
+              background-color: var(--primary-color-dark);
+              box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+         }
+
+
+        /* Progress Tracking Styles */
+        .chart-container {
+            background-color: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-medium);
+            box-shadow: var(--subtle-shadow);
+            margin-bottom: var(--spacing-medium);
+            position: relative; /* Needed for floating controls */
+        }
+
+        .chart-title {
+             font-size: 1.2em;
+             font-weight: 600;
+             margin-bottom: var(--spacing-medium);
+             color: var(--text-color);
+        }
+
+        .floating-controls {
+            position: absolute;
+            top: var(--spacing-medium);
+            right: var(--spacing-medium);
+            background: rgba(255, 255, 255, 0.98); /* Slightly less transparent */
+            padding: var(--spacing-medium);
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* More prominent shadow when open */
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all var(--transition-speed) ease;
+            pointer-events: none;
+            z-index: 5;
+            min-width: 180px; /* Give controls some width */
+             visibility: hidden; /* Use visibility for screen readers */
+        }
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+             visibility: visible;
+        }
+        .control-group {
+            margin-bottom: var(--spacing-small);
+            display: flex;
+            flex-direction: column;
+        }
+        .control-group label {
+            font-size: 0.9em;
+            color: var(--text-color-light);
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+        .control-group input[type="color"] {
+             padding: 4px; /* Adjust padding for color input */
+             height: 36px; /* Match height of select/text inputs */
+             border: 1px solid var(--border-color);
+             border-radius: 4px;
+             box-sizing: border-box;
+        }
+        .control-group input:not([type="color"]),
+        .control-group select {
+            padding: 6px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.9em;
+            transition: border-color var(--transition-speed) ease;
+             outline-offset: 2px;
+        }
+         .control-group input:focus,
+         .control-group select:focus {
+             outline: 2px solid var(--accent-color);
+             border-color: var(--accent-color);
+         }
+
+        .chart-canvas-wrapper {
+             height: 250px; /* Fixed height for chart */
+             width: 100%;
+             position: relative;
+             cursor: pointer;
+             outline-offset: 4px;
+        }
+         .chart-canvas-wrapper:focus {
+             outline: 2px solid var(--accent-color);
+         }
+
+
+        /* Goals Styles */
+        .goal-item {
+            background-color: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-medium);
+            box-shadow: var(--subtle-shadow);
+            margin-bottom: var(--spacing-medium);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+             cursor: pointer;
+             outline-offset: 4px;
+        }
+         .goal-item:hover {
+             transform: translateY(-2px);
+             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+         }
+          .goal-item:active {
+             transform: scale(0.98);
+              box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+         }
+         .goal-item:focus {
+             outline: 2px solid var(--accent-color);
+         }
+
+
+        .goal-details {
+            flex-grow: 1;
+        }
+
+        .goal-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: var(--spacing-small);
+            color: var(--text-color);
+        }
+
+        .goal-progress {
+            font-size: 0.9em;
+            color: var(--text-color-light);
+        }
+
+        /* Profile Styles */
+        .profile-section {
+            background-color: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-medium);
+            box-shadow: var(--subtle-shadow);
+            margin-bottom: var(--spacing-medium);
+        }
+
+        .profile-avatar {
+            display: block;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto var(--spacing-medium);
+            object-fit: cover;
+            border: 3px solid var(--primary-color);
+        }
+
+        .profile-section label {
+            display: block;
+            margin-bottom: var(--spacing-small);
+            font-weight: 500;
+            color: var(--text-color-light);
+             font-size: 0.9em;
+        }
+
+        .profile-section input[type="text"],
+        .profile-section input[type="email"],
+        .profile-section input[type="number"] {
+             width: 100%;
+             padding: var(--spacing-small);
+             margin-bottom: var(--spacing-medium);
+             border: 1px solid var(--border-color);
+             border-radius: var(--border-radius);
+             font-size: 1em;
+             box-sizing: border-box;
+             transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+             outline-offset: 4px;
+        }
+         .profile-section input[type="text"]:focus,
+        .profile-section input[type="email"]:focus,
+        .profile-section input[type="number"]:focus {
+            outline: 2px solid var(--accent-color);
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2);
+        }
+
+
+        .profile-section button {
+            display: block;
+            width: 100%;
+            padding: var(--spacing-medium);
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color var(--transition-speed) ease, transform 0.1s ease;
+             box-shadow: var(--subtle-shadow);
+             outline-offset: 4px;
+        }
+
+        .profile-section button:hover,
+        .profile-section button:focus {
+            background-color: var(--primary-color-dark);
+            outline: 2px solid var(--accent-color);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+         .profile-section button:active {
+             transform: scale(0.98);
+              background-color: var(--primary-color-dark);
+              box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+         }
+
+
+        /* Bottom Navigation Styles */
+        .bottom-nav {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 60px;
+            background-color: var(--card-background);
+            border-top: 1px solid var(--border-color);
+            box-shadow: 0 -2px 8px var(--subtle-shadow);
+            position: fixed; /* Use fixed for bottom nav */
+            bottom: 0;
+            left: 50%; /* Center the nav */
+            transform: translateX(-50%); /* Center the nav */
+            width: 100%;
+            max-width: 450px; /* Match app container width */
+            z-index: 10;
+        }
+
+        [role="tablist"] {
+            display: flex;
+            padding: 0;
+            margin: 0;
+            list-style: none;
+            width: 100%; /* Ensure tablist fills nav */
+        }
+
+        [role="tab"] {
+            flex-grow: 1;
+            text-decoration: none;
+            color: var(--text-color-light);
+            font-size: 0.8em;
+            transition: color var(--transition-speed) ease, transform 0.1s ease, background-color 0.1s ease;
+            padding: 4px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+             -webkit-tap-highlight-color: var(--tap-feedback-color);
+             position: relative; /* Needed for tap feedback overlay */
+             outline-offset: 4px;
+        }
+         [role="tab"]::before {
+             content: '';
+             position: absolute;
+             top: 0;
+             left: 0;
+             right: 0;
+             bottom: 0;
+             background-color: transparent;
+             transition: background-color 0.1s ease;
+             border-radius: var(--border-radius); /* Match nav item shape */
+         }
+         [role="tab"]:active::before {
+             background-color: var(--tap-feedback-color);
+         }
+
+
+        [role="tab"] .material-symbols-rounded {
+             font-size: 24px;
+             margin-bottom: 2px;
+        }
+
+        [role="tab"][aria-selected="true"] {
+            color: var(--primary-color);
+        }
+
+        [role="tab"]:hover {
+            color: var(--text-color);
+        }
+
+         [role="tab"]:focus {
+            outline: 2px solid var(--accent-color);
+            color: var(--text-color);
+         }
+        [role="tab"][aria-selected="true"]:hover,
+        [role="tab"][aria-selected="true"]:focus {
+             color: var(--primary-color-dark);
+             outline: 2px solid var(--accent-color);
+        }
+
+
+        [role="tabpanel"] {
+            display: none;
+        }
+
+        [role="tabpanel"].active {
+            display: block;
+        }
+
+         /* Accessibility: Visually hidden but available for screen readers */
+         .visually-hidden {
+             position: absolute;
+             width: 1px;
+             height: 1px;
+             margin: -1px;
+             padding: 0;
+             overflow: hidden;
+             clip: rect(0, 0, 0, 0);
+             border: 0;
+         }
+
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <h1>Fitness Tracker</h1>
+        </header>
+
+        <main class="content-area" aria-live="polite">
+            <section id="dashboard" class="section active" role="tabpanel" aria-labelledby="tab-dashboard">
+                <h2>Dashboard</h2>
+                <div class="dashboard-grid">
+                    <div class="dashboard-card" tabindex="0" role="button" aria-label="View Steps details">
+                        <div class="card-title"><span class="material-symbols-rounded" aria-hidden="true">directions_walk</span> Steps</div>
+                        <div class="card-value" id="steps-value">0</div>
+                        <div class="card-subtitle">Goal: 10,000 steps</div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" id="steps-progress" style="width: 0%;" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Steps progress towards daily goal"></div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card" tabindex="0" role="button" aria-label="View Calories Burned details">
+                        <div class="card-title"><span class="material-symbols-rounded" aria-hidden="true">local_fire_department</span> Calories Burned</div>
+                        <div class="card-value" id="calories-value">0</div>
+                        <div class="card-subtitle">Goal: 500 kcal</div>
+                         <div class="progress-bar-container">
+                            <div class="progress-bar" id="calories-progress" style="width: 0%;" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Calories burned progress towards daily goal"></div>
+                        </div>
+                    </div>
+                     <div class="dashboard-card" tabindex="0" role="button" aria-label="View Active Time details">
+                        <div class="card-title"><span class="material-symbols-rounded" aria-hidden="true">timer</span> Active Time</div>
+                        <div class="card-value" id="active-time-value">0 min</div>
+                        <div class="card-subtitle">Goal: 60 min</div>
+                         <div class="progress-bar-container">
+                            <div class="progress-bar" id="active-time-progress" style="width: 0%;" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Active time progress towards daily goal"></div>
+                        </div>
+                    </div>
+                     <div class="dashboard-card" tabindex="0" role="button" aria-label="View Workouts details">
+                        <div class="card-title"><span class="material-symbols-rounded" aria-hidden="true">fitness_center</span> Workouts</div>
+                        <div class="card-value" id="workouts-value">0</div>
+                        <div class="card-subtitle">Weekly Goal: 3 workouts</div>
+                         <div class="progress-bar-container">
+                            <div class="progress-bar" id="workouts-progress" style="width: 0%;" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Workouts progress towards weekly goal"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="activity" class="section" role="tabpanel" aria-labelledby="tab-activity">
+                <h2>Log Activity</h2>
+                <form class="activity-form" id="activity-log-form" novalidate aria-label="Log new activity">
+                    <div class="input-group">
+                        <label for="activity-type">Activity Type</label>
+                        <select id="activity-type" required aria-required="true" aria-label="Select activity type">
+                            <option value="">Select Activity</option>
+                            <option value="running">Running</option>
+                            <option value="walking">Walking</option>
+                            <option value="cycling">Cycling</option>
+                            <option value="swimming">Swimming</option>
+                            <option value="weights">Weight Lifting</option>
+                            <option value="yoga">Yoga</option>
+                            <option value="other">Other</option>
+                        </select>
+                         <p id="activity-type-error" class="error-message" aria-live="polite"></p>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="activity-duration">Duration (minutes)</label>
+                        <input type="number" id="activity-duration" min="1" required aria-required="true" aria-label="Enter duration in minutes" aria-describedby="activity-duration-error">
+                        <p id="activity-duration-error" class="error-message" aria-live="polite"></p>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="activity-calories">Calories Burned (approx)</label>
+                        <input type="number" id="activity-calories" min="0" aria-label="Enter approximate calories burned" aria-describedby="activity-calories-error">
+                         <p id="activity-calories-error" class="error-message" aria-live="polite"></p>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="activity-distance">Distance (km, optional)</label>
+                        <input type="number" id="activity-distance" min="0" step="0.1" aria-label="Enter distance in kilometers (optional)" aria-describedby="activity-distance-error">
+                         <p id="activity-distance-error" class="error-message" aria-live="polite"></p>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="activity-date">Date</label>
+                        <input type="date" id="activity-date" required aria-required="true" aria-label="Select activity date" aria-describedby="activity-date-error">
+                         <p id="activity-date-error" class="error-message" aria-live="polite"></p>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="activity-time">Time</label>
+                        <input type="time" id="activity-time" required aria-required="true" aria-label="Select activity time" aria-describedby="activity-time-error">
+                         <p id="activity-time-error" class="error-message" aria-live="polite"></p>
+                    </div>
+
+                    <button type="submit">Log Activity</button>
+                </form>
+            </section>
+
+            <section id="progress" class="section" role="tabpanel" aria-labelledby="tab-progress">
+                <h2>Progress</h2>
+                <div class="chart-container">
+                    <div class="chart-title">Daily Steps Trend</div>
+                    <div class="chart-canvas-wrapper" tabindex="0" role="img" aria-label="Daily steps trend chart. Click to show chart options.">
+                        <canvas id="stepsChart"></canvas>
+                         <div class="floating-controls" id="stepsChartControls" aria-hidden="true" aria-label="Steps chart options">
+                            <div class="control-group">
+                                <label for="stepsChartType">Chart Type</label>
+                                <select id="stepsChartType" aria-label="Select chart type for steps trend">
+                                    <option value="line">Line</option>
+                                    <option value="bar">Bar</option>
+                                </select>
+                            </div>
+                             <div class="control-group">
+                                <label for="stepsChartColor">Line/Bar Color</label>
+                                <input type="color" id="stepsChartColor" value="#4CAF50" aria-label="Select color for steps trend chart">
+                            </div>
+                             <div class="control-group">
+                                <label for="stepsChartRange">Time Range</label>
+                                <select id="stepsChartRange" aria-label="Select time range for steps trend">
+                                    <option value="7">Last 7 Days</option>
+                                    <option value="30">Last 30 Days</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                 <div class="chart-container">
+                    <div class="chart-title">Weekly Activity Summary</div>
+                    <div class="chart-canvas-wrapper" tabindex="0" role="img" aria-label="Weekly activity summary chart showing duration and calories. Click to show chart options.">
+                        <canvas id="activityChart"></canvas>
+                         <div class="floating-controls" id="activityChartControls" aria-hidden="true" aria-label="Activity summary chart options">
+                            <div class="control-group">
+                                <label for="activityChartType">Chart Type</label>
+                                <select id="activityChartType" aria-label="Select chart type for activity summary">
+                                    <option value="bar">Bar</option>
+                                    <option value="line">Line</option>
+                                </select>
+                            </div>
+                             <div class="control-group">
+                                <label for="activityChartDurationColor">Duration Color</label>
+                                <input type="color" id="activityChartDurationColor" value="#2196F3" aria-label="Select color for activity duration data">
+                            </div>
+                             <div class="control-group">
+                                <label for="activityChartCaloriesColor">Calories Color</label>
+                                <input type="color" id="activityChartCaloriesColor" value="#FF6384" aria-label="Select color for activity calories data">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+            <section id="goals" class="section" role="tabpanel" aria-labelledby="tab-goals">
+                <h2>Goals</h2>
+                <div id="goals-list">
+                    <!-- Goal items will be populated here by JS or rendered statically -->
+                    <div class="goal-item" tabindex="0" role="button" aria-label="Goal: Walk 10,000 Steps Daily. Progress: 70% achieved 5 out of 7 days this week.">
+                        <div class="goal-details">
+                            <div class="goal-title">Walk 10,000 Steps Daily</div>
+                            <div class="goal-progress">Progress: 70% (Achieved 5/7 days this week)</div>
+                        </div>
+                        <!-- Could add edit/delete buttons here -->
+                    </div>
+                     <div class="goal-item" tabindex="0" role="button" aria-label="Goal: Log 3 Workouts Weekly. Progress: 66% logged 2 out of 3 workouts this week.">
+                        <div class="goal-details">
+                            <div class="goal-title">Log 3 Workouts Weekly</div>
+                            <div class="goal-progress">Progress: 66% (Logged 2/3 workouts this week)</div>
+                        </div>
+                    </div>
+                     <div class="goal-item" tabindex="0" role="button" aria-label="Goal: Burn 500 kcal Daily. Progress: 85% average daily burn.">
+                        <div class="goal-details">
+                            <div class="goal-title">Burn 500 kcal Daily</div>
+                            <div class="goal-progress">Progress: 85% (Average daily burn)</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="profile" class="section" role="tabpanel" aria-labelledby="tab-profile">
+                <h2>Profile</h2>
+                <div class="profile-section">
+                    <img src="https://placehold.co/80x80?text=Avatar" alt="User Avatar" class="profile-avatar">
+                    <label for="profile-name">Name</label>
+                    <input type="text" id="profile-name" value="John Doe" aria-label="Enter your name">
+
+                    <label for="profile-email">Email</label>
+                    <input type="email" id="profile-email" value="john.doe@example.com" aria-label="Enter your email address">
+
+                     <label for="profile-weight">Weight (kg)</label>
+                    <input type="number" id="profile-weight" value="75" min="1" aria-label="Enter your weight in kilograms">
+
+                     <label for="profile-height">Height (cm)</label>
+                    <input type="number" id="profile-height" value="175" min="1" aria-label="Enter your height in centimeters">
+
+                    <button id="save-profile-button">Save Profile</button>
+                </div>
+            </section>
+        </main>
+
+        <nav class="bottom-nav" role="tablist" aria-label="Main navigation">
+            <button class="nav-item active" id="tab-dashboard" role="tab" aria-controls="dashboard" aria-selected="true" tabindex="0" aria-label="Dashboard">
+                <span class="material-symbols-rounded" aria-hidden="true">dashboard</span>
+                Dashboard
+            </button>
+            <button class="nav-item" id="tab-activity" role="tab" aria-controls="activity" aria-selected="false" tabindex="-1" aria-label="Log Activity">
+                <span class="material-symbols-rounded" aria-hidden="true">add_circle</span>
+                Log
+            </button>
+            <button class="nav-item" id="tab-progress" role="tab" aria-controls="progress" aria-selected="false" tabindex="-1" aria-label="View Progress">
+                <span class="material-symbols-rounded" aria-hidden="true">trending_up</span>
+                Progress
+            </button>
+            <button class="nav-item" id="tab-goals" role="tab" aria-controls="goals" aria-selected="false" tabindex="-1" aria-label="View Goals">
+                <span class="material-symbols-rounded" aria-hidden="true">check_circle</span>
+                Goals
+            </button>
+            <button class="nav-item" id="tab-profile" role="tab" aria-controls="profile" aria-selected="false" tabindex="-1" aria-label="View Profile">
+                <span class="material-symbols-rounded" aria-hidden="true">person</span>
+                Profile
+            </button>
+        </nav>
+    </div>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        // --- Navigation Logic ---
+        const navItems = document.querySelectorAll('.bottom-nav [role="tab"]');
+        const sections = document.querySelectorAll('.content-area [role="tabpanel"]');
+        const contentArea = document.querySelector('.content-area');
+
+        function activateTab(targetTabId) {
+            const targetTab = document.getElementById(targetTabId);
+            const targetSectionId = targetTab.getAttribute('aria-controls');
+            const targetSection = document.getElementById(targetSectionId);
+
+            // Update active nav item and tabindex for keyboard navigation
+            navItems.forEach(item => {
+                item.classList.remove('active');
+                item.setAttribute('aria-selected', 'false');
+                 item.setAttribute('tabindex', '-1'); // Make non-active tabs unfocusable via tab key
+            });
+            targetTab.classList.add('active');
+            targetTab.setAttribute('aria-selected', 'true');
+             targetTab.setAttribute('tabindex', '0'); // Make active tab focusable
+
+            // Hide all sections first for transition effect
+             sections.forEach(section => {
+                 section.classList.remove('active');
+                 section.setAttribute('aria-hidden', 'true'); // Hide from screen readers
+                 section.setAttribute('tabindex', '-1'); // Make section content unfocusable when hidden
+             });
+
+            // Show target section
+            targetSection.classList.add('active');
+            targetSection.setAttribute('aria-hidden', 'false'); // Show to screen readers
+             targetSection.setAttribute('tabindex', '0'); // Make section content focusable
+
+            // If navigating to Progress, ensure charts are rendered/updated
+            if (targetSectionId === 'progress') {
+                renderCharts();
+            } else {
+                // Destroy charts when leaving the progress section to save memory
+                if (stepsChart) {
+                    stepsChart.destroy();
+                    stepsChart = null;
+                }
+                 if (activityChart) {
+                    activityChart.destroy();
+                    activityChart = null;
+                }
+                 // Hide controls when leaving progress section
+                 document.querySelectorAll('.floating-controls').forEach(controls => {
+                     controls.classList.remove('active');
+                     controls.setAttribute('aria-hidden', 'true');
+                 });
+            }
+
+
+             // Ensure focus is managed for accessibility after tab switch
+             // Find the first focusable element in the new section and focus it
+             const firstFocusableElement = targetSection.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+             if (firstFocusableElement) {
+                 // Delay focus slightly to allow transition to complete
+                 setTimeout(() => firstFocusableElement.focus(), parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--transition-speed')) * 1000);
+             } else {
+                 // If no focusable element, focus the section itself
+                 setTimeout(() => targetSection.focus(), parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--transition-speed')) * 1000);
+             }
+
+             // Scroll content area to top on section switch
+             contentArea.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                activateTab(item.id);
+            });
+
+            // Add keyboard navigation for tabs (left/right arrow keys)
+            item.addEventListener('keydown', (e) => {
+                let index = Array.from(navItems).indexOf(e.target);
+                let nextIndex = -1;
+
+                if (e.key === 'ArrowRight') {
+                    nextIndex = (index + 1) % navItems.length;
+                    e.preventDefault(); // Prevent scrolling
+                } else if (e.key === 'ArrowLeft') {
+                    nextIndex = (index - 1 + navItems.length) % navItems.length;
+                     e.preventDefault(); // Prevent scrolling
+                } else if (e.key === 'Home') {
+                     nextIndex = 0;
+                     e.preventDefault();
+                } else if (e.key === 'End') {
+                     nextIndex = navItems.length - 1;
+                     e.preventDefault();
+                }
+
+
+                if (nextIndex !== -1) {
+                    activateTab(navItems[nextIndex].id);
+                    navItems[nextIndex].focus(); // Move focus to the newly active tab
+                }
+            });
+        });
+
+        // Initial activation on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const activeTab = document.querySelector('.bottom-nav [role="tab"].active');
+            if (activeTab) {
+                activateTab(activeTab.id);
+            } else {
+                 // Default to dashboard if no active tab is set
+                 activateTab('tab-dashboard');
+            }
+        });
+
+
+        // --- Data Simulation (replace with real data fetching later) ---
+        let dashboardData = {
+            steps: { current: 7500, goal: 10000 },
+            calories: { current: 400, goal: 500 },
+            activeTime: { current: 45, goal: 60 },
+            workouts: { current: 2, goal: 3 } // Weekly goal
+        };
+
+         let activityData = [
+             { type: 'running', duration: 30, calories: 350, distance: 5, date: '2023-10-26', time: '07:00' },
+             { type: 'walking', duration: 60, calories: 200, distance: 4, date: '2023-10-26', time: '12:00' },
+             { type: 'weights', duration: 45, calories: 300, distance: null, date: '2023-10-25', time: '18:30' },
+             { type: 'cycling', duration: 50, calories: 400, distance: 15, date: '2023-10-24', time: '06:30' },
+             { type: 'walking', duration: 30, calories: 150, distance: 2.5, date: '2023-10-23', time: '19:00' },
+             { type: 'running', duration: 25, calories: 300, distance: 4, date: '2023-10-22', time: '07:00' },
+             { type: 'yoga', duration: 60, calories: 250, distance: null, date: '2023-10-21', time: '09:00' },
+         ];
+
+        // --- Dashboard Updates ---
+        function updateDashboard() {
+            const stepsValueEl = document.getElementById('steps-value');
+            const caloriesValueEl = document.getElementById('calories-value');
+            const activeTimeValueEl = document.getElementById('active-time-value');
+            const workoutsValueEl = document.getElementById('workouts-value');
+
+            stepsValueEl.textContent = dashboardData.steps.current;
+            caloriesValueEl.textContent = dashboardData.calories.current;
+            activeTimeValueEl.textContent = dashboardData.activeTime.current + ' min';
+            workoutsValueEl.textContent = dashboardData.workouts.current;
+
+            const stepsProgress = (dashboardData.steps.current / dashboardData.steps.goal) * 100;
+            const caloriesProgress = (dashboardData.calories.current / dashboardData.calories.goal) * 100;
+            const activeTimeProgress = (dashboardData.activeTime.current / dashboardData.activeTime.goal) * 100;
+            const workoutsProgress = (dashboardData.workouts.current / dashboardData.workouts.goal) * 100;
+
+            const stepsProgressEl = document.getElementById('steps-progress');
+            const caloriesProgressEl = document.getElementById('calories-progress');
+            const activeTimeProgressEl = document.getElementById('active-time-progress');
+            const workoutsProgressEl = document.getElementById('workouts-progress');
+
+            stepsProgressEl.style.width = `${Math.min(stepsProgress, 100)}%`;
+            caloriesProgressEl.style.width = `${Math.min(caloriesProgress, 100)}%`;
+            activeTimeProgressEl.style.width = `${Math.min(activeTimeProgress, 100)}%`;
+            workoutsProgressEl.style.width = `${Math.min(workoutsProgress, 100)}%`;
+
+             // Update ARIA progress values
+             stepsProgressEl.setAttribute('aria-valuenow', Math.min(stepsProgress, 100).toFixed(0));
+             caloriesProgressEl.setAttribute('aria-valuenow', Math.min(caloriesProgress, 100).toFixed(0));
+             activeTimeProgressEl.setAttribute('aria-valuenow', Math.min(activeTimeProgress, 100).toFixed(0));
+             workoutsProgressEl.setAttribute('aria-valuenow', Math.min(workoutsProgress, 100).toFixed(0));
+        }
+
+        // Initial dashboard update
+        updateDashboard();
+
+        // Add click listeners to dashboard cards (simulated action)
+        document.querySelectorAll('.dashboard-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const title = card.querySelector('.card-title').textContent.trim();
+                console.log(`Dashboard card clicked: ${title}`);
+                // In a real app, this would navigate to a detail view
+                alert(`Clicked on ${title} card! (Details not implemented)`);
+            });
+             card.addEventListener('keydown', (e) => {
+                 if (e.key === 'Enter' || e.key === ' ') {
+                     e.preventDefault();
+                     card.click();
+                 }
+             });
+        });
+
+
+        // --- Activity Logging Form ---
+        const activityForm = document.getElementById('activity-log-form');
+        const requiredInputs = activityForm.querySelectorAll('input[required], select[required]');
+
+        // Add basic validation feedback
+        requiredInputs.forEach(input => {
+            const errorElementId = input.id + '-error';
+            const errorElement = document.getElementById(errorElementId);
+
+            const validateInput = () => {
+                if (!input.value.trim()) {
+                    input.classList.add('invalid');
+                    input.setAttribute('aria-invalid', 'true');
+                    if (errorElement) {
+                         errorElement.textContent = 'This field is required.';
+                    }
+                    return false;
+                } else {
+                    input.classList.remove('invalid');
+                    input.setAttribute('aria-invalid', 'false');
+                    if (errorElement) {
+                         errorElement.textContent = ''; // Clear error message
+                    }
+                    return true;
+                }
+            };
+
+            // Validate on blur and input
+            input.addEventListener('blur', validateInput);
+            input.addEventListener('input', validateInput);
+        });
+
+
+        activityForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            let formIsValid = true;
+            requiredInputs.forEach(input => {
+                // Force validation check on submit
+                const errorElementId = input.id + '-error';
+                const errorElement = document.getElementById(errorElementId);
+                if (!input.value.trim()) {
+                    input.classList.add('invalid');
+                    input.setAttribute('aria-invalid', 'true');
+                     if (errorElement) {
+                         errorElement.textContent = 'This field is required.';
+                    }
+                    formIsValid = false;
+                } else {
+                    input.classList.remove('invalid');
+                    input.setAttribute('aria-invalid', 'false');
+                     if (errorElement) {
+                         errorElement.textContent = '';
+                    }
+                }
+            });
+
+            if (!formIsValid) {
+                 // Announce validation error for screen readers
+                 const firstInvalidInput = activityForm.querySelector('input.invalid, select.invalid');
+                 if (firstInvalidInput) {
+                     firstInvalidInput.focus(); // Focus the first invalid field
+                     // Use an aria-live region or alert for general feedback if needed
+                     // For simplicity, we'll rely on field-specific messages and focus
+                 }
+                 return;
+            }
+
+            const type = document.getElementById('activity-type').value;
+            const duration = parseInt(document.getElementById('activity-duration').value);
+            const calories = parseInt(document.getElementById('activity-calories').value) || 0;
+            const distance = parseFloat(document.getElementById('activity-distance').value) || null;
+            const date = document.getElementById('activity-date').value;
+            const time = document.getElementById('activity-time').value;
+
+
+            const newActivity = {
+                type,
+                duration,
+                calories,
+                distance,
+                date,
+                time
+            };
+
+            activityData.push(newActivity);
+            console.log('Activity Logged:', newActivity);
+
+            // Simulate updating dashboard based on new activity (simple example)
+            // Note: This is a very basic simulation. Real apps would aggregate data properly.
+            // This simulation adds to daily totals. A real app would track day-by-day.
+            // For simplicity, let's update based on the *current* date input in the form
+            const today = new Date().toISOString().split('T')[0];
+            if (date === today) {
+                dashboardData.calories.current += calories;
+                dashboardData.activeTime.current += duration;
+
+                 // Simple check to increment workout count for non-step activities logged *today*
+                 // A real app would track unique workouts or types per week for the workout goal
+                 if (type !== 'walking' && type !== 'running') {
+                     // Check if a workout of this type was already logged *today* via this form
+                     const todayActivitiesOfSameType = activityData.filter(a => a.date === date && a.type === type);
+                     if (todayActivitiesOfSameType.length === 1) { // Only count the first one logged today
+                          dashboardData.workouts.current++;
+                     }
+                 }
+                 // Steps are usually tracked automatically, not logged via this form, so skipping steps update here.
+            }
+
+
+            updateDashboard();
+            // Use an aria-live region for success message
+            const successMessage = document.createElement('div');
+            successMessage.textContent = 'Activity logged successfully!';
+            successMessage.style.cssText = 'position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); background-color: var(--primary-color); color: white; padding: var(--spacing-small) var(--spacing-medium); border-radius: var(--border-radius); z-index: 20; opacity: 0; transition: opacity 0.5s ease;';
+            document.body.appendChild(successMessage);
+            setTimeout(() => { successMessage.style.opacity = 1; }, 10);
+            setTimeout(() => { successMessage.style.opacity = 0; }, 3000);
+            setTimeout(() => { successMessage.remove(); }, 3500);
+
+
+            activityForm.reset(); // Clear form
+             // Remove invalid class and error messages after successful submission
+             activityForm.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
+             activityForm.querySelectorAll('[aria-invalid]').forEach(el => el.setAttribute('aria-invalid', 'false'));
+             activityForm.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+        });
+
+        // --- Progress Charts ---
+        let stepsChart = null;
+        let activityChart = null;
+
+        function processStepsData(rangeDays) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const data = {};
+            const dates = [];
+
+            // Initialize data for the last `rangeDays`
+            for (let i = rangeDays - 1; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(today.getDate() - i);
+                const dateString = date.toISOString().split('T')[0];
+                dates.push(dateString);
+                data[dateString] = 0;
+            }
+
+            // Simulate step data (replace with actual data processing)
+            // For this simulation, let's just put some random-ish data
+             dates.forEach(date => {
+                 const dayOfWeek = new Date(date).getDay(); // 0 = Sunday, 6 = Saturday
+                 let baseSteps = 5000 + Math.random() * 3000; // Base steps
+                 if (dayOfWeek >= 1 && dayOfWeek <= 5) { // Weekdays
+                     baseSteps += Math.random() * 4000; // More steps on weekdays
+                 } else { // Weekend
+                     baseSteps += Math.random() * 1000; // Fewer steps on weekends
+                 }
+                 data[date] = Math.round(baseSteps);
+             });
+
+
+            return {
+                labels: dates.map(date => {
+                    const [year, month, day] = date.split('-');
+                    // Format as MM/DD
+                    return `${month}/${day}`;
+                }),
+                data: dates.map(date => data[date])
+            };
+        }
+
+        function processActivityData() {
+            const weeklyData = {};
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            // Find the start of the current week (Sunday)
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - today.getDay()); // Go back to Sunday
+
+            // Initialize data for the last 7 days (current week)
+            const dates = [];
+             for (let i = 0; i < 7; i++) {
+                const date = new Date(startOfWeek);
+                date.setDate(startOfWeek.getDate() + i);
+                const dateString = date.toISOString().split('T')[0];
+                dates.push(dateString);
+                weeklyData[dateString] = { duration: 0, calories: 0 };
+             }
+
+
+            // Aggregate activity data by date, only for the last 7 days
+            activityData.forEach(activity => {
+                 const activityDate = new Date(activity.date);
+                 activityDate.setHours(0, 0, 0, 0);
+                 // Check if the activity date is within the last 7 days (inclusive of startOfWeek)
+                 if (activityDate >= startOfWeek && activityDate <= today) {
+                    const dateString = activity.date;
+                    if (weeklyData[dateString]) { // Check if the date exists in our 7-day range
+                         weeklyData[dateString].duration += activity.duration;
+                         weeklyData[dateString].calories += activity.calories;
+                    }
+                 }
+            });
+
+            return {
+                labels: dates.map(date => {
+                    const [year, month, day] = date.split('-');
+                    // Format as MM/DD
+                    return `${month}/${day}`;
+                }),
+                durationData: dates.map(date => weeklyData[date].duration),
+                caloriesData: dates.map(date => weeklyData[date].calories)
+            };
+        }
+
+
+        function renderCharts() {
+            // Steps Chart
+            const stepsCtx = document.getElementById('stepsChart').getContext('2d');
+            const stepsChartControls = document.getElementById('stepsChartControls');
+            const stepsChartTypeSelect = document.getElementById('stepsChartType');
+            const stepsChartColorInput = document.getElementById('stepsChartColor');
+            const stepsChartRangeSelect = document.getElementById('stepsChartRange');
+             const stepsChartWrapper = document.querySelector('#stepsChart').closest('.chart-canvas-wrapper');
+
+
+            function updateStepsChart() {
+                const range = parseInt(stepsChartRangeSelect.value);
+                const processedData = processStepsData(range);
+                const chartType = stepsChartTypeSelect.value;
+                const chartColor = stepsChartColorInput.value;
+
+                if (stepsChart) {
+                    stepsChart.destroy(); // Destroy existing chart
+                }
+
+                stepsChart = new Chart(stepsCtx, {
+                    type: chartType,
+                    data: {
+                        labels: processedData.labels,
+                        datasets: [{
+                            label: 'Steps',
+                            data: processedData.data,
+                            backgroundColor: chartType === 'bar' ? chartColor + 'B3' : chartColor, // Add transparency for bars
+                            borderColor: chartColor,
+                            borderWidth: chartType === 'line' ? 2 : 1,
+                            fill: chartType === 'line' ? 'origin' : false, // Fill from origin for line charts
+                            tension: chartType === 'line' ? 0.3 : 0,
+                             pointBackgroundColor: chartColor,
+                             pointBorderColor: "#ffffff", /* Use white border for points */
+                             pointRadius: chartType === 'line' ? 5 : 0,
+                             pointHoverRadius: chartType === 'line' ? 7 : 0,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        onClick: (e) => toggleControls(stepsChartControls),
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            title: {
+                                display: false // Title is in HTML
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                bodyFont: { size: 14 },
+                                titleFont: { size: 14, weight: 'bold' },
+                                padding: 10,
+                                displayColors: false,
+                                callbacks: {
+                                     label: function(context) {
+                                         let label = context.dataset.label || '';
+                                         if (label) {
+                                             label += ': ';
+                                         }
+                                         if (context.parsed.y !== null) {
+                                             label += new Intl.NumberFormat('en-US').format(context.parsed.y) + ' steps';
+                                         }
+                                         return label;
+                                     }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                     font: { size: 12 },
+                                     callback: function(value) {
+                                         if (value >= 1000) return value / 1000 + 'k';
+                                         return value;
+                                     }
+                                },
+                                grid: { drawBorder: false, color: '#eee' }
+                            },
+                            x: {
+                                ticks: { font: { size: 12 } },
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Activity Chart
+            const activityCtx = document.getElementById('activityChart').getContext('2d');
+            const activityChartControls = document.getElementById('activityChartControls');
+            const activityChartTypeSelect = document.getElementById('activityChartType');
+            const activityChartDurationColorInput = document.getElementById('activityChartDurationColor');
+            const activityChartCaloriesColorInput = document.getElementById('activityChartCaloriesColor');
+             const activityChartWrapper = document.querySelector('#activityChart').closest('.chart-canvas-wrapper');
+
+
+            function updateActivityChart() {
+                const processedData = processActivityData();
+                const chartType = activityChartTypeSelect.value;
+                 const durationColor = activityChartDurationColorInput.value;
+                 const caloriesColor = activityChartCaloriesColorInput.value; // Use color picker value
+
+                if (activityChart) {
+                    activityChart.destroy(); // Destroy existing chart
+                }
+
+                activityChart = new Chart(activityCtx, {
+                    type: chartType,
+                    data: {
+                        labels: processedData.labels,
+                        datasets: [
+                            {
+                                label: 'Duration (min)',
+                                data: processedData.durationData,
+                                backgroundColor: chartType === 'bar' ? durationColor + 'B3' : durationColor,
+                                borderColor: durationColor,
+                                borderWidth: chartType === 'line' ? 2 : 1,
+                                fill: chartType === 'line' ? 'origin' : false,
+                                tension: chartType === 'line' ? 0.3 : 0,
+                                yAxisID: 'y-duration',
+                                 pointBackgroundColor: durationColor,
+                                 pointBorderColor: '#fff',
+                                 pointRadius: chartType === 'line' ? 5 : 0,
+                                 pointHoverRadius: chartType === 'line' ? 7 : 0,
+                            },
+                             {
+                                label: 'Calories (kcal)',
+                                data: processedData.caloriesData,
+                                backgroundColor: chartType === 'bar' ? caloriesColor + 'B3' : caloriesColor,
+                                borderColor: caloriesColor,
+                                borderWidth: chartType === 'line' ? 2 : 1,
+                                fill: chartType === 'line' ? 'origin' : false,
+                                tension: chartType === 'line' ? 0.3 : 0,
+                                yAxisID: 'y-calories',
+                                 pointBackgroundColor: caloriesColor,
+                                 pointBorderColor: '#fff',
+                                 pointRadius: chartType === 'line' ? 5 : 0,
+                                 pointHoverRadius: chartType === 'line' ? 7 : 0,
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                         onClick: (e) => toggleControls(activityChartControls),
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                     font: { size: 12 },
+                                     usePointStyle: true, /* Use point style in legend */
+                                }
+                            },
+                            title: {
+                                display: false
+                            },
+                             tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                bodyFont: { size: 14 },
+                                titleFont: { size: 14, weight: 'bold' },
+                                padding: 10,
+                                displayColors: true,
+                                usePointStyle: true, /* Use point style in tooltip */
+                                callbacks: {
+                                     label: function(context) {
+                                         let label = context.dataset.label || '';
+                                         if (label) {
+                                             label += ': ';
+                                         }
+                                         if (context.parsed.y !== null) {
+                                             label += new Intl.NumberFormat('en-US').format(context.parsed.y) + (context.dataset.label.includes('Duration') ? ' min' : ' kcal');
+                                         }
+                                         return label;
+                                     }
+                                }
+                            }
+                        },
+                        scales: {
+                            'y-duration': {
+                                type: 'linear',
+                                position: 'left',
+                                beginAtZero: true,
+                                ticks: {
+                                     font: { size: 12 },
+                                     callback: function(value) { return value + ' min'; }
+                                },
+                                grid: { drawOnChartArea: false, drawBorder: false, color: '#eee' }
+                            },
+                            'y-calories': {
+                                type: 'linear',
+                                position: 'right',
+                                beginAtZero: true,
+                                ticks: {
+                                     font: { size: 12 },
+                                     callback: function(value) { return value + ' kcal'; }
+                                },
+                                grid: { drawOnChartArea: false, drawBorder: false, color: '#eee' }
+                            },
+                            x: {
+                                ticks: { font: { size: 12 } },
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Initial chart render when Progress tab is first clicked (handled by activateTab)
+            // Add event listeners for controls (only once per chart)
+            if (!stepsChartTypeSelect.dataset.listenerAdded) {
+                 stepsChartTypeSelect.addEventListener('change', updateStepsChart);
+                 stepsChartColorInput.addEventListener('input', updateStepsChart); // Use input for real-time color change
+                 stepsChartRangeSelect.addEventListener('change', updateStepsChart);
+                 stepsChartWrapper.addEventListener('click', () => toggleControls(stepsChartControls));
+                 stepsChartWrapper.addEventListener('keydown', (e) => {
+                     if (e.key === 'Enter' || e.key === ' ') {
+                         e.preventDefault();
+                         toggleControls(stepsChartControls);
+                     }
+                 });
+                 stepsChartTypeSelect.dataset.listenerAdded = 'true'; // Mark listener as added
+            }
+
+             if (!activityChartTypeSelect.dataset.listenerAdded) {
+                activityChartTypeSelect.addEventListener('change', updateActivityChart);
+                activityChartDurationColorInput.addEventListener('input', updateActivityChart);
+                activityChartCaloriesColorInput.addEventListener('input', updateActivityChart);
+                 activityChartWrapper.addEventListener('click', () => toggleControls(activityChartControls));
+                 activityChartWrapper.addEventListener('keydown', (e) => {
+                     if (e.key === 'Enter' || e.key === ' ') {
+                         e.preventDefault();
+                         toggleControls(activityChartControls);
+                     }
+                 });
+                 activityChartTypeSelect.dataset.listenerAdded = 'true';
+            }
+        }
+
+        // Toggle floating controls visibility
+        function toggleControls(controlsElement) {
+            const isActive = controlsElement.classList.contains('active');
+
+            // Close any other open controls first
+            document.querySelectorAll('.floating-controls.active').forEach(openControls => {
+                if (openControls !== controlsElement) {
+                    openControls.classList.remove('active');
+                    openControls.setAttribute('aria-hidden', 'true');
+                }
+            });
+
+            // Toggle the target controls
+            if (isActive) {
+                 controlsElement.classList.remove('active');
+                 controlsElement.setAttribute('aria-hidden', 'true');
+            } else {
+                 controlsElement.classList.add('active');
+                 controlsElement.setAttribute('aria-hidden', 'false');
+                 // Focus the first interactive element in the controls when opened
+                 const firstControl = controlsElement.querySelector('select, input, button');
+                 if (firstControl) {
+                     firstControl.focus();
+                 }
+            }
+        }
+
+        // Close controls when clicking outside chart or controls
+        document.addEventListener('click', (e) => {
+            document.querySelectorAll('.floating-controls').forEach(controls => {
+                 const chartContainer = controls.closest('.chart-container');
+                 const chartWrapper = chartContainer.querySelector('.chart-canvas-wrapper');
+
+                 // Check if the click target is NOT inside the controls AND NOT inside the chart canvas wrapper
+                if (!controls.contains(e.target) &&
+                    !chartWrapper.contains(e.target) &&
+                    controls.classList.contains('active')) {
+                    controls.classList.remove('active');
+                    controls.setAttribute('aria-hidden', 'true');
+                }
+            });
+        });
+
+        // Close controls when pressing Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.floating-controls.active').forEach(controls => {
+                    controls.classList.remove('active');
+                    controls.setAttribute('aria-hidden', 'true');
+                     // Optionally return focus to the chart wrapper that opened it
+                     const chartWrapper = controls.closest('.chart-container').querySelector('.chart-canvas-wrapper');
+                     if (chartWrapper) {
+                         chartWrapper.focus();
+                     }
+                });
+            }
+        });
+
+
+        // --- Goals Section ---
+        // Add click listeners to goal items (simulated action)
+        document.querySelectorAll('.goal-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const title = item.querySelector('.goal-title').textContent.trim();
+                console.log(`Goal item clicked: ${title}`);
+                // In a real app, this would navigate to a goal detail/edit screen
+                 alert(`Clicked on goal: "${title}" (Details/Edit not implemented)`);
+            });
+             item.addEventListener('keydown', (e) => {
+                 if (e.key === 'Enter' || e.key === ' ') {
+                     e.preventDefault();
+                     item.click();
+                 }
+             });
+        });
+
+
+        // --- Profile Section (Static for now, could be dynamic) ---
+        const saveProfileButton = document.getElementById('save-profile-button');
+        saveProfileButton.addEventListener('click', () => {
+            const name = document.getElementById('profile-name').value;
+            const email = document.getElementById('profile-email').value;
+             const weight = document.getElementById('profile-weight').value;
+             const height = document.getElementById('profile-height').value;
+
+            console.log('Profile Saved:', { name, email, weight, height });
+            // Use an aria-live region for success message
+            const successMessage = document.createElement('div');
+            successMessage.textContent = 'Profile saved!';
+            successMessage.style.cssText = 'position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); background-color: var(--primary-color); color: white; padding: var(--spacing-small) var(--spacing-medium); border-radius: var(--border-radius); z-index: 20; opacity: 0; transition: opacity 0.5s ease;';
+            document.body.appendChild(successMessage);
+            setTimeout(() => { successMessage.style.opacity = 1; }, 10);
+            setTimeout(() => { successMessage.style.opacity = 0; }, 3000);
+            setTimeout(() => { successMessage.remove(); }, 3500);
+        });
+
+
+    </script>
+</body>
+</html>

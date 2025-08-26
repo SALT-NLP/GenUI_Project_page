@@ -1,0 +1,2181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ecosystem Explorer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* CSS Variables */
+        :root {
+            --primary-color: #4CAF50; /* Green */
+            --primary-dark: #388E3C;
+            --primary-light: #81C784;
+            --secondary-color: #FFC107; /* Amber */
+            --secondary-dark: #FFA000;
+            --secondary-light: #FFECB3;
+            --accent-color: #2196F3; /* Blue */
+            --accent-dark: #1976D2;
+            --accent-light: #90CAF9;
+            --background-color: #f4f4f4; /* Light grey background */
+            --surface-color: #ffffff; /* White surfaces */
+            --text-color: #333333; /* Dark grey text */
+            --text-color-light: #666666; /* Medium grey text */
+            --border-color: #dddddd; /* Light grey border */
+            --success-color: #4CAF50; /* Green for success */
+            --error-color: #F44336; /* Red for error */
+            --warning-color: #FF9800; /* Orange for warning */
+            --spacing-unit: 8px; /* Base spacing unit */
+            --header-height: 60px;
+            --sidebar-width: 240px;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+            --transition-speed: 0.3s ease; /* Smooth transition */
+            --hover-scale: 1.02; /* Slight scale on hover */
+            --focus-outline-color: var(--accent-dark); /* Outline color for focus */
+        }
+
+        /* Base Styles */
+        body {
+            font-family: 'Nunito', sans-serif;
+            margin: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            overflow: hidden; /* Prevent body scroll */
+            font-size: 16px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        button {
+            font-family: inherit;
+        }
+
+        /* App Layout */
+        .app-container {
+            display: grid;
+            grid-template-rows: var(--header-height) 1fr;
+            height: 100vh;
+        }
+
+        /* Header */
+        .app-header {
+            grid-row: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 calc(var(--spacing-unit) * 3);
+            background-color: var(--surface-color);
+            box-shadow: var(--box-shadow);
+            z-index: 100;
+        }
+
+        .app-title {
+            margin: 0;
+            font-size: 1.8em;
+            color: var(--primary-dark);
+            font-weight: 700;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: calc(var(--spacing-unit) * 2);
+        }
+
+        .control-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: var(--spacing-unit);
+            border-radius: var(--border-radius);
+            transition: background-color var(--transition-speed), transform var(--transition-speed), color var(--transition-speed);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-color-light);
+            min-width: 44px; /* WCAG touch target */
+            min-height: 44px; /* WCAG touch target */
+        }
+
+        .control-button svg {
+             fill: currentColor;
+             width: 24px;
+             height: 24px;
+        }
+
+        .control-button:hover {
+            background-color: rgba(0, 0, 0, 0.08);
+            color: var(--text-color);
+            transform: scale(var(--hover-scale));
+        }
+
+         .control-button:focus-visible {
+             outline: 2px solid var(--focus-outline-color);
+             outline-offset: 2px;
+             color: var(--text-color);
+         }
+
+        .control-button.active {
+            color: var(--accent-dark);
+            font-weight: 600;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            grid-row: 2;
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr;
+            overflow: hidden; /* Contain scrolling */
+        }
+
+        /* Sidebar Navigation */
+        .sidebar-nav {
+            grid-column: 1;
+            background-color: var(--surface-color);
+            padding: calc(var(--spacing-unit) * 2) 0;
+            box-shadow: var(--box-shadow);
+            overflow-y: auto; /* Enable scrolling */
+            z-index: 50;
+        }
+
+        .nav-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .nav-item {
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .nav-button {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 3);
+            background: none;
+            border: none;
+            text-align: left;
+            cursor: pointer;
+            font-size: 1.1em;
+            color: var(--text-color-light);
+            transition: background-color var(--transition-speed), color var(--transition-speed);
+            min-height: 44px; /* WCAG touch target */
+        }
+
+         .nav-button svg {
+             margin-right: var(--spacing-unit);
+             fill: currentColor;
+             width: 24px;
+             height: 24px;
+         }
+
+        .nav-button:hover {
+            background-color: rgba(0, 0, 0, 0.08);
+            color: var(--text-color);
+        }
+
+        .nav-button.active {
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+            font-weight: 700;
+        }
+
+         .nav-button:focus-visible {
+             outline: 2px solid var(--focus-outline-color);
+             outline-offset: -2px;
+         }
+
+        /* Main Content Area */
+        .main-content {
+            grid-column: 2;
+            padding: calc(var(--spacing-unit) * 3);
+            overflow-y: auto; /* Enable scrolling */
+            position: relative;
+        }
+
+        .module-content {
+            display: none;
+            opacity: 0;
+            transition: opacity var(--transition-speed);
+        }
+
+        .module-content.active {
+            display: block;
+            opacity: 1;
+        }
+
+        h2 {
+            color: var(--primary-dark);
+            margin-top: 0;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            font-size: 1.6em;
+            font-weight: 700;
+        }
+
+        p {
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            color: var(--text-color);
+        }
+
+        /* Food Web Module */
+        .food-web-container {
+            display: flex;
+            gap: calc(var(--spacing-unit) * 3);
+            height: calc(100vh - var(--header-height) - calc(var(--spacing-unit) * 6) - 1.6em - 1.6em); /* Dynamic height calc */
+        }
+
+        .organism-palette {
+            width: 180px;
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            padding: calc(var(--spacing-unit) * 2);
+            box-shadow: var(--box-shadow);
+            display: flex;
+            flex-direction: column;
+            gap: calc(var(--spacing-unit) * 2);
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .draggable-organism {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: grab;
+            padding: var(--spacing-unit);
+            border-radius: var(--border-radius);
+            background-color: var(--background-color);
+            transition: background-color var(--transition-speed), transform var(--transition-speed), box-shadow var(--transition-speed);
+             user-select: none;
+             touch-action: none; /* Prevent default touch actions */
+             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .draggable-organism:hover {
+            background-color: var(--secondary-light);
+            transform: scale(var(--hover-scale));
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .draggable-organism:active {
+            cursor: grabbing;
+            transform: scale(1.05);
+        }
+
+         .draggable-organism:focus-visible {
+             outline: 2px solid var(--focus-outline-color);
+             outline-offset: 2px;
+         }
+
+
+         .draggable-organism img {
+             width: 60px;
+             height: 60px;
+             border-radius: 50%;
+             object-fit: cover;
+             border: 2px solid var(--primary-color);
+             margin-bottom: var(--spacing-unit);
+         }
+
+        .organism-label {
+            font-size: 0.9em;
+            font-weight: 600;
+            color: var(--text-color);
+            text-align: center;
+        }
+
+         /* Style for the element being dragged (clone) */
+         .dragging {
+             opacity: 0.8;
+             transform: scale(1.05);
+             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+         }
+
+
+        .food-web-canvas {
+            flex-grow: 1;
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+         .dropped-organism {
+             position: absolute;
+             display: flex;
+             flex-direction: column;
+             align-items: center;
+             cursor: grab;
+             padding: var(--spacing-unit);
+             background-color: var(--background-color);
+             border-radius: var(--border-radius);
+             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+             transition: box-shadow var(--transition-speed), transform var(--transition-speed), outline-color var(--transition-speed);
+             user-select: none;
+             touch-action: none;
+             z-index: 10;
+         }
+
+         .dropped-organism:hover {
+             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+             transform: scale(var(--hover-scale));
+         }
+
+          .dropped-organism:focus-visible {
+              outline: 2px solid var(--focus-outline-color);
+              outline-offset: 2px;
+          }
+
+         .dropped-organism.selected-for-connection {
+             outline: 3px dashed var(--accent-dark);
+             outline-offset: 4px;
+             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+         }
+
+
+         .dropped-organism img {
+             width: 60px;
+             height: 60px;
+             border-radius: 50%;
+             object-fit: cover;
+             border: 2px solid var(--primary-color);
+             margin-bottom: var(--spacing-unit);
+         }
+
+         .dropped-organism .organism-label {
+             font-size: 0.9em;
+             font-weight: 600;
+             color: var(--text-color);
+             text-align: center;
+         }
+
+         #food-web-svg {
+             position: absolute;
+             top: 0;
+             left: 0;
+             width: 100%;
+             height: 100%;
+             pointer-events: none; /* Allow clicks to pass through */
+             z-index: 1;
+         }
+
+         .food-web-line {
+             stroke: var(--primary-color);
+             stroke-width: 3;
+             marker-end: url(#arrowhead);
+             transition: stroke var(--transition-speed);
+         }
+
+        /* Energy Flow Module */
+        .energy-flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: calc(var(--spacing-unit) * 4);
+            padding: calc(var(--spacing-unit) * 4);
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            flex-wrap: wrap;
+        }
+
+        .energy-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: var(--spacing-unit);
+            border-radius: var(--border-radius);
+            background-color: var(--background-color);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .energy-item img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--secondary-color);
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .item-label {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .energy-arrow {
+            font-size: 3em;
+            color: var(--accent-color);
+            animation: pulse-arrow 1.5s infinite ease-in-out;
+            flex-shrink: 0;
+        }
+
+        @keyframes pulse-arrow {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+
+        .energy-loss-note {
+            text-align: center;
+            font-style: italic;
+            color: var(--text-color-light);
+            margin-top: calc(var(--spacing-unit) * 3);
+            font-size: 0.9em;
+        }
+
+
+        /* Habitat Module */
+        .habitat-diagram-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto calc(var(--spacing-unit) * 3);
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+        }
+
+        .habitat-image {
+            display: block;
+            width: 100%;
+            height: auto;
+             /* Placeholder image: Replace with actual illustration */
+        }
+
+        .habitat-hotspot {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background-color: rgba(var(--accent-color), 0.6);
+            border: 3px solid var(--accent-dark);
+            border-radius: 50%;
+            cursor: pointer;
+            opacity: 0.9;
+            transition: opacity var(--transition-speed), transform var(--transition-speed), background-color var(--transition-speed);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            font-size: 1em;
+             min-width: 44px; /* WCAG touch target */
+             min-height: 44px; /* WCAG touch target */
+        }
+
+        .habitat-hotspot:hover {
+            opacity: 1;
+            transform: scale(1.1);
+            background-color: rgba(var(--accent-dark), 0.8);
+        }
+
+         .habitat-hotspot:focus-visible {
+             outline: 2px solid var(--focus-outline-color);
+             outline-offset: 2px;
+         }
+
+        .info-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--transition-speed), visibility var(--transition-speed);
+        }
+
+        .info-popup.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .popup-content {
+            background-color: var(--surface-color);
+            padding: calc(var(--spacing-unit) * 4);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+            transform: translateY(20px);
+            transition: transform var(--transition-speed);
+        }
+
+         .info-popup.visible .popup-content {
+             transform: translateY(0);
+         }
+
+        .popup-content h3 {
+            color: var(--primary-dark);
+            margin-top: 0;
+            margin-bottom: var(--spacing-unit);
+            font-size: 1.4em;
+            font-weight: 700;
+        }
+
+        .popup-content p {
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            font-size: 1em;
+        }
+
+         .popup-image {
+             max-width: 100%;
+             height: auto;
+             border-radius: var(--border-radius);
+             margin-bottom: calc(var(--spacing-unit) * 2);
+             border: 1px solid var(--border-color);
+              /* Placeholder image: Replace with actual illustration */
+         }
+
+         .popup-controls {
+             display: flex;
+             justify-content: flex-end;
+             gap: var(--spacing-unit);
+         }
+
+         .close-popup {
+             background-color: var(--error-color);
+             color: white;
+             padding: var(--spacing-unit);
+             border: none;
+             border-radius: var(--border-radius);
+             cursor: pointer;
+             transition: background-color var(--transition-speed), transform var(--transition-speed);
+              min-width: 44px; /* WCAG touch target */
+              min-height: 44px; /* WCAG touch target */
+         }
+
+         .close-popup svg {
+             fill: currentColor;
+             width: 24px;
+             height: 24px;
+         }
+
+         .close-popup:hover {
+             background-color: var(--error-color);
+             opacity: 0.9;
+             transform: scale(var(--hover-scale));
+         }
+          .close-popup:focus-visible {
+             outline: 2px solid var(--focus-outline-color);
+             outline-offset: 2px;
+         }
+
+
+        /* Glossary Module */
+        .glossary-container {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: calc(var(--spacing-unit) * 3);
+            height: calc(100vh - var(--header-height) - calc(var(--spacing-unit) * 6) - 1.6em - 1.6em); /* Dynamic height calc */
+        }
+
+        .glossary-list {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow-y: auto;
+            padding: calc(var(--spacing-unit) * 2);
+        }
+
+        #glossary-terms-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #glossary-terms-list li {
+            padding: calc(var(--spacing-unit) * 1.5) var(--spacing-unit);
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color var(--transition-speed), color var(--transition-speed), font-weight var(--transition-speed);
+             color: var(--text-color-light);
+             font-size: 1.1em;
+             min-height: 44px; /* WCAG touch target */
+             display: flex;
+             align-items: center;
+             outline-offset: -2px;
+        }
+
+         #glossary-terms-list li:last-child {
+             border-bottom: none;
+         }
+
+        #glossary-terms-list li:hover {
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+         #glossary-terms-list li:focus-visible {
+             outline: 2px solid var(--focus-outline-color);
+             color: var(--text-color);
+         }
+
+         #glossary-terms-list li.active {
+             background-color: var(--primary-light);
+             color: var(--primary-dark);
+             font-weight: 700;
+         }
+
+
+        .glossary-detail {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: calc(var(--spacing-unit) * 4);
+            overflow-y: auto;
+        }
+
+        .glossary-detail h3 {
+            color: var(--primary-dark);
+            margin-top: 0;
+            margin-bottom: var(--spacing-unit);
+            font-size: 1.4em;
+            font-weight: 700;
+        }
+
+        .glossary-detail p {
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            font-size: 1em;
+        }
+
+         .glossary-image {
+             max-width: 100%;
+             height: auto;
+             border-radius: var(--border-radius);
+             margin-bottom: calc(var(--spacing-unit) * 2);
+             border: 1px solid var(--border-color);
+              /* Placeholder image: Replace with actual illustration */
+         }
+
+         .glossary-controls {
+             display: flex;
+             justify-content: flex-end;
+             gap: var(--spacing-unit);
+         }
+
+
+        /* Quiz Module */
+        #quiz-area {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: calc(var(--spacing-unit) * 4);
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        #question-text {
+            font-size: 1.3em;
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            color: var(--primary-dark);
+            font-weight: 600;
+        }
+
+        .answer-options {
+            display: flex;
+            flex-direction: column;
+            gap: calc(var(--spacing-unit) * 2);
+            margin-bottom: calc(var(--spacing-unit) * 3);
+        }
+
+        .answer-button {
+            width: 100%;
+            padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 2);
+            background-color: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color var(--transition-speed), border-color var(--transition-speed), transform var(--transition-speed);
+            text-align: left;
+            min-height: 44px; /* WCAG touch target */
+        }
+
+        .answer-button:hover:not(:disabled) {
+            background-color: var(--primary-light);
+            border-color: var(--primary-color);
+            transform: scale(1.01);
+        }
+
+         .answer-button:focus-visible {
+             outline: 2px solid var(--focus-outline-color);
+             outline-offset: 2px;
+         }
+
+        .answer-button.correct {
+            background-color: var(--success-color);
+            color: white;
+            border-color: var(--success-color);
+        }
+
+        .answer-button.incorrect {
+            background-color: var(--error-color);
+            color: white;
+            border-color: var(--error-color);
+        }
+
+         .answer-button:disabled {
+             cursor: not-allowed;
+             opacity: 0.7;
+             box-shadow: none;
+             transform: none;
+         }
+
+        .feedback-message {
+            font-size: 1.1em;
+            font-weight: 700;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            min-height: 1.5em;
+        }
+
+        .feedback-message.success {
+            color: var(--success-color);
+        }
+
+        .feedback-message.error {
+            color: var(--error-color);
+        }
+
+        .action-button {
+            padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 3);
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color var(--transition-speed), transform var(--transition-speed);
+            font-weight: 600;
+             min-height: 44px; /* WCAG touch target */
+        }
+
+        .action-button:hover {
+            background-color: var(--primary-dark);
+            transform: scale(var(--hover-scale));
+        }
+
+         .action-button:focus-visible {
+             outline: 2px solid var(--focus-outline-color);
+             outline-offset: 2px;
+         }
+
+        .progress-indicator {
+            margin-top: calc(var(--spacing-unit) * 3);
+            font-weight: 600;
+            color: var(--text-color-light);
+            font-size: 0.9em;
+        }
+
+
+        /* General Utility/Component Styles */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+             .main-layout {
+                 grid-template-columns: 1fr; /* Stack sidebar and content */
+             }
+
+             .sidebar-nav {
+                 display: none; /* Hide sidebar on small screens */
+             }
+
+             .app-header {
+                 padding: 0 calc(var(--spacing-unit) * 2);
+             }
+
+             .app-title {
+                 font-size: 1.5em;
+             }
+
+             .main-content {
+                 padding: calc(var(--spacing-unit) * 2);
+             }
+
+             .food-web-container {
+                 flex-direction: column;
+                 height: auto; /* Allow height to adjust */
+             }
+
+             .organism-palette {
+                 width: 100%;
+                 flex-direction: row; /* Arrange palette items horizontally */
+                 flex-wrap: wrap;
+                 justify-content: center;
+                 gap: var(--spacing-unit);
+                 padding: var(--spacing-unit);
+             }
+
+             .draggable-organism {
+                 padding: calc(var(--spacing-unit) * 0.5);
+             }
+
+             .draggable-organism img {
+                 width: 50px;
+                 height: 50px;
+             }
+
+             .organism-label {
+                 font-size: 0.8em;
+             }
+
+             .food-web-canvas {
+                 min-height: 400px; /* Ensure canvas has some height */
+             }
+
+             .energy-flow-diagram {
+                 flex-direction: column;
+                 gap: calc(var(--spacing-unit) * 2);
+                 padding: calc(var(--spacing-unit) * 2);
+             }
+
+             .energy-arrow {
+                 font-size: 2em;
+                 transform: rotate(90deg); /* Rotate arrow for vertical flow */
+             }
+
+             @keyframes pulse-arrow {
+                 0% { transform: rotate(90deg) scale(1); opacity: 0.8; }
+                 50% { transform: rotate(90deg) scale(1.2); opacity: 1; }
+                 100% { transform: rotate(90deg) scale(1); opacity: 0.8; }
+             }
+
+             .glossary-container {
+                 grid-template-columns: 1fr; /* Stack list and detail */
+                 height: auto;
+             }
+
+             .glossary-list {
+                 max-height: 300px; /* Limit height and enable scrolling */
+             }
+
+             .glossary-detail {
+                 padding: calc(var(--spacing-unit) * 2);
+             }
+
+             #quiz-area {
+                 padding: calc(var(--spacing-unit) * 2);
+             }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1 class="app-title">Ecosystem Explorer</h1>
+            <div class="header-controls">
+                <button class="control-button" id="tts-toggle" aria-label="Toggle Text-to-Speech" aria-pressed="false">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24px" height="24px"><path d="M0 0h24v24H0z" fill="none"/><path d="M18 13.5c0-.33-.03-.66-.09-.98-.83-.33-1.47-1-1.89-1.89-.32-.82-.33-1.73-.02-2.55.29-.75.79-1.38 1.46-1.84.68-.45 1.48-.69 2.3-.69.18 0 .36.01.53.04.33.06.66.15.96.28.83.37 1.52.89 2.04 1.53.52.64.83 1.4.93 2.2.1.8-.02 1.6-.36 2.36-.33.75-.83 1.38-1.5 1.83-.67.45-1.47.68-2.29.68-.18 0-.36-.01-.53-.04zm-2.5 0c0-.33-.03-.66-.09-.98-.83-.33-1.47-1-1.89-1.89-.32-.82-.33-1.73-.02-2.55.29-.75.79-1.38 1.46-1.84.68-.45 1.48-.69 2.3-.69.18 0 .36.01.53.04.33.06.66.15.96.28.83.37 1.52.89 2.04 1.53.52.64.83 1.4.93 2.2.1.8-.02 1.6-.36 2.36-.33.75-.83 1.38-1.5 1.83-.67.45-1.47.68-2.29.68-.18 0-.36-.01-.53-.04zM12 13.5c0-.33-.03-.66-.09-.98-.83-.33-1.47-1-1.89-1.89-.32-.82-.33-1.73-.02-2.55.29-.75.79-1.38 1.46-1.84.68-.45 1.48-.69 2.3-.69.18 0 .36.01.53.04.33.06.66.15.96.28.83.37 1.52.89 2.04 1.53.52.64.83 1.4.93 2.2.1.8-.02 1.6-.36 2.36-.33.75-.83 1.38-1.5 1.83-.67.45-1.47.68-2.29.68-.18 0-.36-.01-.53-.04zM10 13.5c0-.33-.03-.66-.09-.98-.83-.33-1.47-1-1.89-1.89-.32-.82-.33-1.73-.02-2.55.29-.75.79-1.38 1.46-1.84.68-.45 1.48-.69 2.3-.69.18 0 .36.01.53.04.33.06.66.15.96.28.83.37 1.52.89 2.04 1.53.52.64.83 1.4.93 2.2.1.8-.02 1.6-.36 2.36-.33.75-.83 1.38-1.5 1.83-.67.45-1.47.68-2.29.68-.18 0-.36-.01-.53-.04zM8 13.5c0-.33-.03-.66-.09-.98-.83-.33-1.47-1-1.89-1.89-.32-.82-.33-1.73-.02-2.55.29-.75.79-1.38 1.46-1.84.68-.45 1.48-.69 2.3-.69.18 0 .36.01.53.04.33.06.66.15.96.28.83.37 1.52.89 2.04 1.53.52.64.83 1.4.93 2.2.1.8-.02 1.6-.36 2.36-.33.75-.83 1.38-1.5 1.83-.67.45-1.47.68-2.29.68-.18 0-.36-.01-.53-.04zM6 13.5c0-.33-.03-.66-.09-.98-.83-.33-1.47-1-1.89-1.89-.32-.82-.33-1.73-.02-2.55.29-.75.79-1.38 1.46-1.84.68-.45 1.48-.69 2.3-.69.18 0 .36.01.53.04.33.06.66.15.96.28.83.37 1.52.89 2.04 1.53.52.64.83 1.4.93 2.2.1.8-.02 1.6-.36 2.36-.33.75-.83 1.38-1.5 1.83-.67.45-1.47.68-2.29.68-.18 0-.36-.01-.53-.04zM4 13.5c0-.33-.03-.66-.09-.98-.83-.33-1.47-1-1.89-1.89-.32-.82-.33-1.73-.02-2.55.29-.75.79-1.38 1.46-1.84.68-.45 1.48-.69 2.3-.69.18 0 .36.01.53.04.33.06.66.15.96.28.83.37 1.52.89 2.04 1.53.52.64.83 1.4.93 2.2.1.8-.02 1.6-.36 2.36-.33.75-.83 1.38-1.5 1.83-.67.45-1.47.68-2.29.68-.18 0-.36-.01-.53-.04zM2 13.5c0-.33-.03-.66-.09-.98-.83-.33-1.47-1-1.89-1.89-.32-.82-.33-1.73-.02-2.55.29-.75.79-1.38 1.46-1.84.68-.45 1.48-.69 2.3-.69.18 0 .36.01.53.04.33.06.66.15.96.28.83.37 1.52.89 2.04 1.53.52.64.83 1.4.93 2.2.1.8-.02 1.6-.36 2.36-.33.75-.83 1.38-1.5 1.83-.67.45-1.47.68-2.29.68-.18 0-.36-.01-.53-.04z"/></svg>
+                </button>
+                <button class="control-button" id="language-toggle" aria-label="Toggle Simplified Language" aria-pressed="false">
+                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24px" height="24px"><path d="M0 0h24v24H0z" fill="none"/><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-3.17 3.71-3.99.74-.83 1.13-1.4 1.13-1.99 0-.53-.25-.95-.74-1.21-.49-.26-1.11-.39-1.83-.39-.75 0-1.34.15-1.79.45-.45.3-.76.74-.93 1.32H8.92c.21-.77.64-1.47 1.29-2.12 1.03-1.03 2.39-1.56 4.08-1.56 1.63 0 3.01.56 4.14 1.67 1.13 1.11 1.7 2.44 1.7 3.99 0 1.03-.23 2.02-.68 2.92-.45.9-1.08 1.83-1.89 2.78l-2.55 2.51c-.55.61-1.1 1.1-1.64 1.47-.54.37-1.05.55-1.56.55zM12 18c-.73 0-1.3-.29-1.71-.86-.41-.57-.62-1.31-.62-2.21 0-.53.11-1.05.34-1.56.23-.5.55-.92.96-1.25l2.54 2.51c-.55.61-1.1 1.1-1.64 1.47-.54.37-1.05.55-1.56.55zM2 4h18v2H2V4zm10 7c-1.74 0-3.17-.62-4.3-1.85-.53-.58-.94-1.23-1.23-1.95-.29-.72-.44-1.55-.44-2.49 0-1.64.56-3.01 1.67-4.14 1.11-1.13 2.44-1.7 3.99-1.7 1.03 0 2.02.23 2.92.68.9.45 1.83 1.08 2.78 1.89l-2.51 2.54c-.61-.55-1.1-1.1-1.47-1.64-.37-.54-.55-1.05-.55-1.56 0-.73.29-1.3.86-1.71.57-.41 1.31-.62 2.21-.62.53 0 1.05.11 1.56.34.5.23.92.55 1.25.96l-2.51 2.54c1.94 1.74 3.17 2.98 3.99 3.71.83.74 1.4 1.13 1.99 1.13.53 0 .95-.25 1.21-.74.26-.49.39-1.11.39-1.83 0-.75-.15-1.34-.45-1.79-.3-.45-.74-.76-1.32-.93v-2.07c.77.21 1.47.64 2.12 1.29 1.03 1.03 1.56 2.39 1.56 4.08 0 1.63-.56 3.01-1.67 4.14-1.11 1.13-2.44 1.7-3.99 1.7z"/></svg>
+                </button>
+            </div>
+        </header>
+        <div class="main-layout">
+            <aside class="sidebar-nav">
+                <nav aria-label="Main Modules">
+                    <ul class="nav-list">
+                        <li class="nav-item">
+                            <button class="nav-button active" data-module="food-web" aria-controls="food-web" aria-selected="true" tabindex="0">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24px" height="24px"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+                                <span class="nav-text">Food Web</span>
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-button" data-module="energy-flow" aria-controls="energy-flow" aria-selected="false" tabindex="-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24px" height="24px"><path d="M0 0h24v24H0z" fill="none"/><path d="M13 12v8h-2v-8H8l4-4 4 4h-3zM4 2h16v2H4z"/></svg>
+                                <span class="nav-text">Energy Flow</span>
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-button" data-module="habitat" aria-controls="habitat" aria-selected="false" tabindex="-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24px" height="24px"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 5.69l5 4.5V18h-2v-6H9v6H7v-7.81l5-4.5M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/></svg>
+                                <span class="nav-text">Habitat</span>
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-button" data-module="glossary" aria-controls="glossary" aria-selected="false" tabindex="-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24px" height="24px"><path d="M0 0h24v24H0z" fill="none"/><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 6H8V4h8v4zm-2 6H8v-2h6v2zm0 4H8v-2h6v2z"/></svg>
+                                <span class="nav-text">Glossary</span>
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-button" data-module="quiz" aria-controls="quiz" aria-selected="false" tabindex="-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24px" height="24px"><path d="M0 0h24v24H0z" fill="none"/><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8 15l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
+                                <span class="nav-text">Quiz</span>
+                            </button>
+                        </li>
+                    </ul>
+                </nav>
+            </aside>
+            <main class="main-content">
+                <section id="food-web" class="module-content active" aria-labelledby="food-web-heading">
+                    <h2 id="food-web-heading">Food Web Builder</h2>
+                    <p data-normal-text="Drag organisms from the palette to the canvas and click two organisms to connect them to show who eats whom." data-simplified-text="Put animals and plants on the board. Click two things to show what eats what.">Drag organisms from the palette to the canvas and click two organisms to connect them to show who eats whom.</p>
+                    <div class="food-web-container">
+                        <div class="organism-palette" aria-label="Organism Palette">
+                            <div class="draggable-organism" data-organism="sun" data-tts-text="Sun" tabindex="0">
+                                <!-- Placeholder image: Replace with actual illustration -->
+                                <img src="https://placehold.co/60x60/FFC107/000?text=☀️" alt="Illustration of the sun">
+                                <span class="organism-label">Sun</span>
+                            </div>
+                             <div class="draggable-organism" data-organism="grass" data-tts-text="Grass" tabindex="0">
+                                 <!-- Placeholder image: Replace with actual illustration -->
+                                <img src="https://placehold.co/60x60/81C784/000?text=🌿" alt="Illustration of grass">
+                                <span class="organism-label">Grass</span>
+                            </div>
+                            <div class="draggable-organism" data-organism="rabbit" data-tts-text="Rabbit" tabindex="0">
+                                 <!-- Placeholder image: Replace with actual illustration -->
+                                <img src="https://placehold.co/60x60/E0F2F7/000?text=🐇" alt="Illustration of a rabbit">
+                                <span class="organism-label">Rabbit</span>
+                            </div>
+                            <div class="draggable-organism" data-organism="fox" data-tts-text="Fox" tabindex="0">
+                                 <!-- Placeholder image: Replace with actual illustration -->
+                                <img src="https://placehold.co/60x60/FFAB91/000?text=🦊" alt="Illustration of a fox">
+                                <span class="organism-label">Fox</span>
+                            </div>
+                             <div class="draggable-organism" data-organism="hawk" data-tts-text="Hawk" tabindex="0">
+                                  <!-- Placeholder image: Replace with actual illustration -->
+                                <img src="https://placehold.co/60x60/BDBDBD/000?text=🦅" alt="Illustration of a hawk">
+                                <span class="organism-label">Hawk</span>
+                            </div>
+                             <div class="draggable-organism" data-organism="snake" data-tts-text="Snake" tabindex="0">
+                                  <!-- Placeholder image: Replace with actual illustration -->
+                                <img src="https://placehold.co/60x60/C5E1A5/000?text=🐍" alt="Illustration of a snake">
+                                <span class="organism-label">Snake</span>
+                            </div>
+                        </div>
+                        <div class="food-web-canvas" id="food-web-canvas" aria-label="Food web building area">
+                            <svg id="food-web-svg" width="100%" height="100%">
+                                 <defs>
+                                     <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                                         <polygon points="0 0, 10 3.5, 0 7" fill="var(--primary-color)" />
+                                     </marker>
+                                 </defs>
+                            </svg>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="energy-flow" class="module-content" aria-labelledby="energy-flow-heading" aria-hidden="true">
+                    <h2 id="energy-flow-heading">Energy Flow</h2>
+                    <p data-normal-text="Energy flows from the sun to producers, then to consumers. Energy is lost as heat at each step." data-simplified-text="Energy goes from the sun to plants, then to animals. Energy gets lost each time.">Energy flows from the sun to producers, then to consumers. Energy is lost as heat at each step.</p>
+                     <div class="energy-flow-diagram">
+                        <div class="energy-item producer" data-tts-text="Producers like plants make their own food from sunlight.">
+                             <!-- Placeholder image: Replace with actual illustration -->
+                            <img src="https://placehold.co/80x80/81C784/000?text=🌿" alt="Illustration of a plant">
+                            <span class="item-label">Producers</span>
+                        </div>
+                        <div class="energy-arrow" aria-hidden="true">→</div>
+                         <div class="energy-item consumer" data-tts-text="Primary consumers eat producers.">
+                             <!-- Placeholder image: Replace with actual illustration -->
+                            <img src="https://placehold.co/80x80/E0F2F7/000?text=🐇" alt="Illustration of a rabbit">
+                            <span class="item-label">Primary Consumers</span>
+                        </div>
+                         <div class="energy-arrow" aria-hidden="true">→</div>
+                         <div class="energy-item consumer" data-tts-text="Secondary consumers eat primary consumers.">
+                             <!-- Placeholder image: Replace with actual illustration -->
+                            <img src="https://placehold.co/80x80/FFAB91/000?text=🦊" alt="Illustration of a fox">
+                            <span class="item-label">Secondary Consumers</span>
+                        </div>
+                         <div class="energy-arrow" aria-hidden="true">→</div>
+                         <div class="energy-item consumer" data-tts-text="Tertiary consumers eat secondary consumers.">
+                             <!-- Placeholder image: Replace with actual illustration -->
+                            <img src="https://placehold.co/80x80/BDBDBD/000?text=🦅" alt="Illustration of a hawk">
+                            <span class="item-label">Tertiary Consumers</span>
+                        </div>
+                     </div>
+                    <p class="energy-loss-note" data-normal-text="About ninety percent of energy is lost as heat at each transfer level." data-simplified-text="Most energy is lost as heat each time it moves.">About 90% of energy is lost as heat at each transfer level.</p>
+                </section>
+
+                <section id="habitat" class="module-content" aria-labelledby="habitat-heading" aria-hidden="true">
+                    <h2 id="habitat-heading">Habitat Interdependence</h2>
+                    <p data-normal-text="Click on different parts of the habitat to learn how living things depend on each other and their environment." data-simplified-text="Click on things in the picture to learn how living things help each other.">Click on different parts of the habitat to learn how living things depend on each other and their environment.</p>
+                    <div class="habitat-diagram-container">
+                         <!-- Placeholder image: Replace with actual illustration -->
+                        <img src="https://placehold.co/800x500/C8E6C9/000?text=Forest+Habitat+Illustration" alt="Illustration of a forest habitat" class="habitat-image">
+                        <button class="habitat-hotspot" style="top: 30%; left: 20%;" data-habitat-element="tree" aria-label="Tree Information">1</button>
+                        <button class="habitat-hotspot" style="top: 60%; left: 50%;" data-habitat-element="pond" aria-label="Pond Information">2</button>
+                        <button class="habitat-hotspot" style="top: 50%; left: 70%;" data-habitat-element="deer" aria-label="Deer Information">3</button>
+                    </div>
+                    <div id="habitat-popup" class="info-popup" role="dialog" aria-modal="true" aria-labelledby="popup-title" aria-hidden="true">
+                        <div class="popup-content">
+                            <h3 id="popup-title"></h3>
+                            <p id="popup-text" data-tts-text=""></p>
+                             <!-- Placeholder image: Replace with actual illustration -->
+                            <img id="popup-image" src="" alt="" class="popup-image" style="display: none;">
+                            <div class="popup-controls">
+                                <button class="control-button audio-button" aria-label="Play Audio">
+                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24px" height="24px"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 10v4c0 .55.45 1 1 1h3l3.29 3.29c.63.63 1.71.18 1.71-.71V6.41c0-.9-.98-1.35-1.71-.71L7 9H4c-.55 0-1 .45-1 1zm13.5 2c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                                </button>
+                                <button class="close-popup" aria-label="Close Popup">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24px" height="24px"><path d="M0 0h24v24H0z" fill="none"/><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="glossary" class="module-content" aria-labelledby="glossary-heading" aria-hidden="true">
+                    <h2 id="glossary-heading">Glossary</h2>
+                    <p data-normal-text="Find definitions for important ecosystem words. Click a word to learn more." data-simplified-text="Find words about nature. Click a word to learn.">Find definitions for important ecosystem words. Click a word to learn more.</p>
+                    <div class="glossary-container">
+                        <div class="glossary-list">
+                            <ul id="glossary-terms-list" role="listbox" aria-label="Glossary Terms">
+                                <!-- Glossary terms will be populated here by JS -->
+                            </ul>
+                        </div>
+                        <div class="glossary-detail" id="glossary-detail">
+                            <!-- Glossary term details will be displayed here -->
+                            <h3 id="glossary-detail-term">Select a term</h3>
+                            <p id="glossary-detail-definition" data-tts-text="Click on a term from the list to see its definition, picture, and hear it read aloud.">Click on a term from the list to see its definition, picture, and hear it read aloud.</p>
+                             <!-- Placeholder image: Replace with actual illustration -->
+                            <img id="glossary-detail-image" src="" alt="" class="glossary-image" style="display: none;">
+                             <div class="glossary-controls">
+                                <button class="control-button audio-button" aria-label="Play Audio" id="glossary-audio-button" style="display: none;">
+                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24px" height="24px"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 10v4c0 .55.45 1 1 1h3l3.29 3.29c.63.63 1.71.18 1.71-.71V6.41c0-.9-.98-1.35-1.71-.71L7 9H4c-.55 0-1 .45-1 1zm13.5 2c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                                </button>
+                             </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="quiz" class="module-content" aria-labelledby="quiz-heading" aria-hidden="true">
+                    <h2 id="quiz-heading">Quiz Time!</h2>
+                    <p data-normal-text="Test your knowledge about ecosystems." data-simplified-text="See what you know about nature.">Test your knowledge about ecosystems.</p>
+                    <div id="quiz-area">
+                        <div id="question-container">
+                            <p id="question-text" data-tts-text=""></p>
+                            <div id="answer-options" class="answer-options" role="group" aria-labelledby="question-text">
+                                <!-- Answer buttons/elements -->
+                            </div>
+                        </div>
+                        <div id="quiz-feedback" class="feedback-message" role="status" aria-live="polite" data-tts-text=""></div>
+                        <button id="next-question-button" class="action-button" style="display: none;">Next Question</button>
+                         <div id="quiz-progress" class="progress-indicator" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="0">
+                            Progress: <span id="current-question">0</span> / <span id="total-questions">0</span>
+                         </div>
+                         <button id="restart-quiz-button" class="action-button" style="display: none;">Restart Quiz</button>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // --- App State ---
+        const appState = {
+            currentModule: 'food-web',
+            isTTSActive: false,
+            isSimplifiedLanguage: false,
+            foodWeb: {
+                organisms: [], // { id: 'sun-12345', type: 'sun', x: 100, y: 100, element: divElement }
+                connections: [] // { from: 'sun-12345', to: 'grass-67890', element: svgLineElement }
+            },
+            quiz: {
+                questions: [], // Will store shuffled questions
+                currentQuestionIndex: 0,
+                score: 0,
+                quizActive: false
+            }
+        };
+
+        // --- App Data ---
+        const appData = {
+             organisms: [
+                 { id: 'sun', name: 'Sun', type: 'producer', img: 'https://placehold.co/60x60/FFC107/000?text=☀️', simplifiedName: 'Sun', simplifiedText: 'The sun gives energy to plants.' },
+                 { id: 'grass', name: 'Grass', type: 'producer', img: 'https://placehold.co/60x60/81C784/000?text=🌿', simplifiedName: 'Grass', simplifiedText: 'Grass is a plant that makes its own food from sunlight.' },
+                 { id: 'rabbit', name: 'Rabbit', type: 'consumer', img: 'https://placehold.co/60x60/E0F2F7/000?text=🐇', simplifiedName: 'Bunny', simplifiedText: 'A bunny eats plants like grass.' },
+                 { id: 'fox', name: 'Fox', type: 'consumer', img: 'https://placehold.co/60x60/FFAB91/000?text=🦊', simplifiedName: 'Fox', simplifiedText: 'A fox eats small animals like bunnies.' },
+                 { id: 'hawk', name: 'Hawk', type: 'consumer', img: 'https://placehold.co/60x60/BDBDBD/000?text=🦅', simplifiedName: 'Hawk', simplifiedText: 'A hawk is a bird that eats other animals like snakes.' },
+                 { id: 'snake', name: 'Snake', type: 'consumer', img: 'https://placehold.co/60x60/C5E1A5/000?text=🐍', simplifiedName: 'Snake', simplifiedText: 'A snake eats small animals like bunnies.' },
+             ],
+             habitatElements: [
+                 { id: 'tree', name: 'Tree', text: 'Trees are producers. They use sunlight, water, and air to make food. They also provide shelter and food for many animals in the forest ecosystem.', simplifiedName: 'Tree', simplifiedText: 'Trees are plants that make food. Animals live in trees and eat from them.', img: 'https://placehold.co/400x250/A5D6A7/000?text=Tree', audioText: 'Trees are producers. They provide food and shelter for many animals.' },
+                 { id: 'pond', name: 'Pond', text: 'Ponds are important water sources in a habitat. They are home to various organisms like fish, frogs, insects, and aquatic plants, all depending on the pond for survival.', simplifiedName: 'Pond', simplifiedText: 'A pond is water where fish, frogs, and bugs live. They need the pond to live.', img: 'https://placehold.co/400x250/90CAF9/000?text=Pond', audioText: 'Ponds are important water sources and homes for fish, frogs, and insects.' },
+                 { id: 'deer', name: 'Deer', text: 'Deer are herbivores, meaning they only eat plants. They are primary consumers in the food web, getting energy by eating grass and leaves. Foxes or wolves might eat deer.', simplifiedName: 'Deer', simplifiedText: 'Deer eat plants. Other animals like foxes eat deer.', img: 'https://placehold.co/400x250/E0F2F7/000?text=Deer', audioText: 'Deer are herbivores, meaning they only eat plants. They are primary consumers.' },
+             ],
+             glossaryTerms: [
+                 { term: 'Ecosystem', definition: 'A community of living organisms (like plants and animals) interacting with each other and their physical environment (like air, water, and soil).', simplifiedName: 'Ecosystem', simplifiedDefinition: 'Living things and their environment working together.', img: 'https://placehold.co/300x200/C8E6C9/000?text=Ecosystem', audioText: 'Ecosystem: A community of living organisms interacting with each other and their physical environment.' },
+                 { term: 'Producer', definition: 'An organism that makes its own food, usually using energy from the sun (like plants). Producers form the base of a food web.', simplifiedName: 'Producer', simplifiedDefinition: 'A living thing that makes its own food, like a plant.', img: 'https://placehold.co/300x200/A5D6A7/000?text=Producer', audioText: 'Producer: An organism that makes its own food, like a plant.' },
+                 { term: 'Consumer', definition: 'An organism that gets energy by eating other organisms (like animals). Consumers cannot make their own food.', simplifiedName: 'Consumer', simplifiedDefinition: 'A living thing that eats other living things for energy.', img: 'https://placehold.co/300x200/FFCC80/000?text=Consumer', audioText: 'Consumer: An organism that gets energy by eating other organisms.' },
+                 { term: 'Food Web', definition: 'A system of interlocking and interdependent food chains that shows how energy flows through an ecosystem.', simplifiedName: 'Food Web', simplifiedDefinition: 'Shows what eats what in an ecosystem.', img: 'https://placehold.co/300x200/B3E5FC/000?text=Food+Web', audioText: 'Food Web: Shows what eats what in an ecosystem.' },
+                 { term: 'Habitat', definition: 'The natural home or environment of an animal, plant, or other organism. It provides everything the organism needs to survive, like food, water, and shelter.', simplifiedName: 'Habitat', simplifiedDefinition: 'The place where a plant or animal lives.', img: 'https://placehold.co/300x200/E1BEE7/000?text=Habitat', audioText: 'Habitat: The place where a plant or animal lives.' },
+                 { term: 'Energy Flow', definition: 'The movement of energy through an ecosystem, usually starting with the sun, then producers, and then consumers.', simplifiedName: 'Energy Flow', simplifiedDefinition: 'How energy moves from one living thing to another.', img: 'https://placehold.co/300x200/FFECB3/000?text=Energy+Flow', audioText: 'Energy Flow: How energy moves from one living thing to another.' },
+             ],
+            quizQuestions: [
+                {
+                    text: 'What is a living thing that makes its own food called?',
+                    simplifiedText: 'What makes its own food?',
+                    type: 'multiple-choice',
+                    options: ['Consumer', 'Producer', 'Habitat', 'Ecosystem'],
+                    correctAnswer: 'Producer',
+                    feedback: 'Correct! Producers make their own food, usually from sunlight.',
+                    simplifiedFeedback: 'Yes! Producers make their own food.',
+                    incorrectFeedback: 'Not quite. A living thing that makes its own food is called a Producer.',
+                    simplifiedIncorrectFeedback: 'Not right. It is called a Producer.'
+                },
+                 {
+                    text: 'Which of these organisms eats plants?',
+                    simplifiedText: 'Which eats plants?',
+                    type: 'multiple-choice',
+                    options: ['Sun', 'Grass', 'Rabbit', 'Fox'],
+                    correctAnswer: 'Rabbit',
+                    feedback: 'Correct! Rabbits eat plants, making them primary consumers.',
+                    simplifiedFeedback: 'Yes! Rabbits eat plants.',
+                    incorrectFeedback: 'Not quite. A primary consumer eats producers (plants).',
+                    simplifiedIncorrectFeedback: 'Not right. A primary consumer eats plants.'
+                 },
+                 {
+                    text: 'What does a food web show?',
+                    simplifiedText: 'What shows who eats who?',
+                    type: 'multiple-choice',
+                    options: ['A spider web', 'A list of foods', 'Shows what eats what in an ecosystem', 'A type of plant'],
+                    correctAnswer: 'Shows what eats what in an ecosystem',
+                    feedback: 'Correct! A food web shows how energy flows through an ecosystem.',
+                    simplifiedFeedback: 'Yes! A food web shows what eats what.',
+                    incorrectFeedback: 'Not quite. A food web shows the feeding relationships in an ecosystem.',
+                    simplifiedIncorrectFeedback: 'Not right. A food web shows who eats who.'
+                 },
+                 {
+                     text: 'Where does most energy in an ecosystem originally come from?',
+                     simplifiedText: 'Where does energy start?',
+                     type: 'multiple-choice',
+                     options: ['Water', 'Soil', 'The Sun', 'Animals'],
+                     correctAnswer: 'The Sun',
+                     feedback: 'Correct! The sun provides the energy that producers use to make food, starting the energy flow.',
+                     simplifiedFeedback: 'Yes! Energy starts with the Sun.',
+                     incorrectFeedback: 'Not quite. Most energy in an ecosystem comes from the Sun.',
+                     simplifiedIncorrectFeedback: 'Not right. Energy starts with the Sun.'
+                 },
+                 {
+                     text: 'What is a habitat?',
+                     simplifiedText: 'What is a habitat?',
+                     type: 'multiple-choice',
+                     options: ['Something an animal eats', 'The place where an animal or plant lives', 'A type of weather', 'A food web'],
+                     correctAnswer: 'The place where an animal or plant lives',
+                     feedback: 'Correct! A habitat is the natural home for an organism.',
+                     simplifiedFeedback: 'Yes! A habitat is where plants and animals live.',
+                     incorrectFeedback: 'Not quite. A habitat is the place where an animal or plant lives.',
+                     simplifiedIncorrectFeedback: 'Not right. A habitat is where plants and animals live.'
+                 }
+            ]
+        };
+
+        // --- DOM Elements ---
+        const navButtons = document.querySelectorAll('.nav-button');
+        const moduleContents = document.querySelectorAll('.module-content');
+        const ttsToggle = document.getElementById('tts-toggle');
+        const languageToggle = document.getElementById('language-toggle');
+        const foodWebCanvas = document.getElementById('food-web-canvas');
+        const foodWebSvg = document.getElementById('food-web-svg');
+        const organismPalette = document.querySelector('.organism-palette');
+        const habitatHotspots = document.querySelectorAll('.habitat-hotspot');
+        const habitatPopup = document.getElementById('habitat-popup');
+        const popupTitle = document.getElementById('popup-title');
+        const popupText = document.getElementById('popup-text');
+        const popupImage = document.getElementById('popup-image');
+        const popupAudioButton = habitatPopup.querySelector('.audio-button');
+        const closePopupButton = habitatPopup.querySelector('.close-popup');
+        const glossaryTermsList = document.getElementById('glossary-terms-list');
+        const glossaryDetail = document.getElementById('glossary-detail');
+        const glossaryDetailTerm = document.getElementById('glossary-detail-term');
+        const glossaryDetailDefinition = document.getElementById('glossary-detail-definition');
+        const glossaryDetailImage = document.getElementById('glossary-detail-image');
+        const glossaryAudioButton = document.getElementById('glossary-audio-button');
+        const quizArea = document.getElementById('quiz-area');
+        const questionText = document.getElementById('question-text');
+        const answerOptionsDiv = document.getElementById('answer-options');
+        const quizFeedback = document.getElementById('quiz-feedback');
+        const nextQuestionButton = document.getElementById('next-question-button');
+        const currentQuestionSpan = document.getElementById('current-question');
+        const totalQuestionsSpan = document.getElementById('total-questions');
+        const restartQuizButton = document.getElementById('restart-quiz-button');
+
+        // --- State Management & Rendering ---
+        function renderModule(moduleId) {
+            moduleContents.forEach(module => {
+                module.classList.remove('active');
+                module.setAttribute('aria-hidden', true);
+            });
+            const activeModule = document.getElementById(moduleId);
+            if (activeModule) {
+                activeModule.classList.add('active');
+                activeModule.setAttribute('aria-hidden', false);
+                appState.currentModule = moduleId;
+
+                // Update text content for the new module based on language state
+                updateLanguageForElement(activeModule);
+
+                // Module specific initialization
+                if (moduleId === 'glossary') {
+                    // Re-render glossary list if it's empty or language changed
+                    if (glossaryTermsList.children.length === 0 || glossaryTermsList.dataset.simplified !== String(appState.isSimplifiedLanguage)) {
+                         renderGlossaryList();
+                    }
+                    // Ensure detail view is updated if a term was previously selected
+                     const activeTermElement = glossaryTermsList.querySelector('.active');
+                     if (activeTermElement) {
+                         displayGlossaryTerm(activeTermElement.dataset.term);
+                     } else {
+                         // Reset detail view placeholder text
+                         displayGlossaryTerm(null);
+                     }
+                } else if (moduleId === 'quiz' && !appState.quiz.quizActive) {
+                     startQuiz();
+                } else if (moduleId === 'food-web') {
+                     // Ensure organism labels are updated if language changed
+                     updateOrganismLabels();
+                     // Deselect any organism if module was switched away and back
+                     deselectOrganismForConnection();
+                }
+            }
+        }
+
+        function updateNavigation(activeModuleId) {
+            navButtons.forEach(button => {
+                if (button.dataset.module === activeModuleId) {
+                    button.classList.add('active');
+                    button.setAttribute('aria-selected', true);
+                    button.setAttribute('tabindex', 0);
+                } else {
+                    button.classList.remove('active');
+                    button.setAttribute('aria-selected', false);
+                    button.setAttribute('tabindex', -1);
+                }
+            });
+        }
+
+        // Update text content within a specific element based on language state
+        function updateLanguageForElement(element) {
+             // Update general module description paragraphs
+             element.querySelectorAll('p[data-normal-text]').forEach(p => {
+                 const normalText = p.getAttribute('data-normal-text');
+                 const simplifiedText = p.getAttribute('data-simplified-text') || normalText;
+                 p.textContent = appState.isSimplifiedLanguage ? simplifiedText : normalText;
+                 p.setAttribute('data-tts-text', p.textContent); // Keep TTS text updated
+             });
+
+             // Update H2 titles if they have data-normal-text (currently they don't, but good practice)
+             element.querySelectorAll('h2[data-normal-text]').forEach(h2 => {
+                 const normalText = h2.getAttribute('data-normal-text');
+                 const simplifiedText = h2.getAttribute('data-simplified-text') || normalText;
+                 h2.textContent = appState.isSimplifiedLanguage ? simplifiedText : normalText;
+                 h2.setAttribute('data-tts-text', h2.textContent); // Keep TTS text updated
+             });
+
+             // Module-specific updates are handled within their respective functions
+        }
+
+
+        // --- Text-to-Speech ---
+        let speechUtterance = null;
+        const synth = window.speechSynthesis;
+
+        function speak(text, element = null) {
+            if (!synth) {
+                console.warn("Text-to-Speech not supported in this browser.");
+                return;
+            }
+            if (!appState.isTTSActive) {
+                return; // Don't speak if TTS is toggled off
+            }
+            if (synth.speaking) {
+                synth.cancel(); // Stop current speech before starting new one
+            }
+
+            let textToSpeak = text; // Default to the provided text
+
+            // Try to get text from data-tts-text attribute if element is provided
+            if (element && element.dataset.ttsText) {
+                 textToSpeak = element.dataset.ttsText;
+            } else if (element) {
+                 // Fallback to element's text content if no data-tts-text
+                 textToSpeak = element.textContent;
+            }
+
+
+            speechUtterance = new SpeechSynthesisUtterance(textToSpeak);
+            speechUtterance.lang = 'en-US'; // Or appropriate language
+            synth.speak(speechUtterance);
+        }
+
+        function toggleTTS() {
+            appState.isTTSActive = !appState.isTTSActive;
+            ttsToggle.classList.toggle('active', appState.isTTSActive);
+            ttsToggle.setAttribute('aria-pressed', appState.isTTSActive);
+            if (!appState.isTTSActive && synth.speaking) {
+                 synth.cancel();
+            }
+        }
+
+        function handleAudioButtonClick(event) {
+            const button = event.target.closest('.audio-button');
+            if (!button || !appState.isTTSActive) return; // Only proceed if TTS is active
+
+            // Find the element whose text should be spoken based on the button's context
+            let textSourceElement = null;
+            const popup = button.closest('.info-popup');
+            const glossary = button.closest('.glossary-detail');
+
+            if (popup) {
+                 textSourceElement = popupText; // Speak the popup text content (which has data-tts-text)
+            } else if (glossary) {
+                 textSourceElement = glossaryDetailDefinition; // Speak the glossary definition (which has data-tts-text)
+            } else {
+                 // Generic case: try to speak the text content of the parent element or a nearby element
+                 // This might need refinement depending on where other audio buttons are placed
+                 // For now, assume the audio button is next to the text it should read.
+                 textSourceElement = button.previousElementSibling;
+            }
+
+            if (textSourceElement) {
+                speak(textSourceElement.textContent, textSourceElement); // Pass element for data-tts-text lookup
+            }
+        }
+
+
+        // --- Simplified Language Toggle ---
+        function toggleLanguage() {
+            appState.isSimplifiedLanguage = !appState.isSimplifiedLanguage;
+            languageToggle.classList.toggle('active', appState.isSimplifiedLanguage);
+            languageToggle.setAttribute('aria-pressed', appState.isSimplifiedLanguage);
+            updateLanguage(); // Re-render text content across the app
+        }
+
+        function updateLanguage() {
+             // Update general text elements in the currently active module
+             const activeModule = document.getElementById(appState.currentModule);
+             if (activeModule) {
+                 updateLanguageForElement(activeModule); // Update general paragraphs and titles
+
+                 // Module-specific updates handle their own text content and data-tts-text
+                 if (appState.currentModule === 'glossary') {
+                     renderGlossaryList(); // Re-render list with new language
+                     const activeTermElement = glossaryTermsList.querySelector('.active');
+                     if (activeTermElement) {
+                          displayGlossaryTerm(activeTermElement.dataset.term); // Re-display detail with new language
+                     } else {
+                          // Update placeholder text
+                          glossaryDetailTerm.textContent = appState.isSimplifiedLanguage ? 'Choose a word' : 'Select a term';
+                          const placeholderText = appState.isSimplifiedLanguage ? 'Tap a word to see what it means.' : 'Click on a term from the list to see its definition, picture, and hear it read aloud.';
+                          glossaryDetailDefinition.textContent = placeholderText;
+                          glossaryDetailDefinition.setAttribute('data-tts-text', placeholderText);
+                     }
+                 } else if (appState.currentModule === 'food-web') {
+                      updateOrganismLabels(); // Update labels on palette and dropped organisms
+                 } else if (appState.currentModule === 'quiz' && appState.quiz.quizActive) {
+                      // Re-render current quiz question and feedback
+                      displayQuestion(appState.quiz.currentQuestionIndex);
+                      // Re-display feedback if any is visible
+                      if (quizFeedback.textContent) {
+                          const questionData = appState.quiz.questions[appState.quiz.currentQuestionIndex];
+                           const isCorrect = quizFeedback.classList.contains('success') && !quizFeedback.classList.contains('error'); // Check current state based on classes
+                           const feedbackText = isCorrect
+                               ? (appState.isSimplifiedLanguage ? questionData.simplifiedFeedback : questionData.feedback)
+                               : (appState.isSimplifiedLanguage ? questionData.incorrectFeedback : questionData.feedback); // Use normal feedback if no simplified incorrect
+                           quizFeedback.textContent = feedbackText;
+                           quizFeedback.setAttribute('data-tts-text', feedbackText);
+                      }
+                 } else if (appState.currentModule === 'habitat') {
+                      // Habitat popup text is updated when popup is shown
+                      // Hotspot labels are static for now (numbers 1, 2, 3)
+                 }
+             }
+        }
+
+
+        // --- Food Web Module ---
+        let draggedElement = null;
+        let offsetX, offsetY;
+        let selectedOrganismForConnection = null;
+        let startDragPos = { x: 0, y: 0 }; // Track start position to distinguish drag from click
+
+        function createDroppedOrganism(organismData, x, y) {
+            const uniqueId = organismData.id + '-' + Date.now();
+            const organismDiv = document.createElement('div');
+            organismDiv.classList.add('dropped-organism');
+            organismDiv.dataset.organismId = uniqueId; // Use unique ID
+            organismDiv.dataset.organismType = organismData.id; // Store original type
+            organismDiv.setAttribute('role', 'img'); // Not strictly an image, but represents one
+            organismDiv.setAttribute('aria-label', appState.isSimplifiedLanguage ? organismData.simplifiedName : organismData.name);
+            organismDiv.setAttribute('tabindex', '0'); // Make dropped items focusable
+            organismDiv.style.left = `${x}px`;
+            organismDiv.style.top = `${y}px`;
+            organismDiv.innerHTML = `
+                <!-- Placeholder image: Replace with actual illustration -->
+                <img src="${organismData.img}" alt="Illustration of a ${organismData.name.toLowerCase()}">
+                <span class="organism-label">${appState.isSimplifiedLanguage ? organismData.simplifiedName : organismData.name}</span>
+            `;
+            organismDiv.addEventListener('mousedown', startDragDropped);
+            organismDiv.addEventListener('touchstart', startDragDropped, { passive: false }); // Add touch support
+             organismDiv.addEventListener('click', handleOrganismClick); // For connection building
+             organismDiv.addEventListener('keydown', handleOrganismKeydown); // For keyboard connection
+
+            foodWebCanvas.appendChild(organismDiv);
+            appState.foodWeb.organisms.push({
+                id: uniqueId,
+                type: organismData.id,
+                name: organismData.name, // Store name for language updates
+                simplifiedName: organismData.simplifiedName, // Store simplified name
+                x: x,
+                y: y,
+                element: organismDiv
+            });
+             // Update labels immediately if language is simplified (redundant if called after create, but safe)
+             updateOrganismLabels();
+        }
+
+         function updateOrganismLabels() {
+             // Update labels for both palette and dropped organisms
+             document.querySelectorAll('.organism-palette .draggable-organism, .food-web-canvas .dropped-organism').forEach(el => {
+                 const organismType = el.dataset.organism || el.dataset.organismType;
+                 const organismData = appData.organisms.find(data => data.id === organismType);
+                 if (organismData) {
+                     const labelSpan = el.querySelector('.organism-label');
+                     const labelText = appState.isSimplifiedLanguage ? organismData.simplifiedName : organismData.name;
+                     labelSpan.textContent = labelText;
+                     el.setAttribute('aria-label', labelText);
+                     // data-tts-text is static on palette items currently, but could be updated here if needed.
+                     // For dropped items, the label textContent is what will be read by default TTS if no data-tts-text.
+                 }
+             });
+         }
+
+
+        function startDragPalette(event) {
+            // Use event.button for mouse, check event.touches for touch
+            const isMouseEvent = event.button === 0;
+            const isTouchEvent = event.touches && event.touches.length === 1;
+            if (!isMouseEvent && !isTouchEvent) return;
+
+            const paletteItem = event.target.closest('.draggable-organism');
+            if (!paletteItem) return;
+
+            // Prevent default touch behavior (like scrolling)
+            if (isTouchEvent) event.preventDefault();
+
+            const organismId = paletteItem.dataset.organism;
+            const organismData = appData.organisms.find(org => org.id === organismId);
+            if (!organismData) return;
+
+            // Create a clone for dragging
+            draggedElement = paletteItem.cloneNode(true);
+            draggedElement.classList.remove('draggable-organism');
+            draggedElement.classList.add('dragging'); // Add a dragging class for styling
+            draggedElement.style.position = 'absolute';
+            draggedElement.style.zIndex = 1000;
+            draggedElement.style.pointerEvents = 'none'; // Don't interfere with mouse events
+
+            const rect = paletteItem.getBoundingClientRect();
+            const clientX = isMouseEvent ? event.clientX : event.touches[0].clientX;
+            const clientY = isTouchEvent ? event.touches[0].clientY : event.touches[0].clientY;
+
+            offsetX = clientX - rect.left;
+            offsetY = clientY - rect.top;
+            startDragPos = { x: clientX, y: clientY }; // Store start position
+
+            // Position the clone initially
+            draggedElement.style.left = `${clientX - offsetX}px`;
+            draggedElement.style.top = `${clientY - offsetY}px`;
+
+            document.body.appendChild(draggedElement);
+
+            document.addEventListener('mousemove', onDragging);
+            document.addEventListener('mouseup', stopDragPalette);
+            document.addEventListener('touchmove', onDragging, { passive: false });
+            document.addEventListener('touchend', stopDragPalette);
+        }
+
+        function startDragDropped(event) {
+             const isMouseEvent = event.button === 0;
+             const isTouchEvent = event.touches && event.touches.length === 1;
+             if (!isMouseEvent && !isTouchEvent) return;
+
+             const droppedItem = event.target.closest('.dropped-organism');
+             if (!droppedItem) return;
+
+             // Prevent default touch behavior (like scrolling)
+            if (isTouchEvent) event.preventDefault();
+
+             // Deselect if this item was previously selected for connection
+             if (selectedOrganismForConnection && selectedOrganismForConnection.element === droppedItem) {
+                 deselectOrganismForConnection();
+             }
+
+             draggedElement = droppedItem;
+             const rect = droppedItem.getBoundingClientRect();
+             const clientX = isMouseEvent ? event.clientX : event.touches[0].clientX;
+             const clientY = isTouchEvent ? event.touches[0].clientY : event.touches[0].clientY;
+
+             offsetX = clientX - rect.left;
+             offsetY = clientY - rect.top;
+             startDragPos = { x: clientX, y: clientY }; // Store start position
+
+             draggedElement.style.cursor = 'grabbing';
+             draggedElement.style.zIndex = 1000; // Bring to front
+             draggedElement.classList.add('dragging'); // Add dragging class
+
+             document.addEventListener('mousemove', onDragging);
+             document.addEventListener('mouseup', stopDragDropped);
+             document.addEventListener('touchmove', onDragging, { passive: false });
+             document.addEventListener('touchend', stopDragDropped);
+        }
+
+
+        function onDragging(event) {
+            if (!draggedElement) return;
+
+            const isTouchEvent = event.touches && event.touches.length > 0;
+             if (isTouchEvent) event.preventDefault(); // Prevent scrolling during drag
+
+            const clientX = isTouchEvent ? event.touches[0].clientX : event.clientX;
+            const clientY = isTouchEvent ? event.touches[0].clientY : event.clientY;
+
+            // Update position based on mouse/touch
+            draggedElement.style.left = `${clientX - offsetX}px`;
+            draggedElement.style.top = `${clientY - offsetY}px`;
+
+            // If dragging a dropped item, update its stored position and redraw lines
+             if (draggedElement.classList.contains('dropped-organism')) {
+                 const canvasRect = foodWebCanvas.getBoundingClientRect();
+                 const organismInstance = appState.foodWeb.organisms.find(org => org.element === draggedElement);
+                 if (organismInstance) {
+                     // Calculate position relative to canvas top-left
+                     // Ensure position stays within canvas bounds
+                     const newX = clientX - offsetX - canvasRect.left;
+                     const newY = clientY - offsetY - canvasRect.top;
+
+                     const maxX = canvasRect.width - draggedElement.offsetWidth;
+                     const maxY = canvasRect.height - draggedElement.offsetHeight;
+
+                     organismInstance.x = Math.max(0, Math.min(newX, maxX));
+                     organismInstance.y = Math.max(0, Math.min(newY, maxY));
+
+                     draggedElement.style.left = `${organismInstance.x}px`;
+                     draggedElement.style.top = `${organismInstance.y}px`;
+
+                     redrawConnections();
+                 }
+             }
+        }
+
+        function stopDragPalette(event) {
+            if (!draggedElement) return;
+
+            document.removeEventListener('mousemove', onDragging);
+            document.removeEventListener('mouseup', stopDragPalette);
+            document.removeEventListener('touchmove', onDragging);
+            document.removeEventListener('touchend', stopDragPalette);
+
+
+            const canvasRect = foodWebCanvas.getBoundingClientRect();
+            // Use changedTouches for touchend event
+            const clientX = event.changedTouches ? event.changedTouches[0].clientX : event.clientX;
+            const clientY = event.changedTouches ? event.changedTouches[0].clientY : event.clientY;
+
+            // Calculate drop position relative to canvas
+            const dropX = clientX - canvasRect.left - offsetX;
+            const dropY = clientY - canvasRect.top - offsetY;
+
+             // Calculate distance moved to distinguish drag from click
+             const moveDistance = Math.sqrt(Math.pow(clientX - startDragPos.x, 2) + Math.pow(clientY - startDragPos.y, 2));
+             const isClick = moveDistance < 5; // Threshold to consider it a click
+
+
+            // Check if dropped inside the canvas bounds
+            // Add a small buffer to account for element size
+            const buffer = 30; // Half the size of the organism image
+            const droppedInsideCanvas = clientX >= canvasRect.left + buffer && clientX <= canvasRect.right - buffer &&
+                                        clientY >= canvasRect.top + buffer && clientY <= canvasRect.bottom - buffer;
+
+
+            if (droppedInsideCanvas && !isClick) { // Only create if it was a drag and dropped inside
+                const organismId = draggedElement.dataset.organism;
+                const organismData = appData.organisms.find(org => org.id === organismId);
+                if (organismData) {
+                    // Adjust drop position slightly to center the element
+                    const centeredDropX = dropX - draggedElement.offsetWidth / 2 + offsetX;
+                    const centeredDropY = dropY - draggedElement.offsetHeight / 2 + offsetY;
+
+                    // Ensure created position is within canvas bounds
+                     const finalX = Math.max(0, Math.min(centeredDropX, canvasRect.width - draggedElement.offsetWidth));
+                     const finalY = Math.max(0, Math.min(centeredDropY, canvasRect.height - draggedElement.offsetHeight));
+
+                    createDroppedOrganism(organismData, finalX, finalY);
+                }
+            }
+
+            // Clean up the clone
+            draggedElement.remove();
+            draggedElement = null;
+             startDragPos = { x: 0, y: 0 };
+        }
+
+         function stopDragDropped(event) {
+             if (!draggedElement) return;
+
+             document.removeEventListener('mousemove', onDragging);
+             document.removeEventListener('mouseup', stopDragDropped);
+             document.removeEventListener('touchmove', onDragging);
+             document.removeEventListener('touchend', stopDragDropped);
+
+             draggedElement.style.cursor = 'grab';
+             draggedElement.style.zIndex = 10; // Reset z-index
+             draggedElement.classList.remove('dragging'); // Remove dragging class
+
+             // Update stored position one last time based on final drop
+             const canvasRect = foodWebCanvas.getBoundingClientRect();
+             const clientX = event.changedTouches ? event.changedTouches[0].clientX : event.clientX;
+             const clientY = event.changedTouches ? event.changedTouches[0].clientY : event.clientY;
+
+              // Calculate distance moved to distinguish drag from click
+             const moveDistance = Math.sqrt(Math.pow(clientX - startDragPos.x, 2) + Math.pow(clientY - startDragPos.y, 2));
+             const isClick = moveDistance < 5; // Threshold to consider it a click
+
+
+             const organismInstance = appState.foodWeb.organisms.find(org => org.element === draggedElement);
+             if (organismInstance && !isClick) { // Only update position if it was a drag
+                 // Calculate position relative to canvas top-left
+                 const newX = clientX - offsetX - canvasRect.left;
+                 const newY = clientY - offsetY - canvasRect.top;
+
+                 const maxX = canvasRect.width - draggedElement.offsetWidth;
+                 const maxY = canvasRect.height - draggedElement.offsetHeight;
+
+                 organismInstance.x = Math.max(0, Math.min(newX, maxX));
+                 organismInstance.y = Math.max(0, Math.min(newY, maxY));
+
+                 draggedElement.style.left = `${organismInstance.x}px`;
+                 draggedElement.style.top = `${organismInstance.y}px`;
+
+                 redrawConnections();
+             }
+
+             draggedElement = null;
+             startDragPos = { x: 0, y: 0 };
+         }
+
+         function selectOrganismForConnection(organismInstance) {
+             if (selectedOrganismForConnection) {
+                 deselectOrganismForConnection();
+             }
+             selectedOrganismForConnection = organismInstance;
+             organismInstance.element.classList.add('selected-for-connection'); // Add class for styling
+             organismInstance.element.setAttribute('aria-pressed', true);
+         }
+
+         function deselectOrganismForConnection() {
+             if (selectedOrganismForConnection) {
+                 selectedOrganismForConnection.element.classList.remove('selected-for-connection');
+                 selectedOrganismForConnection.element.setAttribute('aria-pressed', false);
+                 selectedOrganismForConnection = null;
+             }
+         }
+
+         function handleOrganismClick(event) {
+             // Prevent click if it was part of a significant drag motion
+             // Check if the element had the 'dragging' class just before the mouseup/touchend
+             // A simple way is to check the distance moved from the start of the interaction.
+             // If the element was dragged more than a small threshold, treat it as a drag, not a click.
+             const clickTarget = event.target.closest('.dropped-organism');
+             if (!clickTarget) return;
+
+              // Calculate distance moved since mousedown/touchstart
+             const clientX = event.clientX || (event.changedTouches ? event.changedTouches[0].clientX : null);
+             const clientY = event.clientY || (event.changedTouches ? event.changedTouches[0].clientY : null);
+
+             if (clientX === null || clientY === null) return; // Should not happen with mouse/touch events
+
+             const moveDistance = Math.sqrt(Math.pow(clientX - startDragPos.x, 2) + Math.pow(clientY - startDragPos.y, 2));
+             const isClick = moveDistance < 5; // Threshold in pixels
+
+             if (!isClick) {
+                 // If it was a drag, do nothing here, stopDragDropped handles position update
+                 return;
+             }
+
+
+             const organismElement = event.target.closest('.dropped-organism');
+             if (!organismElement) return;
+
+             const organismInstance = appState.foodWeb.organisms.find(org => org.element === organismElement);
+             if (!organismInstance) return;
+
+             if (!selectedOrganismForConnection) {
+                 // First click: Select organism
+                 selectOrganismForConnection(organismInstance);
+             } else if (selectedOrganismForConnection === organismInstance) {
+                 // Click the same organism again: Deselect
+                 deselectOrganismForConnection();
+             }
+             else {
+                 // Second click: Create connection
+                 const fromOrg = selectedOrganismForConnection;
+                 const toOrg = organismInstance;
+
+                 // Prevent connecting an organism to itself
+                 if (fromOrg.id === toOrg.id) {
+                      deselectOrganismForConnection();
+                      return;
+                 }
+
+                 // Check if connection already exists (from -> to)
+                 const connectionExists = appState.foodWeb.connections.some(conn =>
+                     conn.from === fromOrg.id && conn.to === toOrg.id
+                 );
+
+                 if (!connectionExists) {
+                     addConnection(fromOrg, toOrg);
+                 }
+
+                 // Deselect after attempting connection
+                 deselectOrganismForConnection();
+             }
+         }
+
+         function handleOrganismKeydown(event) {
+             if (event.key === 'Enter' || event.key === ' ') {
+                 event.preventDefault(); // Prevent default space/enter behavior
+                 // Simulate click event on the element for keyboard activation
+                 // Need to pass a dummy event object that handleOrganismClick can process
+                 handleOrganismClick({ target: event.target, clientX: event.target.getBoundingClientRect().left, clientY: event.target.getBoundingClientRect().top, changedTouches: null });
+             }
+         }
+
+
+         function addConnection(fromOrg, toOrg) {
+             // Create SVG line element
+             const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+             line.classList.add('food-web-line');
+
+             // Get center points of organisms relative to SVG/Canvas
+             // Use stored x/y which are relative to canvas top-left
+             const x1 = fromOrg.x + fromOrg.element.offsetWidth / 2;
+             const y1 = fromOrg.y + fromOrg.element.offsetHeight / 2;
+             const x2 = toOrg.x + toOrg.element.offsetWidth / 2;
+             const y2 = toOrg.y + toOrg.element.offsetHeight / 2;
+
+             line.setAttribute('x1', x1);
+             line.setAttribute('y1', y1);
+             line.setAttribute('x2', x2);
+             line.setAttribute('y2', y2);
+             line.setAttribute('marker-end', 'url(#arrowhead)'); // Add arrowhead
+
+             foodWebSvg.appendChild(line);
+
+             appState.foodWeb.connections.push({
+                 from: fromOrg.id,
+                 to: toOrg.id,
+                 element: line
+             });
+         }
+
+         function redrawConnections() {
+             // Update positions of existing lines
+             appState.foodWeb.connections.forEach(conn => {
+                 const fromOrg = appState.foodWeb.organisms.find(org => org.id === conn.from);
+                 const toOrg = appState.foodWeb.organisms.find(org => org.id === conn.to);
+
+                 if (fromOrg && toOrg && conn.element) {
+                     // Positions are relative to canvas, use stored x/y
+                     const x1 = fromOrg.x + fromOrg.element.offsetWidth / 2;
+                     const y1 = fromOrg.y + fromOrg.element.offsetHeight / 2;
+                     const x2 = toOrg.x + toOrg.element.offsetWidth / 2;
+                     const y2 = toOrg.y + toOrg.element.offsetHeight / 2;
+
+                     conn.element.setAttribute('x1', x1);
+                     conn.element.setAttribute('y1', y1);
+                     conn.element.setAttribute('x2', x2);
+                     conn.element.setAttribute('y2', y2);
+                 } else if (conn.element) {
+                     // If an organism was removed (not implemented, but handle orphaned lines)
+                     conn.element.remove();
+                 }
+             });
+              // Clean up orphaned connections after the loop
+             appState.foodWeb.connections = appState.foodWeb.connections.filter(conn =>
+                 appState.foodWeb.organisms.some(org => org.id === conn.from) &&
+                 appState.foodWeb.organisms.some(org => org.id === conn.to)
+             );
+         }
+
+
+        // --- Habitat Module ---
+        function showHabitatPopup(elementId) {
+            const elementData = appData.habitatElements.find(el => el.id === elementId);
+            if (!elementData) return;
+
+            popupTitle.textContent = appState.isSimplifiedLanguage ? elementData.simplifiedName || elementData.name : elementData.name;
+            const popupBodyText = appState.isSimplifiedLanguage ? elementData.simplifiedText : elementData.text;
+            popupText.textContent = popupBodyText;
+            popupText.setAttribute('data-tts-text', elementData.audioText || popupBodyText); // Use audioText if available, else current text
+
+            habitatPopup.dataset.elementId = elementId; // Store ID for audio button
+
+            if (elementData.img) {
+                popupImage.src = elementData.img;
+                popupImage.alt = `Illustration of ${appState.isSimplifiedLanguage ? elementData.simplifiedName || elementData.name : elementData.name}`;
+                popupImage.style.display = 'block';
+            } else {
+                popupImage.style.display = 'none';
+            }
+
+            habitatPopup.classList.add('visible');
+            habitatPopup.setAttribute('aria-hidden', false);
+            // Show audio button only if TTS is supported
+            if (synth) {
+                popupAudioButton.style.display = 'inline-flex';
+            } else {
+                 popupAudioButton.style.display = 'none';
+            }
+
+
+             // Focus the close button for accessibility
+             closePopupButton.focus();
+        }
+
+        function hideHabitatPopup() {
+            habitatPopup.classList.remove('visible');
+            habitatPopup.setAttribute('aria-hidden', true);
+            habitatPopup.dataset.elementId = ''; // Clear stored ID
+            popupAudioButton.style.display = 'none'; // Hide audio button
+             // Restore focus to the hotspot that opened it? Requires storing the element.
+             // For now, just remove focus from the popup.
+             document.activeElement.blur();
+        }
+
+
+        // --- Glossary Module ---
+        function renderGlossaryList() {
+            glossaryTermsList.innerHTML = ''; // Clear existing list
+            glossaryTermsList.dataset.simplified = appState.isSimplifiedLanguage; // Mark list with current language state
+            appData.glossaryTerms.sort((a, b) => {
+                const termA = appState.isSimplifiedLanguage ? a.simplifiedName || a.term : a.term;
+                const termB = appState.isSimplifiedLanguage ? b.simplifiedName || b.term : b.term;
+                return termA.localeCompare(termB);
+            }).forEach(termData => {
+                const listItem = document.createElement('li');
+                listItem.textContent = appState.isSimplifiedLanguage ? termData.simplifiedName || termData.term : termData.term;
+                listItem.dataset.term = termData.term; // Store original term for lookup
+                listItem.setAttribute('tabindex', '0'); // Make list items focusable
+                listItem.setAttribute('role', 'option');
+                glossaryTermsList.appendChild(listItem);
+            });
+        }
+
+        function displayGlossaryTerm(term) {
+            const termData = appData.glossaryTerms.find(t => t.term === term);
+            if (!termData) {
+                 // Reset detail view if term not found or null is passed
+                 glossaryDetailTerm.textContent = appState.isSimplifiedLanguage ? 'Choose a word' : 'Select a term';
+                 const placeholderText = appState.isSimplifiedLanguage ? 'Tap a word to see what it means.' : 'Click on a term from the list to see its definition, picture, and hear it read aloud.';
+                 glossaryDetailDefinition.textContent = placeholderText;
+                 glossaryDetailDefinition.setAttribute('data-tts-text', placeholderText);
+                 glossaryDetailImage.style.display = 'none';
+                 glossaryDetailImage.src = '';
+                 glossaryDetailImage.alt = '';
+                 glossaryAudioButton.style.display = 'none';
+
+                 // Remove active state from all list items
+                 glossaryTermsList.querySelectorAll('li').forEach(li => {
+                     li.classList.remove('active');
+                     li.setAttribute('aria-selected', false);
+                 });
+                 return;
+            }
+
+            glossaryDetailTerm.textContent = appState.isSimplifiedLanguage ? termData.simplifiedName || termData.term : termData.term;
+            const definitionText = appState.isSimplifiedLanguage ? termData.simplifiedDefinition : termData.definition;
+            glossaryDetailDefinition.textContent = definitionText;
+            glossaryDetailDefinition.setAttribute('data-tts-text', termData.audioText || definitionText); // Use audioText if available, else current text
+
+            if (termData.img) {
+                glossaryDetailImage.src = termData.img;
+                glossaryDetailImage.alt = `Illustration for ${appState.isSimplifiedLanguage ? termData.simplifiedName || termData.term : termData.term}`;
+                glossaryDetailImage.style.display = 'block';
+            } else {
+                glossaryDetailImage.style.display = 'none';
+            }
+
+            // Show audio button only if TTS is supported
+            if (synth) {
+                glossaryAudioButton.style.display = 'inline-flex';
+            } else {
+                 glossaryAudioButton.style.display = 'none';
+            }
+
+
+            // Update active state in list
+            glossaryTermsList.querySelectorAll('li').forEach(li => {
+                 if (li.dataset.term === term) {
+                     li.classList.add('active');
+                     li.setAttribute('aria-selected', true);
+                 } else {
+                     li.classList.remove('active');
+                     li.setAttribute('aria-selected', false);
+                 }
+            });
+        }
+
+
+        // --- Quiz Module ---
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]]; // Swap elements
+            }
+            return array;
+        }
+
+        function startQuiz() {
+            appState.quiz.questions = shuffleArray([...appData.quizQuestions]); // Use a shuffled copy
+            appState.quiz.currentQuestionIndex = 0;
+            appState.quiz.score = 0;
+            appState.quiz.quizActive = true;
+            totalQuestionsSpan.textContent = appState.quiz.questions.length;
+            document.getElementById('quiz-progress').setAttribute('aria-valuemax', appState.quiz.questions.length);
+            restartQuizButton.style.display = 'none';
+            nextQuestionButton.style.display = 'none';
+            quizFeedback.textContent = '';
+            quizFeedback.className = 'feedback-message'; // Reset feedback class
+            quizFeedback.dataset.ttsText = ''; // Clear feedback TTS text
+            displayQuestion(appState.quiz.currentQuestionIndex);
+        }
+
+        function displayQuestion(index) {
+            if (index >= appState.quiz.questions.length) {
+                endQuiz();
+                return;
+            }
+
+            const questionData = appState.quiz.questions[index];
+            const questionTextContent = appState.isSimplifiedLanguage ? questionData.simplifiedText : questionData.text;
+            questionText.textContent = questionTextContent;
+            questionText.setAttribute('data-tts-text', questionTextContent); // Update TTS text attribute for the question
+            currentQuestionSpan.textContent = index + 1;
+            document.getElementById('quiz-progress').setAttribute('aria-valuenow', index + 1);
+
+            answerOptionsDiv.innerHTML = ''; // Clear previous options
+            quizFeedback.textContent = '';
+            quizFeedback.className = 'feedback-message'; // Reset feedback class
+            quizFeedback.dataset.ttsText = ''; // Clear feedback TTS text
+            nextQuestionButton.style.display = 'none';
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.classList.add('answer-button');
+                button.textContent = option;
+                button.dataset.answer = option;
+                button.setAttribute('role', 'option');
+                button.setAttribute('aria-checked', false); // For potential radio/checkbox roles
+                button.addEventListener('click', handleAnswer);
+                answerOptionsDiv.appendChild(button);
+            });
+             // Focus the first answer button for keyboard navigation
+             if (answerOptionsDiv.firstElementChild) {
+                 answerOptionsDiv.firstElementChild.focus();
+             }
+        }
+
+        function handleAnswer(event) {
+            const selectedAnswer = event.target.dataset.answer;
+            const questionData = appState.quiz.questions[appState.quiz.currentQuestionIndex];
+            const isCorrect = selectedAnswer === questionData.correctAnswer;
+
+            // Disable all answer buttons and update aria-checked
+            answerOptionsDiv.querySelectorAll('.answer-button').forEach(button => {
+                button.disabled = true;
+                button.setAttribute('aria-disabled', true);
+                if (button.dataset.answer === questionData.correctAnswer) {
+                    button.classList.add('correct');
+                     button.setAttribute('aria-checked', true);
+                } else if (button.dataset.answer === selectedAnswer) {
+                     button.classList.add('incorrect');
+                     button.setAttribute('aria-checked', true);
+                } else {
+                     button.setAttribute('aria-checked', false);
+                }
+            });
+
+            let feedbackText = '';
+            if (isCorrect) {
+                appState.quiz.score++;
+                feedbackText = appState.isSimplifiedLanguage ? questionData.simplifiedFeedback : questionData.feedback;
+                quizFeedback.classList.add('success');
+            } else {
+                feedbackText = appState.isSimplifiedLanguage ? questionData.simplifiedIncorrectFeedback : questionData.incorrectFeedback;
+                quizFeedback.classList.add('error');
+            }
+            quizFeedback.textContent = feedbackText;
+            quizFeedback.setAttribute('data-tts-text', feedbackText); // Update TTS text
+
+            // Show next question button or end quiz button
+            if (appState.quiz.currentQuestionIndex < appState.quiz.questions.length - 1) {
+                nextQuestionButton.style.display = 'block';
+                 nextQuestionButton.focus(); // Focus next button
+            } else {
+                restartQuizButton.style.display = 'block';
+                 restartQuizButton.focus(); // Focus restart button
+            }
+
+             // Announce feedback for screen readers
+             quizFeedback.setAttribute('aria-live', 'assertive');
+             // Optionally speak the feedback if TTS is active
+             if (appState.isTTSActive) {
+                 speak(feedbackText);
+             }
+        }
+
+        function nextQuestion() {
+             quizFeedback.setAttribute('aria-live', 'polite'); // Reset live region
+            appState.quiz.currentQuestionIndex++;
+            displayQuestion(appState.quiz.currentQuestionIndex);
+        }
+
+        function endQuiz() {
+            const finalMessage = `Quiz finished! You got ${appState.quiz.score} out of ${appState.quiz.questions.length} correct.`;
+            quizFeedback.textContent = finalMessage;
+            quizFeedback.className = 'feedback-message success'; // Final score is a success message
+            quizFeedback.setAttribute('data-tts-text', finalMessage); // Update TTS text
+            quizFeedback.setAttribute('aria-live', 'assertive'); // Announce final score
+
+            questionText.textContent = ''; // Clear question
+            questionText.setAttribute('data-tts-text', '');
+            answerOptionsDiv.innerHTML = ''; // Clear answers
+            nextQuestionButton.style.display = 'none';
+            restartQuizButton.style.display = 'block';
+            appState.quiz.quizActive = false; // Quiz is no longer active
+            currentQuestionSpan.textContent = appState.quiz.questions.length; // Show total questions
+            document.getElementById('quiz-progress').setAttribute('aria-valuenow', appState.quiz.questions.length);
+
+             // Optionally speak the final score if TTS is active
+             if (appState.isTTSActive) {
+                 speak(finalMessage);
+             }
+              restartQuizButton.focus(); // Focus restart button
+        }
+
+
+        // --- Event Listeners ---
+        navButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const moduleId = button.dataset.module;
+                renderModule(moduleId);
+                updateNavigation(moduleId);
+            });
+        });
+
+        ttsToggle.addEventListener('click', toggleTTS);
+        languageToggle.addEventListener('click', toggleLanguage);
+
+        // Food Web Drag and Drop (Palette)
+        organismPalette.addEventListener('mousedown', startDragPalette);
+        organismPalette.addEventListener('touchstart', startDragPalette, { passive: false });
+
+        // Food Web Click for Connections (Canvas)
+        // Event listeners for dropped organisms are added when they are created
+
+        // Habitat Hotspots
+        habitatHotspots.forEach(hotspot => {
+            hotspot.addEventListener('click', (event) => {
+                const elementId = event.target.dataset.habitatElement;
+                showHabitatPopup(elementId);
+            });
+             hotspot.addEventListener('keydown', (event) => {
+                 if (event.key === 'Enter' || event.key === ' ') {
+                     event.preventDefault();
+                     const elementId = event.target.dataset.habitatElement;
+                     showHabitatPopup(elementId);
+                 }
+             });
+        });
+
+        closePopupButton.addEventListener('click', hideHabitatPopup);
+        habitatPopup.addEventListener('click', (event) => {
+             // Close popup if clicking outside the content
+             if (event.target === habitatPopup) {
+                 hideHabitatPopup();
+             }
+        });
+         // Close popup with Escape key
+         document.addEventListener('keydown', (event) => {
+             if (event.key === 'Escape' && habitatPopup.classList.contains('visible')) {
+                 hideHabitatPopup();
+             }
+         });
+
+
+        // Glossary List
+        glossaryTermsList.addEventListener('click', (event) => {
+            const listItem = event.target.closest('li');
+            if (listItem && listItem.dataset.term) {
+                displayGlossaryTerm(listItem.dataset.term);
+            }
+        });
+         // Allow focusing and activating glossary terms with keyboard (Enter/Space)
+         glossaryTermsList.addEventListener('keydown', (event) => {
+             if ((event.key === 'Enter' || event.key === ' ') && event.target.tagName === 'LI' && event.target.dataset.term) {
+                 event.preventDefault(); // Prevent default space scroll
+                 displayGlossaryTerm(event.target.dataset.term);
+             }
+         });
+
+
+        // Audio Buttons (for Habitat Popup and Glossary Detail)
+        // Use event delegation on the main content area or body
+        document.body.addEventListener('click', handleAudioButtonClick);
+
+
+        // Quiz Buttons
+        nextQuestionButton.addEventListener('click', nextQuestion);
+        restartQuizButton.addEventListener('click', startQuiz);
+
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderModule(appState.currentModule); // Load the initial module
+            updateNavigation(appState.currentModule);
+             // Initialize glossary list (hidden until module is active, but data is ready)
+             renderGlossaryList();
+             // Initialize quiz total questions count
+             totalQuestionsSpan.textContent = appData.quizQuestions.length;
+             document.getElementById('quiz-progress').setAttribute('aria-valuemax', appData.quizQuestions.length);
+             // Check TTS support
+             if (!synth) {
+                 ttsToggle.style.display = 'none'; // Hide TTS button if not supported
+             }
+
+             // Ensure initial language state is applied
+             updateLanguage();
+        });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,2669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urban Green Space & Health Platform</title>
+    <!-- Google Fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+    <!-- Material Symbols Rounded -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet/dist/leaflet.css" />
+    <style>
+        /* CSS Variables */
+        :root {
+            --color-primary: #2e7d32; /* Green */
+            --color-primary-dark: #1b5e20; /* Darker Green */
+            --color-secondary: #1976d2; /* Blue */
+            --color-secondary-dark: #1565c0; /* Darker Blue */
+            --color-accent: #fbc02d; /* Yellow */
+            --color-text-dark: #212121;
+            --color-text-light: #ffffff;
+            --color-background: #f5f5f5;
+            --color-surface: #ffffff;
+            --color-border: #e0e0e0;
+            --color-success: #388e3c;
+            --color-error: #d32f2f;
+            --spacing-unit: 8px;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+            --transition-speed: 0.3s ease;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--color-background);
+            color: var(--color-text-dark);
+            line-height: 1.6;
+            display: grid;
+            grid-template-rows: auto 1fr;
+            min-height: 100vh;
+            overflow: hidden; /* Prevent body scroll */
+        }
+
+        .header {
+            background-color: var(--color-primary);
+            color: var(--color-text-light);
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--box-shadow);
+            z-index: 100;
+        }
+
+        .header__title {
+            margin: 0;
+            font-size: 1.8em;
+            font-weight: 500;
+        }
+
+        .nav__list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            gap: calc(var(--spacing-unit) * 3);
+        }
+
+        .nav__item a {
+            color: var(--color-text-light);
+            text-decoration: none;
+            font-weight: 400;
+            padding: var(--spacing-unit) 0;
+            transition: border-bottom var(--transition-speed);
+            border-bottom: 2px solid transparent;
+            outline-offset: 4px; /* For focus state */
+        }
+
+        .nav__item a:hover,
+        .nav__item a.is-active {
+            border-bottom-color: var(--color-accent);
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 300px 1fr; /* Sidebar and main content */
+            gap: calc(var(--spacing-unit) * 3);
+            padding: calc(var(--spacing-unit) * 3);
+            overflow: hidden; /* Contain grid items */
+        }
+
+        .sidebar,
+        .main-content {
+            background-color: var(--color-surface);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: calc(var(--spacing-unit) * 2);
+            overflow-y: auto; /* Enable scrolling within panels */
+            height: calc(100vh - 60px - calc(var(--spacing-unit) * 6)); /* Adjust height based on header and padding */
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: calc(var(--spacing-unit) * 3);
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section-title {
+            font-size: 1.4em;
+            font-weight: 500;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            color: var(--color-primary);
+            border-bottom: 1px solid var(--color-border);
+            padding-bottom: var(--spacing-unit);
+        }
+
+        /* Data Upload Area */
+        .upload-area {
+            border: 2px dashed var(--color-border);
+            border-radius: var(--border-radius);
+            padding: calc(var(--spacing-unit) * 4);
+            text-align: center;
+            cursor: pointer;
+            transition: background-color var(--transition-speed), border-color var(--transition-speed);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--spacing-unit);
+        }
+
+        .upload-area:hover {
+            background-color: #e8f5e9; /* Light green */
+            border-color: var(--color-primary);
+        }
+
+         .upload-area .material-symbols-rounded {
+             font-size: 3em;
+             color: var(--color-secondary);
+         }
+
+        .upload-area input[type="file"] {
+            display: none;
+        }
+
+        .upload-area p {
+            margin: 0;
+            color: #555;
+        }
+
+        .upload-area small {
+             color: #777;
+        }
+
+
+        .progress-bar-container {
+            width: 100%;
+            background-color: var(--color-background);
+            border-radius: var(--border-radius);
+            margin-top: var(--spacing-unit);
+            overflow: hidden;
+            height: 10px;
+            display: none; /* Hidden by default */
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: var(--color-secondary);
+            transition: width 0.1s ease-in-out;
+        }
+
+        /* Buttons */
+        .button {
+            display: inline-flex; /* Use flex for icon alignment */
+            align-items: center;
+            justify-content: center;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            background-color: var(--color-secondary);
+            color: var(--color-text-light);
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color var(--transition-speed), box-shadow var(--transition-speed);
+            text-decoration: none;
+            text-align: center;
+            min-width: 80px; /* Minimum width for buttons */
+            outline-offset: 4px; /* For focus state */
+        }
+
+        .button .material-symbols-rounded {
+             margin-right: var(--spacing-unit);
+             font-size: 1.2em;
+        }
+
+        .button:hover {
+            background-color: var(--color-secondary-dark);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .button:disabled {
+             background-color: #ccc;
+             cursor: not-allowed;
+             box-shadow: none;
+        }
+
+        .button--primary {
+            background-color: var(--color-primary);
+        }
+
+        .button--primary:hover {
+            background-color: var(--color-primary-dark);
+        }
+         .button--primary:disabled {
+             background-color: #ccc;
+         }
+
+
+        .button--outline {
+            background-color: transparent;
+            color: var(--color-secondary);
+            border: 1px solid var(--color-secondary);
+        }
+
+        .button--outline:hover {
+            background-color: #e3f2fd; /* Light blue */
+        }
+
+        .button--outline:disabled {
+             color: #999;
+             border-color: #999;
+             background-color: transparent;
+        }
+
+
+        /* Data Table */
+        .data-table-container {
+            margin-top: calc(var(--spacing-unit) * 3);
+            overflow-x: auto;
+            flex-grow: 1; /* Allow table container to grow */
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+            border-bottom: 1px solid var(--color-border);
+            text-align: left;
+        }
+
+        .data-table th {
+            background-color: #f0f0f0;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color var(--transition-speed);
+            position: sticky; /* Sticky header */
+            top: 0;
+            z-index: 1;
+        }
+
+        .data-table th:hover {
+            background-color: #e0e0e0;
+        }
+
+        .data-table th .sort-icon {
+            margin-left: var(--spacing-unit);
+            font-size: 0.8em;
+            vertical-align: middle;
+        }
+
+         .data-table th .data-type-icon {
+             margin-left: var(--spacing-unit);
+             font-size: 0.9em;
+             vertical-align: middle;
+             color: #777;
+         }
+
+
+        .data-table tbody tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: calc(var(--spacing-unit) * 2);
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: var(--spacing-unit);
+            font-weight: 500;
+            color: var(--color-text-dark);
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: var(--spacing-unit);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+            box-sizing: border-box; /* Include padding and border in element's total width and height */
+            outline-offset: 2px; /* For focus state */
+        }
+
+        .form-group input[type="text"]:focus,
+        .form-group input[type="number"]:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: var(--color-secondary);
+            box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+            outline: none;
+        }
+
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .checkbox-group,
+        .radio-group {
+            margin-top: var(--spacing-unit);
+        }
+
+        .checkbox-group label,
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            margin-bottom: var(--spacing-unit);
+            font-weight: 400;
+            cursor: pointer;
+        }
+
+        .checkbox-group input[type="checkbox"],
+        .radio-group input[type="radio"] {
+            margin-right: var(--spacing-unit);
+            cursor: pointer;
+        }
+
+         select[multiple] {
+             height: auto;
+             min-height: 120px; /* Ensure multiple select is visible */
+         }
+
+
+        /* Analysis Results Panel */
+        .results-panel {
+            margin-top: calc(var(--spacing-unit) * 3);
+             flex-grow: 1; /* Allow results panel to grow */
+        }
+
+        .results-panel details {
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            margin-bottom: var(--spacing-unit);
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); /* Lighter shadow for details */
+        }
+
+        .results-panel summary {
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+            background-color: #f0f0f0;
+            font-weight: 500;
+            cursor: pointer;
+            outline-offset: 4px; /* For focus state */
+            transition: background-color var(--transition-speed);
+            display: flex;
+            align-items: center;
+             position: relative; /* For caret positioning */
+        }
+
+         .results-panel summary::marker {
+             content: ''; /* Hide default marker */
+         }
+
+         .results-panel summary::before {
+             content: '►'; /* Custom caret */
+             display: inline-block;
+             margin-right: var(--spacing-unit);
+             transition: transform var(--transition-speed);
+         }
+
+         .results-panel details[open] summary::before {
+             transform: rotate(90deg);
+         }
+
+
+        .results-panel summary:hover {
+            background-color: #e0e0e0;
+        }
+
+        .results-panel .results-content {
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+            background-color: var(--color-surface);
+        }
+
+        .results-panel pre {
+            background-color: var(--color-background);
+            padding: var(--spacing-unit);
+            border-radius: var(--border-radius);
+            overflow-x: auto;
+            white-space: pre-wrap; /* Wrap long lines */
+            word-wrap: break-word;
+        }
+
+        /* Visualization Area */
+        .visualization-area {
+            margin-top: calc(var(--spacing-unit) * 3);
+            flex-grow: 1; /* Allow visualization area to grow */
+        }
+
+        #visualization-dashboard {
+             display: grid;
+             grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); /* Flexible grid */
+             gap: calc(var(--spacing-unit) * 3);
+             height: 100%; /* Take full height of parent */
+             overflow-y: auto; /* Allow scrolling if many visualizations */
+             padding-bottom: calc(var(--spacing-unit) * 3); /* Add padding at the bottom */
+        }
+
+        .chart-container,
+        .map-container {
+            position: relative;
+            min-height: 300px; /* Minimum height */
+            background-color: var(--color-surface);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: calc(var(--spacing-unit) * 2);
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Center content vertically */
+            align-items: center; /* Center content horizontally */
+        }
+
+        .chart-container canvas,
+        .map-container #map {
+            width: 100% !important;
+            height: 100% !important;
+            flex-grow: 1; /* Allow viz area to grow */
+        }
+
+        .floating-controls {
+            position: absolute;
+            top: var(--spacing-unit) * 2;
+            right: var(--spacing-unit) * 2;
+            background: rgba(255, 255, 255, 0.95);
+            padding: var(--spacing-unit) * 1.5;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all var(--transition-speed);
+            pointer-events: none;
+            z-index: 10;
+            min-width: 200px;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-unit) * 1.5;
+             /* Ensure it doesn't block clicks when hidden */
+        }
+
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all; /* Enable clicks when active */
+        }
+
+        .floating-controls .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-unit);
+        }
+
+        .floating-controls label {
+            font-size: 0.9em;
+            font-weight: 500;
+            color: var(--color-text-dark);
+            margin-bottom: 0; /* Override form-group label margin */
+        }
+
+        .floating-controls input[type="color"],
+        .floating-controls select,
+        .floating-controls input[type="number"] {
+             padding: var(--spacing-unit);
+             border: 1px solid var(--color-border);
+             border-radius: var(--border-radius);
+             font-size: 0.9em;
+             box-sizing: border-box;
+             width: 100%; /* Make controls fill container */
+        }
+
+        .floating-controls input[type="color"] {
+            height: calc(var(--spacing-unit) * 2 + 2px + 0.9em * 1.6); /* Approximate height match */
+            padding: var(--spacing-unit) / 2;
+        }
+
+
+        /* Filter Panel */
+        .filter-panel {
+            margin-top: calc(var(--spacing-unit) * 3);
+        }
+
+        .filter-panel .filter-group {
+            margin-bottom: calc(var(--spacing-unit) * 2);
+        }
+
+        .filter-panel .filter-group label {
+            display: block;
+            margin-bottom: var(--spacing-unit);
+            font-weight: 500;
+        }
+
+        .filter-panel .filter-group input[type="range"] {
+            width: 100%;
+        }
+
+        /* Progress Indicators */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--color-secondary);
+            animation: spin 1s ease-in-out infinite;
+            margin-left: var(--spacing-unit);
+            vertical-align: middle;
+            display: none; /* Hidden by default */
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); /* Darker overlay */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity var(--transition-speed), visibility var(--transition-speed);
+        }
+
+        .modal.is-visible {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background-color: var(--color-surface);
+            padding: calc(var(--spacing-unit) * 3);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            max-width: 600px;
+            width: 90%;
+            transform: translateY(-20px);
+            transition: transform var(--transition-speed);
+            position: relative; /* Needed for focus trapping */
+        }
+
+        .modal.is-visible .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--color-border);
+            padding-bottom: var(--spacing-unit) * 2;
+            margin-bottom: var(--spacing-unit) * 2;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.2em;
+            color: var(--color-primary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #888;
+            transition: color var(--transition-speed);
+            padding: var(--spacing-unit); /* Increase click target */
+            margin: -var(--spacing-unit); /* Offset padding */
+             outline-offset: 4px; /* For focus state */
+        }
+
+        .modal-close:hover {
+            color: #555;
+        }
+
+        .modal-body {
+             max-height: 70vh; /* Limit modal body height */
+             overflow-y: auto; /* Add scroll if content is tall */
+        }
+
+
+        /* Utility Classes */
+        .hidden {
+            display: none !important;
+        }
+
+        .mb-3 {
+            margin-bottom: calc(var(--spacing-unit) * 3);
+        }
+
+        .mt-3 {
+            margin-top: calc(var(--spacing-unit) * 3);
+        }
+         .flex-grow-1 {
+             flex-grow: 1;
+         }
+
+        /* Accessibility */
+        [tabindex="0"]:focus,
+        button:focus,
+        a:focus,
+        input:focus,
+        select:focus,
+        textarea:focus,
+        summary:focus {
+            outline: 2px solid var(--color-secondary);
+            outline-offset: 2px;
+        }
+
+         /* Ensure sufficient contrast for text and interactive elements */
+         body { color: var(--color-text-dark); }
+         .header { color: var(--color-text-light); }
+         .nav__item a { color: var(--color-text-light); }
+         .button { color: var(--color-text-light); }
+         .button--outline { color: var(--color-secondary); }
+         .button--outline:hover { color: var(--color-secondary-dark); }
+         .modal-header h3 { color: var(--color-primary); }
+         .modal-close { color: #888; } /* Adjust if needed */
+         .data-table th { background-color: #f0f0f0; } /* Ensure sufficient contrast with text */
+         .data-table tbody tr:nth-child(even) { background-color: #fafafa; }
+
+
+        /* Responsive Adjustments */
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr; /* Stack sidebar and main content */
+                gap: calc(var(--spacing-unit) * 2);
+                padding: calc(var(--spacing-unit) * 2);
+            }
+
+            .sidebar {
+                width: 100%;
+                order: 2; /* Place sidebar below main content or make it collapsible */
+                height: auto; /* Allow sidebar to take natural height */
+                max-height: 40vh; /* Limit height on smaller screens */
+            }
+
+            .main-content {
+                 order: 1;
+                 height: calc(100vh - 60px - calc(var(--spacing-unit) * 4) - 40vh - calc(var(--spacing-unit) * 2)); /* Adjust height */
+            }
+
+            .header {
+                flex-direction: column;
+                gap: var(--spacing-unit);
+            }
+
+            .nav__list {
+                gap: calc(var(--spacing-unit) * 2);
+            }
+
+             #visualization-dashboard {
+                 grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Adjust grid */
+             }
+        }
+
+         @media (max-width: 768px) {
+             .header {
+                 padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+             }
+             .nav__list {
+                 flex-direction: column;
+                 align-items: center;
+                 gap: var(--spacing-unit);
+             }
+             .container {
+                 padding: var(--spacing-unit);
+             }
+             .sidebar, .main-content {
+                 padding: var(--spacing-unit) * 1.5;
+             }
+             .section-title {
+                 font-size: 1.2em;
+             }
+             .upload-area {
+                 padding: calc(var(--spacing-unit) * 2);
+             }
+             .data-table th, .data-table td {
+                 padding: var(--spacing-unit);
+             }
+             .chart-container, .map-container {
+                 min-height: 250px; /* Further reduce minimum height */
+                 padding: var(--spacing-unit);
+             }
+             .floating-controls {
+                 min-width: unset;
+                 width: 180px;
+                 padding: var(--spacing-unit);
+                 top: var(--spacing-unit);
+                 right: var(--spacing-unit);
+             }
+             .modal-content {
+                 padding: calc(var(--spacing-unit) * 2);
+             }
+              .button {
+                 padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+                 font-size: 0.9em;
+             }
+         }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1 class="header__title">Urban Green Space & Health Platform</h1>
+        <nav class="nav">
+            <ul class="nav__list" role="tablist">
+                <li class="nav__item" role="presentation"><a href="#" class="nav__link is-active" data-section="data" role="tab" aria-selected="true" aria-controls="data-content" id="tab-data">Data</a></li>
+                <li class="nav__item" role="presentation"><a href="#" class="nav__link" data-section="analysis" role="tab" aria-selected="false" aria-controls="analysis-content" id="tab-analysis" tabindex="-1">Analysis</a></li>
+                <li class="nav__item" role="presentation"><a href="#" class="nav__link" data-section="visualization" role="tab" aria-selected="false" aria-controls="visualization-content" id="tab-visualization" tabindex="-1">Visualization</a></li>
+                <li class="nav__item" role="presentation"><a href="#" class="nav__link" data-section="reports" role="tab" aria-selected="false" aria-controls="reports-content" id="tab-reports" tabindex="-1">Reports</a></li>
+                 <li class="nav__item" role="presentation"><a href="#" class="nav__link" data-section="project" role="tab" aria-selected="false" aria-controls="project-content" id="tab-project" tabindex="-1">Project</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container">
+        <aside class="sidebar">
+            <section class="sidebar__section" id="data-sidebar" role="tabpanel" aria-labelledby="tab-data">
+                <h2 class="section-title">Data Management</h2>
+                <div class="upload-area" id="upload-area" role="button" aria-label="Drag and drop files or click to upload">
+                     <span class="material-symbols-rounded">upload_file</span>
+                    <input type="file" id="file-input" multiple accept=".csv, .json, .xlsx">
+                    <p>Drag & Drop Files Here</p>
+                    <p>or</p>
+                    <button class="button button--primary">Browse Files</button>
+                    <p><small>Accepted: .csv, .json, .xlsx</small></p>
+                </div>
+                <div class="progress-bar-container" id="upload-progress-container" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-bar" id="upload-progress"></div>
+                </div>
+                <div class="mt-3">
+                    <h3 class="section-title">Loaded Datasets</h3>
+                    <ul id="dataset-list" aria-label="Loaded datasets">
+                        <!-- Loaded datasets will be listed here -->
+                        <li>No datasets loaded yet.</li>
+                    </ul>
+                </div>
+                 <div class="mt-3">
+                    <h3 class="section-title">Data Cleaning & Transformation</h3>
+                    <p>Tools for handling missing values, outliers, and variable transformations.</p>
+                     <button class="button button--outline" disabled>Open Cleaning Tools</button>
+                </div>
+            </section>
+
+            <section class="sidebar__section hidden" id="analysis-sidebar" role="tabpanel" aria-labelledby="tab-analysis" aria-hidden="true">
+                 <h2 class="section-title">Analysis Configuration</h2>
+                 <div class="form-group">
+                     <label for="select-dataset-analysis">Select Dataset</label>
+                     <select id="select-dataset-analysis" aria-label="Select dataset for analysis">
+                         <option value="">-- Select Dataset --</option>
+                         <!-- Options populated by JS -->
+                     </select>
+                 </div>
+                 <div class="form-group">
+                     <label for="select-model">Statistical Model</label>
+                     <select id="select-model" aria-label="Select statistical model">
+                         <option value="">-- Select Model --</option>
+                         <option value="regression">Regression Analysis</option>
+                         <option value="anova">ANOVA</option>
+                         <option value="correlation">Correlation Matrix</option>
+                         <!-- Add more models -->
+                     </select>
+                 </div>
+                 <div class="form-group">
+                     <label for="select-dependent-var">Dependent Variable</label>
+                     <select id="select-dependent-var" aria-label="Select dependent variable">
+                          <option value="">-- Select Variable --</option>
+                          <!-- Options populated by JS -->
+                     </select>
+                 </div>
+                  <div class="form-group">
+                     <label for="select-independent-vars">Independent Variables</label>
+                     <select id="select-independent-vars" multiple size="5" aria-label="Select independent variables">
+                          <!-- Options populated by JS -->
+                     </select>
+                 </div>
+                 <div class="form-group">
+                     <label for="select-confounders">Confounders (Optional)</label>
+                     <select id="select-confounders" multiple size="5" aria-label="Select confounding variables">
+                          <!-- Options populated by JS -->
+                     </select>
+                 </div>
+                 <button class="button button--primary" id="run-analysis-button">
+                     <span class="material-symbols-rounded">play_arrow</span> Run Analysis <span class="loading-spinner" id="analysis-spinner"></span>
+                 </button>
+            </section>
+
+            <section class="sidebar__section hidden" id="visualization-sidebar" role="tabpanel" aria-labelledby="tab-visualization" aria-hidden="true">
+                <h2 class="section-title">Visualization Controls</h2>
+                 <div class="form-group">
+                     <label for="select-dataset-viz">Select Dataset</label>
+                     <select id="select-dataset-viz" aria-label="Select dataset for visualization">
+                         <option value="">-- Select Dataset --</option>
+                         <!-- Options populated by JS -->
+                     </select>
+                 </div>
+                 <div class="form-group">
+                     <label for="select-viz-type">Visualization Type</label>
+                     <select id="select-viz-type" aria-label="Select visualization type">
+                         <option value="">-- Select Type --</option>
+                         <option value="scatter">Scatter Plot</option>
+                         <option value="bar">Bar Chart</option>
+                         <option value="line">Line Chart</option>
+                         <option value="map">Geographic Map</option>
+                         <!-- Add more types -->
+                     </select>
+                 </div>
+                 <div id="viz-specific-controls">
+                     <p>Select a dataset and visualization type.</p>
+                 </div>
+                 <button class="button button--primary" id="generate-viz-button" disabled>
+                      <span class="material-symbols-rounded">add_chart</span> Generate Visualization
+                 </button>
+            </section>
+
+             <section class="sidebar__section hidden" id="reports-sidebar" role="tabpanel" aria-labelledby="tab-reports" aria-hidden="true">
+                <h2 class="section-title">Report Generation</h2>
+                 <div class="form-group">
+                     <label for="select-analysis-report">Select Analysis Result</label>
+                     <select id="select-analysis-report" aria-label="Select analysis result for report">
+                         <option value="">-- Select Result --</option>
+                         <!-- Options populated by JS -->
+                     </select>
+                 </div>
+                  <div class="form-group">
+                     <label for="select-viz-report">Select Visualization</label>
+                     <select id="select-viz-report" aria-label="Select visualization for report">
+                         <option value="">-- Select Visualization --</option>
+                         <!-- Options populated by JS -->
+                     </select>
+                 </div>
+                 <div class="form-group">
+                     <label for="report-title">Report Title</label>
+                     <input type="text" id="report-title" placeholder="Enter report title">
+                 </div>
+                 <div class="form-group">
+                     <label for="report-format">Export Format</label>
+                     <select id="report-format" aria-label="Select report export format">
+                         <option value="pdf">PDF</option>
+                         <option value="docx">DOCX</option>
+                         <option value="html">HTML</option>
+                     </select>
+                 </div>
+                 <button class="button button--primary" id="generate-report-button">
+                     <span class="material-symbols-rounded">description</span> Generate Report
+                 </button>
+            </section>
+
+             <section class="sidebar__section hidden" id="project-sidebar" role="tabpanel" aria-labelledby="tab-project" aria-hidden="true">
+                <h2 class="section-title">Project Management</h2>
+                 <p>Organize your datasets, analyses, and reports within projects.</p>
+                 <div class="mt-3">
+                     <h3 class="section-title">Current Project</h3>
+                     <p><strong>Project Name:</strong> Green Space Health Impact Study</p>
+                     <p><strong>Created:</strong> 2023-01-15</p>
+                 </div>
+                 <div class="mt-3">
+                     <h3 class="section-title">Project Files</h3>
+                     <ul>
+                         <li>Dataset: Sample_Health_Data</li>
+                         <li>Dataset: Sample_Environmental_Data</li>
+                         <li>Analysis: analysis-1 (Regression)</li>
+                         <li>Visualization: viz-1 (Scatter Plot)</li>
+                     </ul>
+                 </div>
+                 <button class="button button--outline" disabled>Manage Projects</button>
+            </section>
+        </aside>
+
+        <main class="main-content">
+            <section id="data-content" role="tabpanel" aria-labelledby="tab-data">
+                <h2 class="section-title">Data Preview</h2>
+                 <div class="form-group">
+                     <label for="select-dataset-preview">Select Dataset</label>
+                     <select id="select-dataset-preview" aria-label="Select dataset to preview">
+                         <option value="">-- Select Dataset --</option>
+                         <!-- Options populated by JS -->
+                     </select>
+                 </div>
+                <div class="data-table-container flex-grow-1" id="data-preview-table-container">
+                    <p>Select a dataset to preview.</p>
+                    <!-- Data table will be rendered here -->
+                </div>
+            </section>
+
+            <section id="analysis-content" class="hidden" role="tabpanel" aria-labelledby="tab-analysis" aria-hidden="true">
+                <h2 class="section-title">Analysis Results</h2>
+                <div class="results-panel flex-grow-1" id="analysis-results-panel">
+                    <p>Run an analysis from the sidebar to see results.</p>
+                    <!-- Analysis results will be rendered here -->
+                </div>
+            </section>
+
+            <section id="visualization-content" class="hidden" role="tabpanel" aria-labelledby="tab-visualization" aria-hidden="true">
+                <h2 class="section-title">Visualization Dashboard</h2>
+                 <div id="visualization-dashboard">
+                     <p>Generate a visualization from the sidebar.</p>
+                     <!-- Visualizations will be rendered here -->
+                 </div>
+            </section>
+
+            <section id="reports-content" class="hidden" role="tabpanel" aria-labelledby="tab-reports" aria-hidden="true">
+                <h2 class="section-title">Generated Reports</h2>
+                 <div id="generated-reports-list">
+                     <p>Generate a report from the sidebar.</p>
+                     <!-- List of generated reports will be here -->
+                 </div>
+            </section>
+
+             <section id="project-content" class="hidden" role="tabpanel" aria-labelledby="tab-project" aria-hidden="true">
+                <h2 class="section-title">Project Details</h2>
+                 <p>Detailed view of the current project, including linked datasets, analyses, and reports.</p>
+                 <div class="mt-3">
+                     <h3 class="section-title">Project: Green Space Health Impact Study</h3>
+                     <p><strong>Description:</strong> Examining the relationship between urban green space interventions and community health outcomes.</p>
+                 </div>
+                 <div class="mt-3">
+                     <h4>Linked Datasets</h4>
+                     <ul aria-label="Datasets linked to project">
+                         <li>Sample_Health_Data</li>
+                         <li>Sample_Environmental_Data</li>
+                     </ul>
+                 </div>
+                  <div class="mt-3">
+                     <h4>Analyses</h4>
+                     <ul aria-label="Analyses linked to project">
+                         <li>analysis-1 (Regression)</li>
+                     </ul>
+                 </div>
+                  <div class="mt-3">
+                     <h4>Visualizations</h4>
+                     <ul aria-label="Visualizations linked to project">
+                         <li>viz-1 (Scatter Plot)</li>
+                     </ul>
+                 </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal for details/errors -->
+    <div class="modal" id="app-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Modal Title</h3>
+                <button class="modal-close" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <p>Modal content goes here.</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+        import * as L from "https://esm.sh/leaflet";
+
+        // --- State Management ---
+        const appState = {
+            datasets: {}, // { datasetName: { data: [...], columns: [...], columnTypes: {} } }
+            analysisResults: {}, // { resultId: { config: {}, output: {} } }
+            visualizations: {}, // { vizId: { config: {}, chartInstance: null, mapInstance: null, element: HTMLElement } }
+            activeSection: 'data',
+            activeDatasetPreview: null,
+            activeVizControls: null, // ID of the currently active viz controls
+        };
+
+        // --- DOM Elements ---
+        const navLinks = document.querySelectorAll('.nav__link');
+        const sections = document.querySelectorAll('main section');
+        const sidebarSections = document.querySelectorAll('.sidebar__section');
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-input');
+        const uploadProgressContainer = document.getElementById('upload-progress-container');
+        const uploadProgressBar = document.getElementById('upload-progress');
+        const datasetList = document.getElementById('dataset-list');
+        const selectDatasetPreview = document.getElementById('select-dataset-preview');
+        const dataPreviewTableContainer = document.getElementById('data-preview-table-container');
+        const selectDatasetAnalysis = document.getElementById('select-dataset-analysis');
+        const selectModel = document.getElementById('select-model');
+        const selectDependentVar = document.getElementById('select-dependent-var');
+        const selectIndependentVars = document.getElementById('select-independent-vars');
+        const selectConfounders = document.getElementById('select-confounders');
+        const runAnalysisButton = document.getElementById('run-analysis-button');
+        const analysisSpinner = document.getElementById('analysis-spinner');
+        const analysisResultsPanel = document.getElementById('analysis-results-panel');
+        const selectDatasetViz = document.getElementById('select-dataset-viz');
+        const selectVizType = document.getElementById('select-viz-type');
+        const vizSpecificControls = document.getElementById('viz-specific-controls');
+        const generateVizButton = document.getElementById('generate-viz-button');
+        const visualizationDashboard = document.getElementById('visualization-dashboard');
+        const selectAnalysisReport = document.getElementById('select-analysis-report');
+        const selectVizReport = document.getElementById('select-viz-report');
+        const reportTitleInput = document.getElementById('report-title');
+        const reportFormatSelect = document.getElementById('report-format');
+        const generateReportButton = document.getElementById('generate-report-button');
+        const generatedReportsList = document.getElementById('generated-reports-list');
+        const appModal = document.getElementById('app-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalBody = document.getElementById('modal-body');
+        const modalCloseButton = appModal.querySelector('.modal-close');
+
+
+        // --- Helper Functions ---
+
+        function showModal(title, content) {
+            modalTitle.textContent = title;
+            modalBody.innerHTML = content;
+            appModal.classList.add('is-visible');
+            appModal.setAttribute('aria-hidden', 'false');
+             // Focus the modal for accessibility (basic)
+            modalContent.focus();
+        }
+
+        function hideModal() {
+            appModal.classList.remove('is-visible');
+            appModal.setAttribute('aria-hidden', 'true');
+             // Return focus to the element that triggered the modal (more complex, skip for now)
+        }
+
+        function updateDatasetSelects() {
+            const selects = [selectDatasetPreview, selectDatasetAnalysis, selectDatasetViz];
+            selects.forEach(select => {
+                const currentValue = select.value; // Preserve current selection if possible
+                select.innerHTML = '<option value="">-- Select Dataset --</option>';
+                const datasetNames = Object.keys(appState.datasets);
+                datasetNames.forEach(name => {
+                    const option = document.createElement('option');
+                    option.value = name;
+                    option.textContent = name;
+                    select.appendChild(option);
+                });
+                 // Restore selection
+                if (datasetNames.includes(currentValue)) {
+                     select.value = currentValue;
+                } else {
+                     select.value = ""; // Reset if current value is no longer valid
+                }
+            });
+        }
+
+        function updateVariableSelects(datasetName) {
+            const dataset = appState.datasets[datasetName];
+            const varSelects = [selectDependentVar, selectIndependentVars, selectConfounders];
+
+            varSelects.forEach(select => {
+                const currentValues = Array.from(select.selectedOptions || []).map(opt => opt.value);
+                select.innerHTML = !select.multiple ? '<option value="">-- Select Variable --</option>' : ''; // Keep placeholder for single selects, clear for multi
+
+                if (dataset) {
+                    dataset.columns.forEach(col => {
+                        const option = document.createElement('option');
+                        option.value = col;
+                        option.textContent = col; // Add type indicator later if needed
+                        select.appendChild(option);
+                    });
+                     // Restore selections
+                    Array.from(select.options).forEach(option => {
+                        if (currentValues.includes(option.value)) {
+                            option.selected = true;
+                        }
+                    });
+                }
+                 // Trigger change event to update UI if needed
+                 select.dispatchEvent(new Event('change'));
+            });
+        }
+
+        function updateAnalysisReportSelect() {
+             selectAnalysisReport.innerHTML = '<option value="">-- Select Result --</option>';
+             const analysisIds = Object.keys(appState.analysisResults);
+             analysisIds.forEach(id => {
+                 const result = appState.analysisResults[id];
+                 const option = document.createElement('option');
+                 option.value = id;
+                 option.textContent = `Analysis ${id} (${result.config.model})`;
+                 selectAnalysisReport.appendChild(option);
+             });
+        }
+
+         function updateVizReportSelect() {
+             selectVizReport.innerHTML = '<option value="">-- Select Visualization --</option>';
+             const vizIds = Object.keys(appState.visualizations);
+             vizIds.forEach(id => {
+                 const viz = appState.visualizations[id];
+                 const option = document.createElement('option');
+                 option.value = id;
+                 option.textContent = `Visualization ${id} (${viz.config.type})`;
+                 selectVizReport.appendChild(option);
+             });
+         }
+
+
+        // --- Section Navigation ---
+        function setActiveSection(sectionId) {
+            appState.activeSection = sectionId;
+
+            navLinks.forEach(link => {
+                const linkSectionId = link.getAttribute('data-section');
+                if (linkSectionId === sectionId) {
+                    link.classList.add('is-active');
+                    link.setAttribute('aria-selected', 'true');
+                    link.removeAttribute('tabindex');
+                } else {
+                    link.classList.remove('is-active');
+                    link.setAttribute('aria-selected', 'false');
+                    link.setAttribute('tabindex', '-1');
+                }
+            });
+
+            sections.forEach(section => {
+                const sectionElId = section.id.replace('-content', '');
+                if (sectionElId === sectionId) {
+                    section.classList.remove('hidden');
+                    section.setAttribute('aria-hidden', 'false');
+                } else {
+                    section.classList.add('hidden');
+                    section.setAttribute('aria-hidden', 'true');
+                }
+            });
+
+             sidebarSections.forEach(section => {
+                const sectionElId = section.id.replace('-sidebar', '');
+                if (sectionElId === sectionId) {
+                    section.classList.remove('hidden');
+                     section.setAttribute('aria-hidden', 'false');
+                } else {
+                    section.classList.add('hidden');
+                     section.setAttribute('aria-hidden', 'true');
+                }
+            });
+        }
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const sectionId = e.target.getAttribute('data-section');
+                setActiveSection(sectionId);
+            });
+        });
+
+         // Keyboard navigation for tabs
+        document.querySelector('.nav__list').addEventListener('keydown', (e) => {
+            const currentTab = document.activeElement.closest('.nav__item');
+            if (!currentTab) return;
+
+            const tabs = Array.from(document.querySelectorAll('.nav__item a'));
+            const currentIndex = tabs.indexOf(currentTab.querySelector('a'));
+            let nextIndex = -1;
+
+            if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+                e.preventDefault();
+                if (e.key === 'ArrowRight') {
+                    nextIndex = (currentIndex + 1) % tabs.length;
+                } else { // ArrowLeft
+                    nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+                }
+                tabs[nextIndex].focus();
+                tabs[nextIndex].click(); // Activate the section on focus
+            }
+        });
+
+
+        // Set initial active section
+        setActiveSection(appState.activeSection);
+
+
+        // --- Data Upload ---
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            handleFiles(files);
+        });
+        fileInput.addEventListener('change', (e) => {
+            const files = e.target.files;
+            handleFiles(files);
+        });
+
+        function handleFiles(files) {
+            if (files.length === 0) return;
+
+            // Simulate upload progress
+            uploadProgressContainer.style.display = 'block';
+            uploadProgressBar.style.width = '0%';
+            uploadProgressContainer.setAttribute('aria-valuenow', '0');
+
+
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 10;
+                if (progress > 100) progress = 100;
+                uploadProgressBar.style.width = `${progress}%`;
+                 uploadProgressContainer.setAttribute('aria-valuenow', progress);
+
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        uploadProgressContainer.style.display = 'none';
+                        uploadProgressContainer.setAttribute('aria-valuenow', '0');
+                        // Process files
+                        for (const file of files) {
+                             processFile(file);
+                        }
+                        fileInput.value = ''; // Clear file input
+                    }, 500);
+                }
+            }, 100);
+        }
+
+        function processFile(file) {
+             const reader = new FileReader();
+             reader.onload = (e) => {
+                 try {
+                     // Basic simulation: treat content as CSV/JSON/etc.
+                     // In a real app, this would involve parsing based on file.type or extension
+                     const content = e.target.result;
+                     const datasetName = file.name.replace(/\.[^/.]+$/, ""); // Remove extension
+
+                     // Simulate parsing and getting columns and types
+                     const dummyData = generateDummyData(datasetName); // Generate some dummy data
+                     appState.datasets[datasetName] = dummyData;
+
+                     // Update UI
+                     updateDatasetList();
+                     updateDatasetSelects();
+                     showModal('Upload Successful', `<p>File "${file.name}" processed as dataset "${datasetName}".</p>`);
+
+                 } catch (error) {
+                     showModal('Processing Error', `<p>Could not process file "${file.name}". Error: ${error.message}</p>`);
+                 }
+             };
+             reader.onerror = () => {
+                 showModal('File Read Error', `<p>Error reading file "${file.name}".</p>`);
+             };
+             // Use readAsArrayBuffer for more realistic simulation of binary files like XLSX
+             // For simplicity, sticking to readAsText for this simulation
+             reader.readAsText(file);
+        }
+
+        function generateDummyData(name) {
+             const numRows = 100; // Increased sample size
+             const columns = ['ID', 'Green_Space_Area_SqM', 'Health_Metric_A', 'Health_Metric_B', 'Population_Density', 'Median_Income', 'Intervention_Group', 'City', 'Date', 'Latitude', 'Longitude'];
+             const columnTypes = {
+                 'ID': 'number',
+                 'Green_Space_Area_SqM': 'number',
+                 'Health_Metric_A': 'number',
+                 'Health_Metric_B': 'number',
+                 'Population_Density': 'number',
+                 'Median_Income': 'number',
+                 'Intervention_Group': 'category',
+                 'City': 'category',
+                 'Date': 'date',
+                 'Latitude': 'number',
+                 'Longitude': 'number'
+             };
+             const data = [];
+
+             const cities = ['City A', 'City B', 'City C', 'City D'];
+             const interventionGroups = ['Control', 'Intervention'];
+             const baseLat = 34.0522; // Los Angeles
+             const baseLon = -118.2437;
+
+             for (let i = 0; i < numRows; i++) {
+                 const row = {};
+                 row['ID'] = i + 1;
+                 row['Green_Space_Area_SqM'] = parseFloat((Math.random() * 5000 + 100).toFixed(2));
+                 row['Health_Metric_A'] = parseFloat((Math.random() * 50 + 20).toFixed(2)); // e.g., Asthma prevalence %
+                 row['Health_Metric_B'] = parseFloat((Math.random() * 10 + 1).toFixed(2)); // e.g., Mental health score
+                 row['Population_Density'] = parseFloat((Math.random() * 10000 + 1000).toFixed(0));
+                 row['Median_Income'] = parseFloat((Math.random() * 60000 + 30000).toFixed(0));
+                 row['Intervention_Group'] = interventionGroups[Math.floor(Math.random() * interventionGroups.length)];
+                 row['City'] = cities[Math.floor(Math.random() * cities.length)];
+                 const day = String(Math.floor(Math.random() * 30) + 1).padStart(2, '0');
+                 row['Date'] = `2023-01-${day}`;
+                 row['Latitude'] = parseFloat((baseLat + (Math.random() - 0.5) * 0.5).toFixed(4));
+                 row['Longitude'] = parseFloat((baseLon + (Math.random() - 0.5) * 0.5).toFixed(4));
+                 data.push(row);
+             }
+
+             return { data, columns, columnTypes };
+        }
+
+
+        function updateDatasetList() {
+            datasetList.innerHTML = '';
+            const datasetNames = Object.keys(appState.datasets);
+            if (datasetNames.length === 0) {
+                datasetList.innerHTML = '<li>No datasets loaded yet.</li>';
+            } else {
+                datasetNames.forEach(name => {
+                    const li = document.createElement('li');
+                    li.textContent = name;
+                    datasetList.appendChild(li);
+                });
+            }
+        }
+
+        // --- Data Preview ---
+        selectDatasetPreview.addEventListener('change', (e) => {
+            const datasetName = e.target.value;
+            appState.activeDatasetPreview = datasetName;
+            renderDataTable(datasetName);
+        });
+
+        function renderDataTable(datasetName) {
+            dataPreviewTableContainer.innerHTML = ''; // Clear previous table
+            const dataset = appState.datasets[datasetName];
+
+            if (!dataset) {
+                dataPreviewTableContainer.innerHTML = '<p>Select a dataset to preview.</p>';
+                return;
+            }
+
+            const table = document.createElement('table');
+            table.classList.add('data-table');
+            table.setAttribute('aria-label', `Preview of dataset: ${datasetName}`);
+
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            dataset.columns.forEach(col => {
+                const th = document.createElement('th');
+                th.textContent = col;
+                th.setAttribute('data-column', col);
+                th.setAttribute('aria-sort', 'none'); // Initial state
+                 const typeIcon = getDataTypeIcon(dataset.columnTypes[col]);
+                th.innerHTML += ` <span class="data-type-icon" title="${dataset.columnTypes[col]}">${typeIcon}</span> <span class="sort-icon"></span>`; // Placeholder for sort icon
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            const tbody = document.createElement('tbody');
+            // Display only a sample (e.g., first 50 rows) for performance
+            const sampleSize = 100; // Increased sample size
+            const sampleData = dataset.data.slice(0, sampleSize);
+            sampleData.forEach(rowData => {
+                const tr = document.createElement('tr');
+                dataset.columns.forEach(col => {
+                    const td = document.createElement('td');
+                    td.textContent = rowData[col];
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+
+            dataPreviewTableContainer.appendChild(table);
+
+            // Add sorting functionality (basic client-side on sample)
+            thead.querySelectorAll('th').forEach(th => {
+                th.addEventListener('click', () => {
+                    const column = th.getAttribute('data-column');
+                    const currentSort = th.getAttribute('aria-sort');
+                    const newSort = currentSort === 'asc' ? 'desc' : (currentSort === 'desc' ? 'none' : 'asc');
+
+                    // Reset other headers
+                    thead.querySelectorAll('th').forEach(otherTh => {
+                         if (otherTh !== th) {
+                            otherTh.setAttribute('aria-sort', 'none');
+                            otherTh.querySelector('.sort-icon').textContent = '';
+                         }
+                    });
+
+                    th.setAttribute('aria-sort', newSort);
+                    th.querySelector('.sort-icon').textContent = newSort === 'asc' ? '▲' : (newSort === 'desc' ? '▼' : '');
+
+                    let sortedData = [...dataset.data]; // Sort the full data for consistency
+                    if (newSort !== 'none') {
+                        sortedData.sort((a, b) => {
+                            const valA = a[column];
+                            const valB = b[column];
+                             const type = dataset.columnTypes[column];
+
+                             if (type === 'number') {
+                                 return newSort === 'asc' ? (valA || 0) - (valB || 0) : (valB || 0) - (valA || 0);
+                             } else if (type === 'date') {
+                                  const dateA = new Date(valA);
+                                  const dateB = new Date(valB);
+                                  return newSort === 'asc' ? dateA - dateB : dateB - dateA;
+                             } else { // category or string
+                                 const stringA = String(valA || '').toLowerCase();
+                                 const stringB = String(valB || '').toLowerCase();
+                                 if (stringA < stringB) return newSort === 'asc' ? -1 : 1;
+                                 if (stringA > stringB) return newSort === 'asc' ? 1 : -1;
+                                 return 0;
+                             }
+                        });
+                    } else {
+                         // If sorting is none, revert to original order (requires storing original data or index)
+                         // For simplicity here, 'none' will just remove sorting icons and show the initial sample.
+                         sortedData = dataset.data; // Use original order
+                    }
+
+
+                    // Re-render tbody with sorted data sample
+                    tbody.innerHTML = '';
+                    sortedData.slice(0, sampleSize).forEach(rowData => {
+                         const tr = document.createElement('tr');
+                         dataset.columns.forEach(col => {
+                             const td = document.createElement('td');
+                             td.textContent = rowData[col];
+                             tr.appendChild(td);
+                         });
+                         tbody.appendChild(tr);
+                    });
+                });
+            });
+        }
+
+         function getDataTypeIcon(type) {
+             switch (type) {
+                 case 'number': return '🔢'; // Or a symbol like #
+                 case 'category': return '🅰️'; // Or a symbol like A
+                 case 'date': return '📅'; // Or a calendar symbol
+                 case 'boolean': return '✅'; // Or T/F
+                 default: return '❓'; // Unknown
+             }
+         }
+
+
+        // --- Analysis Configuration ---
+        selectDatasetAnalysis.addEventListener('change', (e) => {
+             const datasetName = e.target.value;
+             updateVariableSelects(datasetName);
+        });
+
+        runAnalysisButton.addEventListener('click', () => {
+             const datasetName = selectDatasetAnalysis.value;
+             const model = selectModel.value;
+             const dependentVar = selectDependentVar.value;
+             const independentVars = Array.from(selectIndependentVars.selectedOptions).map(opt => opt.value);
+             const confounders = Array.from(selectConfounders.selectedOptions).map(opt => opt.value);
+
+             if (!datasetName || !model || !dependentVar || independentVars.length === 0) {
+                 showModal('Validation Error', '<p>Please select a dataset, model, dependent variable, and at least one independent variable.</p>');
+                 return;
+             }
+
+             // Simulate running analysis
+             runAnalysisButton.disabled = true;
+             analysisSpinner.style.display = 'inline-block';
+             runAnalysisButton.classList.add('button--loading'); // Optional loading class for styling
+
+             setTimeout(() => {
+                 const analysisId = `analysis-${Object.keys(appState.analysisResults).length + 1}`;
+                 const result = simulateAnalysis(datasetName, model, dependentVar, independentVars, confounders);
+
+                 appState.analysisResults[analysisId] = {
+                     config: { datasetName, model, dependentVar, independentVars, confounders },
+                     output: result
+                 };
+
+                 renderAnalysisResult(analysisId, result);
+                 updateAnalysisReportSelect();
+
+                 runAnalysisButton.disabled = false;
+                 analysisSpinner.style.display = 'none';
+                 runAnalysisButton.classList.remove('button--loading');
+                 showModal('Analysis Complete', `<p>Analysis "${analysisId}" (${model}) finished successfully.</p>`);
+
+             }, 2000); // Simulate network latency/computation time
+        });
+
+        function simulateAnalysis(datasetName, model, dependentVar, independentVars, confounders) {
+             // This is a dummy function simulating backend analysis
+             console.log(`Simulating ${model} analysis on ${datasetName}`);
+             console.log(`Dependent: ${dependentVar}, Independent: ${independentVars}, Confounders: ${confounders}`);
+
+             // Generate dummy results based on model type
+             switch (model) {
+                 case 'regression':
+                     return {
+                         summary: `<h3>Regression Results for ${dependentVar}</h3><p>Dataset: ${datasetName}</p>`,
+                         coefficients: independentVars.map(v => ({
+                             variable: v,
+                             coefficient: parseFloat((Math.random() * 10 - 5).toFixed(3)),
+                             std_error: parseFloat((Math.random() * 2).toFixed(3)),
+                             t_value: parseFloat((Math.random() * 5).toFixed(3)),
+                             p_value: parseFloat(Math.random().toFixed(3))
+                         })),
+                         confounder_coefficients: confounders.map(v => ({
+                            variable: v,
+                            coefficient: parseFloat((Math.random() * 5 - 2).toFixed(3)),
+                             std_error: parseFloat((Math.random() * 1).toFixed(3)),
+                             t_value: parseFloat((Math.random() * 3).toFixed(3)),
+                            p_value: parseFloat(Math.random().toFixed(3))
+                         })),
+                         r_squared: parseFloat(Math.random().toFixed(3)),
+                         adj_r_squared: parseFloat((Math.random() * 0.8).toFixed(3)),
+                         notes: "<p><em>Note: These are simulated results. Statistical significance (p < 0.05) highlighted in bold.</em></p>"
+                     };
+                 case 'anova':
+                      return {
+                         summary: `<h3>ANOVA Results for ${dependentVar} by ${independentVars[0]}</h3><p>Dataset: ${datasetName}</p>`,
+                         table: [
+                             { source: independentVars[0], df: 2, sum_sq: 150.5, mean_sq: 75.25, F: 5.1, p_value: 0.008 },
+                             { source: 'Residuals', df: 97, sum_sq: 690.2, mean_sq: 7.11, F: null, p_value: null },
+                             { source: 'Total', df: 99, sum_sq: 840.7, mean_sq: null, F: null, p_value: null },
+                         ],
+                          notes: "<p><em>Note: These are simulated results. Statistical significance (p < 0.05) highlighted in bold.</em></p>"
+                      };
+                 case 'correlation':
+                      const allVars = [dependentVar, ...independentVars, ...confounders].filter((v, i, a) => a.indexOf(v) === i); // Unique variables
+                      const matrix = {};
+                      allVars.forEach(v1 => {
+                          matrix[v1] = {};
+                          allVars.forEach(v2 => {
+                              if (v1 === v2) {
+                                  matrix[v1][v2] = 1;
+                              } else if (matrix[v2] && matrix[v2][v1] !== undefined) {
+                                  matrix[v1][v2] = matrix[v2][v1]; // Ensure symmetry
+                              } else {
+                                  matrix[v1][v2] = parseFloat((Math.random() * 2 - 1).toFixed(3)); // Random correlation between -1 and 1
+                              }
+                          });
+                      });
+                      return {
+                          summary: `<h3>Correlation Matrix</h3><p>Dataset: ${datasetName}</p>`,
+                          matrix: matrix,
+                          notes: "<p><em>Note: These are simulated results.</em></p>"
+                      };
+                 default:
+                     return { summary: '<h3>Analysis Not Supported</h3><p>The selected model is not supported in this simulation.</p>' };
+             }
+        }
+
+        function renderAnalysisResult(id, result) {
+             const details = document.createElement('details');
+             details.setAttribute('open', ''); // Open by default
+             details.setAttribute('aria-expanded', 'true');
+             details.setAttribute('aria-controls', `result-content-${id}`);
+
+             const summary = document.createElement('summary');
+             summary.textContent = `Result ${id} (${result.config.model})`;
+             details.appendChild(summary);
+
+             const content = document.createElement('div');
+             content.classList.add('results-content');
+             content.id = `result-content-${id}`;
+             content.setAttribute('aria-hidden', 'false');
+
+             content.innerHTML = result.summary || '';
+
+             if (result.coefficients) {
+                 content.innerHTML += '<h4>Coefficients:</h4>';
+                 const table = document.createElement('table');
+                 table.classList.add('data-table');
+                 table.innerHTML = `
+                     <thead><tr><th>Variable</th><th>Coefficient</th><th>Std. Error</th><th>t-value</th><th>P-value</th></tr></thead>
+                     <tbody>
+                         ${result.coefficients.map(c => `<tr><td>${c.variable}</td><td>${c.coefficient}</td><td>${c.std_error}</td><td>${c.t_value}</td><td>${c.p_value < 0.05 ? `<strong>${c.p_value}</strong>` : c.p_value}</td></tr>`).join('')}
+                         ${result.confounder_coefficients.map(c => `<tr><td>${c.variable} (Confounder)</td><td>${c.coefficient}</td><td>${c.std_error}</td><td>${c.t_value}</td><td>${c.p_value < 0.05 ? `<strong>${c.p_value}</strong>` : c.p_value}</td></tr>`).join('')}
+                     </tbody>
+                 `;
+                 content.appendChild(table);
+                 content.innerHTML += `<p>R-squared: ${result.r_squared}, Adjusted R-squared: ${result.adj_r_squared}</p>`;
+             }
+
+             if (result.table) { // For ANOVA
+                 content.innerHTML += '<h4>ANOVA Table:</h4>';
+                 const table = document.createElement('table');
+                 table.classList.add('data-table');
+                 table.innerHTML = `
+                     <thead><tr><th>Source</th><th>Df</th><th>Sum Sq</th><th>Mean Sq</th><th>F Value</th><th>Pr(>F)</th></tr></thead>
+                     <tbody>
+                         ${result.table.map(row => `<tr><td>${row.source}</td><td>${row.df}</td><td>${row.sum_sq}</td><td>${row.mean_sq || ''}</td><td>${row.F || ''}</td><td>${row.p_value !== null ? (row.p_value < 0.05 ? `<strong>${row.p_value}</strong>` : row.p_value) : ''}</td></tr>`).join('')}
+                     </tbody>
+                 `;
+                 content.appendChild(table);
+             }
+
+              if (result.matrix) { // For Correlation
+                 content.innerHTML += '<h4>Correlation Matrix:</h4>';
+                 const table = document.createElement('table');
+                 table.classList.add('data-table');
+                 const vars = Object.keys(result.matrix);
+                 let matrixHtml = '<thead><tr><th></th>' + vars.map(v => `<th>${v}</th>`).join('') + '</tr></thead><tbody>';
+                 vars.forEach(v1 => {
+                     matrixHtml += `<tr><th>${v1}</th>`;
+                     vars.forEach(v2 => {
+                         matrixHtml += `<td>${result.matrix[v1][v2].toFixed(3)}</td>`;
+                     });
+                     matrixHtml += '</tr>';
+                 });
+                 matrixHtml += '</tbody>';
+                 table.innerHTML = matrixHtml;
+                 content.appendChild(table);
+             }
+
+
+             content.innerHTML += result.notes || '';
+
+             details.appendChild(content);
+             analysisResultsPanel.appendChild(details);
+
+             // Add ARIA for details/summary toggle
+             summary.addEventListener('click', () => {
+                 const isExpanded = details.getAttribute('aria-expanded') === 'true';
+                 // Toggle aria-expanded immediately, aria-hidden will be handled by CSS :not([open])
+                 details.setAttribute('aria-expanded', String(!isExpanded));
+             });
+              // Set initial aria-hidden state based on initial open state
+             content.setAttribute('aria-hidden', String(!details.open));
+             details.addEventListener('toggle', () => {
+                 content.setAttribute('aria-hidden', String(!details.open));
+             });
+        }
+
+        // --- Visualization ---
+        selectDatasetViz.addEventListener('change', (e) => {
+            const datasetName = e.target.value;
+            // Update viz-specific controls based on dataset variables if needed
+             // For now, just ensure dataset is selected
+             const vizType = selectVizType.value; // Keep current viz type selection
+             renderVizSpecificControls(vizType); // Re-render controls with new dataset
+        });
+
+        selectVizType.addEventListener('change', (e) => {
+            const vizType = e.target.value;
+            renderVizSpecificControls(vizType);
+        });
+
+        function renderVizSpecificControls(vizType) {
+            vizSpecificControls.innerHTML = '';
+            const datasetName = selectDatasetViz.value;
+            const dataset = appState.datasets[datasetName];
+
+            if (!dataset) {
+                 vizSpecificControls.innerHTML = '<p>Select a dataset first.</p>';
+                 generateVizButton.disabled = true;
+                 return;
+            }
+
+            let controlsHtml = '';
+            const variableOptions = dataset.columns.map(col => `<option value="${col}">${col}</option>`).join('');
+            const numericVariableOptions = dataset.columns
+                 .filter(col => dataset.columnTypes[col] === 'number')
+                 .map(col => `<option value="${col}">${col}</option>`).join('');
+            const categoricalVariableOptions = dataset.columns
+                 .filter(col => dataset.columnTypes[col] === 'category' || dataset.columnTypes[col] === 'boolean')
+                 .map(col => `<option value="${col}">${col}</option>`).join('');
+             const dateVariableOptions = dataset.columns
+                 .filter(col => dataset.columnTypes[col] === 'date')
+                 .map(col => `<option value="${col}">${col}</option>`).join('');
+
+
+            switch (vizType) {
+                case 'scatter':
+                    controlsHtml = `
+                        <div class="form-group">
+                            <label for="scatter-x-var">X-axis Variable (Numeric)</label>
+                            <select id="scatter-x-var" aria-label="Select X-axis variable">${numericVariableOptions}</select>
+                        </div>
+                        <div class="form-group">
+                            <label for="scatter-y-var">Y-axis Variable (Numeric)</label>
+                            <select id="scatter-y-var" aria-label="Select Y-axis variable">${numericVariableOptions}</select>
+                        </div>
+                         <div class="form-group">
+                            <label for="scatter-color-var">Color by (Categorical/Numeric, Optional)</label>
+                            <select id="scatter-color-var" aria-label="Color points by variable">
+                                <option value="">-- None --</option>
+                                ${categoricalVariableOptions}
+                                ${numericVariableOptions}
+                            </select>
+                        </div>
+                    `;
+                    generateVizButton.disabled = false;
+                    break;
+                case 'bar':
+                     controlsHtml = `
+                        <div class="form-group">
+                            <label for="bar-category-var">Category Variable</label>
+                            <select id="bar-category-var" aria-label="Select category variable">${categoricalVariableOptions}</select>
+                        </div>
+                        <div class="form-group">
+                            <label for="bar-value-var">Value Variable (Numeric, e.g., for average/count)</label>
+                            <select id="bar-value-var" aria-label="Select value variable">${numericVariableOptions}</select>
+                        </div>
+                         <p><small>Note: Bar chart will aggregate the value variable by category.</small></p>
+                    `;
+                    generateVizButton.disabled = false;
+                    break;
+                 case 'line':
+                      controlsHtml = `
+                        <div class="form-group">
+                            <label for="line-date-var">Date/Time Variable</label>
+                            <select id="line-date-var" aria-label="Select date/time variable">${dateVariableOptions}</select>
+                        </div>
+                        <div class="form-group">
+                            <label for="line-value-var">Value Variable (Numeric)</label>
+                            <select id="line-value-var" aria-label="Select value variable">${numericVariableOptions}</select>
+                        </div>
+                         <div class="form-group">
+                            <label for="line-group-var">Group by (Categorical, Optional)</label>
+                            <select id="line-group-var" aria-label="Group lines by variable">
+                                <option value="">-- None --</option>
+                                ${categoricalVariableOptions}
+                            </select>
+                        </div>
+                    `;
+                    generateVizButton.disabled = false;
+                    break;
+                 case 'map':
+                     controlsHtml = `
+                        <p>Map visualization requires geographical data (e.g., Latitude, Longitude).</p>
+                         <div class="form-group">
+                            <label for="map-lat-var">Latitude Variable (Numeric)</label>
+                            <select id="map-lat-var" aria-label="Select Latitude variable">${numericVariableOptions}</select>
+                        </div>
+                        <div class="form-group">
+                            <label for="map-lon-var">Longitude Variable (Numeric)</label>
+                            <select id="map-lon-var" aria-label="Select Longitude variable">${numericVariableOptions}</select>
+                        </div>
+                         <div class="form-group">
+                            <label for="map-color-var">Color/Size by (Numeric/Categorical, Optional)</label>
+                            <select id="map-color-var" aria-label="Color/size points by variable">
+                                <option value="">-- None --</option>
+                                ${numericVariableOptions}
+                                ${categoricalVariableOptions}
+                            </select>
+                        </div>
+                     `;
+                     generateVizButton.disabled = false;
+                     break;
+                default:
+                    controlsHtml = '<p>Select a visualization type.</p>';
+                    generateVizButton.disabled = true;
+                    break;
+            }
+            vizSpecificControls.innerHTML = controlsHtml;
+        }
+
+        generateVizButton.addEventListener('click', () => {
+             const datasetName = selectDatasetViz.value;
+             const vizType = selectVizType.value;
+             const dataset = appState.datasets[datasetName];
+
+             if (!datasetName || !vizType || !dataset) {
+                  showModal('Validation Error', '<p>Please select a dataset and visualization type.</p>');
+                  return;
+             }
+
+             const vizId = `viz-${Object.keys(appState.visualizations).length + 1}`;
+             let vizConfig = { datasetName, type: vizType };
+             let vizElement = null;
+
+             // Get specific variables based on type and validate
+             switch (vizType) {
+                 case 'scatter':
+                     vizConfig.xVar = document.getElementById('scatter-x-var').value;
+                     vizConfig.yVar = document.getElementById('scatter-y-var').value;
+                     vizConfig.colorVar = document.getElementById('scatter-color-var').value;
+                     if (!vizConfig.xVar || !vizConfig.yVar) {
+                         showModal('Validation Error', '<p>Please select both X and Y variables for the scatter plot.</p>');
+                         return;
+                     }
+                      if(dataset.columnTypes[vizConfig.xVar] !== 'number' || dataset.columnTypes[vizConfig.yVar] !== 'number') {
+                           showModal('Validation Error', '<p>X and Y variables for scatter plot must be numeric.</p>');
+                           return;
+                      }
+                     vizElement = createChartElement(vizId, 'Scatter Plot');
+                     break;
+                 case 'bar':
+                     vizConfig.categoryVar = document.getElementById('bar-category-var').value;
+                     vizConfig.valueVar = document.getElementById('bar-value-var').value;
+                      if (!vizConfig.categoryVar || !vizConfig.valueVar) {
+                         showModal('Validation Error', '<p>Please select both Category and Value variables for the bar chart.</p>');
+                         return;
+                     }
+                      if(dataset.columnTypes[vizConfig.valueVar] !== 'number') {
+                           showModal('Validation Error', '<p>Value variable for bar chart must be numeric.</p>');
+                           return;
+                      }
+                     vizElement = createChartElement(vizId, 'Bar Chart');
+                     break;
+                 case 'line':
+                      vizConfig.dateVar = document.getElementById('line-date-var').value;
+                      vizConfig.valueVar = document.getElementById('line-value-var').value;
+                      vizConfig.groupVar = document.getElementById('line-group-var').value;
+                       if (!vizConfig.dateVar || !vizConfig.valueVar) {
+                         showModal('Validation Error', '<p>Please select both Date/Time and Value variables for the line chart.</p>');
+                         return;
+                     }
+                      if(dataset.columnTypes[vizConfig.dateVar] !== 'date' || dataset.columnTypes[vizConfig.valueVar] !== 'number') {
+                           showModal('Validation Error', '<p>Date/Time variable must be date type and Value variable must be numeric for line chart.</p>');
+                           return;
+                      }
+                      vizElement = createChartElement(vizId, 'Line Chart');
+                     break;
+                 case 'map':
+                     vizConfig.latVar = document.getElementById('map-lat-var').value;
+                     vizConfig.lonVar = document.getElementById('map-lon-var').value;
+                      vizConfig.colorVar = document.getElementById('map-color-var').value;
+                      if (!vizConfig.latVar || !vizConfig.lonVar) {
+                         showModal('Validation Error', '<p>Please select Latitude and Longitude variables for the map.</p>');
+                         return;
+                     }
+                      if(dataset.columnTypes[vizConfig.latVar] !== 'number' || dataset.columnTypes[vizConfig.lonVar] !== 'number') {
+                           showModal('Validation Error', '<p>Latitude and Longitude variables for map must be numeric.</p>');
+                           return;
+                      }
+                     vizElement = createMapElement(vizId, 'Geographic Map');
+                     break;
+                 default:
+                     return; // Should not happen if controls are rendered correctly
+             }
+
+             // Clear default message if it exists
+             if (visualizationDashboard.querySelector('p')) {
+                 visualizationDashboard.innerHTML = '';
+             }
+
+             visualizationDashboard.appendChild(vizElement);
+
+             // Render the actual visualization
+             let chartInstance = null;
+             let mapInstance = null;
+
+             if (vizType === 'scatter' || vizType === 'bar' || vizType === 'line') {
+                 chartInstance = renderChart(vizId, vizConfig, dataset);
+             } else if (vizType === 'map') {
+                 mapInstance = renderMap(vizId, vizConfig, dataset);
+             }
+
+
+             appState.visualizations[vizId] = {
+                 config: vizConfig,
+                 chartInstance: chartInstance,
+                 mapInstance: mapInstance,
+                 element: vizElement // Store the container element
+             };
+
+             updateVizReportSelect();
+             // showModal('Visualization Generated', `<p>${vizConfig.type} visualization "${vizId}" generated.</p>`); // Modal might be annoying here
+        });
+
+        function createChartElement(id, title) {
+            const container = document.createElement('div');
+            container.id = `viz-container-${id}`;
+            container.classList.add('chart-container');
+            container.setAttribute('aria-label', title);
+             container.setAttribute('tabindex', '0'); // Make container focusable
+
+            const canvas = document.createElement('canvas');
+            canvas.id = `chart-${id}`;
+            container.appendChild(canvas);
+
+            // Add floating controls container
+            const controls = document.createElement('div');
+            controls.id = `controls-${id}`;
+            controls.classList.add('floating-controls');
+            controls.setAttribute('aria-hidden', 'true');
+            controls.innerHTML = `
+                <div class="control-group">
+                    <label for="chart-${id}-type">Chart Type</label>
+                    <select id="chart-${id}-type" aria-label="Change chart type">
+                        <option value="scatter">Scatter</option>
+                        <option value="bar">Bar</option>
+                        <option value="line">Line</option>
+                    </select>
+                </div>
+                 <div class="control-group">
+                    <label for="chart-${id}-color">Color</label>
+                    <input type="color" id="chart-${id}-color" value="#1976d2" aria-label="Change chart color">
+                </div>
+                 <div class="control-group" id="chart-${id}-point-size-group">
+                    <label for="chart-${id}-point-size">Point Size</label>
+                    <input type="number" id="chart-${id}-point-size" value="5" min="1" max="20" aria-label="Change point size">
+                </div>
+                <button class="button button--outline" id="chart-${id}-export-png">
+                     <span class="material-symbols-rounded">download</span> Export PNG
+                </button>
+            `;
+            container.appendChild(controls);
+
+            // Add click listener to show controls
+            container.addEventListener('click', (e) => {
+                // Check if click is inside controls, if so, do nothing
+                if (controls.contains(e.target)) {
+                     return;
+                }
+
+                // Hide currently active controls if any
+                if (appState.activeVizControls && appState.activeVizControls !== controls.id) {
+                     document.getElementById(appState.activeVizControls).classList.remove('active');
+                     document.getElementById(appState.activeVizControls).setAttribute('aria-hidden', 'true');
+                }
+
+                // Toggle current controls
+                const isActive = controls.classList.toggle('active');
+                controls.setAttribute('aria-hidden', String(!isActive));
+                appState.activeVizControls = isActive ? controls.id : null;
+
+                 // Prevent clicks on the container from propagating further if controls are toggled
+                 e.stopPropagation();
+            });
+
+             // Close controls when clicking anywhere else on the document
+            document.addEventListener('click', (e) => {
+                 if (appState.activeVizControls) {
+                     const activeControlsEl = document.getElementById(appState.activeVizControls);
+                      // Check if the click target is outside the active controls and outside its parent container
+                     if (!activeControlsEl.contains(e.target) && !activeControlsEl.parentElement.contains(e.target)) {
+                         activeControlsEl.classList.remove('active');
+                         activeControlsEl.setAttribute('aria-hidden', 'true');
+                         appState.activeVizControls = null;
+                     }
+                 }
+            });
+
+             // Close controls on Escape key
+            container.addEventListener('keydown', (e) => {
+                 if (e.key === 'Escape' && controls.classList.contains('active')) {
+                     controls.classList.remove('active');
+                     controls.setAttribute('aria-hidden', 'true');
+                     appState.activeVizControls = null;
+                     e.stopPropagation(); // Prevent closing other things
+                 }
+             });
+
+
+            return container;
+        }
+
+         function createMapElement(id, title) {
+            const container = document.createElement('div');
+            container.id = `viz-container-${id}`;
+            container.classList.add('map-container');
+            container.setAttribute('aria-label', title);
+             container.setAttribute('tabindex', '0'); // Make container focusable
+
+            const mapDiv = document.createElement('div');
+            mapDiv.id = `map-${id}`; // Unique ID for the map container
+            container.appendChild(mapDiv);
+
+             // Add basic map controls container (can be expanded)
+            const controls = document.createElement('div');
+            controls.id = `controls-${id}`;
+            controls.classList.add('floating-controls'); // Reuse floating controls style
+             controls.setAttribute('aria-hidden', 'true');
+            controls.innerHTML = `
+                 <div class="control-group">
+                    <label for="map-${id}-zoom">Zoom Level</label>
+                    <input type="number" id="map-${id}-zoom" value="10" min="1" max="18" aria-label="Change map zoom level">
+                </div>
+                <button class="button button--outline" id="map-${id}-export-png">
+                    <span class="material-symbols-rounded">download</span> Export Map
+                </button>
+            `;
+            container.appendChild(controls);
+
+             // Add click listener to show controls
+             container.addEventListener('click', (e) => {
+                 // Check if click is inside controls, if so, do nothing
+                if (controls.contains(e.target)) {
+                     return;
+                }
+
+                // Hide currently active controls if any
+                if (appState.activeVizControls && appState.activeVizControls !== controls.id) {
+                     document.getElementById(appState.activeVizControls).classList.remove('active');
+                     document.getElementById(appState.activeVizControls).setAttribute('aria-hidden', 'true');
+                }
+
+                // Toggle current controls
+                const isActive = controls.classList.toggle('active');
+                controls.setAttribute('aria-hidden', String(!isActive));
+                appState.activeVizControls = isActive ? controls.id : null;
+
+                 // Prevent clicks on the container from propagating further if controls are toggled
+                 e.stopPropagation();
+            });
+
+             // Close controls when clicking anywhere else on the document
+            document.addEventListener('click', (e) => {
+                 if (appState.activeVizControls) {
+                     const activeControlsEl = document.getElementById(appState.activeVizControls);
+                      // Check if the click target is outside the active controls and outside its parent container
+                     if (!activeControlsEl.contains(e.target) && !activeControlsEl.parentElement.contains(e.target)) {
+                         activeControlsEl.classList.remove('active');
+                         activeControlsEl.setAttribute('aria-hidden', 'true');
+                         appState.activeVizControls = null;
+                     }
+                 }
+            });
+
+             // Close controls on Escape key
+            container.addEventListener('keydown', (e) => {
+                 if (e.key === 'Escape' && controls.classList.contains('active')) {
+                     controls.classList.remove('active');
+                     controls.setAttribute('aria-hidden', 'true');
+                     appState.activeVizControls = null;
+                     e.stopPropagation(); // Prevent closing other things
+                 }
+             });
+
+
+            return container;
+         }
+
+
+        function renderChart(vizId, config, dataset) {
+             const ctx = document.getElementById(`chart-${vizId}`).getContext('2d');
+             let chartConfig = {};
+             const data = dataset.data;
+             const datasetColumns = dataset.columns; // Use actual columns from dataset
+
+             if (config.type === 'scatter') {
+                 chartConfig = {
+                     type: 'scatter',
+                     data: {
+                         datasets: [{
+                             label: `${config.yVar} vs ${config.xVar}`,
+                             data: data.map(row => ({ x: row[config.xVar], y: row[config.yVar] })),
+                             backgroundColor: "var('--color-secondary', '#1976d2')b3", // Default blue with transparency
+                             borderColor: "var('--color-secondary', '#1976d2')",
+                             pointRadius: 5, // Default point size
+                             pointHoverRadius: 7,
+                         }]
+                     },
+                     options: {
+                         responsive: true,
+                         maintainAspectRatio: false,
+                         plugins: {
+                             tooltip: {
+                                 callbacks: {
+                                     label: function(context) {
+                                         const item = context.raw;
+                                         // Show all relevant data from the original row
+                                         const rowIndex = data.findIndex(row => row[config.xVar] === item.x && row[config.yVar] === item.y);
+                                         if (rowIndex === -1) return '';
+                                         const originalRow = data[rowIndex];
+                                         let tooltipText = datasetColumns.map(col => `${col}: ${originalRow[col]}`).join(', ');
+                                         return tooltipText;
+                                     }
+                                 }
+                             },
+                             legend: { display: true }
+                         },
+                         scales: {
+                             x: {
+                                 title: { display: true, text: config.xVar },
+                                 type: 'linear', // Assume numerical for scatter
+                                 position: 'bottom'
+                             },
+                             y: {
+                                 title: { display: true, text: config.yVar },
+                                 type: 'linear' // Assume numerical for scatter
+                             }
+                         }
+                     }
+                 };
+
+                 // Handle color by variable (simple categorical or numerical coloring simulation)
+                 if (config.colorVar && dataset.columns.includes(config.colorVar)) {
+                     const colorData = data.map(row => row[config.colorVar]);
+                     const uniqueColors = [...new Set(colorData)];
+                     const colorPalette = ["var('--color-secondary', '#1976d2')", "var('--color-primary', '#2e7d32')", "var('--color-accent', '#fbc02d')", "var('--color-error', '#d32f2f')", '#7b1fa2', '#00796b', '#c2185b']; // Example palette
+
+                     if (dataset.columnTypes[config.colorVar] === 'category' || dataset.columnTypes[config.colorVar] === 'boolean') {
+                          chartConfig.data.datasets = uniqueColors.map((colorValue, index) => {
+                             const subset = data.filter(row => row[config.colorVar] === colorValue);
+                             const color = colorPalette[index % colorPalette.length];
+                             return {
+                                 label: `${colorValue}`, // Label by category value
+                                 data: subset.map(row => ({ x: row[config.xVar], y: row[config.yVar] })),
+                                 backgroundColor: color + 'b3',
+                                 borderColor: color,
+                                 pointRadius: 5,
+                                 pointHoverRadius: 7,
+                             };
+                         });
+                     } else if (dataset.columnTypes[config.colorVar] === 'number') {
+                          // Simple numerical coloring: map value to a color gradient (requires more advanced logic/library usually)
+                          // For simulation, just use a single color and maybe vary size (not implemented here)
+                           chartConfig.data.datasets[0].label = `${config.yVar} vs ${config.xVar} (Colored by ${config.colorVar})`;
+                           // A real implementation would map colorData to colors
+                           // For now, just update label and keep default color
+                     }
+                 }
+
+
+             } else if (config.type === 'bar') {
+                  // Aggregate data for bar chart (e.g., average value by category)
+                 const aggregatedData = data.reduce((acc, row) => {
+                     const category = row[config.categoryVar];
+                     const value = parseFloat(row[config.valueVar]);
+                     if (category === undefined || category === null) return acc; // Skip rows with no category
+                     if (!acc[category]) {
+                         acc[category] = { sum: 0, count: 0 };
+                     }
+                     if (!isNaN(value)) {
+                        acc[category].sum += value;
+                        acc[category].count += 1;
+                     }
+                     return acc;
+                 }, {});
+
+                 const categories = Object.keys(aggregatedData);
+                 const values = categories.map(cat => aggregatedData[cat].count > 0 ? aggregatedData[cat].sum / aggregatedData[cat].count : 0); // Calculate average
+
+                 chartConfig = {
+                     type: 'bar',
+                     data: {
+                         labels: categories,
+                         datasets: [{
+                             label: `Average ${config.valueVar} by ${config.categoryVar}`,
+                             data: values,
+                             backgroundColor: "var('--color-primary', '#2e7d32')b3", // Default green with transparency
+                             borderColor: "var('--color-primary', '#2e7d32')",
+                             borderWidth: 1
+                         }]
+                     },
+                     options: {
+                         responsive: true,
+                         maintainAspectRatio: false,
+                         plugins: {
+                             legend: { display: true },
+                              tooltip: {
+                                 callbacks: {
+                                     label: function(context) {
+                                         const label = context.dataset.label || '';
+                                         const value = context.raw;
+                                         const category = context.label;
+                                          // Find original data points for this category to show count
+                                         const count = data.filter(row => row[config.categoryVar] === category && !isNaN(parseFloat(row[config.valueVar]))).length;
+                                         return `${label}: ${value.toFixed(2)} (n=${count})`;
+                                     }
+                                 }
+                             },
+                         },
+                         scales: {
+                             x: {
+                                 title: { display: true, text: config.categoryVar }
+                             },
+                             y: {
+                                 title: { display: true, text: `Average ${config.valueVar}` },
+                                 beginAtZero: true
+                             }
+                         }
+                     }
+                 };
+             } else if (config.type === 'line') {
+                  // Basic line chart simulation (requires date/time data)
+                  // Aggregate data by date, potentially grouped
+                  const aggregatedData = data.reduce((acc, row) => {
+                      const date = row[config.dateVar];
+                      const value = parseFloat(row[config.valueVar]);
+                      const group = config.groupVar ? row[config.groupVar] : 'All';
+
+                      if (!date || isNaN(value)) return acc;
+
+                      if (!acc[group]) {
+                          acc[group] = {};
+                      }
+                      if (!acc[group][date]) {
+                           acc[group][date] = { sum: 0, count: 0 };
+                      }
+                      acc[group][date].sum += value;
+                      acc[group][date].count += 1;
+
+                      return acc;
+                  }, {});
+
+                  const allDates = [...new Set(data.map(row => row[config.dateVar]))].filter(Boolean).sort((a, b) => new Date(a) - new Date(b));
+                  const groups = Object.keys(aggregatedData);
+                  const colorPalette = ["var('--color-secondary', '#1976d2')", "var('--color-primary', '#2e7d32')", "var('--color-accent', '#fbc02d')", "var('--color-error', '#d32f2f')", '#7b1fa2', '#00796b', '#c2185b']; // Example palette
+
+
+                   chartConfig = {
+                     type: 'line',
+                     data: {
+                         labels: allDates,
+                         datasets: groups.map((group, index) => {
+                             const groupData = aggregatedData[group];
+                             const values = allDates.map(date => {
+                                 if (groupData[date] && groupData[date].count > 0) {
+                                     return groupData[date].sum / groupData[date].count; // Average value for the date
+                                 }
+                                 return null; // Handle missing data points
+                             });
+                              const color = colorPalette[index % colorPalette.length];
+                             return {
+                                 label: config.groupVar ? `${config.valueVar} (${group})` : `${config.valueVar} over time`,
+                                 data: values,
+                                 borderColor: color,
+                                 backgroundColor: color + '33', // Light transparency for fill
+                                 fill: false, // Don't fill area under line by default
+                                 tension: 0.1,
+                                  spanGaps: true, // Connect gaps in data
+                             };
+                         })
+                     },
+                     options: {
+                         responsive: true,
+                         maintainAspectRatio: false,
+                         plugins: {
+                             legend: { display: true },
+                             tooltip: {
+                                  callbacks: {
+                                      label: function(context) {
+                                          let label = context.dataset.label || '';
+                                          if (label) {
+                                              label += ': ';
+                                          }
+                                          if (context.parsed.y !== null) {
+                                              label += context.parsed.y.toFixed(2);
+                                          }
+                                          return label;
+                                      }
+                                  }
+                             }
+                         },
+                         scales: {
+                             x: {
+                                 title: { display: true, text: config.dateVar },
+                                 type: 'category', // Use 'category' for date strings
+                                 labels: allDates, // Explicitly set labels for category scale
+                             },
+                             y: {
+                                 title: { display: true, text: config.valueVar },
+                                 beginAtZero: true
+                             }
+                         }
+                     }
+                 };
+             }
+
+
+             const chartInstance = new Chart(ctx, chartConfig);
+
+             // Add event listeners for floating controls
+             const controls = document.getElementById(`controls-${vizId}`);
+             const chartTypeSelect = document.getElementById(`chart-${vizId}-type`);
+             const chartColorInput = document.getElementById(`chart-${vizId}-color`);
+             const chartPointSizeInput = document.getElementById(`chart-${vizId}-point-size`);
+             const chartPointSizeGroup = document.getElementById(`chart-${vizId}-point-size-group`);
+             const exportPngButton = document.getElementById(`chart-${vizId}-export-png`);
+
+             // Set initial control values based on rendered chart
+             if (chartTypeSelect) chartTypeSelect.value = chartInstance.config.type;
+             if (chartColorInput && chartInstance.config.data.datasets.length > 0) {
+                 // Extract base color removing potential alpha
+                 const bgColor = chartInstance.config.data.datasets[0].backgroundColor;
+                 const baseColorMatch = bgColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/) || bgColor.match(/#([0-9a-fA-F]{6})/);
+                 if (baseColorMatch) {
+                     if (baseColorMatch[1].length === 6) { // Hex match
+                          chartColorInput.value = '#' + baseColorMatch[1];
+                     } else { // RGBA match
+                         const toHex = (c) => parseInt(c).toString(16).padStart(2, '0');
+                         chartColorInput.value = `#${toHex(baseColorMatch[1])}${toHex(baseColorMatch[2])}${toHex(baseColorMatch[3])}`;
+                     }
+                 } else {
+                     chartColorInput.value = "#1976d2"; // Default if parsing fails
+                 }
+             }
+              if (chartPointSizeInput && chartInstance.config.type === 'scatter') {
+                  chartPointSizeInput.value = chartInstance.config.data.datasets[0].pointRadius;
+              } else if (chartPointSizeGroup) {
+                   chartPointSizeGroup.style.display = 'none'; // Hide point size for non-scatter
+              }
+
+
+             if (chartTypeSelect) {
+                 chartTypeSelect.addEventListener('change', (e) => {
+                      const newType = e.target.value;
+                      // Note: Changing chart type dynamically in Chart.js can be complex if scales/data structures differ.
+                      // This is a simplified example. A real app might re-render the chart entirely.
+                      // For this simulation, we'll just change the type and update, which might break some charts.
+                      // A better approach would be to re-generate the chart config based on the *original* vizConfig
+                      // but with the new type, and then destroy and recreate the chart instance.
+                      // Let's implement the destroy/recreate approach for robustness.
+
+                      const currentViz = appState.visualizations[vizId];
+                      const originalConfig = currentViz.config;
+                      const datasetForViz = appState.datasets[originalConfig.datasetName];
+
+                      // Destroy old chart
+                      if (currentViz.chartInstance) {
+                          currentViz.chartInstance.destroy();
+                      }
+
+                      // Update config with new type
+                      originalConfig.type = newType;
+
+                      // Re-render the chart with the new type
+                      const newChartInstance = renderChart(vizId, originalConfig, datasetForViz); // This will also re-attach controls
+
+                      // Update state
+                      appState.visualizations[vizId].chartInstance = newChartInstance;
+
+                      // Update point size control visibility
+                      if (chartPointSizeGroup) {
+                           if (newType === 'scatter') {
+                               chartPointSizeGroup.style.display = 'flex';
+                           } else {
+                               chartPointSizeGroup.style.display = 'none';
+                           }
+                      }
+                 });
+             }
+
+             if (chartColorInput) {
+                 chartColorInput.addEventListener('input', (e) => {
+                     const newColor = e.target.value;
+                      // Apply color to all datasets or just the first one depending on complexity
+                      chartInstance.config.data.datasets.forEach(dataset => {
+                          // Preserve transparency if originally present, or add default b3
+                           const currentColor = dataset.backgroundColor;
+                           const alphaMatch = currentColor ? currentColor.match(/rgba?\(\d+,\s*\d+,\s*\d+,\s*([\d.]+)\)/) : null;
+                           const newColorWithAlpha = alphaMatch ? `${newColor}${Math.round(parseFloat(alphaMatch[1]) * 255).toString(16).padStart(2, '0')}` : newColor + 'b3'; // Add 70% alpha
+
+                          dataset.backgroundColor = newColorWithAlpha;
+                          dataset.borderColor = newColor;
+                      });
+                     chartInstance.update();
+                 });
+             }
+
+             if (chartPointSizeInput) {
+                 chartPointSizeInput.addEventListener('input', (e) => {
+                     const newSize = parseInt(e.target.value);
+                      if (chartInstance.config.type === 'scatter' && !isNaN(newSize)) {
+                          chartInstance.config.data.datasets.forEach(dataset => {
+                              dataset.pointRadius = newSize;
+                              dataset.pointHoverRadius = newSize + 2;
+                          });
+                          chartInstance.update();
+                      }
+                 });
+             }
+
+
+             if (exportPngButton) {
+                 exportPngButton.addEventListener('click', () => {
+                     const link = document.createElement('a');
+                     link.href = chartInstance.toBase64Image();
+                     link.download = `${vizId}_${config.type}.png`;
+                     link.click();
+                 });
+             }
+
+             // Re-attach controls listeners after re-rendering (if destroy/recreate was used)
+             // This is handled implicitly by calling renderChart again, which creates new controls and listeners.
+             // If just updating config, listeners persist.
+
+             return chartInstance;
+        }
+
+        function renderMap(vizId, config, dataset) {
+             const mapDiv = document.getElementById(`map-${vizId}`);
+             // Ensure map container is visible and has dimensions before initializing
+             if (!mapDiv.offsetWidth || !mapDiv.offsetHeight) {
+                 console.warn(`Map container ${mapDiv.id} is not visible or has no dimensions.`);
+                 // Retry initialization or show error message
+                 showModal('Map Initialization Error', '<p>Map container is not ready. Ensure the visualization section is visible.</p>');
+                 return null; // Cannot initialize map
+             }
+
+             // Initialize map - Use a default view or try to center on data points
+             // Check if map already exists on this element (e.g., after re-rendering)
+             let mapInstance;
+             if (mapDiv._leaflet_id) {
+                 mapInstance = mapDiv._leaflet_id; // Get existing instance
+             } else {
+                mapInstance = L.map(mapDiv).setView([0, 0], 2); // Default to world view
+                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                     attribution: '© OpenStreetMap contributors'
+                 }).addTo(mapInstance);
+             }
+
+
+             const latData = dataset.data.map(row => parseFloat(row[config.latVar])).filter(lat => !isNaN(lat));
+             const lonData = dataset.data.map(row => parseFloat(row[config.lonVar])).filter(lon => !isNaN(lon));
+
+             // Clear existing layers (markers, etc.) before adding new ones
+             mapInstance.eachLayer(layer => {
+                 if (layer instanceof L.Marker || layer instanceof L.CircleMarker || layer instanceof L.Polyline) {
+                     mapInstance.removeLayer(layer);
+                 }
+             });
+              // Re-add base layer if it was removed (shouldn't happen with the check above, but safe)
+              let hasTileLayer = false;
+              mapInstance.eachLayer(layer => {
+                  if (layer instanceof L.TileLayer) {
+                      hasTileLayer = true;
+                  }
+              });
+              if (!hasTileLayer) {
+                   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                     attribution: '© OpenStreetMap contributors'
+                 }).addTo(mapInstance);
+              }
+
+
+             if (latData.length > 0 && lonData.length > 0) {
+                 // Try to fit map to bounds of data points
+                 const bounds = L.latLngBounds(latData.map((lat, i) => [lat, lonData[i]]));
+                 mapInstance.fitBounds(bounds, { padding: [20, 20] }); // Add some padding
+             } else {
+                 // showModal('Map Data Warning', `<p>Could not find valid Latitude (${config.latVar}) and Longitude (${config.lonVar}) data in the dataset. Showing world view.</p>`);
+                 mapInstance.setView([0, 0], 2); // Reset to world view
+             }
+
+             // Add markers for data points
+             dataset.data.forEach(row => {
+                 const lat = parseFloat(row[config.latVar]);
+                 const lon = parseFloat(row[config.lonVar]);
+
+                 if (!isNaN(lat) && !isNaN(lon)) {
+                     let popupContent = `<strong>${row.ID || 'Data Point'}</strong><br>`;
+                     dataset.columns.forEach(col => {
+                         popupContent += `<strong>${col}:</strong> ${row[col]}<br>`;
+                     });
+
+                     // Determine marker color/size based on colorVar (simple simulation)
+                     let markerOptions = {};
+                     if (config.colorVar && dataset.columns.includes(config.colorVar)) {
+                          const colorValue = row[config.colorVar];
+                           // Simple categorical color mapping
+                           if (dataset.columnTypes[config.colorVar] === 'category' || dataset.columnTypes[config.colorVar] === 'boolean') {
+                               const uniqueValues = [...new Set(dataset.data.map(r => r[config.colorVar]))].filter(Boolean);
+                               const index = uniqueValues.indexOf(colorValue);
+                               const colorPalette = ["var('--color-secondary', '#1976d2')", "var('--color-primary', '#2e7d32')", "var('--color-accent', '#fbc02d')", "var('--color-error', '#d32f2f')", '#7b1fa2', '#00796b', '#c2185b'];
+                               const color = colorPalette[index % colorPalette.length];
+                               // Use L.CircleMarker for colored points
+                               L.circleMarker([lat, lon], {
+                                    radius: 6,
+                                    fillColor: color,
+                                    color: "#000",
+                                    weight: 1,
+                                    opacity: 1,
+                                    fillOpacity: 0.8
+                               })
+                               .bindPopup(popupContent)
+                               .addTo(mapInstance);
+                               return; // Skip default marker if using CircleMarker
+                           } else if (dataset.columnTypes[config.colorVar] === 'number') {
+                               // Simple numerical mapping to size (radius)
+                               const numericValues = dataset.data.map(r => parseFloat(r[config.colorVar])).filter(n => !isNaN(n));
+                               const minVal = Math.min(...numericValues);
+                               const maxVal = Math.max(...numericValues);
+                               const value = parseFloat(row[config.colorVar]);
+                               const radius = value ? 5 + (value - minVal) / (maxVal - minVal) * 10 : 5; // Radius between 5 and 15
+                                L.circleMarker([lat, lon], {
+                                    radius: radius,
+                                    fillColor: "var('--color-secondary', '#1976d2')", // Default color
+                                    color: "#000",
+                                    weight: 1,
+                                    opacity: 1,
+                                    fillOpacity: 0.8
+                               })
+                               .bindPopup(popupContent)
+                               .addTo(mapInstance);
+                               return; // Skip default marker
+                           }
+                     }
+
+
+                     // Default marker if no coloring/sizing applied
+                     L.marker([lat, lon])
+                         .addTo(mapInstance)
+                         .bindPopup(popupContent);
+                 }
+             });
+
+
+             // Add event listeners for floating controls (basic zoom)
+             const controls = document.getElementById(`controls-${vizId}`);
+             const zoomInput = document.getElementById(`map-${vizId}-zoom`);
+             const exportPngButton = document.getElementById(`map-${vizId}-export-png`);
+
+             if (zoomInput) {
+                 // Update input when map zoom changes
+                 mapInstance.on('zoomend', () => {
+                     zoomInput.value = mapInstance.getZoom();
+                 });
+                 // Update map zoom when input changes
+                 zoomInput.addEventListener('change', (e) => {
+                     const newZoom = parseInt(e.target.value);
+                     if (!isNaN(newZoom)) {
+                         mapInstance.setZoom(newZoom);
+                     }
+                 });
+                  // Set initial value
+                 zoomInput.value = mapInstance.getZoom();
+             }
+
+              if (exportPngButton) {
+                 exportPngButton.addEventListener('click', () => {
+                     // Exporting Leaflet map as PNG is more complex, often requiring server-side or specific libraries.
+                     // Simulate by showing a message.
+                     showModal('Export Info', '<p>Map export functionality is not fully implemented in this demo. You would typically use a server-side library or a dedicated map export service.</p>');
+                 });
+             }
+
+             // Invalidate size to ensure map renders correctly after being added to potentially hidden container
+             // Use a small timeout to ensure container is in the DOM and potentially visible
+             setTimeout(() => {
+                 mapInstance.invalidateSize();
+             }, 0);
+
+
+             return mapInstance;
+        }
+
+
+        // --- Report Generation ---
+        generateReportButton.addEventListener('click', () => {
+             const analysisId = selectAnalysisReport.value;
+             const vizId = selectVizReport.value;
+             const reportTitle = reportTitleInput.value || 'Generated Report';
+             const reportFormat = reportFormatSelect.value;
+
+             if (!analysisId && !vizId) {
+                 showModal('Validation Error', '<p>Please select at least one Analysis Result or Visualization to include in the report.</p>');
+                 return;
+             }
+
+             // Simulate report generation
+             generateReportButton.disabled = true;
+             generateReportButton.classList.add('button--loading');
+             // Add a spinner next to the button if desired
+
+
+             setTimeout(() => {
+                 const reportId = `report-${Object.keys(generatedReportsList.children).length + 1}`;
+                 const reportItem = document.createElement('div');
+                 reportItem.classList.add('mt-3');
+                 reportItem.innerHTML = `
+                     <p><strong>Report Title:</strong> ${reportTitle}</p>
+                     <p><strong>ID:</strong> ${reportId}</p>
+                     <p><strong>Format:</strong> ${reportFormat.toUpperCase()}</p>
+                     <p><strong>Includes:</strong> ${analysisId ? `Analysis ${analysisId}` : ''}${analysisId && vizId ? ', ' : ''}${vizId ? `Visualization ${vizId}` : ''}</p>
+                     <button class="button button--outline mt-3" onclick="alert('Simulating download of ${reportTitle}.${reportFormat}')">
+                          <span class="material-symbols-rounded">download</span> Download ${reportFormat.toUpperCase()}
+                     </button>
+                 `;
+
+                 // Clear default message if it exists
+                if (generatedReportsList.querySelector('p') && generatedReportsList.children.length === 1) {
+                    generatedReportsList.innerHTML = '';
+                }
+
+                 generatedReportsList.appendChild(reportItem);
+
+                 generateReportButton.disabled = false;
+                 generateReportButton.classList.remove('button--loading');
+                 showModal('Report Generated', `<p>Report "${reportTitle}" generated successfully.</p>`);
+
+             }, 1500); // Simulate generation time
+        });
+
+
+        // --- Modal Close Button ---
+        modalCloseButton.addEventListener('click', hideModal);
+        appModal.addEventListener('click', (e) => {
+             if (e.target === appModal) { // Close if clicking outside the modal content
+                 hideModal();
+             }
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && appModal.classList.contains('is-visible')) {
+                hideModal();
+            }
+        });
+
+         // Basic focus trapping for modal (imperfect but better than none)
+         const modalContent = appModal.querySelector('.modal-content');
+         modalContent.setAttribute('tabindex', '-1'); // Make modal content focusable
+         appModal.addEventListener('transitionend', () => {
+             if (appModal.classList.contains('is-visible')) {
+                 modalContent.focus();
+             }
+         });
+         modalContent.addEventListener('keydown', (e) => {
+             const focusableElements = modalContent.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+             const firstFocusable = focusableElements[0];
+             const lastFocusable = focusableElements[focusableElements.length - 1];
+
+             if (e.key === 'Tab') {
+                 if (e.shiftKey) { // Shift + Tab
+                     if (document.activeElement === firstFocusable || focusableElements.length === 1) {
+                         lastFocusable.focus();
+                         e.preventDefault();
+                     }
+                 } else { // Tab
+                     if (document.activeElement === lastFocusable || focusableElements.length === 1) {
+                         firstFocusable.focus();
+                         e.preventDefault();
+                     }
+                 }
+             }
+         });
+
+
+        // --- Initial Setup / Data Loading Simulation ---
+        // Simulate loading some initial dummy data on page load
+        appState.datasets['Sample_Health_Data'] = generateDummyData('Sample_Health_Data');
+        appState.datasets['Sample_Environmental_Data'] = generateDummyData('Sample_Environmental_Data'); // Another dummy dataset
+
+        updateDatasetList();
+        updateDatasetSelects();
+        updateAnalysisReportSelect(); // Initialize empty
+        updateVizReportSelect(); // Initialize empty
+
+        // Trigger initial data table preview for the first dataset if any
+        const firstDatasetName = Object.keys(appState.datasets)[0];
+        if (firstDatasetName) {
+             selectDatasetPreview.value = firstDatasetName;
+             appState.activeDatasetPreview = firstDatasetName;
+             renderDataTable(firstDatasetName);
+        }
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding Docker Containers</title>
+    <style>
+        :root {
+            --primary-color: #0db7ed;
+            --secondary-color: #384d54;
+            --background-color: #ffffff;
+            --text-color: #333333;
+            --light-gray: #f5f5f5;
+            --border-color: #e0e0e0;
+            --code-bg: #f8f9fa;
+            --hover-color: #f0f9fd;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            padding-bottom: 2rem;
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        h2 {
+            font-size: 1.8rem;
+            margin: 2rem 0 1rem;
+            color: var(--secondary-color);
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary-color);
+        }
+        
+        h3 {
+            font-size: 1.4rem;
+            margin: 1.5rem 0 1rem;
+            color: var(--secondary-color);
+        }
+        
+        p {
+            margin-bottom: 1rem;
+        }
+        
+        .section {
+            margin: 3rem 0;
+            padding: 2rem;
+            background-color: var(--background-color);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .concept-card {
+            background-color: var(--light-gray);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .concept-card:hover {
+            background-color: var(--hover-color);
+            transform: translateX(5px);
+        }
+        
+        .comparison {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .comparison-box {
+            flex: 1;
+            min-width: 300px;
+            padding: 1.5rem;
+            border-radius: 8px;
+            background-color: var(--light-gray);
+            position: relative;
+        }
+        
+        .comparison-box h3 {
+            text-align: center;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+        
+        .comparison-box.vm {
+            border-top: 4px solid #9c27b0;
+        }
+        
+        .comparison-box.container {
+            border-top: 4px solid var(--primary-color);
+        }
+        
+        .comparison-diagram {
+            display: flex;
+            justify-content: center;
+            margin: 2rem 0;
+        }
+        
+        .diagram-container {
+            width: 100%;
+            max-width: 800px;
+            height: 400px;
+            position: relative;
+        }
+        
+        ul {
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .code-block {
+            background-color: var(--code-bg);
+            border-radius: 6px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            border-bottom: 1px dotted var(--primary-color);
+            cursor: help;
+        }
+        
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--secondary-color);
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 0.5rem;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .interactive-demo {
+            margin: 2rem 0;
+            padding: 2rem;
+            background-color: var(--light-gray);
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .demo-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            justify-content: center;
+        }
+        
+        .container-box {
+            width: 120px;
+            height: 120px;
+            background-color: var(--primary-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            opacity: 0;
+            transform: scale(0.8);
+        }
+        
+        .container-box.active {
+            opacity: 1;
+            transform: scale(1);
+        }
+        
+        .container-box:hover {
+            transform: scale(1.05);
+        }
+        
+        .container-box .status {
+            position: absolute;
+            bottom: 5px;
+            font-size: 0.8rem;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-weight: bold;
+        }
+        
+        button:hover {
+            background-color: #0a96c4;
+        }
+        
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 1rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            h2 {
+                font-size: 1.5rem;
+            }
+            
+            .section {
+                padding: 1.5rem;
+            }
+            
+            .comparison {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .diagram-container {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Understanding Docker Containers</h1>
+            <p>A comprehensive guide to containerization technology</p>
+        </div>
+    </header>
+    
+    <div class="container">
+        <section class="section" id="introduction">
+            <h2>What are Docker Containers?</h2>
+            <p>Docker containers are lightweight, standalone, executable software packages that include everything needed to run an application: code, runtime, system tools, libraries, and settings. Containers isolate applications from one another and from the underlying infrastructure, ensuring consistent operation across environments.</p>
+            
+            <div class="concept-card">
+                <h3>Key Concept: Containerization</h3>
+                <p>Containerization is a virtualization method that packages an application and its dependencies together. Unlike traditional virtual machines, containers share the host system's OS kernel, making them more efficient and portable.</p>
+            </div>
+        </section>
+        
+        <section class="section" id="why-docker">
+            <h2>Why Use Docker Containers?</h2>
+            <p>Docker containers offer numerous advantages for developers, operations teams, and organizations:</p>
+            
+            <ul>
+                <li><strong>Consistency:</strong> "Build once, run anywhere" - eliminates "works on my machine" problems</li>
+                <li><strong>Isolation:</strong> Applications run in isolated environments without interfering with each other</li>
+                <li><strong>Efficiency:</strong> Containers share the OS kernel, using fewer resources than virtual machines</li>
+                <li><strong>Portability:</strong> Containers can run on any platform that supports Docker</li>
+                <li><strong>Scalability:</strong> Easy to scale applications horizontally by adding more container instances</li>
+                <li><strong>Rapid Deployment:</strong> Containers can be started in seconds</li>
+                <li><strong>Version Control:</strong> Container images can be versioned, enabling easy rollbacks</li>
+            </ul>
+        </section>
+        
+        <section class="section" id="comparison">
+            <h2>Virtual Machines vs. Containers</h2>
+            <p>Understanding the difference between traditional virtual machines and containers is essential:</p>
+            
+            <div class="comparison">
+                <div class="comparison-box vm">
+                    <h3>Virtual Machines</h3>
+                    <ul>
+                        <li>Include full operating system copy</li>
+                        <li>Slow to start (minutes)</li>
+                        <li>Resource-intensive (GB of memory)</li>
+                        <li>Complete isolation with hypervisor</li>
+                        <li>Large size (often several GB)</li>
+                    </ul>
+                </div>
+                
+                <div class="comparison-box container">
+                    <h3>Docker Containers</h3>
+                    <ul>
+                        <li>Share host OS kernel</li>
+                        <li>Start almost instantly (seconds)</li>
+                        <li>Lightweight (MB of memory)</li>
+                        <li>Process-level isolation</li>
+                        <li>Small size (often MB)</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="comparison-diagram">
+                <svg width="800" height="400" viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+                    <!-- VM Architecture -->
+                    <rect x="50" y="50" width="300" height="300" fill="#f5f5f5" stroke="#cccccc" stroke-width="2" rx="8" />
+                    <text x="200" y="30" font-size="18" text-anchor="middle" font-weight="bold" fill="#9c27b0">Virtual Machine Architecture</text>
+                    
+                    <!-- Infrastructure -->
+                    <rect x="70" y="290" width="260" height="40" fill="#384d54" stroke="#333333" stroke-width="1" rx="4" />
+                    <text x="200" y="315" font-size="14" text-anchor="middle" fill="white">Host Operating System</text>
+                    
+                    <rect x="70" y="240" width="260" height="40" fill="#5d4037" stroke="#333333" stroke-width="1" rx="4" />
+                    <text x="200" y="265" font-size="14" text-anchor="middle" fill="white">Hypervisor</text>
+                    
+                    <!-- VMs -->
+                    <rect x="80" y="100" width="100" height="130" fill="#9c27b0" stroke="#7b1fa2" stroke-width="1" rx="4" />
+                    <text x="130" y="120" font-size="12" text-anchor="middle" fill="white">VM 1</text>
+                    <rect x="90" y="130" width="80" height="30" fill="#ce93d8" stroke="#ba68c8" stroke-width="1" rx="2" />
+                    <text x="130" y="150" font-size="10" text-anchor="middle" fill="#333">App A</text>
+                    <rect x="90" y="170" width="80" height="40" fill="#e1bee7" stroke="#ba68c8" stroke-width="1" rx="2" />
+                    <text x="130" y="195" font-size="10" text-anchor="middle" fill="#333">Guest OS</text>
+                    
+                    <rect x="200" y="100" width="100" height="130" fill="#9c27b0" stroke="#7b1fa2" stroke-width="1" rx="4" />
+                    <text x="250" y="120" font-size="12" text-anchor="middle" fill="white">VM 2</text>
+                    <rect x="210" y="130" width="80" height="30" fill="#ce93d8" stroke="#ba68c8" stroke-width="1" rx="2" />
+                    <text x="250" y="150" font-size="10" text-anchor="middle" fill="#333">App B</text>
+                    <rect x="210" y="170" width="80" height="40" fill="#e1bee7" stroke="#ba68c8" stroke-width="1" rx="2" />
+                    <text x="250" y="195" font-size="10" text-anchor="middle" fill="#333">Guest OS</text>
+                    
+                    <!-- Container Architecture -->
+                    <rect x="450" y="50" width="300" height="300" fill="#f5f5f5" stroke="#cccccc" stroke-width="2" rx="8" />
+                    <text x="600" y="30" font-size="18" text-anchor="middle" font-weight="bold" fill="#0db7ed">Container Architecture</text>
+                    
+                    <!-- Infrastructure -->
+                    <rect x="470" y="290" width="260" height="40" fill="#384d54" stroke="#333333" stroke-width="1" rx="4" />
+                    <text x="600" y="315" font-size="14" text-anchor="middle" fill="white">Host Operating System</text>
+                    
+                    <rect x="470" y="240" width="260" height="40" fill="#0db7ed" stroke="#333333" stroke-width="1" rx="4" />
+                    <text x="600" y="265" font-size="14" text-anchor="middle" fill="white">Docker Engine</text>
+                    
+                    <!-- Containers -->
+                    <rect x="480" y="100" width="70" height="130" fill="#0db7ed" stroke="#0097a7" stroke-width="1" rx="4" />
+                    <text x="515" y="120" font-size="10" text-anchor="middle" fill="white">Container 1</text>
+                    <rect x="485" y="130" width="60" height="85" fill="#b3e5fc" stroke="#81d4fa" stroke-width="1" rx="2" />
+                    <text x="515" y="170" font-size="10" text-anchor="middle" fill="#333">App A</text>
+                    
+                    <rect x="560" y="100" width="70" height="130" fill="#0db7ed" stroke="#0097a7" stroke-width="1" rx="4" />
+                    <text x="595" y="120" font-size="10" text-anchor="middle" fill="white">Container 2</text>
+                    <rect x="565" y="130" width="60" height="85" fill="#b3e5fc" stroke="#81d4fa" stroke-width="1" rx="2" />
+                    <text x="595" y="170" font-size="10" text-anchor="middle" fill="#333">App B</text>
+                    
+                    <rect x="640" y="100" width="70" height="130" fill="#0db7ed" stroke="#0097a7" stroke-width="1" rx="4" />
+                    <text x="675" y="120" font-size="10" text-anchor="middle" fill="white">Container 3</text>
+                    <rect x="645" y="130" width="60" height="85" fill="#b3e5fc" stroke="#81d4fa" stroke-width="1" rx="2" />
+                    <text x="675" y="170" font-size="10" text-anchor="middle" fill="#333">App C</text>
+                </svg>
+            </div>
+        </section>
+        
+        <section class="section" id="key-concepts">
+            <h2>Key Docker Concepts</h2>
+            
+            <div class="concept-card">
+                <h3>Docker Images</h3>
+                <p>A Docker image is a read-only template containing instructions for creating a Docker container. It includes the application code, libraries, dependencies, tools, and other files needed to run an application.</p>
+                <p>Images are built in layers, with each layer representing a set of filesystem changes. This layered approach enables efficient storage and transfer.</p>
+            </div>
+            
+            <div class="concept-card">
+                <h3>Dockerfile</h3>
+                <p>A Dockerfile is a text file containing instructions for building a Docker image. It specifies the base image, adds application code, installs dependencies, configures settings, and defines how the container should run.</p>
+                
+                <div class="code-block">
+                    # Example Dockerfile
+                    FROM node:14
+                    WORKDIR /app
+                    COPY package*.json ./
+                    RUN npm install
+                    COPY . .
+                    EXPOSE 3000
+                    CMD ["npm", "start"]
+                </div>
+            </div>
+            
+            <div class="concept-card">
+                <h3>Docker Registry</h3>
+                <p>A Docker registry stores and distributes Docker images. Docker Hub is the default public registry, but organizations often use private registries for proprietary applications.</p>
+                <p>Registries enable version control and distribution of container images across environments and teams.</p>
+            </div>
+            
+            <div class="concept-card">
+                <h3>Docker Engine</h3>
+                <p>Docker Engine is the runtime that powers containers. It includes:</p>
+                <ul>
+                    <li>A server with a long-running daemon process (dockerd)</li>
+                    <li>APIs that specify interfaces for interacting with the daemon</li>
+                    <li>A command-line interface (CLI) client (docker command)</li>
+                </ul>
+            </div>
+        </section>
+        
+        <section class="section" id="docker-commands">
+            <h2>Essential Docker Commands</h2>
+            <p>Here are some fundamental Docker commands to get started:</p>
+            
+            <div class="code-block">
+                # Pull an image from Docker Hub
+                docker pull nginx
+                
+                # List downloaded images
+                docker images
+                
+                # Run a container
+                docker run --name my-nginx -p 8080:80 -d nginx
+                
+                # List running containers
+                docker ps
+                
+                # Stop a container
+                docker stop my-nginx
+                
+                # Remove a container
+                docker rm my-nginx
+                
+                # Build an image from a Dockerfile
+                docker build -t my-app:1.0 .
+            </div>
+        </section>
+        
+        <section class="section" id="interactive-demo">
+            <h2>Interactive Container Demonstration</h2>
+            <p>See how containers work in a simplified visual demonstration:</p>
+            
+            <div class="interactive-demo">
+                <div class="controls">
+                    <button id="create-btn">Create Container</button>
+                    <button id="start-btn" disabled>Start Container</button>
+                    <button id="stop-btn" disabled>Stop Container</button>
+                    <button id="remove-btn" disabled>Remove Container</button>
+                </div>
+                
+                <div class="demo-container" id="container-area">
+                    <!-- Containers will be added here dynamically -->
+                </div>
+            </div>
+        </section>
+        
+        <section class="section" id="getting-started">
+            <h2>Getting Started with Docker</h2>
+            <p>Ready to start using Docker? Here's how:</p>
+            
+            <ol>
+                <li><strong>Install Docker:</strong> Download and install Docker Desktop (for Windows/Mac) or Docker Engine (for Linux) from the <span class="tooltip">official Docker website<span class="tooltip-text">docker.com</span></span>.</li>
+                <li><strong>Verify installation:</strong> Run <code>docker --version</code> to confirm Docker is installed correctly.</li>
+                <li><strong>Pull your first image:</strong> Try <code>docker pull hello-world</code> to download a simple test image.</li>
+                <li><strong>Run your first container:</strong> Execute <code>docker run hello-world</code> to start a container from the image.</li>
+                <li><strong>Explore Docker Hub:</strong> Browse the public registry to find pre-built images for popular applications and services.</li>
+                <li><strong>Create a Dockerfile:</strong> Write a Dockerfile for your application following the example above.</li>
+                <li><strong>Build and run:</strong> Build your image with <code>docker build</code> and run it with <code>docker run</code>.</li>
+            </ol>
+        </section>
+    </div>
+    
+    <script>
+        // Interactive container demo
+        document.addEventListener('DOMContentLoaded', function() {
+            const createBtn = document.getElementById('create-btn');
+            const startBtn = document.getElementById('start-btn');
+            const stopBtn = document.getElementById('stop-btn');
+            const removeBtn = document.getElementById('remove-btn');
+            const containerArea = document.getElementById('container-area');
+            
+            let containers = [];
+            let selectedContainer = null;
+            
+            createBtn.addEventListener('click', function() {
+                if (containers.length >= 5) {
+                    alert('Maximum 5 containers allowed in this demo.');
+                    return;
+                }
+                
+                const containerId = 'container-' + Math.floor(Math.random() * 1000);
+                const containerEl = document.createElement('div');
+                containerEl.className = 'container-box';
+                containerEl.id = containerId;
+                containerEl.innerHTML = `
+                    <span>Container</span>
+                    <span class="status">Created</span>
+                `;
+                
+                containerArea.appendChild(containerEl);
+                
+                // Animate container appearance
+                setTimeout(() => {
+                    containerEl.classList.add('active');
+                }, 50);
+                
+                const newContainer = {
+                    id: containerId,
+                    element: containerEl,
+                    status: 'created' // created, running, stopped
+                };
+                
+                containers.push(newContainer);
+                
+                // Set as selected
+                selectContainer(newContainer);
+                
+                containerEl.addEventListener('click', function() {
+                    selectContainer(newContainer);
+                });
+            });
+            
+            startBtn.addEventListener('click', function() {
+                if (!selectedContainer) return;
+                
+                selectedContainer.status = 'running';
+                selectedContainer.element.style.backgroundColor = '#4CAF50';
+                selectedContainer.element.querySelector('.status').textContent = 'Running';
+                
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+            });
+            
+            stopBtn.addEventListener('click', function() {
+                if (!selectedContainer) return;
+                
+                selectedContainer.status = 'stopped';
+                selectedContainer.element.style.backgroundColor = '#FF5722';
+                selectedContainer.element.querySelector('.status').textContent = 'Stopped';
+                
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+            });
+            
+            removeBtn.addEventListener('click', function() {
+                if (!selectedContainer) return;
+                
+                // Animate container removal
+                selectedContainer.element.classList.remove('active');
+                
+                setTimeout(() => {
+                    containerArea.removeChild(selectedContainer.element);
+                    containers = containers.filter(c => c.id !== selectedContainer.id);
+                    selectedContainer = null;
+                    
+                    // Update buttons
+                    startBtn.disabled = true;
+                    stopBtn.disabled = true;
+                    removeBtn.disabled = true;
+                }, 300);
+            });
+            
+            function selectContainer(container) {
+                // Deselect previous
+                if (selectedContainer) {
+                    selectedContainer.element.style.outline = 'none';
+                }
+                
+                // Select new
+                selectedContainer = container;
+                container.element.style.outline = '3px solid #333';
+                
+                // Update buttons based on container status
+                removeBtn.disabled = false;
+                
+                if (container.status === 'running') {
+                    startBtn.disabled = true;
+                    stopBtn.disabled = false;
+                } else {
+                    startBtn.disabled = false;
+                    stopBtn.disabled = true;
+                }
+            }
+        });
+        
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 100,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

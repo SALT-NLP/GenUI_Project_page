@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriSight - Precision Farming Dashboard</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet/dist/leaflet.css" />
+    <style>
+        :root {
+            --primary: #2e7d32;
+            --primary-light: #60ad5e;
+            --primary-dark: #005005;
+            --secondary: #1565c0;
+            --secondary-light: #5e92f3;
+            --secondary-dark: #003c8f;
+            --accent: #ff8f00;
+            --accent-light: #ffc046;
+            --accent-dark: #c56000;
+            --background: #f5f5f5;
+            --surface: #ffffff;
+            --error: #b71c1c;
+            --text-primary: #212121;
+            --text-secondary: #757575;
+            --text-hint: #9e9e9e;
+            --text-on-primary: #ffffff;
+            --text-on-secondary: #ffffff;
+            --text-on-accent: #000000;
+            --border: #e0e0e0;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background);
+            color: var(--text-primary);
+            height: 100vh;
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            grid-template-rows: 64px 1fr;
+            grid-template-areas:
+                "header header"
+                "sidebar main";
+        }
+
+        .header {
+            grid-area: header;
+            background-color: var(--primary);
+            color: var(--text-on-primary);
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            box-shadow: 0 2px 4px var(--shadow);
+            z-index: 10;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 20px;
+            font-weight: 500;
+        }
+
+        .logo-icon {
+            font-size: 28px;
+        }
+
+        .nav-links {
+            display: flex;
+            margin-left: 32px;
+            flex: 1;
+        }
+
+        .nav-link {
+            padding: 0 16px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            color: var(--text-on-primary);
+            text-decoration: none;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            opacity: 1;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-on-primary);
+            font-weight: 500;
+        }
+
+        .sidebar {
+            grid-area: sidebar;
+            background-color: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 16px 0;
+            overflow-y: auto;
+        }
+
+        .sidebar-section {
+            margin-bottom: 24px;
+        }
+
+        .sidebar-title {
+            padding: 8px 16px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            color: var(--text-primary);
+            text-decoration: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .sidebar-item:hover {
+            background-color: rgba(0, 0, 0, 0.04);
+        }
+
+        .sidebar-item.active {
+            background-color: rgba(46, 125, 50, 0.1);
+            color: var(--primary);
+            border-left: 4px solid var(--primary);
+        }
+
+        .sidebar-icon {
+            margin-right: 12px;
+        }
+
+        .main {
+            grid-area: main;
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .page-title {
+            margin-bottom: 24px;
+            font-size: 24px;
+            font-weight: 500;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 24px;
+        }
+
+        .dashboard-card {
+            background-color: var(--surface);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px var(--shadow);
+            overflow: hidden;
+        }
+
+        .map-container {
+            grid-column: 1 / 3;
+            height: 500px;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .card-content {
+            padding: 16px;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+
+        .map-controls {
+            position: absolute;
+            top: 100px;
+            right: 40px;
+            z-index: 1000;
+            background-color: var(--surface);
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px var(--shadow);
+            width: 240px;
+        }
+
+        .layer-control {
+            margin-bottom: 16px;
+        }
+
+        .layer-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .layer-toggle {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+
+        .layer-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--primary);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(20px);
+        }
+
+        .opacity-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .opacity-slider {
+            flex: 1;
+        }
+
+        .date-control {
+            margin-top: 16px;
+        }
+
+        .date-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .date-select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background-color: var(--surface);
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: var(--text-on-primary);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary);
+            color: var(--text-on-secondary);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--secondary-dark);
+        }
+
+        .btn-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: transparent;
+            color: var(--text-secondary);
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-icon:hover {
+            background-color: rgba(0, 0, 0, 0.04);
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .metric-card {
+            padding: 16px;
+            border-radius: 8px;
+            background-color: var(--surface);
+            box-shadow: 0 1px 2px var(--shadow);
+        }
+
+        .metric-title {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: 500;
+        }
+
+        .stress-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .indicator-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .chart-container {
+            height: 250px;
+            position: relative;
+        }
+
+        .recommendation-list {
+            list-style: none;
+        }
+
+        .recommendation-item {
+            display: flex;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .recommendation-item:last-child {
+            border-bottom: none;
+        }
+
+        .recommendation-icon {
+            margin-right: 12px;
+            color: var(--primary);
+        }
+
+        .recommendation-content {
+            flex: 1;
+        }
+
+        .recommendation-title {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .recommendation-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(5, auto);
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            margin-right: 4px;
+            border-radius: 2px;
+        }
+
+        .floating-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .control-group {
+            margin: 10px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            flex-direction: column;
+        }
+
+        .control-group label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .control-group input,
+        .control-group select {
+            padding: 6px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <span class="material-symbols-rounded logo-icon">eco</span>
+            <span>AgriSight</span>
+        </div>
+        <nav class="nav-links">
+            <a href="#" class="nav-link active">Dashboard</a>
+            <a href="#" class="nav-link">Data Upload</a>
+            <a href="#" class="nav-link">Reports</a>
+            <a href="#" class="nav-link">Settings</a>
+        </nav>
+        <div class="user-profile">
+            <div class="avatar">JD</div>
+        </div>
+    </header>
+
+    <aside class="sidebar">
+        <div class="sidebar-section">
+            <h3 class="sidebar-title">Fields</h3>
+            <ul class="sidebar-menu">
+                <li class="sidebar-item active">
+                    <span class="material-symbols-rounded sidebar-icon">crop_square</span>
+                    North Field
+                </li>
+                <li class="sidebar-item">
+                    <span class="material-symbols-rounded sidebar-icon">crop_square</span>
+                    South Field
+                </li>
+                <li class="sidebar-item">
+                    <span class="material-symbols-rounded sidebar-icon">crop_square</span>
+                    East Field
+                </li>
+                <li class="sidebar-item">
+                    <span class="material-symbols-rounded sidebar-icon">crop_square</span>
+                    West Field
+                </li>
+            </ul>
+        </div>
+
+        <div class="sidebar-section">
+            <h3 class="sidebar-title">Analysis</h3>
+            <ul class="sidebar-menu">
+                <li class="sidebar-item">
+                    <span class="material-symbols-rounded sidebar-icon">monitoring</span>
+                    Crop Stress
+                </li>
+                <li class="sidebar-item">
+                    <span class="material-symbols-rounded sidebar-icon">trending_up</span>
+                    Yield Prediction
+                </li>
+                <li class="sidebar-item">
+                    <span class="material-symbols-rounded sidebar-icon">water_drop</span>
+                    Soil Moisture
+                </li>
+                <li class="sidebar-item">
+                    <span class="material-symbols-rounded sidebar-icon">thermostat</span>
+                    Weather Data
+                </li>
+                <li class="sidebar-item">
+                    <span class="material-symbols-rounded sidebar-icon">history</span>
+                    Historical Comparison
+                </li>
+            </ul>
+        </div>
+
+        <div class="sidebar-section">
+            <h3 class="sidebar-title">Reports</h3>
+            <ul class="sidebar-menu">
+                <li class="sidebar-item">
+                    <span class="material-symbols-rounded sidebar-icon">summarize</span>
+                    Weekly Summary
+                </li>
+                <li class="sidebar-item">
+                    <span class="material-symbols-rounded sidebar-icon">description</span>
+                    Seasonal Report
+                </li>
+                <li class="sidebar-item">
+                    <span class="material-symbols-rounded sidebar-icon">download</span>
+                    Export Data
+                </li>
+            </ul>
+        </div>
+    </aside>
+
+    <main class="main">
+        <h1 class="page-title">North Field Dashboard</h1>
+
+        <div class="dashboard-grid">
+            <div class="dashboard-card map-container">
+                <div class="card-header">
+                    <h2 class="card-title">Field Map</h2>
+                    <div class="card-actions">
+                        <button class="btn-icon" title="Download Map">
+                            <span class="material-symbols-rounded">download</span>
+                        </button>
+                        <button class="btn-icon" title="Fullscreen">
+                            <span class="material-symbols-rounded">fullscreen</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="map"></div>
+                <div class="map-controls">
+                    <div class="layer-control">
+                        <div class="layer-title">
+                            NDVI (Crop Health)
+                            <label class="layer-toggle">
+                                <input type="checkbox" id="ndvi-toggle" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="opacity-control">
+                            <span>Opacity:</span>
+                            <input type="range" class="opacity-slider" min="0" max="100" value="70" id="ndvi-opacity">
+                        </div>
+                    </div>
+
+                    <div class="layer-control">
+                        <div class="layer-title">
+                            Soil Moisture
+                            <label class="layer-toggle">
+                                <input type="checkbox" id="soil-toggle">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="opacity-control">
+                            <span>Opacity:</span>
+                            <input type="range" class="opacity-slider" min="0" max="100" value="70" id="soil-opacity" disabled>
+                        </div>
+                    </div>
+
+                    <div class="layer-control">
+                        <div class="layer-title">
+                            Yield Prediction
+                            <label class="layer-toggle">
+                                <input type="checkbox" id="yield-toggle">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="opacity-control">
+                            <span>Opacity:</span>
+                            <input type="range" class="opacity-slider" min="0" max="100" value="70" id="yield-opacity" disabled>
+                        </div>
+                    </div>
+
+                    <div class="date-control">
+                        <label class="date-label">Date:</label>
+                        <select class="date-select" id="date-select">
+                            <option value="2023-10-15">October 15, 2023</option>
+                            <option value="2023-10-08">October 8, 2023</option>
+                            <option value="2023-10-01">October 1, 2023</option>
+                            <option value="2023-09-24">September 24, 2023</option>
+                            <option value="2023-09-17">September 17, 2023</option>
+                        </select>
+                    </div>
+
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #d73027;"></div>
+                            <span>Low</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #fc8d59;"></div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #fee08b;"></div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #d9ef8b;"></div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #1a9850;"></div>
+                            <span>High</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2 class="card-title">Crop Stress Analysis</h2>
+                    <div class="card-actions">
+                        <button class="btn-icon" title="Download Chart">
+                            <span class="material-symbols-rounded">download</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <div class="metric-grid">
+                        <div class="metric-card">
+                            <div class="metric-title">Average NDVI</div>
+                            <div class="metric-value">0.73</div>
+                            <div class="stress-indicator">
+                                <div class="indicator-dot" style="background-color: #1a9850;"></div>
+                                <span>Healthy</span>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-title">Stressed Area</div>
+                            <div class="metric-value">12%</div>
+                            <div class="stress-indicator">
+                                <div class="indicator-dot" style="background-color: #fc8d59;"></div>
+                                <span>Moderate Concern</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-container" id="stress-chart-container">
+                        <canvas id="stressChart"></canvas>
+                        <div class="floating-controls" id="stress-controls">
+                            <div class="control-group">
+                                <label>Chart Type</label>
+                                <select id="stress-chart-type">
+                                    <option value="line">Line</option>
+                                    <option value="bar">Bar</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>Time Range</label>
+                                <select id="stress-time-range">
+                                    <option value="30">Last 30 Days</option>
+                                    <option value="60">Last 60 Days</option>
+                                    <option value="90">Last 90 Days</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>Data Points</label>
+                                <select id="stress-data-points">
+                                    <option value="ndvi">NDVI</option>
+                                    <option value="moisture">Soil Moisture</option>
+                                    <option value="both">Both</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2 class="card-title">Recommendations</h2>
+                    <div class="card-actions">
+                        <button class="btn-primary">Apply All</button>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <ul class="recommendation-list">
+                        <li class="recommendation-item">
+                            <span class="material-symbols-rounded recommendation-icon">water_drop</span>
+                            <div class="recommendation-content">
+                                <div class="recommendation-title">Irrigation Needed</div>
+                                <div class="recommendation-desc">Northeast section shows low soil moisture. Consider targeted irrigation of 15mm.</div>
+                            </div>
+                        </li>
+                        <li class="recommendation-item">
+                            <span class="material-symbols-rounded recommendation-icon">nutrition</span>
+                            <div class="recommendation-content">
+                                <div class="recommendation-title">Nitrogen Application</div>
+                                <div class="recommendation-desc">Central sections show signs of nitrogen deficiency. Apply 30kg/ha of nitrogen fertilizer.</div>
+                            </div>
+                        </li>
+                        <li class="recommendation-item">
+                            <span class="material-symbols-rounded recommendation-icon">pest_control</span>
+                            <div class="recommendation-content">
+                                <div class="recommendation-title">Pest Monitoring</div>
+                                <div class="recommendation-desc">Southern edge showing early signs of pest activity. Increase monitoring frequency.</div>
+                            </div>
+                        </li>
+                        <li class="recommendation-item">
+                            <span class="material-symbols-rounded recommendation-icon">calendar_month</span>
+                            <div class="recommendation-content">
+                                <div class="recommendation-title">Harvest Planning</div>
+                                <div class="recommendation-desc">Northwest section showing earlier maturity. Consider selective harvesting within next 10 days.</div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import * as L from "https://esm.sh/leaflet";
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        // Initialize map
+        const map = L.map('map').setView([38.9, -92.3], 15);
+
+        // Base map layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Field boundary (example polygon)
+        const fieldBoundary = L.polygon([
+            [38.905, -92.310],
+            [38.905, -92.290],
+            [38.895, -92.290],
+            [38.895, -92.310]
+        ], {
+            color: '#2e7d32',
+            weight: 3,
+            fillOpacity: 0.1
+        }).addTo(map);
+
+        // Create field sections for demonstration
+        const fieldSections = [];
+        for (let i = 0; i < 5; i++) {
+            for (let j = 0; j < 5; j++) {
+                const latStart = 38.895 + (i * 0.002);
+                const lngStart = -92.310 + (j * 0.004);
+                
+                // Generate random NDVI value between 0.3 and 0.9
+                const ndviValue = 0.3 + (Math.random() * 0.6);
+                
+                // Color based on NDVI value (red to green)
+                let color;
+                if (ndviValue < 0.4) color = '#d73027'; // Very low - red
+                else if (ndviValue < 0.55) color = '#fc8d59'; // Low - orange
+                else if (ndviValue < 0.7) color = '#fee08b'; // Medium - yellow
+                else if (ndviValue < 0.8) color = '#d9ef8b'; // Good - light green
+                else color = '#1a9850'; // Excellent - green
+
+                const section = L.polygon([
+                    [latStart, lngStart],
+                    [latStart, lngStart + 0.004],
+                    [latStart + 0.002, lngStart + 0.004],
+                    [latStart + 0.002, lngStart]
+                ], {
+                    color: '#666',
+                    weight: 1,
+                    fillColor: color,
+                    fillOpacity: 0.7
+                });
+
+                // Add popup with information
+                section.bindPopup(`
+                    <div style="font-family: Roboto, sans-serif;">
+                        <h3 style="margin-bottom: 8px;">Section ${i*5 + j + 1}</h3>
+                        <p><strong>NDVI:</strong> ${ndviValue.toFixed(2)}</p>
+                        <p><strong>Soil Moisture:</strong> ${(30 + Math.random() * 20).toFixed(1)}%</p>
+                        <p><strong>Est. Yield:</strong> ${(4 + ndviValue * 4).toFixed(1)} t/ha</p>
+                    </div>
+                `);
+
+                fieldSections.push(section);
+            }
+        }
+
+        // Create layer groups
+        const ndviLayer = L.layerGroup(fieldSections).addTo(map);
+        
+        // Toggle layers based on controls
+        document.getElementById('ndvi-toggle').addEventListener('change', function(e) {
+            if (e.target.checked) {
+                ndviLayer.addTo(map);
+            } else {
+                ndviLayer.remove();
+            }
+        });
+
+        // Opacity control
+        document.getElementById('ndvi-opacity').addEventListener('input', function(e) {
+            const opacity = e.target.value / 100;
+            fieldSections.forEach(section => {
+                section.setStyle({ fillOpacity: opacity });
+            });
+        });
+
+        // Add soil moisture toggle functionality
+        document.getElementById('soil-toggle').addEventListener('change', function(e) {
+            const opacityControl = document.getElementById('soil-opacity');
+            opacityControl.disabled = !e.target.checked;
+        });
+
+        // Add yield prediction toggle functionality
+        document.getElementById('yield-toggle').addEventListener('change', function(e) {
+            const opacityControl = document.getElementById('yield-opacity');
+            opacityControl.disabled = !e.target.checked;
+        });
+
+        // Initialize crop stress chart
+        const stressChartCtx = document.getElementById('stressChart').getContext('2d');
+        
+        // Generate dates for the last 30 days
+        const dates = [];
+        const ndviData = [];
+        const moistureData = [];
+        
+        const today = new Date();
+        for (let i = 30; i >= 0; i--) {
+            const date = new Date(today);
+            date.setDate(date.getDate() - i);
+            dates.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+            
+            // Generate random NDVI data with an upward trend (simulating crop growth)
+            const baseNdvi = 0.5 + (30 - i) * 0.01; // Base value increases over time
+            ndviData.push(baseNdvi + (Math.random() * 0.1 - 0.05)); // Add some random variation
+            
+            // Generate random soil moisture data with some correlation to weather events
+            const baseMoisture = 40;
+            const weatherEvent = i % 7 === 0 ? 15 : 0; // Simulate rain every 7 days
+            moistureData.push(baseMoisture + weatherEvent + (Math.random() * 10 - 5));
+        }
+        
+        const stressChart = new Chart(stressChartCtx, {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: 'Average NDVI',
+                    data: ndviData,
+                    borderColor: '#2e7d32',
+                    backgroundColor: 'rgba(46, 125, 50, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 1,
+                        title: {
+                            display: true,
+                            text: 'NDVI Value'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
+                    }
+                },
+                onClick: function() {
+                    const controls = document.getElementById('stress-controls');
+                    controls.classList.toggle('active');
+                }
+            }
+        });
+
+        // Chart control event listeners
+        document.getElementById('stress-chart-type').addEventListener('change', function(e) {
+            stressChart.config.type = e.target.value;
+            stressChart.update();
+        });
+
+        document.getElementById('stress-data-points').addEventListener('change', function(e) {
+            const selectedValue = e.target.value;
+            
+            // Remove all datasets
+            stressChart.data.datasets = [];
+            
+            if (selectedValue === 'ndvi' || selectedValue === 'both') {
+                stressChart.data.datasets.push({
+                    label: 'Average NDVI',
+                    data: ndviData,
+                    borderColor: '#2e7d32',
+                    backgroundColor: 'rgba(46, 125, 50, 0.1)',
+                    tension: 0.3,
+                    fill: true,
+                    yAxisID: 'y'
+                });
+            }
+            
+            if (selectedValue === 'moisture' || selectedValue === 'both') {
+                stressChart.data.datasets.push({
+                    label: 'Soil Moisture (%)',
+                    data: moistureData,
+                    borderColor: '#1565c0',
+                    backgroundColor: 'rgba(21, 101, 192, 0.1)',
+                    tension: 0.3,
+                    fill: true,
+                    yAxisID: selectedValue === 'both' ? 'y1' : 'y'
+                });
+            }
+            
+            // Update scales based on data shown
+            if (selectedValue === 'both') {
+                stressChart.options.scales = {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        min: 0,
+                        max: 1,
+                        title: {
+                            display: true,
+                            text: 'NDVI Value'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        min: 0,
+                        max: 80,
+                        title: {
+                            display: true,
+                            text: 'Soil Moisture (%)'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        }
+                    }
+                };
+            } else if (selectedValue === 'moisture') {
+                stressChart.options.scales = {
+                    y: {
+                        min: 0,
+                        max: 80,
+                        title: {
+                            display: true,
+                            text: 'Soil Moisture (%)'
+                        }
+                    }
+                };
+            } else {
+                stressChart.options.scales = {
+                    y: {
+                        min: 0,
+                        max: 1,
+                        title: {
+                            display: true,
+                            text: 'NDVI Value'
+                        }
+                    }
+                };
+            }
+            
+            stressChart.update();
+        });
+
+        document.getElementById('stress-time-range').addEventListener('change', function(e) {
+            const days = parseInt(e.target.value);
+            
+            // Update chart with the selected time range
+            const updatedDates = [];
+            const updatedNdvi = [];
+            const updatedMoisture = [];
+            
+            const today = new Date();
+            for (let i = days; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                updatedDates.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+                
+                // Generate data with some consistency
+                const baseNdvi = 0.5 + (days - i) * (0.5 / days); // Gradual increase
+                updatedNdvi.push(baseNdvi + (Math.random() * 0.1 - 0.05));
+                
+                const baseMoisture = 40;
+                const weatherEvent = i % 7 === 0 ? 15 : 0;
+                updatedMoisture.push(baseMoisture + weatherEvent + (Math.random() * 10 - 5));
+            }
+            
+            stressChart.data.labels = updatedDates;
+            
+            // Update datasets based on what's currently shown
+            stressChart.data.datasets.forEach(dataset => {
+                if (dataset.label === 'Average NDVI') {
+                    dataset.data = updatedNdvi;
+                } else if (dataset.label === 'Soil Moisture (%)') {
+                    dataset.data = updatedMoisture;
+                }
+            });
+            
+            stressChart.update();
+        });
+
+        // Close floating controls when clicking outside
+        document.addEventListener('click', (e) => {
+            const controls = document.getElementById('stress-controls');
+            if (!e.target.closest('#stress-chart-container')) {
+                controls.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>

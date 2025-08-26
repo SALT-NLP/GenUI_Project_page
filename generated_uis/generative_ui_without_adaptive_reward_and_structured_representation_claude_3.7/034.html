@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English to Spanish Translator</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --primary-color-dark: #0056b3;
+            --secondary-color: #f8f9fa;
+            --text-color-dark: #333;
+            --text-color-light: #fff;
+            --border-color: #ced4da;
+            --focus-color: #80bdff;
+            --error-color: #dc3545;
+            --success-color: #28a745;
+            --spacing-unit: 1rem; /* 16px */
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--secondary-color);
+            color: var(--text-color-dark);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: var(--text-color-light);
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            padding: calc(var(--spacing-unit) * 2);
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .translation-area {
+            display: flex;
+            gap: calc(var(--spacing-unit) * 2);
+            flex-grow: 1;
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .language-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #fff;
+            padding: var(--spacing-unit);
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .language-section label {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: var(--spacing-unit);
+            color: var(--primary-color);
+        }
+
+        textarea {
+            flex-grow: 1;
+            width: 100%;
+            padding: var(--spacing-unit);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 1rem;
+            font-family: 'Roboto', sans-serif;
+            resize: vertical; /* Allow vertical resize */
+            outline: none;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+
+        textarea:focus {
+            border-color: var(--focus-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        .output-area textarea {
+            background-color: #e9ecef; /* Subtle different background for output */
+            cursor: default;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: var(--spacing-unit);
+        }
+
+        button {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: var(--text-color-light);
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            border: none;
+            border-radius: 4px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, opacity 0.2s ease-in-out;
+            min-width: 150px;
+            text-align: center;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: var(--primary-color-dark);
+        }
+
+        button:active:not(:disabled) {
+            background-color: var(--primary-color);
+            transform: translateY(1px);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .status-message {
+            margin-top: var(--spacing-unit);
+            text-align: center;
+            min-height: 1.2rem; /* Reserve space */
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+
+        .status-message.loading {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .status-message.success {
+            color: var(--success-color);
+            font-weight: 500;
+        }
+
+        .status-message.error {
+            color: var(--error-color);
+            font-weight: 500;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .translation-area {
+                flex-direction: column;
+                gap: var(--spacing-unit);
+            }
+
+            .language-section {
+                flex: none; /* Prevent flex-grow on small screens */
+            }
+
+            button {
+                width: 100%;
+                padding: var(--spacing-unit) var(--spacing-unit);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Document Translator</h1>
+    </header>
+    <main class="container">
+        <div class="translation-area">
+            <section class="language-section input-area">
+                <label for="english-input">English</label>
+                <textarea id="english-input" placeholder="Enter English text here..." aria-label="English input text area"></textarea>
+            </section>
+            <section class="language-section output-area">
+                <label for="spanish-output">Spanish</label>
+                <textarea id="spanish-output" placeholder="Translated Spanish text will appear here..." aria-label="Spanish output text area" readonly></textarea>
+            </section>
+        </div>
+        <div class="controls">
+            <button id="translate-button" aria-label="Translate text">Translate</button>
+            <div id="status-message" class="status-message" aria-live="polite"></div>
+        </div>
+    </main>
+
+    <script>
+        const englishInput = document.getElementById('english-input');
+        const spanishOutput = document.getElementById('spanish-output');
+        const translateButton = document.getElementById('translate-button');
+        const statusMessage = document.getElementById('status-message');
+
+        translateButton.addEventListener('click', handleTranslate);
+
+        async function handleTranslate() {
+            const textToTranslate = englishInput.value.trim();
+
+            if (!textToTranslate) {
+                updateStatus('Please enter text to translate.', 'error');
+                return;
+            }
+
+            // Simulate translation process
+            translateButton.disabled = true;
+            translateButton.textContent = 'Translating...';
+            updateStatus('Translating...', 'loading');
+            spanishOutput.value = ''; // Clear previous output
+
+            try {
+                // --- Simulated API Call ---
+                // In a real application, you would make an API call here
+                // Example: const response = await fetch('/api/translate', { method: 'POST', body: JSON.stringify({ text: textToTranslate, targetLang: 'es' }) });
+                // const data = await response.json();
+                // const translatedText = data.translatedText;
+
+                // Simulate network delay
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                // Simulate a successful translation
+                const translatedText = simulateTranslation(textToTranslate); // Replace with actual translation logic
+
+                spanishOutput.value = translatedText;
+                updateStatus('Translation Complete.', 'success');
+
+            } catch (error) {
+                console.error('Translation failed:', error);
+                updateStatus('Translation failed. Please try again.', 'error');
+                spanishOutput.value = 'Error during translation.'; // Indicate error in output area
+            } finally {
+                translateButton.disabled = false;
+                translateButton.textContent = 'Translate';
+            }
+        }
+
+        function simulateTranslation(text) {
+            // Basic simulation: just append a Spanish phrase
+            // Replace this with actual translation logic (e.g., calling an API)
+            if (text.toLowerCase().includes('hello')) return text.replace(/hello/gi, 'hola') + " (Translated)";
+            if (text.toLowerCase().includes('world')) return text.replace(/world/gi, 'mundo') + " (Translated)";
+            return text + " (Translated to Spanish)";
+        }
+
+        function updateStatus(message, type = '') {
+            statusMessage.textContent = message;
+            statusMessage.className = 'status-message'; // Reset classes
+            if (type) {
+                statusMessage.classList.add(type);
+            }
+        }
+
+        // Optional: Clear status message after a delay if it's not loading
+        statusMessage.addEventListener('DOMSubtreeModified', debounce(() => {
+             if (!statusMessage.classList.contains('loading') && statusMessage.textContent.trim() !== '') {
+                setTimeout(() => {
+                    updateStatus('');
+                }, 5000); // Clear message after 5 seconds
+            }
+        }, 300)); // Debounce to avoid multiple calls on rapid changes
+
+        // Basic debounce utility function
+        function debounce(func, delay) {
+            let timeoutId;
+            return function(...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => {
+                    func.apply(this, args);
+                }, delay);
+            };
+        }
+
+    </script>
+</body>
+</html>

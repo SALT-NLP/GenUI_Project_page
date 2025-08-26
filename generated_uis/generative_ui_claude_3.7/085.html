@@ -1,0 +1,2296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevOps Modernization Wizard</title>
+    <style>
+        :root {
+            --primary: #4a6bdf;
+            --primary-light: #7a92e8;
+            --primary-dark: #3a51a9;
+            --secondary: #34c3eb;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #17a2b8;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --gray: #6c757d;
+            --gray-light: #e9ecef;
+            --gray-dark: #495057;
+            --body-bg: #f5f7fa;
+            --body-color: #212529;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
+            line-height: 1.6;
+            color: var(--body-color);
+            background-color: var(--body-bg);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .wizard-container {
+            display: flex;
+            min-height: 600px;
+        }
+
+        .steps-sidebar {
+            width: 280px;
+            background-color: var(--light);
+            border-right: 1px solid var(--gray-light);
+            padding: 20px 0;
+        }
+
+        .step-list {
+            list-style: none;
+        }
+
+        .step-item {
+            position: relative;
+            padding: 15px 20px 15px 50px;
+            cursor: pointer;
+            transition: var(--transition);
+            border-left: 4px solid transparent;
+        }
+
+        .step-item.active {
+            background-color: rgba(74, 107, 223, 0.1);
+            border-left-color: var(--primary);
+            font-weight: 600;
+        }
+
+        .step-item:hover:not(.active) {
+            background-color: rgba(74, 107, 223, 0.05);
+        }
+
+        .step-number {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background-color: var(--gray-light);
+            color: var(--gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .step-item.active .step-number,
+        .step-item.completed .step-number {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .step-item.completed .step-number::after {
+            content: "✓";
+        }
+
+        .step-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .step-title {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: var(--primary-dark);
+        }
+
+        .step-description {
+            color: var(--gray-dark);
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        .form-section-title {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--gray-light);
+            color: var(--dark);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid var(--gray-light);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(74, 107, 223, 0.25);
+        }
+
+        .form-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23343a40' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 16px;
+        }
+
+        .form-text {
+            display: block;
+            margin-top: 5px;
+            font-size: 0.875rem;
+            color: var(--gray);
+        }
+
+        .form-check {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .form-check-input {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+        }
+
+        .btn {
+            display: inline-block;
+            font-weight: 500;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: middle;
+            user-select: none;
+            border: 1px solid transparent;
+            padding: 10px 20px;
+            font-size: 1rem;
+            line-height: 1.5;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            color: #fff;
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            color: #fff;
+            background-color: var(--gray);
+            border-color: var(--gray);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--gray-dark);
+            border-color: var(--gray-dark);
+        }
+
+        .btn-outline-primary {
+            color: var(--primary);
+            background-color: transparent;
+            border-color: var(--primary);
+        }
+
+        .btn-outline-primary:hover {
+            color: #fff;
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+        }
+
+        .card {
+            background-color: #fff;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--gray-light);
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: var(--dark);
+        }
+
+        .card-text {
+            color: var(--gray-dark);
+        }
+
+        .info-box {
+            background-color: rgba(23, 162, 184, 0.1);
+            border-left: 4px solid var(--info);
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 0 var(--border-radius) var(--border-radius) 0;
+        }
+
+        .warning-box {
+            background-color: rgba(255, 193, 7, 0.1);
+            border-left: 4px solid var(--warning);
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 0 var(--border-radius) var(--border-radius) 0;
+        }
+
+        .success-box {
+            background-color: rgba(40, 167, 69, 0.1);
+            border-left: 4px solid var(--success);
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 0 var(--border-radius) var(--border-radius) 0;
+        }
+
+        .code-block {
+            background-color: var(--dark);
+            color: #f8f9fa;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            font-family: 'Courier New', Courier, monospace;
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+
+        .diagram-container {
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .progress-container {
+            margin: 30px 0;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background-color: var(--gray-light);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary);
+            width: 0;
+            transition: width 0.5s ease;
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            border-bottom: 1px dotted var(--gray);
+            cursor: help;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--dark);
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .accordion {
+            margin-bottom: 20px;
+        }
+
+        .accordion-header {
+            background-color: var(--light);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
+        }
+
+        .accordion-header:hover {
+            background-color: var(--gray-light);
+        }
+
+        .accordion-content {
+            padding: 15px;
+            border: 1px solid var(--gray-light);
+            border-top: none;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+            display: none;
+        }
+
+        .accordion-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .accordion.active .accordion-icon {
+            transform: rotate(180deg);
+        }
+
+        .accordion.active .accordion-content {
+            display: block;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .comparison-table th, 
+        .comparison-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        .comparison-table th {
+            background-color: var(--light);
+            font-weight: 600;
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table tr:hover td {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        @media (max-width: 992px) {
+            .wizard-container {
+                flex-direction: column;
+            }
+
+            .steps-sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--gray-light);
+                padding: 10px 0;
+            }
+
+            .step-item {
+                padding: 10px 20px 10px 45px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>DevOps Modernization Wizard</h1>
+            <p>A step-by-step guide to modernize your educational platform's infrastructure</p>
+        </div>
+
+        <div class="wizard-container">
+            <div class="steps-sidebar">
+                <ul class="step-list">
+                    <li class="step-item active" data-step="1">
+                        <span class="step-number">1</span>
+                        Assessment & Planning
+                    </li>
+                    <li class="step-item" data-step="2">
+                        <span class="step-number">2</span>
+                        Version Control Setup
+                    </li>
+                    <li class="step-item" data-step="3">
+                        <span class="step-number">3</span>
+                        CI/CD Pipeline
+                    </li>
+                    <li class="step-item" data-step="4">
+                        <span class="step-number">4</span>
+                        Infrastructure as Code
+                    </li>
+                    <li class="step-item" data-step="5">
+                        <span class="step-number">5</span>
+                        Containerization
+                    </li>
+                    <li class="step-item" data-step="6">
+                        <span class="step-number">6</span>
+                        Deployment Strategies
+                    </li>
+                    <li class="step-item" data-step="7">
+                        <span class="step-number">7</span>
+                        Monitoring & Alerting
+                    </li>
+                    <li class="step-item" data-step="8">
+                        <span class="step-number">8</span>
+                        Scaling Strategies
+                    </li>
+                    <li class="step-item" data-step="9">
+                        <span class="step-number">9</span>
+                        Implementation Plan
+                    </li>
+                </ul>
+            </div>
+
+            <div class="step-content">
+                <!-- Step 1: Assessment & Planning -->
+                <div class="step-panel" id="step-1">
+                    <h2 class="step-title">Assessment & Planning</h2>
+                    <p class="step-description">Let's evaluate your current setup and identify the key areas for improvement.</p>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Current Infrastructure</h3>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Current Hosting Environment</label>
+                            <select class="form-control form-select" id="hosting-environment">
+                                <option value="single-server">Single Server (VPS/Dedicated)</option>
+                                <option value="shared-hosting">Shared Hosting</option>
+                                <option value="cloud-basic">Basic Cloud Instance (AWS/GCP/Azure)</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Current Deployment Process</label>
+                            <select class="form-control form-select" id="deployment-process">
+                                <option value="manual-ftp">Manual (FTP/SFTP Upload)</option>
+                                <option value="manual-ssh">Manual (SSH & Git Pull)</option>
+                                <option value="basic-script">Basic Deployment Scripts</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Current Database Setup</label>
+                            <select class="form-control form-select" id="database-setup">
+                                <option value="single-instance">Single Database Instance</option>
+                                <option value="replicated">Primary with Read Replicas</option>
+                                <option value="managed">Managed Database Service</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Pain Points</h3>
+                        <p>Select the issues you're currently experiencing:</p>
+                        
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="pain-downtime" checked>
+                            <label for="pain-downtime">Deployment causes downtime</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="pain-performance" checked>
+                            <label for="pain-performance">Performance issues during peak usage</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="pain-manual" checked>
+                            <label for="pain-manual">Manual deployment process is time-consuming</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="pain-testing">
+                            <label for="pain-testing">Lack of automated testing</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="pain-monitoring">
+                            <label for="pain-monitoring">Limited monitoring and alerting</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="pain-scaling">
+                            <label for="pain-scaling">Difficulty scaling with increasing traffic</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="pain-backup">
+                            <label for="pain-backup">Concerns about backup and disaster recovery</label>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Modernization Goals</h3>
+                        <p>Prioritize your modernization goals:</p>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Primary Goal</label>
+                            <select class="form-control form-select" id="primary-goal">
+                                <option value="zero-downtime">Zero-downtime deployments</option>
+                                <option value="auto-scaling">Automatic scaling for traffic spikes</option>
+                                <option value="ci-cd">Automated testing and deployment</option>
+                                <option value="monitoring">Improved monitoring and alerting</option>
+                                <option value="cost">Cost optimization</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Secondary Goal</label>
+                            <select class="form-control form-select" id="secondary-goal">
+                                <option value="auto-scaling">Automatic scaling for traffic spikes</option>
+                                <option value="zero-downtime">Zero-downtime deployments</option>
+                                <option value="ci-cd">Automated testing and deployment</option>
+                                <option value="monitoring">Improved monitoring and alerting</option>
+                                <option value="cost">Cost optimization</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="info-box">
+                        <h4>Why This Matters</h4>
+                        <p>Understanding your current setup and pain points helps create a tailored modernization plan that addresses your specific needs without overwhelming you with unnecessary complexity.</p>
+                    </div>
+
+                    <div class="navigation-buttons">
+                        <div></div>
+                        <button class="btn btn-primary" id="next-btn" data-next="2">Next: Version Control Setup</button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Version Control Setup -->
+                <div class="step-panel hidden" id="step-2">
+                    <h2 class="step-title">Version Control Setup</h2>
+                    <p class="step-description">Proper version control is the foundation of modern development workflows.</p>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Git Repository Setup</h3>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Git Provider</label>
+                            <select class="form-control form-select" id="git-provider">
+                                <option value="github">GitHub</option>
+                                <option value="gitlab">GitLab</option>
+                                <option value="bitbucket">Bitbucket</option>
+                                <option value="azure-devops">Azure DevOps</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <small class="form-text">Choose the platform where your code will be hosted.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Repository Structure</label>
+                            <select class="form-control form-select" id="repo-structure">
+                                <option value="monorepo">Monorepo (all components in one repository)</option>
+                                <option value="multi-repo">Multiple repositories (frontend, backend, etc.)</option>
+                            </select>
+                            <small class="form-text">For educational platforms, a monorepo often simplifies deployment coordination.</small>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Branching Strategy</h3>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Recommended Branching Strategy</label>
+                            <select class="form-control form-select" id="branching-strategy">
+                                <option value="gitflow">GitFlow (develop, feature branches, release branches)</option>
+                                <option value="trunk">Trunk-based (main branch with short-lived feature branches)</option>
+                                <option value="github-flow">GitHub Flow (feature branches and main)</option>
+                            </select>
+                        </div>
+
+                        <div class="card">
+                            <h4 class="card-title">GitFlow Branching Strategy</h4>
+                            <div class="diagram-container">
+                                <svg width="600" height="200" viewBox="0 0 600 200">
+                                    <!-- Main branch -->
+                                    <line x1="50" y1="50" x2="550" y2="50" stroke="#28a745" stroke-width="4"/>
+                                    <text x="20" y="55" fill="#28a745" font-weight="bold">main</text>
+                                    
+                                    <!-- Develop branch -->
+                                    <line x1="50" y1="100" x2="550" y2="100" stroke="#4a6bdf" stroke-width="4"/>
+                                    <text x="20" y="105" fill="#4a6bdf" font-weight="bold">develop</text>
+                                    
+                                    <!-- Feature branches -->
+                                    <path d="M150,100 Q170,80 190,100 L250,100 Q270,120 290,100" fill="none" stroke="#dc3545" stroke-width="2"/>
+                                    <text x="200" y="80" fill="#dc3545">feature/login</text>
+                                    
+                                    <path d="M350,100 Q370,80 390,100 L450,100 Q470,120 490,100" fill="none" stroke="#dc3545" stroke-width="2"/>
+                                    <text x="400" y="80" fill="#dc3545">feature/quiz</text>
+                                    
+                                    <!-- Release branch -->
+                                    <path d="M300,100 L300,75 L400,75 L400,50" fill="none" stroke="#ffc107" stroke-width="3"/>
+                                    <text x="310" y="70" fill="#ffc107">release/v1.0</text>
+                                    
+                                    <!-- Hotfix branch -->
+                                    <path d="M450,50 Q470,30 490,50" fill="none" stroke="#17a2b8" stroke-width="3"/>
+                                    <text x="450" y="25" fill="#17a2b8">hotfix</text>
+                                </svg>
+                            </div>
+                            <p class="card-text">GitFlow works well for scheduled releases with clear development cycles, common in educational platforms.</p>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Git Best Practices</h3>
+                        
+                        <div class="accordion">
+                            <div class="accordion-header">
+                                <span>Commit Message Conventions</span>
+                                <span class="accordion-icon">▼</span>
+                            </div>
+                            <div class="accordion-content">
+                                <p>Use a consistent format for commit messages to improve readability and automation:</p>
+                                <div class="code-block">
+                                    feat: add new quiz feature<br>
+                                    fix: resolve login issue on mobile devices<br>
+                                    docs: update README with setup instructions<br>
+                                    style: format code according to style guide<br>
+                                    refactor: restructure authentication logic<br>
+                                    test: add unit tests for user registration<br>
+                                    chore: update dependencies
+                                </div>
+                                <p>This format (known as Conventional Commits) helps with automated versioning and changelog generation.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion">
+                            <div class="accordion-header">
+                                <span>Pull Request Workflow</span>
+                                <span class="accordion-icon">▼</span>
+                            </div>
+                            <div class="accordion-content">
+                                <p>Even as a solo developer, using pull requests provides several benefits:</p>
+                                <ul>
+                                    <li>Creates a checkpoint for self-review</li>
+                                    <li>Provides a clean place to run automated tests</li>
+                                    <li>Documents the changes and their purpose</li>
+                                    <li>Enables integration with CI/CD pipelines</li>
+                                </ul>
+                                <p>Consider creating a pull request template with sections for:</p>
+                                <ul>
+                                    <li>Description of changes</li>
+                                    <li>Testing performed</li>
+                                    <li>Screenshots (if UI changes)</li>
+                                    <li>Checklist of tasks completed</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion">
+                            <div class="accordion-header">
+                                <span>Gitignore and Secrets Management</span>
+                                <span class="accordion-icon">▼</span>
+                            </div>
+                            <div class="accordion-content">
+                                <p>Properly configure your .gitignore file to exclude:</p>
+                                <ul>
+                                    <li>Environment files (.env) containing secrets</li>
+                                    <li>Local configuration files</li>
+                                    <li>Build artifacts and dependencies</li>
+                                    <li>Log files and temporary files</li>
+                                </ul>
+                                <p>For secrets management:</p>
+                                <ul>
+                                    <li>Use environment variables for sensitive information</li>
+                                    <li>Consider a secrets manager like AWS Secrets Manager, HashiCorp Vault, or your Git provider's secrets feature</li>
+                                    <li>Never commit API keys, passwords, or tokens to your repository</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="warning-box">
+                        <h4>Important Note</h4>
+                        <p>If you're migrating an existing project to version control, be careful not to commit sensitive information like API keys, database credentials, or user data. Review your codebase carefully before the initial commit.</p>
+                    </div>
+
+                    <div class="navigation-buttons">
+                        <button class="btn btn-secondary" data-prev="1">Previous</button>
+                        <button class="btn btn-primary" data-next="3">Next: CI/CD Pipeline</button>
+                    </div>
+                </div>
+
+                <!-- Step 3: CI/CD Pipeline -->
+                <div class="step-panel hidden" id="step-3">
+                    <h2 class="step-title">CI/CD Pipeline</h2>
+                    <p class="step-description">Automate testing and deployment to improve reliability and save time.</p>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">CI/CD Tool Selection</h3>
+                        
+                        <div class="form-group">
+                            <label class="form-label">CI/CD Platform</label>
+                            <select class="form-control form-select" id="cicd-platform">
+                                <option value="github-actions">GitHub Actions</option>
+                                <option value="gitlab-ci">GitLab CI</option>
+                                <option value="jenkins">Jenkins</option>
+                                <option value="circle-ci">CircleCI</option>
+                                <option value="azure-pipelines">Azure Pipelines</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <small class="form-text">For solo developers, cloud-based CI/CD services like GitHub Actions or GitLab CI are often easier to set up and maintain.</small>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Pipeline Components</h3>
+                        
+                        <div class="card">
+                            <h4 class="card-title">Basic CI/CD Pipeline for Educational Platform</h4>
+                            <div class="diagram-container">
+                                <svg width="600" height="200" viewBox="0 0 600 200">
+                                    <!-- Pipeline stages -->
+                                    <rect x="50" y="80" width="100" height="40" rx="5" fill="#4a6bdf" />
+                                    <text x="100" y="105" text-anchor="middle" fill="white">Build</text>
+                                    
+                                    <rect x="180" y="80" width="100" height="40" rx="5" fill="#4a6bdf" />
+                                    <text x="230" y="105" text-anchor="middle" fill="white">Test</text>
+                                    
+                                    <rect x="310" y="80" width="100" height="40" rx="5" fill="#4a6bdf" />
+                                    <text x="360" y="105" text-anchor="middle" fill="white">Package</text>
+                                    
+                                    <rect x="440" y="80" width="100" height="40" rx="5" fill="#4a6bdf" />
+                                    <text x="490" y="105" text-anchor="middle" fill="white">Deploy</text>
+                                    
+                                    <!-- Arrows -->
+                                    <path d="M150,100 L180,100" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)" />
+                                    <path d="M280,100 L310,100" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)" />
+                                    <path d="M410,100 L440,100" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)" />
+                                    
+                                    <!-- Arrowhead marker -->
+                                    <defs>
+                                        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                                            <polygon points="0 0, 10 3.5, 0 7" fill="#333" />
+                                        </marker>
+                                    </defs>
+                                </svg>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Select Pipeline Components</label>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="comp-lint" checked>
+                                <label for="comp-lint">Linting and Code Quality Checks</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="comp-unit" checked>
+                                <label for="comp-unit">Unit Testing</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="comp-integration">
+                                <label for="comp-integration">Integration Testing</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="comp-security">
+                                <label for="comp-security">Security Scanning</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="comp-build" checked>
+                                <label for="comp-build">Build and Package</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="comp-deploy" checked>
+                                <label for="comp-deploy">Automated Deployment</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Sample CI/CD Configuration</h3>
+                        
+                        <div class="accordion">
+                            <div class="accordion-header">
+                                <span>GitHub Actions Workflow Example</span>
+                                <span class="accordion-icon">▼</span>
+                            </div>
+                            <div class="accordion-content">
+                                <p>Create a file at <code>.github/workflows/main.yml</code> in your repository:</p>
+                                <div class="code-block">
+name: CI/CD Pipeline<br><br>
+
+on:<br>
+&nbsp;&nbsp;push:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;branches: [ main, develop ]<br>
+&nbsp;&nbsp;pull_request:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;branches: [ main, develop ]<br><br>
+
+jobs:<br>
+&nbsp;&nbsp;build-and-test:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;runs-on: ubuntu-latest<br>
+&nbsp;&nbsp;&nbsp;&nbsp;steps:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- uses: actions/checkout@v2<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- name: Set up Node.js<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uses: actions/setup-node@v2<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;with:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;node-version: '16'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- name: Install dependencies<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;run: npm ci<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- name: Run linting<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;run: npm run lint<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- name: Run tests<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;run: npm test<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- name: Build application<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;run: npm run build<br><br>
+
+&nbsp;&nbsp;deploy:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;needs: build-and-test<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if: github.ref == 'refs/heads/main'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;runs-on: ubuntu-latest<br>
+&nbsp;&nbsp;&nbsp;&nbsp;steps:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- uses: actions/checkout@v2<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- name: Set up Node.js<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uses: actions/setup-node@v2<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;with:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;node-version: '16'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- name: Install dependencies<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;run: npm ci<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- name: Build application<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;run: npm run build<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- name: Deploy to production<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;run: |<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# Add your deployment script here<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# Example: ssh deploy@your-server './deploy.sh'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;env:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SERVER_IP: ${{ secrets.SERVER_IP }}<br>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Environment Configuration</h3>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Number of Environments</label>
+                            <select class="form-control form-select" id="num-environments">
+                                <option value="2">2 (Development and Production)</option>
+                                <option value="3">3 (Development, Staging, and Production)</option>
+                                <option value="4">4 (Development, Testing, Staging, and Production)</option>
+                            </select>
+                            <small class="form-text">For solo developers, a simpler setup with fewer environments is often more manageable.</small>
+                        </div>
+                        
+                        <div class="info-box">
+                            <h4>Environment Variables Management</h4>
+                            <p>Store environment-specific configuration in environment variables rather than in your codebase. Use your CI/CD platform's secrets management to securely store sensitive values.</p>
+                            <p>Example environment variables for an educational platform:</p>
+                            <ul>
+                                <li>DATABASE_URL</li>
+                                <li>API_KEYS (for third-party services)</li>
+                                <li>SMTP_CREDENTIALS (for email notifications)</li>
+                                <li>STORAGE_CREDENTIALS (for file uploads)</li>
+                                <li>FEATURE_FLAGS (to enable/disable features per environment)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="navigation-buttons">
+                        <button class="btn btn-secondary" data-prev="2">Previous</button>
+                        <button class="btn btn-primary" data-next="4">Next: Infrastructure as Code</button>
+                    </div>
+                </div>
+
+                <!-- Step 4: Infrastructure as Code -->
+                <div class="step-panel hidden" id="step-4">
+                    <h2 class="step-title">Infrastructure as Code</h2>
+                    <p class="step-description">Define your infrastructure in code to make it reproducible and version-controlled.</p>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">IaC Tool Selection</h3>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Infrastructure as Code Tool</label>
+                            <select class="form-control form-select" id="iac-tool">
+                                <option value="terraform">Terraform</option>
+                                <option value="cloudformation">AWS CloudFormation</option>
+                                <option value="arm">Azure Resource Manager</option>
+                                <option value="pulumi">Pulumi</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <small class="form-text">Terraform is a popular choice due to its cloud-agnostic approach and relatively gentle learning curve.</small>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Infrastructure Components</h3>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Select Infrastructure Components to Define as Code</label>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="iac-compute" checked>
+                                <label for="iac-compute">Compute Resources (Servers/Instances)</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="iac-database" checked>
+                                <label for="iac-database">Database</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="iac-storage">
+                                <label for="iac-storage">Storage (Object Storage/File System)</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="iac-network" checked>
+                                <label for="iac-network">Networking (VPC, Subnets, Security Groups)</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="iac-loadbalancer">
+                                <label for="iac-loadbalancer">Load Balancer</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="iac-cdn">
+                                <label for="iac-cdn">CDN</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="iac-dns">
+                                <label for="iac-dns">DNS Configuration</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Sample Infrastructure as Code</h3>
+                        
+                        <div class="accordion">
+                            <div class="accordion-header">
+                                <span>Terraform Example for AWS</span>
+                                <span class="accordion-icon">▼</span>
+                            </div>
+                            <div class="accordion-content">
+                                <p>Basic Terraform configuration for an educational platform on AWS:</p>
+                                <div class="code-block">
+# main.tf<br><br>
+
+provider "aws" {<br>
+&nbsp;&nbsp;region = "us-east-1"<br>
+}<br><br>
+
+# VPC and Networking<br>
+resource "aws_vpc" "main" {<br>
+&nbsp;&nbsp;cidr_block = "10.0.0.0/16"<br>
+&nbsp;&nbsp;tags = {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Name = "education-platform-vpc"<br>
+&nbsp;&nbsp;}<br>
+}<br><br>
+
+resource "aws_subnet" "public" {<br>
+&nbsp;&nbsp;vpc_id     = aws_vpc.main.id<br>
+&nbsp;&nbsp;cidr_block = "10.0.1.0/24"<br>
+&nbsp;&nbsp;map_public_ip_on_launch = true<br>
+&nbsp;&nbsp;tags = {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Name = "education-platform-public"<br>
+&nbsp;&nbsp;}<br>
+}<br><br>
+
+# Security Group<br>
+resource "aws_security_group" "web" {<br>
+&nbsp;&nbsp;name        = "web-sg"<br>
+&nbsp;&nbsp;description = "Allow web traffic"<br>
+&nbsp;&nbsp;vpc_id      = aws_vpc.main.id<br><br>
+
+&nbsp;&nbsp;ingress {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;from_port   = 80<br>
+&nbsp;&nbsp;&nbsp;&nbsp;to_port     = 80<br>
+&nbsp;&nbsp;&nbsp;&nbsp;protocol    = "tcp"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cidr_blocks = ["0.0.0.0/0"]<br>
+&nbsp;&nbsp;}<br><br>
+
+&nbsp;&nbsp;ingress {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;from_port   = 443<br>
+&nbsp;&nbsp;&nbsp;&nbsp;to_port     = 443<br>
+&nbsp;&nbsp;&nbsp;&nbsp;protocol    = "tcp"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cidr_blocks = ["0.0.0.0/0"]<br>
+&nbsp;&nbsp;}<br><br>
+
+&nbsp;&nbsp;egress {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;from_port   = 0<br>
+&nbsp;&nbsp;&nbsp;&nbsp;to_port     = 0<br>
+&nbsp;&nbsp;&nbsp;&nbsp;protocol    = "-1"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cidr_blocks = ["0.0.0.0/0"]<br>
+&nbsp;&nbsp;}<br>
+}<br><br>
+
+# EC2 Instance<br>
+resource "aws_instance" "web" {<br>
+&nbsp;&nbsp;ami           = "ami-0c55b159cbfafe1f0" # Amazon Linux 2<br>
+&nbsp;&nbsp;instance_type = "t3.small"<br>
+&nbsp;&nbsp;subnet_id     = aws_subnet.public.id<br>
+&nbsp;&nbsp;security_groups = [aws_security_group.web.id]<br><br>
+
+&nbsp;&nbsp;tags = {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Name = "education-platform-web"<br>
+&nbsp;&nbsp;}<br><br>
+
+&nbsp;&nbsp;user_data = <<-EOF<br>
+&nbsp;&nbsp;&nbsp;&nbsp;#!/bin/bash<br>
+&nbsp;&nbsp;&nbsp;&nbsp;yum update -y<br>
+&nbsp;&nbsp;&nbsp;&nbsp;yum install -y docker<br>
+&nbsp;&nbsp;&nbsp;&nbsp;service docker start<br>
+&nbsp;&nbsp;&nbsp;&nbsp;usermod -a -G docker ec2-user<br>
+&nbsp;&nbsp;EOF<br>
+}<br><br>
+
+# RDS Database<br>
+resource "aws_db_instance" "education_db" {<br>
+&nbsp;&nbsp;allocated_storage    = 20<br>
+&nbsp;&nbsp;storage_type         = "gp2"<br>
+&nbsp;&nbsp;engine               = "mysql"<br>
+&nbsp;&nbsp;engine_version       = "8.0"<br>
+&nbsp;&nbsp;instance_class       = "db.t3.small"<br>
+&nbsp;&nbsp;name                 = "education_db"<br>
+&nbsp;&nbsp;username             = "admin"<br>
+&nbsp;&nbsp;password             = "REPLACE_WITH_SECURE_PASSWORD"<br>
+&nbsp;&nbsp;parameter_group_name = "default.mysql8.0"<br>
+&nbsp;&nbsp;skip_final_snapshot  = true<br>
+}<br><br>
+
+# Output values<br>
+output "web_instance_ip" {<br>
+&nbsp;&nbsp;value = aws_instance.web.public_ip<br>
+}<br><br>
+
+output "database_endpoint" {<br>
+&nbsp;&nbsp;value = aws_db_instance.education_db.endpoint<br>
+}
+                                </div>
+                                <p>This is a simplified example. In a real-world scenario, you would:</p>
+                                <ul>
+                                    <li>Use variables for configuration</li>
+                                    <li>Split resources into multiple files</li>
+                                    <li>Use modules for reusable components</li>
+                                    <li>Store state in a remote backend</li>
+                                    <li>Never hardcode sensitive values like passwords</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">IaC Best Practices</h3>
+                        
+                        <div class="info-box">
+                            <h4>Tips for Infrastructure as Code</h4>
+                            <ul>
+                                <li><strong>Start small:</strong> Begin with a few core resources and gradually expand.</li>
+                                <li><strong>Use modules:</strong> Create reusable components for common patterns.</li>
+                                <li><strong>Version control:</strong> Store your IaC files in the same repository as your application code.</li>
+                                <li><strong>Remote state:</strong> Store your Terraform state in a remote backend (e.g., S3 bucket) for safety.</li>
+                                <li><strong>Parameterize:</strong> Use variables for environment-specific values.</li>
+                                <li><strong>Plan before apply:</strong> Always review changes before applying them.</li>
+                                <li><strong>Documentation:</strong> Document your infrastructure design and decisions.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="navigation-buttons">
+                        <button class="btn btn-secondary" data-prev="3">Previous</button>
+                        <button class="btn btn-primary" data-next="5">Next: Containerization</button>
+                    </div>
+                </div>
+
+                <!-- Step 5: Containerization -->
+                <div class="step-panel hidden" id="step-5">
+                    <h2 class="step-title">Containerization</h2>
+                    <p class="step-description">Package your application and its dependencies into containers for consistent deployment.</p>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Container Basics</h3>
+                        
+                        <div class="info-box">
+                            <h4>Why Containers?</h4>
+                            <p>Containers provide several benefits for educational platforms:</p>
+                            <ul>
+                                <li><strong>Consistency:</strong> Same environment from development to production</li>
+                                <li><strong>Isolation:</strong> Applications run independently without conflicts</li>
+                                <li><strong>Efficiency:</strong> Lighter than virtual machines</li>
+                                <li><strong>Scalability:</strong> Easy to scale up or down based on demand</li>
+                                <li><strong>Portability:</strong> Run anywhere that supports containers</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Container Technology</h3>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Container Runtime</label>
+                            <select class="form-control form-select" id="container-runtime">
+                                <option value="docker">Docker</option>
+                                <option value="containerd">containerd</option>
+                                <option value="podman">Podman</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <small class="form-text">Docker is the most widely used and has the best documentation for beginners.</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Container Orchestration</label>
+                            <select class="form-control form-select" id="container-orchestration">
+                                <option value="docker-compose">Docker Compose (simple multi-container apps)</option>
+                                <option value="kubernetes">Kubernetes (complex orchestration)</option>
+                                <option value="ecs">AWS ECS</option>
+                                <option value="none">None (single container only)</option>
+                            </select>
+                            <small class="form-text">For solo developers, Docker Compose offers a good balance of features and simplicity.</small>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Sample Containerization</h3>
+                        
+                        <div class="accordion">
+                            <div class="accordion-header">
+                                <span>Dockerfile Example</span>
+                                <span class="accordion-icon">▼</span>
+                            </div>
+                            <div class="accordion-content">
+                                <p>Basic Dockerfile for a Node.js educational platform:</p>
+                                <div class="code-block">
+# Dockerfile<br><br>
+
+# Build stage<br>
+FROM node:16-alpine as build<br>
+WORKDIR /app<br>
+COPY package*.json ./<br>
+RUN npm ci<br>
+COPY . .<br>
+RUN npm run build<br><br>
+
+# Production stage<br>
+FROM node:16-alpine<br>
+WORKDIR /app<br>
+COPY --from=build /app/package*.json ./<br>
+COPY --from=build /app/node_modules ./node_modules<br>
+COPY --from=build /app/dist ./dist<br><br>
+
+# Set environment variables<br>
+ENV NODE_ENV=production<br>
+ENV PORT=3000<br><br>
+
+# Expose the port the app runs on<br>
+EXPOSE 3000<br><br>
+
+# Start the application<br>
+CMD ["npm", "start"]
+                                </div>
+                                <p>This multi-stage build approach keeps the final image smaller by excluding build tools and dependencies.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion">
+                            <div class="accordion-header">
+                                <span>Docker Compose Example</span>
+                                <span class="accordion-icon">▼</span>
+                            </div>
+                            <div class="accordion-content">
+                                <p>Docker Compose file for a complete educational platform:</p>
+                                <div class="code-block">
+# docker-compose.yml<br><br>
+
+version: '3.8'<br><br>
+
+services:<br>
+&nbsp;&nbsp;web:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;build: .<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ports:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- "3000:3000"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;environment:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- NODE_ENV=production<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- DATABASE_URL=mysql://user:password@db:3306/education_db<br>
+&nbsp;&nbsp;&nbsp;&nbsp;depends_on:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- db<br>
+&nbsp;&nbsp;&nbsp;&nbsp;restart: always<br>
+&nbsp;&nbsp;&nbsp;&nbsp;volumes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- ./uploads:/app/uploads<br><br>
+
+&nbsp;&nbsp;db:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;image: mysql:8.0<br>
+&nbsp;&nbsp;&nbsp;&nbsp;environment:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- MYSQL_ROOT_PASSWORD=rootpassword<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- MYSQL_DATABASE=education_db<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- MYSQL_USER=user<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- MYSQL_PASSWORD=password<br>
+&nbsp;&nbsp;&nbsp;&nbsp;volumes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- db_data:/var/lib/mysql<br>
+&nbsp;&nbsp;&nbsp;&nbsp;restart: always<br><br>
+
+&nbsp;&nbsp;nginx:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;image: nginx:alpine<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ports:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- "80:80"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- "443:443"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;volumes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- ./nginx/default.conf:/etc/nginx/conf.d/default.conf<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- ./nginx/ssl:/etc/nginx/ssl<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- ./static:/usr/share/nginx/html/static<br>
+&nbsp;&nbsp;&nbsp;&nbsp;depends_on:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- web<br>
+&nbsp;&nbsp;&nbsp;&nbsp;restart: always<br><br>
+
+volumes:<br>
+&nbsp;&nbsp;db_data:
+                                </div>
+                                <p>This setup includes:</p>
+                                <ul>
+                                    <li>A web application container</li>
+                                    <li>A MySQL database container</li>
+                                    <li>An Nginx container for serving static files and as a reverse proxy</li>
+                                    <li>Persistent volumes for database data and uploads</li>
+                                </ul>
+                                <p>Note: In a production environment, you would use environment variables or a secrets manager rather than hardcoding credentials.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Container Best Practices</h3>
+                        
+                        <div class="info-box">
+                            <h4>Tips for Containerization</h4>
+                            <ul>
+                                <li><strong>Use specific image tags:</strong> Avoid 'latest' to ensure consistency.</li>
+                                <li><strong>Minimize image size:</strong> Use multi-stage builds and Alpine-based images.</li>
+                                <li><strong>One service per container:</strong> Follow the single responsibility principle.</li>
+                                <li><strong>Use environment variables:</strong> Make containers configurable without rebuilding.</li>
+                                <li><strong>Health checks:</strong> Add health checks to detect and recover from failures.</li>
+                                <li><strong>Security:</strong> Run containers as non-root users when possible.</li>
+                                <li><strong>Persistent data:</strong> Use volumes for data that needs to persist.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="navigation-buttons">
+                        <button class="btn btn-secondary" data-prev="4">Previous</button>
+                        <button class="btn btn-primary" data-next="6">Next: Deployment Strategies</button>
+                    </div>
+                </div>
+
+                <!-- Step 6: Deployment Strategies -->
+                <div class="step-panel hidden" id="step-6">
+                    <h2 class="step-title">Deployment Strategies</h2>
+                    <p class="step-description">Implement deployment approaches that minimize downtime and risk.</p>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Deployment Strategy Selection</h3>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Deployment Strategy</label>
+                            <select class="form-control form-select" id="deployment-strategy">
+                                <option value="blue-green">Blue-Green Deployment</option>
+                                <option value="rolling">Rolling Deployment</option>
+                                <option value="canary">Canary Deployment</option>
+                                <option value="recreate">Recreate (Downtime Acceptable)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="card">
+                            <h4 class="card-title">Blue-Green Deployment</h4>
+                            <div class="diagram-container">
+                                <svg width="600" height="250" viewBox="0 0 600 250">
+                                    <!-- Users -->
+                                    <circle cx="300" cy="50" r="20" fill="#6c757d" />
+                                    <text x="300" y="55" text-anchor="middle" fill="white">Users</text>
+                                    
+                                    <!-- Load Balancer -->
+                                    <rect x="250" y="100" width="100" height="40" rx="5" fill="#ffc107" />
+                                    <text x="300" y="125" text-anchor="middle" fill="#212529">Load Balancer</text>
+                                    
+                                    <!-- Blue Environment -->
+                                    <rect x="100" y="180" width="150" height="60" rx="5" fill="#4a6bdf" />
+                                    <text x="175" y="215" text-anchor="middle" fill="white">Blue Environment</text>
+                                    <text x="175" y="235" text-anchor="middle" fill="white" font-size="12">(Current Version)</text>
+                                    
+                                    <!-- Green Environment -->
+                                    <rect x="350" y="180" width="150" height="60" rx="5" fill="#28a745" />
+                                    <text x="425" y="215" text-anchor="middle" fill="white">Green Environment</text>
+                                    <text x="425" y="235" text-anchor="middle" fill="white" font-size="12">(New Version)</text>
+                                    
+                                    <!-- Arrows -->
+                                    <line x1="300" y1="70" x2="300" y2="100" stroke="#333" stroke-width="2" />
+                                    <line x1="250" y1="140" x2="175" y2="180" stroke="#333" stroke-width="2" />
+                                    <line x1="350" y1="140" x2="425" y2="180" stroke="#333" stroke-width="2" stroke-dasharray="5,5" />
+                                </svg>
+                            </div>
+                            <p class="card-text">Blue-Green deployment maintains two identical environments. After deploying the new version to the inactive environment (Green) and testing it, traffic is switched from the old version (Blue) to the new one. This provides zero-downtime deployments and easy rollbacks.</p>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Deployment Strategy Comparison</h3>
+                        
+                        <table class="comparison-table">
+                            <thead>
+                                <tr>
+                                    <th>Strategy</th>
+                                    <th>Pros</th>
+                                    <th>Cons</th>
+                                    <th>Best For</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Blue-Green</strong></td>
+                                    <td>
+                                        <ul>
+                                            <li>Zero downtime</li>
+                                            <li>Easy rollback</li>
+                                            <li>Full testing before switch</li>
+                                        </ul>
+                                    </td>
+                                    <td>
+                                        <ul>
+                                            <li>Requires double resources</li>
+                                            <li>Database migrations can be complex</li>
+                                        </ul>
+                                    </td>
+                                    <td>Educational platforms with high availability requirements</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Rolling</strong></td>
+                                    <td>
+                                        <ul>
+                                            <li>No resource duplication</li>
+                                            <li>Gradual deployment</li>
+                                            <li>Automatic rollback on failure</li>
+                                        </ul>
+                                    </td>
+                                    <td>
+                                        <ul>
+                                            <li>Multiple versions running simultaneously</li>
+                                            <li>Longer deployment time</li>
+                                        </ul>
+                                    </td>
+                                    <td>Platforms with stateless components</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Canary</strong></td>
+                                    <td>
+                                        <ul>
+                                            <li>Reduced risk</li>
+                                            <li>Real user testing</li>
+                                            <li>Targeted deployment</li>
+                                        </ul>
+                                    </td>
+                                    <td>
+                                        <ul>
+                                            <li>Complex traffic routing</li>
+                                            <li>Monitoring overhead</li>
+                                        </ul>
+                                    </td>
+                                    <td>Testing new features with a subset of users</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Recreate</strong></td>
+                                    <td>
+                                        <ul>
+                                            <li>Simplest to implement</li>
+                                            <li>No version compatibility issues</li>
+                                        </ul>
+                                    </td>
+                                    <td>
+                                        <ul>
+                                            <li>Downtime during deployment</li>
+                                            <li>No easy rollback</li>
+                                        </ul>
+                                    </td>
+                                    <td>Development environments or non-critical services</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Implementation Example</h3>
+                        
+                        <div class="accordion">
+                            <div class="accordion-header">
+                                <span>Blue-Green Deployment with Nginx</span>
+                                <span class="accordion-icon">▼</span>
+                            </div>
+                            <div class="accordion-content">
+                                <p>A simple Blue-Green deployment setup using Nginx as a reverse proxy:</p>
+                                <div class="code-block">
+# nginx.conf<br><br>
+
+upstream blue {<br>
+&nbsp;&nbsp;server blue-app:3000;<br>
+}<br><br>
+
+upstream green {<br>
+&nbsp;&nbsp;server green-app:3000;<br>
+}<br><br>
+
+server {<br>
+&nbsp;&nbsp;listen 80;<br>
+&nbsp;&nbsp;server_name example.com;<br><br>
+
+&nbsp;&nbsp;location / {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;proxy_pass http://blue;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;proxy_set_header Host $host;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;proxy_set_header X-Real-IP $remote_addr;<br>
+&nbsp;&nbsp;}<br>
+}
+                                </div>
+                                <p>Deployment script to switch between environments:</p>
+                                <div class="code-block">
+#!/bin/bash<br><br>
+
+# Deploy new version to the inactive environment<br>
+if grep -q "proxy_pass http://blue" /etc/nginx/nginx.conf; then<br>
+&nbsp;&nbsp;# Blue is active, deploy to green<br>
+&nbsp;&nbsp;echo "Deploying to green environment..."<br>
+&nbsp;&nbsp;docker-compose up -d --no-deps green-app<br>
+&nbsp;&nbsp;<br>
+&nbsp;&nbsp;# Wait for green to be ready<br>
+&nbsp;&nbsp;echo "Waiting for green environment to be ready..."<br>
+&nbsp;&nbsp;sleep 10<br>
+&nbsp;&nbsp;<br>
+&nbsp;&nbsp;# Run tests against green<br>
+&nbsp;&nbsp;echo "Running tests against green environment..."<br>
+&nbsp;&nbsp;# Add your test commands here<br>
+&nbsp;&nbsp;<br>
+&nbsp;&nbsp;# Switch traffic to green<br>
+&nbsp;&nbsp;echo "Switching traffic to green environment..."<br>
+&nbsp;&nbsp;sed -i 's/proxy_pass http:\/\/blue/proxy_pass http:\/\/green/' /etc/nginx/nginx.conf<br>
+&nbsp;&nbsp;nginx -s reload<br>
+else<br>
+&nbsp;&nbsp;# Green is active, deploy to blue<br>
+&nbsp;&nbsp;echo "Deploying to blue environment..."<br>
+&nbsp;&nbsp;docker-compose up -d --no-deps blue-app<br>
+&nbsp;&nbsp;<br>
+&nbsp;&nbsp;# Wait for blue to be ready<br>
+&nbsp;&nbsp;echo "Waiting for blue environment to be ready..."<br>
+&nbsp;&nbsp;sleep 10<br>
+&nbsp;&nbsp;<br>
+&nbsp;&nbsp;# Run tests against blue<br>
+&nbsp;&nbsp;echo "Running tests against blue environment..."<br>
+&nbsp;&nbsp;# Add your test commands here<br>
+&nbsp;&nbsp;<br>
+&nbsp;&nbsp;# Switch traffic to blue<br>
+&nbsp;&nbsp;echo "Switching traffic to blue environment..."<br>
+&nbsp;&nbsp;sed -i 's/proxy_pass http:\/\/green/proxy_pass http:\/\/blue/' /etc/nginx/nginx.conf<br>
+&nbsp;&nbsp;nginx -s reload<br>
+fi<br><br>
+
+echo "Deployment completed successfully!"
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="warning-box">
+                        <h4>Database Considerations</h4>
+                        <p>Database migrations require special attention in zero-downtime deployments:</p>
+                        <ul>
+                            <li>Use backward-compatible migrations (additive changes only)</li>
+                            <li>Implement database versioning</li>
+                            <li>Consider a separate process for database migrations</li>
+                            <li>Test migrations thoroughly in a staging environment</li>
+                        </ul>
+                    </div>
+
+                    <div class="navigation-buttons">
+                        <button class="btn btn-secondary" data-prev="5">Previous</button>
+                        <button class="btn btn-primary" data-next="7">Next: Monitoring & Alerting</button>
+                    </div>
+                </div>
+
+                <!-- Step 7: Monitoring & Alerting -->
+                <div class="step-panel hidden" id="step-7">
+                    <h2 class="step-title">Monitoring & Alerting</h2>
+                    <p class="step-description">Set up systems to track performance, detect issues, and alert you when problems occur.</p>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Monitoring Tool Selection</h3>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Monitoring Solution</label>
+                            <select class="form-control form-select" id="monitoring-solution">
+                                <option value="prometheus-grafana">Prometheus + Grafana</option>
+                                <option value="cloudwatch">AWS CloudWatch</option>
+                                <option value="datadog">Datadog</option>
+                                <option value="newrelic">New Relic</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <small class="form-text">Prometheus with Grafana is a powerful open-source combination with a strong community.</small>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Key Metrics to Monitor</h3>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Select Metrics to Monitor</label>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="metric-cpu" checked>
+                                <label for="metric-cpu">CPU Usage</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="metric-memory" checked>
+                                <label for="metric-memory">Memory Usage</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="metric-disk" checked>
+                                <label for="metric-disk">Disk Usage</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="metric-network" checked>
+                                <label for="metric-network">Network Traffic</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="metric-response" checked>
+                                <label for="metric-response">Response Times</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="metric-error" checked>
+                                <label for="metric-error">Error Rates</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="metric-db">
+                                <label for="metric-db">Database Performance</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="metric-users">
+                                <label for="metric-users">Active Users</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="metric-business">
+                                <label for="metric-business">Business Metrics (Enrollments, Completions)</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Alerting Setup</h3>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Alert Notification Channels</label>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="alert-email" checked>
+                                <label for="alert-email">Email</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="alert-sms">
+                                <label for="alert-sms">SMS</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="alert-slack" checked>
+                                <label for="alert-slack">Slack/Discord</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="alert-pagerduty">
+                                <label for="alert-pagerduty">PagerDuty</label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Alert Priority Levels</label>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="priority-critical" checked>
+                                <label for="priority-critical">Critical (Immediate attention required)</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="priority-warning" checked>
+                                <label for="priority-warning">Warning (Attention needed soon)</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="priority-info" checked>
+                                <label for="priority-info">Info (For awareness only)</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Monitoring Implementation</h3>
+                        
+                        <div class="accordion">
+                            <div class="accordion-header">
+                                <span>Prometheus & Grafana Setup with Docker Compose</span>
+                                <span class="accordion-icon">▼</span>
+                            </div>
+                            <div class="accordion-content">
+                                <p>Add monitoring services to your Docker Compose file:</p>
+                                <div class="code-block">
+# docker-compose.yml (additional services)<br><br>
+
+services:<br>
+&nbsp;&nbsp;# ... your existing services ...<br><br>
+
+&nbsp;&nbsp;prometheus:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;image: prom/prometheus:latest<br>
+&nbsp;&nbsp;&nbsp;&nbsp;volumes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- prometheus_data:/prometheus<br>
+&nbsp;&nbsp;&nbsp;&nbsp;command:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- '--config.file=/etc/prometheus/prometheus.yml'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- '--storage.tsdb.path=/prometheus'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- '--web.console.libraries=/usr/share/prometheus/console_libraries'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- '--web.console.templates=/usr/share/prometheus/consoles'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ports:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- "9090:9090"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;restart: always<br><br>
+
+&nbsp;&nbsp;grafana:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;image: grafana/grafana:latest<br>
+&nbsp;&nbsp;&nbsp;&nbsp;volumes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- grafana_data:/var/lib/grafana<br>
+&nbsp;&nbsp;&nbsp;&nbsp;environment:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- GF_SECURITY_ADMIN_PASSWORD=secure_password<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- GF_USERS_ALLOW_SIGN_UP=false<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ports:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- "3001:3000"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;depends_on:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- prometheus<br>
+&nbsp;&nbsp;&nbsp;&nbsp;restart: always<br><br>
+
+&nbsp;&nbsp;node-exporter:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;image: prom/node-exporter:latest<br>
+&nbsp;&nbsp;&nbsp;&nbsp;volumes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- /proc:/host/proc:ro<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- /sys:/host/sys:ro<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- /:/rootfs:ro<br>
+&nbsp;&nbsp;&nbsp;&nbsp;command:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- '--path.procfs=/host/proc'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- '--path.sysfs=/host/sys'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ports:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- "9100:9100"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;restart: always<br><br>
+
+&nbsp;&nbsp;cadvisor:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;image: gcr.io/cadvisor/cadvisor:latest<br>
+&nbsp;&nbsp;&nbsp;&nbsp;volumes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- /:/rootfs:ro<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- /var/run:/var/run:ro<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- /sys:/sys:ro<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- /var/lib/docker/:/var/lib/docker:ro<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ports:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- "8080:8080"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;restart: always<br><br>
+
+volumes:<br>
+&nbsp;&nbsp;# ... your existing volumes ...<br>
+&nbsp;&nbsp;prometheus_data:<br>
+&nbsp;&nbsp;grafana_data:
+                                </div>
+                                <p>Prometheus configuration file (prometheus.yml):</p>
+                                <div class="code-block">
+# prometheus.yml<br><br>
+
+global:<br>
+&nbsp;&nbsp;scrape_interval: 15s<br>
+&nbsp;&nbsp;evaluation_interval: 15s<br><br>
+
+alerting:<br>
+&nbsp;&nbsp;alertmanagers:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;- static_configs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- targets:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# - alertmanager:9093<br><br>
+
+rule_files:<br>
+&nbsp;&nbsp;# - "first_rules.yml"<br><br>
+
+scrape_configs:<br>
+&nbsp;&nbsp;- job_name: 'prometheus'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;static_configs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- targets: ['localhost:9090']<br><br>
+
+&nbsp;&nbsp;- job_name: 'node-exporter'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;static_configs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- targets: ['node-exporter:9100']<br><br>
+
+&nbsp;&nbsp;- job_name: 'cadvisor'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;static_configs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- targets: ['cadvisor:8080']<br><br>
+
+&nbsp;&nbsp;- job_name: 'web'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;static_configs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- targets: ['web:3000']
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Log Management</h3>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Log Management Solution</label>
+                            <select class="form-control form-select" id="log-solution">
+                                <option value="elk">ELK Stack (Elasticsearch, Logstash, Kibana)</option>
+                                <option value="loki">Loki + Grafana</option>
+                                <option value="cloudwatch">AWS CloudWatch Logs</option>
+                                <option value="papertrail">Papertrail</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <small class="form-text">Loki with Grafana provides a lightweight solution that integrates well with Prometheus.</small>
+                        </div>
+                        
+                        <div class="info-box">
+                            <h4>Log Management Best Practices</h4>
+                            <ul>
+                                <li><strong>Structured logging:</strong> Use JSON format for machine-readable logs</li>
+                                <li><strong>Log levels:</strong> Use appropriate log levels (DEBUG, INFO, WARN, ERROR)</li>
+                                <li><strong>Context:</strong> Include relevant context in logs (request ID, user ID)</li>
+                                <li><strong>Retention policy:</strong> Define how long to keep logs</li>
+                                <li><strong>Log rotation:</strong> Implement log rotation to manage file sizes</li>
+                                <li><strong>Sensitive data:</strong> Avoid logging sensitive information</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="navigation-buttons">
+                        <button class="btn btn-secondary" data-prev="6">Previous</button>
+                        <button class="btn btn-primary" data-next="8">Next: Scaling Strategies</button>
+                    </div>
+                </div>
+
+                <!-- Step 8: Scaling Strategies -->
+                <div class="step-panel hidden" id="step-8">
+                    <h2 class="step-title">Scaling Strategies</h2>
+                    <p class="step-description">Implement approaches to handle growing traffic and user base efficiently.</p>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Scaling Types</h3>
+                        
+                        <div class="card">
+                            <h4 class="card-title">Vertical vs. Horizontal Scaling</h4>
+                            <div class="diagram-container">
+                                <svg width="600" height="250" viewBox="0 0 600 250">
+                                    <!-- Vertical Scaling -->
+                                    <rect x="50" y="50" width="200" height="40" rx="5" fill="#4a6bdf" />
+                                    <text x="150" y="75" text-anchor="middle" fill="white">Small Server</text>
+                                    
+                                    <text x="150" y="120" text-anchor="middle" fill="#333">Vertical Scaling</text>
+                                    <path d="M150,100 L150,140" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)" />
+                                    
+                                    <rect x="50" y="150" width="200" height="80" rx="5" fill="#4a6bdf" />
+                                    <text x="150" y="195" text-anchor="middle" fill="white">Larger Server</text>
+                                    
+                                    <!-- Horizontal Scaling -->
+                                    <rect x="350" y="50" width="200" height="40" rx="5" fill="#28a745" />
+                                    <text x="450" y="75" text-anchor="middle" fill="white">Server 1</text>
+                                    
+                                    <text x="450" y="120" text-anchor="middle" fill="#333">Horizontal Scaling</text>
+                                    <path d="M450,100 L450,140" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)" />
+                                    
+                                    <rect x="350" y="150" width="80" height="40" rx="5" fill="#28a745" />
+                                    <text x="390" y="175" text-anchor="middle" fill="white">Server 1</text>
+                                    
+                                    <rect x="450" y="150" width="80" height="40" rx="5" fill="#28a745" />
+                                    <text x="490" y="175" text-anchor="middle" fill="white">Server 2</text>
+                                    
+                                    <rect x="550" y="150" width="80" height="40" rx="5" fill="#28a745" opacity="0.5" />
+                                    <text x="590" y="175" text-anchor="middle" fill="white">Server 3+</text>
+                                    
+                                    <!-- Arrowhead marker -->
+                                    <defs>
+                                        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                                            <polygon points="0 0, 10 3.5, 0 7" fill="#333" />
+                                        </marker>
+                                    </defs>
+                                </svg>
+                            </div>
+                            <p class="card-text"><strong>Vertical Scaling:</strong> Increasing the resources (CPU, RAM) of a single server. Simpler but has limits.<br><strong>Horizontal Scaling:</strong> Adding more servers to distribute the load. More complex but offers better scalability and redundancy.</p>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Scaling Strategy Selection</h3>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Primary Scaling Approach</label>
+                            <select class="form-control form-select" id="scaling-approach">
+                                <option value="horizontal">Horizontal Scaling (Multiple Instances)</option>
+                                <option value="vertical">Vertical Scaling (Larger Instances)</option>
+                                <option value="hybrid">Hybrid Approach</option>
+                            </select>
+                            <small class="form-text">Horizontal scaling is generally preferred for modern web applications due to its flexibility and fault tolerance.</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Scaling Trigger</label>
+                            <select class="form-control form-select" id="scaling-trigger">
+                                <option value="auto">Auto-scaling based on metrics</option>
+                                <option value="scheduled">Scheduled scaling (for predictable patterns)</option>
+                                <option value="manual">Manual scaling</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Application Components to Scale</h3>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Select Components to Scale</label>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="scale-web" checked>
+                                <label for="scale-web">Web/Application Servers</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="scale-db">
+                                <label for="scale-db">Database (Read Replicas)</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="scale-cache">
+                                <label for="scale-cache">Cache Layer</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="scale-static">
+                                <label for="scale-static">Static Content Delivery (CDN)</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="scale-queue">
+                                <label for="scale-queue">Background Job Workers</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Scaling Implementation</h3>
+                        
+                        <div class="accordion">
+                            <div class="accordion-header">
+                                <span>Auto-scaling with Docker Swarm</span>
+                                <span class="accordion-icon">▼</span>
+                            </div>
+                            <div class="accordion-content">
+                                <p>Docker Swarm is a simpler alternative to Kubernetes for container orchestration and scaling:</p>
+                                <div class="code-block">
+# Initialize Docker Swarm<br>
+docker swarm init<br><br>
+
+# Deploy a service with scaling<br>
+docker service create \<br>
+&nbsp;&nbsp;--name education-web \<br>
+&nbsp;&nbsp;--replicas 3 \<br>
+&nbsp;&nbsp;--publish 80:3000 \<br>
+&nbsp;&nbsp;--env-file .env \<br>
+&nbsp;&nbsp;--mount type=volume,source=uploads,destination=/app/uploads \<br>
+&nbsp;&nbsp;your-docker-image:latest<br><br>
+
+# Scale the service manually<br>
+docker service scale education-web=5<br><br>
+
+# Update the service (zero-downtime deployment)<br>
+docker service update \<br>
+&nbsp;&nbsp;--image your-docker-image:new-version \<br>
+&nbsp;&nbsp;--update-parallelism 1 \<br>
+&nbsp;&nbsp;--update-delay 30s \<br>
+&nbsp;&nbsp;education-web
+                                </div>
+                                <p>For automatic scaling, you can use a tool like Docker Autoscaler or implement a custom solution using the Docker API and monitoring metrics.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion">
+                            <div class="accordion-header">
+                                <span>Database Scaling Strategies</span>
+                                <span class="accordion-icon">▼</span>
+                            </div>
+                            <div class="accordion-content">
+                                <p>Database scaling requires different approaches than application scaling:</p>
+                                <ul>
+                                    <li><strong>Read Replicas:</strong> Create read-only copies of your database to distribute read queries</li>
+                                    <li><strong>Connection Pooling:</strong> Efficiently manage database connections</li>
+                                    <li><strong>Sharding:</strong> Split data across multiple database instances based on a key</li>
+                                    <li><strong>Caching:</strong> Use Redis or Memcached to reduce database load</li>
+                                </ul>
+                                <p>Example setup for MySQL read replicas:</p>
+                                <div class="code-block">
+# docker-compose.yml (partial)<br><br>
+
+services:<br>
+&nbsp;&nbsp;db-primary:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;image: mysql:8.0<br>
+&nbsp;&nbsp;&nbsp;&nbsp;environment:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- MYSQL_ROOT_PASSWORD=rootpassword<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- MYSQL_DATABASE=education_db<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- MYSQL_USER=user<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- MYSQL_PASSWORD=password<br>
+&nbsp;&nbsp;&nbsp;&nbsp;volumes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- db_primary_data:/var/lib/mysql<br>
+&nbsp;&nbsp;&nbsp;&nbsp;command: --server-id=1 --log-bin=mysql-bin --binlog-format=ROW<br>
+&nbsp;&nbsp;&nbsp;&nbsp;restart: always<br><br>
+
+&nbsp;&nbsp;db-replica:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;image: mysql:8.0<br>
+&nbsp;&nbsp;&nbsp;&nbsp;environment:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- MYSQL_ROOT_PASSWORD=rootpassword<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- MYSQL_DATABASE=education_db<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- MYSQL_USER=user<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- MYSQL_PASSWORD=password<br>
+&nbsp;&nbsp;&nbsp;&nbsp;volumes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- db_replica_data:/var/lib/mysql<br>
+&nbsp;&nbsp;&nbsp;&nbsp;command: --server-id=2 --log-bin=mysql-bin --binlog-format=ROW --read-only=1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;restart: always<br>
+&nbsp;&nbsp;&nbsp;&nbsp;depends_on:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- db-primary<br><br>
+
+volumes:<br>
+&nbsp;&nbsp;db_primary_data:<br>
+&nbsp;&nbsp;db_replica_data:
+                                </div>
+                                <p>Additional setup is required to configure replication between the primary and replica.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Performance Optimization</h3>
+                        
+                        <div class="info-box">
+                            <h4>Performance Optimization Techniques</h4>
+                            <ul>
+                                <li><strong>Caching:</strong> Implement application-level caching, browser caching, and CDN</li>
+                                <li><strong>Database optimization:</strong> Index frequently queried fields, optimize queries</li>
+                                <li><strong>Code optimization:</strong> Minimize JavaScript, CSS, and image sizes</li>
+                                <li><strong>Lazy loading:</strong> Load resources only when needed</li>
+                                <li><strong>Asynchronous processing:</strong> Move time-consuming tasks to background jobs</li>
+                                <li><strong>Connection pooling:</strong> Reuse connections to databases and external services</li>
+                                <li><strong>Load balancing algorithms:</strong> Choose appropriate algorithms (round-robin, least connections)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="navigation-buttons">
+                        <button class="btn btn-secondary" data-prev="7">Previous</button>
+                        <button class="btn btn-primary" data-next="9">Next: Implementation Plan</button>
+                    </div>
+                </div>
+
+                <!-- Step 9: Implementation Plan -->
+                <div class="step-panel hidden" id="step-9">
+                    <h2 class="step-title">Implementation Plan</h2>
+                    <p class="step-description">Create a phased approach to modernize your infrastructure with minimal disruption.</p>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Phased Implementation</h3>
+                        
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 0%"></div>
+                            </div>
+                            <div class="progress-text">
+                                <span>Phase 1: Foundation</span>
+                                <span>Phase 2: Automation</span>
+                                <span>Phase 3: Scaling</span>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <h4 class="card-title">Phase 1: Foundation (Weeks 1-2)</h4>
+                            <ul>
+                                <li>Set up version control with Git</li>
+                                <li>Implement proper branching strategy</li>
+                                <li>Create basic automated tests</li>
+                                <li>Containerize application with Docker</li>
+                                <li>Set up basic monitoring</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="card">
+                            <h4 class="card-title">Phase 2: Automation (Weeks 3-4)</h4>
+                            <ul>
+                                <li>Implement CI/CD pipeline</li>
+                                <li>Define infrastructure as code</li>
+                                <li>Set up zero-downtime deployment</li>
+                                <li>Enhance monitoring and alerting</li>
+                                <li>Implement database backup and recovery procedures</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="card">
+                            <h4 class="card-title">Phase 3: Scaling (Weeks 5-6)</h4>
+                            <ul>
+                                <li>Implement horizontal scaling for web tier</li>
+                                <li>Set up database read replicas</li>
+                                <li>Implement caching layer</li>
+                                <li>Configure auto-scaling based on metrics</li>
+                                <li>Fine-tune performance and resource allocation</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Risk Mitigation</h3>
+                        
+                        <div class="warning-box">
+                            <h4>Potential Risks and Mitigations</h4>
+                            <table class="comparison-table">
+                                <thead>
+                                    <tr>
+                                        <th>Risk</th>
+                                        <th>Mitigation Strategy</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Data loss during migration</td>
+                                        <td>
+                                            <ul>
+                                                <li>Create comprehensive backups before any changes</li>
+                                                <li>Test restoration procedures</li>
+                                                <li>Implement incremental changes where possible</li>
+                                            </ul>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Extended downtime during transition</td>
+                                        <td>
+                                            <ul>
+                                                <li>Implement changes during low-traffic periods</li>
+                                                <li>Use blue-green deployment to minimize downtime</li>
+                                                <li>Have rollback plans ready for each step</li>
+                                            </ul>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Unexpected costs</td>
+                                        <td>
+                                            <ul>
+                                                <li>Start with minimal infrastructure and scale as needed</li>
+                                                <li>Set up cost monitoring and alerts</li>
+                                                <li>Use spot/preemptible instances for non-critical components</li>
+                                            </ul>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Learning curve for new technologies</td>
+                                        <td>
+                                            <ul>
+                                                <li>Allocate time for learning and experimentation</li>
+                                                <li>Start with simpler implementations and iterate</li>
+                                                <li>Document processes as you learn them</li>
+                                            </ul>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Resource Requirements</h3>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Time Commitment</label>
+                            <select class="form-control form-select" id="time-commitment">
+                                <option value="minimal">Minimal (few hours per week)</option>
+                                <option value="moderate" selected>Moderate (1-2 days per week)</option>
+                                <option value="significant">Significant (3+ days per week)</option>
+                                <option value="full-time">Full-time focus</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Budget Considerations</label>
+                            <select class="form-control form-select" id="budget-level">
+                                <option value="minimal">Minimal (use free tiers where possible)</option>
+                                <option value="moderate" selected>Moderate (some paid services)</option>
+                                <option value="significant">Significant (optimized for performance)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Next Steps</h3>
+                        
+                        <div class="success-box">
+                            <h4>Getting Started</h4>
+                            <p>Based on your selections, here are your immediate next steps:</p>
+                            <ol>
+                                <li>Set up a Git repository for your codebase</li>
+                                <li>Create a basic Dockerfile for your application</li>
+                                <li>Implement a simple CI/CD pipeline with GitHub Actions</li>
+                                <li>Set up basic monitoring with Prometheus and Grafana</li>
+                                <li>Document your current infrastructure and deployment process</li>
+                            </ol>
+                            <p>These steps will establish the foundation for your modernization journey while providing immediate benefits in terms of deployment consistency and visibility.</p>
+                        </div>
+                    </div>
+
+                    <div class="navigation-buttons">
+                        <button class="btn btn-secondary" data-prev="8">Previous</button>
+                        <button class="btn btn-primary" id="finish-btn">Generate Implementation Plan</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show only the first step initially
+            const steps = document.querySelectorAll('.step-panel');
+            steps.forEach(step => {
+                if (step.id !== 'step-1') {
+                    step.classList.add('hidden');
+                }
+            });
+
+            // Navigation between steps
+            document.addEventListener('click', function(e) {
+                if (e.target.matches('[data-next]')) {
+                    const currentStep = e.target.closest('.step-panel');
+                    const nextStepNumber = e.target.getAttribute('data-next');
+                    const nextStep = document.getElementById(`step-${nextStepNumber}`);
+                    
+                    currentStep.classList.add('hidden');
+                    nextStep.classList.remove('hidden');
+                    
+                    // Update sidebar active state
+                    updateSidebarActiveState(nextStepNumber);
+                    
+                    // Mark previous step as completed
+                    const currentStepNumber = currentStep.id.split('-')[1];
+                    markStepAsCompleted(currentStepNumber);
+                    
+                    // Scroll to top
+                    window.scrollTo(0, 0);
+                }
+                
+                if (e.target.matches('[data-prev]')) {
+                    const currentStep = e.target.closest('.step-panel');
+                    const prevStepNumber = e.target.getAttribute('data-prev');
+                    const prevStep = document.getElementById(`step-${prevStepNumber}`);
+                    
+                    currentStep.classList.add('hidden');
+                    prevStep.classList.remove('hidden');
+                    
+                    // Update sidebar active state
+                    updateSidebarActiveState(prevStepNumber);
+                    
+                    // Scroll to top
+                    window.scrollTo(0, 0);
+                }
+            });
+
+            // Step navigation from sidebar
+            document.querySelectorAll('.step-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const stepNumber = this.getAttribute('data-step');
+                    const targetStep = document.getElementById(`step-${stepNumber}`);
+                    
+                    // Hide all steps
+                    document.querySelectorAll('.step-panel').forEach(step => {
+                        step.classList.add('hidden');
+                    });
+                    
+                    // Show target step
+                    targetStep.classList.remove('hidden');
+                    
+                    // Update sidebar active state
+                    updateSidebarActiveState(stepNumber);
+                    
+                    // Scroll to top
+                    window.scrollTo(0, 0);
+                });
+            });
+
+            // Accordion functionality
+            document.querySelectorAll('.accordion-header').forEach(header => {
+                header.addEventListener('click', function() {
+                    const accordion = this.parentElement;
+                    accordion.classList.toggle('active');
+                });
+            });
+
+            // Generate Implementation Plan button
+            document.getElementById('finish-btn').addEventListener('click', function() {
+                // Show success message or redirect to plan
+                alert('Your implementation plan has been generated! Check your email for the detailed plan or download it from the link below.');
+            });
+
+            // Progress bar animation for Phase 1
+            setTimeout(() => {
+                document.querySelector('.progress-fill').style.width = '33%';
+            }, 1000);
+
+            // Helper functions
+            function updateSidebarActiveState(stepNumber) {
+                document.querySelectorAll('.step-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                document.querySelector(`.step-item[data-step="${stepNumber}"]`).classList.add('active');
+            }
+            
+            function markStepAsCompleted(stepNumber) {
+                document.querySelector(`.step-item[data-step="${stepNumber}"]`).classList.add('completed');
+            }
+        });
+    </script>
+</body>
+</html>

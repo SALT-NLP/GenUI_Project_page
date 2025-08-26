@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agri-Sense Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet/dist/leaflet.css" />
+    <style>
+        :root {
+            --primary-color: #28a745; /* Green */
+            --secondary-color: #007bff; /* Blue */
+            --accent-color: #ffc107; /* Yellow */
+            --background-color: #f8f9fa; /* Light Gray */
+            --surface-color: #ffffff; /* White */
+            --text-color: #343a40; /* Dark Gray */
+            --text-light-color: #6c757d; /* Medium Gray */
+            --border-color: #dee2e6; /* Light Border */
+            --danger-color: #dc3545; /* Red */
+            --success-color: var(--primary-color);
+            --warning-color: var(--accent-color);
+            --info-color: var(--secondary-color);
+
+            --spacing-unit: 8px;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            --transition-speed: 0.2s ease-in-out;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--surface-color);
+            color: var(--text-color);
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 3);
+            box-shadow: var(--box-shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8em;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .container {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: calc(var(--spacing-unit) * 3);
+            padding: calc(var(--spacing-unit) * 3);
+        }
+
+        .sidebar {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: calc(var(--spacing-unit) * 3);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: calc(var(--spacing-unit) * 4);
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: calc(var(--spacing-unit) * 3);
+        }
+
+        .card {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: calc(var(--spacing-unit) * 3);
+            display: flex;
+            flex-direction: column;
+            gap: calc(var(--spacing-unit) * 2);
+        }
+
+        .card-header {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .form-group {
+            margin-bottom: calc(var(--spacing-unit) * 2);
+        }
+
+        label {
+            display: block;
+            margin-bottom: var(--spacing-unit);
+            font-weight: 500;
+            color: var(--text-light-color);
+        }
+
+        select, input[type="date"], input[type="text"] {
+            width: 100%;
+            padding: calc(var(--spacing-unit) * 1.5);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            transition: border-color var(--transition-speed);
+            box-sizing: border-box; /* Include padding and border in element's total width and height */
+        }
+
+        select:focus, input[type="date"]:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            margin-bottom: var(--spacing-unit);
+            cursor: pointer;
+            font-weight: 400;
+            color: var(--text-color);
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            margin-right: var(--spacing-unit);
+            accent-color: var(--primary-color);
+        }
+
+        #map {
+            height: 500px; /* Adjust height as needed */
+            border-radius: var(--border-radius);
+            overflow: hidden; /* Ensure border-radius applies */
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px; /* Adjust height as needed */
+            cursor: pointer;
+        }
+
+        .floating-controls {
+            position: absolute;
+            top: calc(var(--spacing-unit) * 2);
+            right: calc(var(--spacing-unit) * 2);
+            background: rgba(255, 255, 255, 0.95);
+            padding: calc(var(--spacing-unit) * 2);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all var(--transition-speed);
+            pointer-events: none;
+            z-index: 10; /* Ensure controls are above the chart */
+        }
+
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .control-group {
+            margin-bottom: var(--spacing-unit);
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-unit);
+        }
+
+        .control-group label {
+            margin-bottom: 0;
+            font-size: 0.9em;
+            color: var(--text-light-color);
+        }
+
+        .control-group input[type="color"],
+        .control-group select,
+        .control-group input[type="number"] {
+            padding: calc(var(--spacing-unit) * 0.5);
+            font-size: 0.9em;
+            background-color: var(--background-color);
+        }
+
+        .recommendations-panel {
+            background-color: var(--info-color);
+            color: white;
+            padding: calc(var(--spacing-unit) * 3);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+
+        .recommendations-panel h3 {
+            margin-top: 0;
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+        }
+
+        .recommendations-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .recommendations-list li {
+            background-color: rgba(255, 255, 255, 0.15);
+            padding: calc(var(--spacing-unit) * 2);
+            border-radius: var(--border-radius);
+            margin-bottom: var(--spacing-unit);
+            font-size: 1em;
+            line-height: 1.5;
+        }
+
+        .recommendations-list li strong {
+            font-weight: 600;
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            display: none; /* Hidden by default */
+            margin: auto; /* Center spinner */
+        }
+
+        .loading-spinner.active {
+            display: block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Tooltip styles */
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: var(--spacing-unit);
+            border-radius: var(--border-radius);
+            font-size: 0.9em;
+            pointer-events: none; /* Allow clicks to pass through */
+            opacity: 0;
+            transition: opacity var(--transition-speed);
+            z-index: 1000; /* Ensure tooltip is on top */
+        }
+
+        .tooltip.active {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Agri-Sense Dashboard</h1>
+        <!-- Optional: Settings/Help icons -->
+        <div>
+            <!-- <button>Settings</button> -->
+        </div>
+    </header>
+
+    <div class="container">
+        <aside class="sidebar">
+            <div class="card">
+                <div class="card-header">Field & Season Selection</div>
+                <div class="form-group">
+                    <label for="field-select">Select Field:</label>
+                    <select id="field-select">
+                        <option value="field1">Field 1 (North)</option>
+                        <option value="field2">Field 2 (South)</option>
+                        <option value="field3">Field 3 (East)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="season-select">Select Season:</label>
+                    <select id="season-select">
+                        <option value="season2023">2023 Growing Season</option>
+                        <option value="season2022">2022 Growing Season</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">Data Filters</div>
+                <div class="form-group">
+                    <label for="date-range-start">Date Range (Start):</label>
+                    <input type="date" id="date-range-start" value="2023-05-01">
+                </div>
+                <div class="form-group">
+                    <label for="date-range-end">Date Range (End):</label>
+                    <input type="date" id="date-range-end" value="2023-08-31">
+                </div>
+                <div class="form-group">
+                    <label for="crop-type-select">Crop Type:</label>
+                    <select id="crop-type-select">
+                        <option value="corn">Corn</option>
+                        <option value="soybeans">Soybeans</option>
+                        <option value="wheat">Wheat</option>
+                    </select>
+                </div>
+                <!-- Add more filters as needed (e.g., growth stage) -->
+            </div>
+
+            <div class="card">
+                <div class="card-header">Map Layers</div>
+                <div class="checkbox-group">
+                    <label>
+                        <input type="checkbox" id="layer-imagery" checked>
+                        Drone Imagery (NDVI)
+                    </label>
+                    <label>
+                        <input type="checkbox" id="layer-stress">
+                        Crop Stress Zones
+                    </label>
+                    <label>
+                        <input type="checkbox" id="layer-yield">
+                        Predicted Yield
+                    </label>
+                    <label>
+                        <input type="checkbox" id="layer-sensors">
+                        Sensor Locations
+                    </label>
+                    <label>
+                        <input type="checkbox" id="layer-boundaries" checked>
+                        Field Boundaries
+                    </label>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="card">
+                <div class="card-header">Field Overview Map</div>
+                <div id="map"></div>
+                <div class="loading-spinner" id="map-loading"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">Historical Weather Data</div>
+                <div class="chart-container">
+                    <canvas id="weatherChart"></canvas>
+                    <div class="floating-controls" id="weatherChartControls">
+                        <div class="control-group">
+                            <label>Chart Type</label>
+                            <select id="weatherChartType">
+                                <option value="line">Line</option>
+                                <option value="bar">Bar</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label>Line Color (Temp)</label>
+                            <input type="color" id="weatherTempColor" value="#dc3545">
+                        </div>
+                         <div class="control-group">
+                            <label>Line Color (Precip)</label>
+                            <input type="color" id="weatherPrecipColor" value="#007bff">
+                        </div>
+                        <!-- Add more controls as needed -->
+                    </div>
+                </div>
+                 <div class="loading-spinner" id="weather-chart-loading"></div>
+            </div>
+
+             <div class="card">
+                <div class="card-header">Soil Sensor Data (Avg)</div>
+                <div class="chart-container">
+                    <canvas id="sensorChart"></canvas>
+                     <div class="floating-controls" id="sensorChartControls">
+                        <div class="control-group">
+                            <label>Chart Type</label>
+                            <select id="sensorChartType">
+                                <option value="line">Line</option>
+                                <option value="bar">Bar</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label>Line Color (Moisture)</label>
+                            <input type="color" id="sensorMoistureColor" value="#ffc107">
+                        </div>
+                         <div class="control-group">
+                            <label>Line Color (Nutrient)</label>
+                            <input type="color" id="sensorNutrientColor" value="#28a745">
+                        </div>
+                        <!-- Add more controls as needed -->
+                    </div>
+                </div>
+                 <div class="loading-spinner" id="sensor-chart-loading"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">Yield Prediction vs Actual</div>
+                <div class="chart-container">
+                    <canvas id="yieldChart"></canvas>
+                     <div class="floating-controls" id="yieldChartControls">
+                        <div class="control-group">
+                            <label>Chart Type</label>
+                            <select id="yieldChartType">
+                                <option value="bar">Bar</option>
+                                <option value="line">Line</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label>Bar Color (Predicted)</label>
+                            <input type="color" id="yieldPredictedColor" value="#007bff">
+                        </div>
+                         <div class="control-group">
+                            <label>Bar Color (Actual)</label>
+                            <input type="color" id="yieldActualColor" value="#28a745">
+                        </div>
+                        <!-- Add more controls as needed -->
+                    </div>
+                </div>
+                 <div class="loading-spinner" id="yield-chart-loading"></div>
+            </div>
+
+            <div class="recommendations-panel">
+                <h3>Targeted Intervention Recommendations</h3>
+                <ul class="recommendations-list" id="recommendations-list">
+                    <li><strong>Field 1, Section B:</strong> Moderate water stress detected. Recommend targeted irrigation (50mm/ha).</li>
+                    <li><strong>Field 2, Section D:</strong> Low nitrogen levels. Recommend foliar fertilization (Urea solution).</li>
+                    <li><strong>Field 3, Section A:</strong> High predicted yield, monitor for potential pest pressure.</li>
+                    <!-- Recommendations will be dynamically loaded -->
+                </ul>
+            </div>
+
+        </main>
+    </div>
+
+    <div class="tooltip" id="map-tooltip"></div>
+
+    <script type="module">
+        import * as L from "https://esm.sh/leaflet";
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        // --- State Management ---
+        const state = {
+            selectedField: 'field1',
+            selectedSeason: 'season2023',
+            dateRange: {
+                start: '2023-05-01',
+                end: '2023-08-31'
+            },
+            cropType: 'corn',
+            mapLayers: {
+                imagery: true,
+                stress: false,
+                yield: false,
+                sensors: false,
+                boundaries: true
+            },
+            data: { // Placeholder for loaded data
+                fieldBoundaries: {},
+                imageryData: {},
+                stressData: {},
+                yieldData: {},
+                sensorData: {},
+                weatherData: {},
+                recommendations: []
+            },
+            charts: {
+                weatherChart: null,
+                sensorChart: null,
+                yieldChart: null
+            }
+        };
+
+        // --- DOM Elements ---
+        const dom = {
+            fieldSelect: document.getElementById('field-select'),
+            seasonSelect: document.getElementById('season-select'),
+            dateRangeStart: document.getElementById('date-range-start'),
+            dateRangeEnd: document.getElementById('date-range-end'),
+            cropTypeSelect: document.getElementById('crop-type-select'),
+            mapElement: document.getElementById('map'),
+            mapTooltip: document.getElementById('map-tooltip'),
+            mapLoading: document.getElementById('map-loading'),
+            layerCheckboxes: {
+                imagery: document.getElementById('layer-imagery'),
+                stress: document.getElementById('layer-stress'),
+                yield: document.getElementById('layer-yield'),
+                sensors: document.getElementById('layer-sensors'),
+                boundaries: document.getElementById('layer-boundaries')
+            },
+            weatherChartCanvas: document.getElementById('weatherChart'),
+            weatherChartControls: document.getElementById('weatherChartControls'),
+            weatherChartLoading: document.getElementById('weather-chart-loading'),
+            weatherChartTypeSelect: document.getElementById('weatherChartType'),
+            weatherTempColorInput: document.getElementById('weatherTempColor'),
+            weatherPrecipColorInput: document.getElementById('weatherPrecipColor'),
+            sensorChartCanvas: document.getElementById('sensorChart'),
+            sensorChartControls: document.getElementById('sensorChartControls'),
+            sensorChartLoading: document.getElementById('sensor-chart-loading'),
+            sensorChartTypeSelect: document.getElementById('sensorChartType'),
+            sensorMoistureColorInput: document.getElementById('sensorMoistureColor'),
+            sensorNutrientColorInput: document.getElementById('sensorNutrientColor'),
+            yieldChartCanvas: document.getElementById('yieldChart'),
+            yieldChartControls: document.getElementById('yieldChartControls'),
+            yieldChartLoading: document.getElementById('yield-chart-loading'),
+            yieldChartTypeSelect: document.getElementById('yieldChartType'),
+            yieldPredictedColorInput: document.getElementById('yieldPredictedColor'),
+            yieldActualColorInput: document.getElementById('yieldActualColor'),
+            recommendationsList: document.getElementById('recommendations-list')
+        };
+
+        // --- Map Initialization ---
+        let map = null;
+        let mapLayers = {}; // Store Leaflet layers
+
+        function initializeMap() {
+            if (map) map.remove(); // Clean up existing map if any
+            map = L.map(dom.mapElement).setView([40, -98], 4); // Default view over US
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Add a dummy field boundary polygon
+            const dummyFieldBoundary = L.polygon([
+                [41.8781, -87.6298], // Chicago
+                [40.7128, -74.0060], // NYC
+                [34.0522, -118.2437], // LA
+                [41.8781, -87.6298]
+            ], { color: 'var(--primary-color)', weight: 2, fillOpacity: 0.1 }).addTo(map);
+             mapLayers['boundaries'] = dummyFieldBoundary;
+             map.fitBounds(dummyFieldBoundary.getBounds()); // Fit map to the dummy field
+
+            // Add dummy sensor marker
+             const dummySensor = L.marker([41.5, -88]).addTo(map);
+             dummySensor.bindPopup("Dummy Sensor 1<br>Moisture: 45%<br>Nutrient: 8ppm");
+             mapLayers['sensors'] = L.layerGroup([dummySensor]); // Use layer group for toggling
+
+             // Dummy Imagery Overlay (example using a simple image)
+             const imageUrl = 'https://placehold.co/500x500/28a745/ffffff?text=NDVI+Overlay'; // Placeholder image
+             const imageBounds = [[41, -89], [42, -87]]; // Bounds for the image
+             const dummyImagery = L.imageOverlay(imageUrl, imageBounds, { opacity: 0.6 });
+             mapLayers['imagery'] = dummyImagery; // Add later based on toggle state
+
+             // Dummy Stress Overlay (example using a simple image)
+             const stressImageUrl = 'https://placehold.co/500x500/dc3545/ffffff?text=Stress+Zones'; // Placeholder image
+             const stressImageBounds = [[41, -89], [42, -87]]; // Bounds for the image
+             const dummyStress = L.imageOverlay(stressImageUrl, stressImageBounds, { opacity: 0.6 });
+             mapLayers['stress'] = dummyStress; // Add later based on toggle state
+
+              // Dummy Yield Overlay (example using a simple image)
+             const yieldImageUrl = 'https://placehold.co/500x500/007bff/ffffff?text=Yield+Prediction'; // Placeholder image
+             const yieldImageBounds = [[41, -89], [42, -87]]; // Bounds for the image
+             const dummyYield = L.imageOverlay(yieldImageUrl, yieldImageBounds, { opacity: 0.6 });
+             mapLayers['yield'] = dummyYield; // Add later based on toggle state
+
+            // Initial layer state
+            updateMapLayers();
+
+            // Map interaction for tooltips (example)
+            map.on('mousemove', function(e) {
+                // In a real app, you'd check if the mouse is over a feature (stress zone, yield area)
+                // For this example, we'll just show a dummy tooltip near the mouse
+                const latlng = e.latlng;
+                const tooltipContent = `Lat: ${latlng.lat.toFixed(4)}<br>Lng: ${latlng.lng.toFixed(4)}`;
+                dom.mapTooltip.innerHTML = tooltipContent;
+                dom.mapTooltip.style.left = `${e.originalEvent.clientX + 10}px`;
+                dom.mapTooltip.style.top = `${e.originalEvent.clientY + 10}px`;
+                dom.mapTooltip.classList.add('active');
+            });
+
+             map.on('mouseout', function() {
+                dom.mapTooltip.classList.remove('active');
+            });
+        }
+
+        function updateMapLayers() {
+            for (const layerKey in state.mapLayers) {
+                const layer = mapLayers[layerKey];
+                if (layer) {
+                    if (state.mapLayers[layerKey]) {
+                        if (!map.hasLayer(layer)) {
+                            map.addLayer(layer);
+                        }
+                    } else {
+                        if (map.hasLayer(layer)) {
+                             map.removeLayer(layer);
+                        }
+                    }
+                }
+            }
+        }
+
+
+        // --- Chart Initialization & Updates ---
+
+        // Helper to toggle chart controls visibility
+        function toggleChartControls(chartCanvas, controlsElement) {
+             chartCanvas.addEventListener('click', () => {
+                controlsElement.classList.toggle('active');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.floating-controls') &&
+                    !e.target.closest('canvas')) {
+                    controlsElement.classList.remove('active');
+                }
+            });
+        }
+
+        function initializeCharts() {
+            // Weather Chart
+            const weatherCtx = dom.weatherChartCanvas.getContext('2d');
+            state.charts.weatherChart = new Chart(weatherCtx, {
+                type: 'line',
+                data: {
+                    labels: ['May 1', 'May 15', 'June 1', 'June 15', 'July 1', 'July 15', 'Aug 1', 'Aug 15'],
+                    datasets: [
+                        {
+                            label: 'Avg Temp (°C)',
+                            data: [15, 18, 22, 25, 28, 26, 24, 23],
+                            borderColor: dom.weatherTempColorInput.value,
+                            backgroundColor: 'rgba(220, 53, 69, 0.2)',
+                            tension: 0.3,
+                            fill: false
+                        },
+                         {
+                            label: 'Total Precipitation (mm)',
+                            data: [5, 10, 15, 8, 20, 12, 5, 3],
+                            borderColor: dom.weatherPrecipColorInput.value,
+                            backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                            tension: 0.3,
+                            fill: false,
+                            yAxisID: 'y1' // Use a secondary Y axis
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Temperature (°C)' }
+                        },
+                         y1: {
+                            beginAtZero: true,
+                            position: 'right', // Position secondary axis on the right
+                             title: { display: true, text: 'Precipitation (mm)' },
+                             grid: { drawOnChartArea: false } // Only draw grid lines for the first axis
+                        }
+                    }
+                }
+            });
+            toggleChartControls(dom.weatherChartCanvas, dom.weatherChartControls);
+
+            // Sensor Chart
+             const sensorCtx = dom.sensorChartCanvas.getContext('2d');
+            state.charts.sensorChart = new Chart(sensorCtx, {
+                type: 'line',
+                data: {
+                    labels: ['May 1', 'May 15', 'June 1', 'June 15', 'July 1', 'July 15', 'Aug 1', 'Aug 15'],
+                    datasets: [
+                        {
+                            label: 'Avg Soil Moisture (%)',
+                            data: [60, 55, 50, 45, 40, 35, 30, 28],
+                            borderColor: dom.sensorMoistureColorInput.value,
+                            backgroundColor: 'rgba(255, 193, 7, 0.2)',
+                            tension: 0.3,
+                            fill: false
+                        },
+                         {
+                            label: 'Avg Soil Nutrient (ppm)',
+                            data: [10, 9, 8, 7, 6, 5, 4, 3],
+                            borderColor: dom.sensorNutrientColorInput.value,
+                            backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                            tension: 0.3,
+                            fill: false,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Moisture (%)' }
+                        },
+                         y1: {
+                            beginAtZero: true,
+                            position: 'right',
+                             title: { display: true, text: 'Nutrient (ppm)' },
+                             grid: { drawOnChartArea: false }
+                        }
+                    }
+                }
+            });
+             toggleChartControls(dom.sensorChartCanvas, dom.sensorChartControls);
+
+
+            // Yield Chart
+             const yieldCtx = dom.yieldChartCanvas.getContext('2d');
+            state.charts.yieldChart = new Chart(yieldCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Section A', 'Section B', 'Section C', 'Section D'],
+                    datasets: [
+                        {
+                            label: 'Predicted Yield (ton/ha)',
+                            data: [10, 8, 11, 9],
+                            backgroundColor: dom.yieldPredictedColorInput.value,
+                            borderColor: dom.yieldPredictedColorInput.value,
+                            borderWidth: 1
+                        },
+                         {
+                            label: 'Actual Yield (ton/ha)',
+                            data: [9.5, 7.8, 11.2, 8.9],
+                            backgroundColor: dom.yieldActualColorInput.value,
+                            borderColor: dom.yieldActualColorInput.value,
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                             title: { display: true, text: 'Yield (ton/ha)' }
+                        }
+                    }
+                }
+            });
+             toggleChartControls(dom.yieldChartCanvas, dom.yieldChartControls);
+        }
+
+        function updateChart(chart, type, datasetConfigs) {
+            if (!chart) return;
+
+            chart.config.type = type;
+
+            datasetConfigs.forEach(config => {
+                const datasetIndex = chart.data.datasets.findIndex(ds => ds.label === config.label);
+                if (datasetIndex > -1) {
+                    if (config.color) {
+                         chart.data.datasets[datasetIndex].borderColor = config.color;
+                         chart.data.datasets[datasetIndex].backgroundColor = config.color.replace('rgb(', 'rgba(').replace(')', ', 0.2)'); // Simple alpha for background
+                    }
+                     if (config.data) {
+                        chart.data.datasets[datasetIndex].data = config.data;
+                     }
+                }
+            });
+
+
+            chart.update();
+        }
+
+        // --- Data Loading (Placeholder) ---
+        function showLoading(element) {
+            element.classList.add('active');
+        }
+
+        function hideLoading(element) {
+            element.classList.remove('active');
+        }
+
+        async function loadData(field, season, dateRange, cropType) {
+            showLoading(dom.mapLoading);
+            showLoading(dom.weatherChartLoading);
+            showLoading(dom.sensorChartLoading);
+            showLoading(dom.yieldChartLoading);
+
+            // Simulate data fetching delay
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Placeholder data based on selection (simple variation)
+            const weatherData = {
+                 labels: ['May 1', 'May 15', 'June 1', 'June 15', 'July 1', 'July 15', 'Aug 1', 'Aug 15'],
+                 temp: field === 'field1' ? [15, 18, 22, 25, 28, 26, 24, 23] : field === 'field2' ? [16, 19, 23, 26, 29, 27, 25, 24] : [14, 17, 21, 24, 27, 25, 23, 22],
+                 precip: season === 'season2023' ? [5, 10, 15, 8, 20, 12, 5, 3] : [8, 12, 10, 15, 18, 10, 7, 4]
+            };
+
+            const sensorData = {
+                 labels: ['May 1', 'May 15', 'June 1', 'June 15', 'July 1', 'July 15', 'Aug 1', 'Aug 15'],
+                 moisture: cropType === 'corn' ? [60, 55, 50, 45, 40, 35, 30, 28] : cropType === 'soybeans' ? [55, 50, 45, 40, 35, 30, 25, 23] : [65, 60, 55, 50, 45, 40, 35, 33],
+                 nutrient: field === 'field3' ? [12, 11, 10, 9, 8, 7, 6, 5] : [10, 9, 8, 7, 6, 5, 4, 3]
+            };
+
+            const yieldData = {
+                 labels: ['Section A', 'Section B', 'Section C', 'Section D'],
+                 predicted: season === 'season2023' ? [10, 8, 11, 9] : [9, 7.5, 10.5, 8.5],
+                 actual: season === 'season2023' ? [9.5, 7.8, 11.2, 8.9] : [8.8, 7.2, 10.8, 8.3]
+            };
+
+            const recommendations = [
+                 { text: `Based on ${field}, ${season}, ${cropType} data:` },
+                 { text: `<strong>${field}, Section B:</strong> Check soil moisture. Data suggests levels are lower than optimal for ${cropType}.` },
+                 { text: `<strong>${field}, Section D:</strong> Predicted yield is slightly below average. Consider targeted nutrient application.` },
+                 { text: `Review imagery from ${dateRange.start} to ${dateRange.end} for visual stress indicators.` }
+            ];
+
+
+            state.data = {
+                fieldBoundaries: {}, // Update Leaflet layers directly
+                imageryData: {},
+                stressData: {},
+                yieldData: {},
+                sensorData: {},
+                weatherData: weatherData,
+                sensorData: sensorData,
+                yieldData: yieldData,
+                recommendations: recommendations
+            };
+
+            updateUI();
+
+            hideLoading(dom.mapLoading);
+            hideLoading(dom.weatherChartLoading);
+            hideLoading(dom.sensorChartLoading);
+            hideLoading(dom.yieldChartLoading);
+        }
+
+        // --- UI Update ---
+        function updateUI() {
+            // Update Map (Map layers are handled by event listeners on checkboxes)
+            // For a real app, this would involve updating GeoJSON layers or image overlays
+            // Based on the loaded state.data.fieldBoundaries, etc.
+            // For this example, we just rely on the initial dummy layers and their toggles.
+
+            // Update Charts
+            updateChart(state.charts.weatherChart, state.charts.weatherChart.config.type, [
+                { label: 'Avg Temp (°C)', data: state.data.weatherData.temp, color: dom.weatherTempColorInput.value },
+                { label: 'Total Precipitation (mm)', data: state.data.weatherData.precip, color: dom.weatherPrecipColorInput.value }
+            ]);
+             state.charts.weatherChart.config.data.labels = state.data.weatherData.labels;
+             state.charts.weatherChart.update();
+
+
+            updateChart(state.charts.sensorChart, state.charts.sensorChart.config.type, [
+                 { label: 'Avg Soil Moisture (%)', data: state.data.sensorData.moisture, color: dom.sensorMoistureColorInput.value },
+                 { label: 'Avg Soil Nutrient (ppm)', data: state.data.sensorData.nutrient, color: dom.sensorNutrientColorInput.value }
+            ]);
+             state.charts.sensorChart.config.data.labels = state.data.sensorData.labels;
+             state.charts.sensorChart.update();
+
+            updateChart(state.charts.yieldChart, state.charts.yieldChart.config.type, [
+                { label: 'Predicted Yield (ton/ha)', data: state.data.yieldData.predicted, color: dom.yieldPredictedColorInput.value },
+                { label: 'Actual Yield (ton/ha)', data: state.data.yieldData.actual, color: dom.yieldActualColorInput.value }
+            ]);
+            state.charts.yieldChart.config.data.labels = state.data.yieldData.labels;
+            state.charts.yieldChart.update();
+
+
+            // Update Recommendations
+            dom.recommendationsList.innerHTML = '';
+            state.data.recommendations.forEach(rec => {
+                const li = document.createElement('li');
+                li.innerHTML = rec.text;
+                dom.recommendationsList.appendChild(li);
+            });
+        }
+
+        // --- Event Listeners ---
+        function setupEventListeners() {
+            // Sidebar controls
+            dom.fieldSelect.addEventListener('change', (e) => {
+                state.selectedField = e.target.value;
+                loadData(state.selectedField, state.selectedSeason, state.dateRange, state.cropType);
+            });
+
+            dom.seasonSelect.addEventListener('change', (e) => {
+                state.selectedSeason = e.target.value;
+                loadData(state.selectedField, state.selectedSeason, state.dateRange, state.cropType);
+            });
+
+            dom.dateRangeStart.addEventListener('change', (e) => {
+                state.dateRange.start = e.target.value;
+                 loadData(state.selectedField, state.selectedSeason, state.dateRange, state.cropType);
+            });
+
+             dom.dateRangeEnd.addEventListener('change', (e) => {
+                state.dateRange.end = e.target.value;
+                 loadData(state.selectedField, state.selectedSeason, state.dateRange, state.cropType);
+            });
+
+             dom.cropTypeSelect.addEventListener('change', (e) => {
+                state.cropType = e.target.value;
+                 loadData(state.selectedField, state.selectedSeason, state.dateRange, state.cropType);
+            });
+
+
+            // Map layer toggles
+            for (const layerKey in dom.layerCheckboxes) {
+                dom.layerCheckboxes[layerKey].addEventListener('change', (e) => {
+                    state.mapLayers[layerKey] = e.target.checked;
+                    updateMapLayers();
+                });
+            }
+
+            // Chart controls
+            dom.weatherChartTypeSelect.addEventListener('change', (e) => {
+                updateChart(state.charts.weatherChart, e.target.value, [
+                    { label: 'Avg Temp (°C)', color: dom.weatherTempColorInput.value },
+                    { label: 'Total Precipitation (mm)', color: dom.weatherPrecipColorInput.value }
+                ]);
+            });
+             dom.weatherTempColorInput.addEventListener('input', (e) => {
+                 updateChart(state.charts.weatherChart, state.charts.weatherChart.config.type, [
+                    { label: 'Avg Temp (°C)', color: e.target.value }
+                ]);
+            });
+             dom.weatherPrecipColorInput.addEventListener('input', (e) => {
+                 updateChart(state.charts.weatherChart, state.charts.weatherChart.config.type, [
+                    { label: 'Total Precipitation (mm)', color: e.target.value }
+                ]);
+            });
+
+             dom.sensorChartTypeSelect.addEventListener('change', (e) => {
+                updateChart(state.charts.sensorChart, e.target.value, [
+                    { label: 'Avg Soil Moisture (%)', color: dom.sensorMoistureColorInput.value },
+                    { label: 'Avg Soil Nutrient (ppm)', color: dom.sensorNutrientColorInput.value }
+                ]);
+            });
+             dom.sensorMoistureColorInput.addEventListener('input', (e) => {
+                 updateChart(state.charts.sensorChart, state.charts.sensorChart.config.type, [
+                    { label: 'Avg Soil Moisture (%)', color: e.target.value }
+                ]);
+            });
+             dom.sensorNutrientColorInput.addEventListener('input', (e) => {
+                 updateChart(state.charts.sensorChart, state.charts.sensorChart.config.type, [
+                    { label: 'Avg Soil Nutrient (ppm)', color: e.target.value }
+                ]);
+            });
+
+             dom.yieldChartTypeSelect.addEventListener('change', (e) => {
+                updateChart(state.charts.yieldChart, e.target.value, [
+                     { label: 'Predicted Yield (ton/ha)', color: dom.yieldPredictedColorInput.value },
+                     { label: 'Actual Yield (ton/ha)', color: dom.yieldActualColorInput.value }
+                ]);
+            });
+             dom.yieldPredictedColorInput.addEventListener('input', (e) => {
+                 updateChart(state.charts.yieldChart, state.charts.yieldChart.config.type, [
+                    { label: 'Predicted Yield (ton/ha)', color: e.target.value }
+                ]);
+            });
+             dom.yieldActualColorInput.addEventListener('input', (e) => {
+                 updateChart(state.charts.yieldChart, state.charts.yieldChart.config.type, [
+                    { label: 'Actual Yield (ton/ha)', color: e.target.value }
+                ]);
+            });
+
+            // Keyboard navigation for controls (basic example)
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    // Close any open modals or controls
+                    document.querySelectorAll('.floating-controls.active').forEach(ctrl => ctrl.classList.remove('active'));
+                }
+                 // Add more specific keyboard shortcuts if needed
+            });
+        }
+
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeMap();
+            initializeCharts();
+            setupEventListeners();
+            // Load initial data
+            loadData(state.selectedField, state.selectedSeason, state.dateRange, state.cropType);
+        });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,2142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLTV Analysis Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet" />
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --primary-color-dark: #0056b3;
+            --secondary-color: #6c757d;
+            --secondary-color-dark: #5a6268;
+            --background-color: #f8f9fa;
+            --surface-color: #ffffff;
+            --text-color: #343a40;
+            --text-light-color: #6c757d;
+            --border-color: #dee2e6;
+            --success-color: #28a745;
+            --success-color-dark: #218838;
+            --danger-color: #dc3545;
+            --danger-color-dark: #c82333;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --spacing-unit: 8px;
+            --border-radius: 8px;
+            --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.05);
+            --shadow-medium: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: flex;
+            min-height: 100vh;
+            overflow-y: auto;
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            grid-template-rows: auto 1fr;
+            height: 100vh;
+            width: 100%;
+        }
+
+        .header {
+            grid-column: 1 / 3;
+            grid-row: 1;
+            background-color: var(--surface-color);
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 3);
+            box-shadow: var(--shadow-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        .header__title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .header__user-icon {
+            font-size: 1.8rem;
+            color: var(--text-light-color);
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .header__user-icon:hover {
+            color: var(--text-color);
+        }
+
+        .sidebar {
+            grid-column: 1;
+            grid-row: 2;
+            background-color: var(--surface-color);
+            padding: calc(var(--spacing-unit) * 2);
+            box-shadow: var(--shadow-subtle);
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .sidebar__nav-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar__nav-item {
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .sidebar__nav-link {
+            display: flex;
+            align-items: center;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            color: var(--text-color);
+            text-decoration: none;
+            border-radius: var(--border-radius);
+            transition: background-color 0.2s ease, color 0.2s ease;
+            outline: none; /* Remove default outline */
+        }
+
+        .sidebar__nav-link:hover {
+            background-color: var(--background-color);
+            color: var(--primary-color);
+        }
+
+         .sidebar__nav-link:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+         }
+
+
+        .sidebar__nav-link.is-active {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+            font-weight: 500;
+        }
+
+        .sidebar__nav-link .material-symbols-rounded {
+            margin-right: var(--spacing-unit);
+            font-size: 1.4rem;
+            color: var(--text-light-color);
+            fill: 0;
+            transition: color 0.2s ease, fill 0.2s ease;
+        }
+
+         .sidebar__nav-link:hover .material-symbols-rounded {
+            color: var(--primary-color);
+        }
+
+        .sidebar__nav-link.is-active .material-symbols-rounded {
+            color: var(--surface-color);
+            fill: 1;
+        }
+
+
+        .main-content {
+            grid-column: 2;
+            grid-row: 2;
+            padding: calc(var(--spacing-unit) * 3);
+            overflow-y: auto;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.is-active {
+            display: block;
+        }
+
+        .section__title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            color: var(--text-color);
+        }
+
+        /* Card Component */
+        .card {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-medium);
+            padding: calc(var(--spacing-unit) * 3);
+            margin-bottom: calc(var(--spacing-unit) * 4);
+        }
+
+        .card__title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            color: var(--text-color);
+        }
+
+        /* Data Upload Section */
+        .data-upload__drop-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--border-radius);
+            padding: calc(var(--spacing-unit) * 5);
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            outline: none; /* Remove default outline */
+        }
+
+        .data-upload__drop-zone:hover,
+        .data-upload__drop-zone.is-dragover {
+            border-color: var(--primary-color);
+            background-color: rgba(0, 123, 255, 0.05);
+        }
+
+         .data-upload__drop-zone:focus {
+             border-color: var(--primary-color);
+             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+         }
+
+
+        .data-upload__drop-zone p {
+            margin: var(--spacing-unit) 0;
+            color: var(--text-light-color);
+        }
+
+        .data-upload__file-input {
+            display: none;
+        }
+
+        .data-upload__button {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 3);
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+            margin-top: var(--spacing-unit);
+            outline: none;
+        }
+
+        .data-upload__button:hover:not(:disabled) {
+            background-color: var(--primary-color-dark);
+        }
+
+         .data-upload__button:focus:not(:disabled) {
+             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.5);
+         }
+
+         .data-upload__button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .data-upload__preview-table-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin-top: calc(var(--spacing-unit) * 3);
+        }
+
+        .data-upload__preview-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-upload__preview-table th,
+        .data-upload__preview-table td {
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap; /* Prevent text wrapping in table cells */
+             overflow: hidden;
+             text-overflow: ellipsis; /* Add ellipsis for overflow */
+             max-width: 200px; /* Limit column width */
+        }
+
+         .data-upload__preview-table th {
+             max-width: none; /* Allow header text to wrap if needed */
+         }
+
+
+        .data-upload__preview-table th {
+            background-color: var(--background-color);
+            font-weight: 600;
+            color: var(--text-color);
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .data-upload__preview-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-upload__preview-table tbody tr:hover {
+            background-color: rgba(0, 123, 255, 0.03);
+        }
+
+        /* Column Mapping Section */
+        .column-mapping__grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: calc(var(--spacing-unit) * 3);
+        }
+
+        .column-mapping__item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .column-mapping__label {
+            font-weight: 500;
+            margin-bottom: var(--spacing-unit);
+            color: var(--text-color);
+        }
+
+        .column-mapping__select {
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            background-color: var(--surface-color);
+            color: var(--text-color);
+            cursor: pointer;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            outline: none;
+        }
+
+        .column-mapping__select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        .column-mapping__select.is-invalid {
+            border-color: var(--danger-color);
+        }
+
+
+        /* Analysis Configuration Section */
+        .analysis-config__form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: calc(var(--spacing-unit) * 3);
+            margin-bottom: calc(var(--spacing-unit) * 4);
+        }
+
+        .analysis-config__form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .analysis-config__label {
+            font-weight: 500;
+            margin-bottom: var(--spacing-unit);
+            color: var(--text-color);
+        }
+
+        .analysis-config__input,
+        .analysis-config__select {
+             padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            background-color: var(--surface-color);
+            color: var(--text-color);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            outline: none;
+        }
+
+         .analysis-config__input:focus,
+        .analysis-config__select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        .analysis-config__run-button {
+            grid-column: 1 / -1;
+            background-color: var(--success-color);
+            color: var(--surface-color);
+            padding: calc(var(--spacing-unit) * 2) calc(var(--spacing-unit) * 4);
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-unit);
+            outline: none;
+        }
+
+        .analysis-config__run-button:hover:not(:disabled) {
+            background-color: var(--success-color-dark);
+        }
+
+         .analysis-config__run-button:focus:not(:disabled) {
+             box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.5); /* Green shadow */
+         }
+
+        .analysis-config__run-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .analysis-config__run-button .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid var(--surface-color);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+
+        .analysis-config__run-button.is-loading .spinner {
+            display: block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+
+        /* Results and Insights Section */
+        .results__summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: calc(var(--spacing-unit) * 3);
+            margin-bottom: calc(var(--spacing-unit) * 4);
+        }
+
+        .results__summary-card {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-medium);
+            padding: calc(var(--spacing-unit) * 3);
+            text-align: center;
+        }
+
+        .results__summary-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .results__summary-label {
+            font-size: 1rem;
+            color: var(--text-light-color);
+        }
+
+        .results__chart-container {
+            position: relative;
+            margin-bottom: calc(var(--spacing-unit) * 4);
+            padding: calc(var(--spacing-unit) * 3);
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-medium);
+            cursor: pointer; /* Indicate clickable for controls */
+            outline: none;
+        }
+
+         .results__chart-container:focus {
+             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+         }
+
+         .results__chart-container canvas {
+            max-width: 100%;
+            height: 400px;
+         }
+
+        .results__table-container {
+             max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin-bottom: calc(var(--spacing-unit) * 4);
+        }
+
+        .results__table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .results__table th,
+        .results__table td {
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .results__table th {
+            background-color: var(--background-color);
+            font-weight: 600;
+            color: var(--text-color);
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            cursor: pointer;
+            outline: none;
+        }
+
+         .results__table th:focus {
+             box-shadow: inset 0 0 0 2px var(--primary-color); /* Outline inside header */
+         }
+
+
+         .results__table th .sort-icon {
+             font-size: 1rem;
+             margin-left: var(--spacing-unit);
+             vertical-align: middle;
+             opacity: 0.4;
+             transition: opacity 0.2s ease, transform 0.2s ease;
+         }
+
+          .results__table th:hover .sort-icon,
+          .results__table th.is-sorted .sort-icon {
+             opacity: 1;
+         }
+
+         .results__table th.sort-asc .sort-icon {
+             transform: rotate(0deg);
+         }
+
+         .results__table th.sort-desc .sort-icon {
+             transform: rotate(180deg);
+         }
+
+
+        .results__table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .results__table tbody tr:hover {
+            background-color: rgba(0, 123, 255, 0.03);
+        }
+
+        .insights__panel {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-medium);
+            margin-bottom: calc(var(--spacing-unit) * 4);
+        }
+
+        .insights__header {
+            padding: calc(var(--spacing-unit) * 3);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s ease;
+            outline: none;
+        }
+
+        .insights__header:hover {
+             background-color: var(--background-color);
+        }
+
+         .insights__header:focus {
+             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+         }
+
+
+        .insights__header h3 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .insights__header .material-symbols-rounded {
+            transition: transform 0.3s ease;
+        }
+
+        .insights__header.is-expanded .material-symbols-rounded {
+            transform: rotate(180deg);
+        }
+
+        .insights__content {
+            padding: calc(var(--spacing-unit) * 3);
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+         .insights__content.is-expanded {
+            display: block;
+            opacity: 1;
+         }
+
+        .insights__list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .insights__list-item {
+            margin-bottom: var(--spacing-unit) * 2;
+            padding-left: calc(var(--spacing-unit) * 3);
+            position: relative;
+        }
+
+         .insights__list-item::before {
+            content: '💡';
+            position: absolute;
+            left: 0;
+            top: 0;
+            font-size: 1.2rem;
+         }
+
+        .insights__list-item strong {
+            color: var(--primary-color-dark);
+        }
+
+        /* Floating Controls for Charts */
+        .floating-controls {
+            position: absolute;
+            top: var(--spacing-unit) * 3;
+            right: var(--spacing-unit) * 3;
+            background: rgba(255, 255, 255, 0.95);
+            padding: calc(var(--spacing-unit) * 2);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-medium);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 5;
+            min-width: 200px;
+        }
+        .floating-controls.is-active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+        .floating-controls .control-group {
+            margin-bottom: var(--spacing-unit) * 2;
+            display: flex;
+            flex-direction: column;
+        }
+        .floating-controls label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: var(--spacing-unit);
+            color: var(--text-color);
+        }
+        .floating-controls input[type="color"],
+        .floating-controls input[type="number"],
+        .floating-controls select {
+            padding: var(--spacing-unit);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 0.9rem;
+            background-color: var(--surface-color);
+            color: var(--text-color);
+             outline: none;
+             transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+         .floating-controls input[type="color"]:focus,
+         .floating-controls input[type="number"]:focus,
+         .floating-controls select:focus {
+             border-color: var(--primary-color);
+             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+         }
+
+
+        .floating-controls input[type="color"] {
+            height: 36px;
+            padding: var(--spacing-unit) / 2;
+        }
+
+        .floating-controls .control-group:last-child {
+            margin-bottom: 0;
+        }
+
+         /* Export Button */
+         .export-button {
+            background-color: var(--secondary-color);
+            color: var(--surface-color);
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 3);
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
+            margin-top: calc(var(--spacing-unit) * 2);
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-unit);
+            outline: none;
+         }
+
+         .export-button:hover {
+            background-color: var(--secondary-color-dark);
+         }
+
+         .export-button:focus {
+             box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.5); /* Grey shadow */
+         }
+
+
+         .export-button .material-symbols-rounded {
+            font-size: 1.2rem;
+         }
+
+         /* Utility Classes */
+         .text-center { text-align: center; }
+         .mb-3 { margin-bottom: calc(var(--spacing-unit) * 3); }
+         .mt-3 { margin-top: calc(var(--spacing-unit) * 3); }
+         .mt-2 { margin-top: calc(var(--spacing-unit) * 2); }
+
+
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header__title">CLTV Insights</div>
+            <span class="material-symbols-rounded header__user-icon" role="button" aria-label="User Profile">account_circle</span>
+        </header>
+
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <ul class="sidebar__nav-list">
+                <li class="sidebar__nav-item">
+                    <a href="#data-upload" class="sidebar__nav-link is-active" data-section="data-upload" role="link" aria-label="Go to Data Upload section">
+                        <span class="material-symbols-rounded">upload_file</span>
+                        Data Upload
+                    </a>
+                </li>
+                <li class="sidebar__nav-item">
+                    <a href="#analysis" class="sidebar__nav-link" data-section="analysis" role="link" aria-label="Go to Analysis Setup section">
+                         <span class="material-symbols-rounded">analytics</span>
+                        Analysis Setup
+                    </a>
+                </li>
+                 <li class="sidebar__nav-item">
+                    <a href="#results" class="sidebar__nav-link" data-section="results" role="link" aria-label="Go to Results and Insights section">
+                         <span class="material-symbols-rounded">insights</span>
+                        Results & Insights
+                    </a>
+                </li>
+                 <li class="sidebar__nav-item">
+                    <a href="#reports" class="sidebar__nav-link" data-section="reports" role="link" aria-label="Go to Reports section">
+                         <span class="material-symbols-rounded">description</span>
+                        Reports
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+
+            <!-- Data Upload Section -->
+            <section id="data-upload" class="section is-active" aria-labelledby="data-upload-title">
+                <h2 id="data-upload-title" class="section__title">Upload Your Customer Data</h2>
+
+                <div class="card">
+                    <h3 class="card__title">Upload File</h3>
+                    <div id="drop-zone" class="data-upload__drop-zone" role="button" tabindex="0" aria-label="Drag and drop file upload area">
+                        <span class="material-symbols-rounded" style="font-size: 3rem; color: var(--primary-color);">cloud_upload</span>
+                        <p>Drag and drop your CSV or Excel file here, or</p>
+                        <input type="file" id="file-input" class="data-upload__file-input" accept=".csv, .xlsx, .xls" aria-label="Select file to upload">
+                        <button class="data-upload__button" onclick="document.getElementById('file-input').click()" aria-controls="file-preview column-mapping-card">Browse Files</button>
+                        <p style="font-size: 0.9rem; margin-top: var(--spacing-unit);">Supported formats: CSV, XLSX, XLS</p>
+                    </div>
+
+                    <div id="file-preview" class="data-upload__preview-table-container" style="display: none;" role="region" aria-live="polite" aria-label="File preview table">
+                        <table class="data-upload__preview-table">
+                            <thead>
+                                <tr id="preview-header"></tr>
+                            </thead>
+                            <tbody id="preview-body"></tbody>
+                        </table>
+                    </div>
+                     <p id="file-name" class="text-center mt-3" style="display: none; font-weight: 500;" aria-live="polite"></p>
+                </div>
+
+                 <div id="column-mapping-card" class="card" style="display: none;" aria-labelledby="column-mapping-title">
+                    <h3 id="column-mapping-title" class="card__title">Map Data Columns to Variables</h3>
+                    <p class="mb-3" style="color: var(--text-light-color);">Select the columns from your uploaded file that correspond to the required variables for CLTV analysis.</p>
+                    <div class="column-mapping__grid" id="column-mapping-grid">
+                        <!-- Mapping inputs will be populated here by JS -->
+                    </div>
+                     <button id="save-mapping-button" class="data-upload__button mt-3" style="display: none;" aria-controls="analysis-config-form">Save Mapping & Proceed</button>
+                 </div>
+
+            </section>
+
+            <!-- Analysis Setup Section -->
+            <section id="analysis" class="section" aria-labelledby="analysis-title">
+                <h2 id="analysis-title" class="section__title">Configure CLTV Analysis</h2>
+
+                <div class="card">
+                    <h3 class="card__title">CLTV Calculation Parameters</h3>
+                    <form id="analysis-config-form" class="analysis-config__form">
+                        <div class="analysis-config__form-group">
+                            <label for="cltv-time-horizon" class="analysis-config__label">Time Horizon (Months)</label>
+                            <input type="number" id="cltv-time-horizon" class="analysis-config__input" value="12" min="1" required aria-required="true">
+                        </div>
+                        <div class="analysis-config__form-group">
+                            <label for="cltv-discount-rate" class="analysis-config__label">Discount Rate (%)</label>
+                            <input type="number" id="cltv-discount-rate" class="analysis-config__input" value="10" min="0" max="100" required aria-required="true">
+                        </div>
+                         <div class="analysis-config__form-group">
+                            <label for="cltv-calculation-method" class="analysis-config__label">Calculation Method</label>
+                            <select id="cltv-calculation-method" class="analysis-config__select" required aria-required="true">
+                                <option value="simple">Simple Average</option>
+                                <option value="predictive">Predictive Model (Simulated)</option>
+                            </select>
+                        </div>
+                        <div class="analysis-config__form-group">
+                            <label for="analysis-method" class="analysis-config__label">Analysis Method</label>
+                            <select id="analysis-method" class="analysis-config__select" required aria-required="true">
+                                <option value="correlation">Correlation Analysis (Simulated)</option>
+                                <option value="regression">Regression Analysis (Simulated)</option>
+                                <option value="segmentation">Segmentation Analysis (Simulated)</option>
+                            </select>
+                        </div>
+                         <div class="analysis-config__form-group">
+                            <label for="influencing-factors" class="analysis-config__label">Potential Influencing Factors (Select multiple)</label>
+                            <select id="influencing-factors" class="analysis-config__select" multiple size="5" aria-describedby="influencing-factors-desc">
+                                <!-- Options populated from mapped columns -->
+                            </select>
+                             <p id="influencing-factors-desc" style="font-size: 0.8rem; color: var(--text-light-color); margin-top: var(--spacing-unit);">Hold Ctrl or Cmd to select multiple factors.</p>
+                        </div>
+
+                         <button type="submit" id="run-analysis-button" class="analysis-config__run-button" aria-controls="results-content no-results-message">
+                            <span class="spinner" role="status" aria-hidden="true"></span>
+                            Run Analysis
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Results & Insights Section -->
+            <section id="results" class="section" aria-labelledby="results-title">
+                <h2 id="results-title" class="section__title">Analysis Results & Insights</h2>
+
+                 <div id="results-content" style="display: none;">
+                     <div class="card" aria-labelledby="summary-title">
+                        <h3 id="summary-title" class="card__title">Key Metrics Summary</h3>
+                        <div class="results__summary-grid">
+                            <div class="results__summary-card" role="status" aria-label="Average CLTV summary">
+                                <div class="results__summary-value" id="summary-avg-cltv">-</div>
+                                <div class="results__summary-label">Average CLTV</div>
+                            </div>
+                            <div class="results__summary-card" role="status" aria-label="Repeat Purchase Rate summary">
+                                <div class="results__summary-value" id="summary-repeat-rate">-</div>
+                                <div class="results__summary-label">Repeat Purchase Rate</div>
+                            </div>
+                             <div class="results__summary-card" role="status" aria-label="Average Purchase Frequency summary">
+                                <div class="results__summary-value" id="summary-avg-freq">-</div>
+                                <div class="results__summary-label">Avg. Purchase Frequency</div>
+                            </div>
+                             <div class="results__summary-card" role="status" aria-label="Average Order Value summary">
+                                <div class="results__summary-value" id="summary-avg-aov">-</div>
+                                <div class="results__summary-label">Avg. Order Value</div>
+                            </div>
+                        </div>
+                     </div>
+
+                     <div class="card" aria-labelledby="visualizations-title">
+                        <h3 id="visualizations-title" class="card__title">Visualizations</h3>
+                         <p style="color: var(--text-light-color); margin-bottom: var(--spacing-unit) * 2;">Click on a chart to access interactive controls.</p>
+
+                        <!-- Chart 1: Segment CLTV -->
+                        <div id="chart1-container" class="results__chart-container" tabindex="0" role="img" aria-label="Chart displaying CLTV by Customer Segment">
+                            <h4 class="card__title" style="margin-bottom: var(--spacing-unit) * 2;">CLTV by Customer Segment</h4>
+                            <canvas id="cltvSegmentChart"></canvas>
+                            <!-- Floating control panel for Chart 1 -->
+                            <div class="floating-controls" id="cltvSegmentChart-controls" aria-hidden="true">
+                                <div class="control-group">
+                                    <label for="cltvSegmentChart-chartType">Chart Type</label>
+                                    <select id="cltvSegmentChart-chartType" aria-controls="cltvSegmentChart">
+                                        <option value="bar">Bar</option>
+                                        <option value="pie">Pie</option>
+                                        <option value="doughnut">Doughnut</option>
+                                    </select>
+                                </div>
+                                 <div class="control-group">
+                                     <label for="cltvSegmentChart-barColor">Bar Color</label>
+                                     <input type="color" id="cltvSegmentChart-barColor" value="#007bff" aria-controls="cltvSegmentChart">
+                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Chart 2: Correlation Matrix (Placeholder - Simulated with Scatter) -->
+                         <div id="chart2-container" class="results__chart-container" style="display: none;" tabindex="0" role="img" aria-label="Chart displaying simulated variable correlation matrix">
+                             <h4 class="card__title" style="margin-bottom: var(--spacing-unit) * 2;">Variable Correlation Matrix (Simulated)</h4>
+                             <canvas id="correlationMatrixChart"></canvas>
+                             <!-- Floating controls for Chart 2 -->
+                            <div class="floating-controls" id="correlationMatrixChart-controls" aria-hidden="true">
+                                <div class="control-group">
+                                    <label for="correlationMatrixChart-colorScale">Color Scale (Simulated)</label>
+                                    <select id="correlationMatrixChart-colorScale" aria-controls="correlationMatrixChart">
+                                        <option value="viridis">Viridis</option>
+                                        <option value="plasma">Plasma</option>
+                                        <option value="heatmap">Heatmap</option>
+                                    </select>
+                                </div>
+                            </div>
+                         </div>
+
+                        <!-- Add more chart containers as needed -->
+
+                     </div>
+
+                     <div class="card" aria-labelledby="detailed-results-title">
+                        <h3 id="detailed-results-title" class="card__title">Detailed Analysis Results</h3>
+                        <div id="results-table-container" class="results__table-container" role="region" aria-live="polite" aria-label="Detailed analysis results table">
+                             <table id="analysis-results-table" class="results__table">
+                                <thead>
+                                     <!-- Table headers populated by JS -->
+                                     <tr><th>Result Type</th><th>Value</th></tr>
+                                </thead>
+                                <tbody>
+                                     <!-- Table rows populated by JS -->
+                                </tbody>
+                             </table>
+                        </div>
+                     </div>
+
+                     <div class="insights__panel" aria-labelledby="insights-heading">
+                        <div id="insights-header" class="insights__header" role="button" aria-expanded="false" tabindex="0">
+                            <h3 id="insights-heading">Actionable Insights & Recommendations</h3>
+                            <span class="material-symbols-rounded">expand_more</span>
+                        </div>
+                        <div id="insights-content" class="insights__content" aria-hidden="true">
+                            <ul class="insights__list">
+                                <!-- Insights populated by JS -->
+                            </ul>
+                             <button id="export-insights-button" class="export-button mt-2">
+                                <span class="material-symbols-rounded">download</span>
+                                Export Insights
+                            </button>
+                        </div>
+                     </div>
+                 </div>
+                  <div id="no-results-message" class="card text-center" style="display: block;" role="status">
+                      <h3 class="card__title">Run Analysis to See Results</h3>
+                      <p style="color: var(--text-light-color);">Configure your analysis on the "Analysis Setup" tab and click "Run Analysis" to generate results and insights.</p>
+                  </div>
+
+            </section>
+
+             <!-- Reports Section (Placeholder) -->
+            <section id="reports" class="section" aria-labelledby="reports-title">
+                <h2 id="reports-title" class="section__title">Reports</h2>
+                 <div class="card text-center">
+                     <h3 class="card__title">Reports Feature Coming Soon</h3>
+                     <p style="color: var(--text-light-color);">This section will contain generated reports based on your analysis.</p>
+                 </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+        import * as XLSX from 'https://esm.sh/xlsx';
+
+        // --- State Management ---
+        const state = {
+            currentSection: 'data-upload',
+            uploadedData: null, // Raw parsed data
+            dataHeaders: [],
+            mappedColumns: {}, // { requiredVar: columnName }
+            analysisConfig: {},
+            analysisResults: null,
+            charts: {}, // Store Chart.js instances
+        };
+
+        // --- DOM Elements ---
+        const elements = {
+            sidebarLinks: document.querySelectorAll('.sidebar__nav-link'),
+            sections: document.querySelectorAll('.section'),
+            dropZone: document.getElementById('drop-zone'),
+            fileInput: document.getElementById('file-input'),
+            filePreview: document.getElementById('file-preview'),
+            previewHeader: document.getElementById('preview-header'),
+            previewBody: document.getElementById('preview-body'),
+            fileNameDisplay: document.getElementById('file-name'),
+            columnMappingCard: document.getElementById('column-mapping-card'),
+            columnMappingGrid: document.getElementById('column-mapping-grid'),
+            saveMappingButton: document.getElementById('save-mapping-button'),
+            analysisConfigForm: document.getElementById('analysis-config-form'),
+            runAnalysisButton: document.getElementById('run-analysis-button'),
+            influencingFactorsSelect: document.getElementById('influencing-factors'),
+            resultsContent: document.getElementById('results-content'),
+            noResultsMessage: document.getElementById('no-results-message'),
+            summaryAvgCltv: document.getElementById('summary-avg-cltv'),
+            summaryRepeatRate: document.getElementById('summary-repeat-rate'),
+            summaryAvgFreq: document.getElementById('summary-avg-freq'),
+            summaryAvgAov: document.getElementById('summary-avg-aov'),
+            analysisResultsTable: document.getElementById('analysis-results-table'),
+            insightsHeader: document.getElementById('insights-header'),
+            insightsContent: document.getElementById('insights-content'),
+            insightsList: document.querySelector('.insights__list'),
+            cltvSegmentChartCanvas: document.getElementById('cltvSegmentChart'),
+            cltvSegmentChartControls: document.getElementById('cltvSegmentChart-controls'),
+            correlationMatrixChartCanvas: document.getElementById('correlationMatrixChart'),
+            correlationMatrixChartControls: document.getElementById('correlationMatrixChart-controls'),
+            chartContainers: document.querySelectorAll('.results__chart-container'),
+            exportInsightsButton: document.getElementById('export-insights-button'),
+        };
+
+        // --- Navigation ---
+        function navigateTo(sectionId) {
+            state.currentSection = sectionId;
+            elements.sections.forEach(section => {
+                section.classList.toggle('is-active', section.id === sectionId);
+                section.setAttribute('aria-hidden', section.id !== sectionId);
+            });
+            elements.sidebarLinks.forEach(link => {
+                link.classList.toggle('is-active', link.dataset.section === sectionId);
+                link.setAttribute('aria-current', link.dataset.section === sectionId ? 'page' : null);
+            });
+             // Update URL hash
+            history.pushState(null, '', `#${sectionId}`);
+
+            // Set focus to the section title for accessibility
+            const sectionTitle = document.getElementById(`${sectionId}-title`);
+            if (sectionTitle) {
+                sectionTitle.focus();
+            } else {
+                 // If no specific title, focus the section itself if it's focusable
+                 const activeSection = document.getElementById(sectionId);
+                 if (activeSection && activeSection.tabIndex === -1) {
+                     activeSection.tabIndex = -1; // Make it programmatically focusable
+                     activeSection.focus();
+                 }
+            }
+        }
+
+        elements.sidebarLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const sectionId = link.dataset.section;
+                navigateTo(sectionId);
+            });
+        });
+
+         // Handle initial load based on URL hash
+        const initialSection = window.location.hash ? window.location.hash.substring(1) : 'data-upload';
+        if (document.getElementById(initialSection)) {
+             navigateTo(initialSection);
+        } else {
+             navigateTo('data-upload');
+        }
+
+
+        // --- Data Upload ---
+        function handleFile(file) {
+            if (!file) return;
+
+            elements.fileNameDisplay.textContent = `Processing: ${file.name}`;
+            elements.fileNameDisplay.style.display = 'block';
+            elements.filePreview.style.display = 'none';
+            elements.columnMappingCard.style.display = 'none';
+            elements.saveMappingButton.style.display = 'none';
+             elements.saveMappingButton.disabled = true; // Disable until mapping is valid
+
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const data = e.target.result;
+                let workbook;
+                let jsonData = [];
+
+                try {
+                    if (file.name.endsWith('.csv')) {
+                        // Basic CSV parsing (can be replaced with PapaParse)
+                        const rows = data.split('\n').map(row => row.split(','));
+                        if (rows.length > 0) {
+                             state.dataHeaders = rows[0].map(header => header.trim());
+                             jsonData = rows.slice(1).map(row => {
+                                 const obj = {};
+                                 state.dataHeaders.forEach((header, i) => {
+                                     obj[header] = row[i] ? row[i].trim() : '';
+                                 });
+                                 return obj;
+                             });
+                        }
+                    } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+                        workbook = XLSX.read(data, { type: 'binary' });
+                        const sheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[sheetName];
+                        jsonData = XLSX.utils.sheet_to_json(worksheet);
+                         if (jsonData.length > 0) {
+                            state.dataHeaders = Object.keys(jsonData[0]);
+                         } else {
+                             state.dataHeaders = []; // Handle empty file
+                         }
+                    } else {
+                        alert('Unsupported file type.');
+                        resetUploadState();
+                        return;
+                    }
+
+                    state.uploadedData = jsonData;
+                    if (state.uploadedData.length > 0 && state.dataHeaders.length > 0) {
+                        displayFilePreview(state.uploadedData, state.dataHeaders);
+                        setupColumnMapping(state.dataHeaders);
+                         elements.fileNameDisplay.textContent = `Uploaded: ${file.name}`;
+                         elements.columnMappingCard.style.display = 'block';
+                         elements.saveMappingButton.style.display = 'inline-block';
+                         elements.saveMappingButton.disabled = false;
+                    } else {
+                         elements.fileNameDisplay.textContent = `Uploaded: ${file.name} (No data or headers found)`;
+                         elements.filePreview.style.display = 'none';
+                         elements.columnMappingCard.style.display = 'none';
+                         elements.saveMappingButton.style.display = 'none';
+                         state.dataHeaders = [];
+                         state.uploadedData = null;
+                         alert('No data or valid headers found in the file.');
+                    }
+
+
+                } catch (error) {
+                    console.error("Error processing file:", error);
+                    alert('Error processing file. Please ensure it is a valid CSV or Excel file.');
+                    resetUploadState();
+                }
+            };
+
+            reader.onerror = function(error) {
+                console.error("Error reading file:", error);
+                alert('Error reading file.');
+                resetUploadState();
+            };
+
+             // Determine how to read the file based on type
+            if (file.type.match(/csv/)) {
+                 reader.readAsText(file);
+            } else if (file.type.match(/spreadsheetml|excel/)) {
+                reader.readAsBinaryString(file);
+            } else {
+                 alert('Unsupported file type.');
+                 resetUploadState();
+            }
+        }
+
+        function resetUploadState() {
+             state.uploadedData = null;
+             state.dataHeaders = [];
+             state.mappedColumns = {};
+             elements.fileNameDisplay.style.display = 'none';
+             elements.filePreview.style.display = 'none';
+             elements.previewHeader.innerHTML = '';
+             elements.previewBody.innerHTML = '';
+             elements.columnMappingCard.style.display = 'none';
+             elements.columnMappingGrid.innerHTML = ''; // Clear previous mapping options
+             elements.saveMappingButton.style.display = 'none';
+             elements.saveMappingButton.disabled = true;
+             // Reset analysis setup options that depend on data
+             elements.influencingFactorsSelect.innerHTML = '';
+        }
+
+
+        function displayFilePreview(data, headers) {
+            elements.previewHeader.innerHTML = headers.map(header => `<th>${escapeHTML(header)}</th>`).join('');
+            elements.previewBody.innerHTML = ''; // Clear previous preview
+
+            const previewRows = data.slice(0, 10); // Show first 10 rows
+
+            previewRows.forEach(row => {
+                const tr = document.createElement('tr');
+                headers.forEach(header => {
+                    const td = document.createElement('td');
+                    // Display cell content, handle potential undefined/null
+                    td.textContent = escapeHTML(row[header] !== undefined && row[header] !== null ? row[header].toString() : '');
+                    tr.appendChild(td);
+                });
+                elements.previewBody.appendChild(tr);
+            });
+
+            elements.filePreview.style.display = 'block';
+        }
+
+        function setupColumnMapping(headers) {
+            elements.columnMappingGrid.innerHTML = ''; // Clear existing options
+
+            const requiredMappings = [
+                { id: 'customer-id', label: 'Customer ID', required: true },
+                { id: 'transaction-id', label: 'Transaction ID', required: true },
+                { id: 'transaction-date', label: 'Transaction Date', required: true },
+                { id: 'transaction-amount', label: 'Transaction Amount', required: true },
+            ];
+
+            const optionalMappings = [
+                { id: 'product-category', label: 'Product Category (Optional)' },
+                { id: 'customer-segment', label: 'Customer Segment (Optional)' },
+                // Add other potential factors here
+            ];
+
+            const allMappings = [...requiredMappings, ...optionalMappings];
+            const currentMapped = state.mappedColumns; // Keep existing mapping if headers match
+
+            allMappings.forEach(mapping => {
+                const itemDiv = document.createElement('div');
+                itemDiv.classList.add('column-mapping__item');
+
+                const label = document.createElement('label');
+                label.setAttribute('for', `map-${mapping.id}`);
+                label.classList.add('column-mapping__label');
+                label.textContent = mapping.label;
+
+                const select = document.createElement('select');
+                select.id = `map-${mapping.id}`;
+                select.classList.add('column-mapping__select');
+                if (mapping.required) {
+                    select.setAttribute('required', true);
+                    select.setAttribute('aria-required', true);
+                }
+                 select.setAttribute('aria-label', `Map to ${mapping.label}`);
+
+
+                const defaultOption = document.createElement('option');
+                defaultOption.value = "";
+                defaultOption.textContent = "Select Column";
+                select.appendChild(defaultOption);
+
+                headers.forEach(header => {
+                    const option = document.createElement('option');
+                    option.value = header;
+                    option.textContent = header;
+                    select.appendChild(option);
+                });
+
+                 // Attempt to pre-select based on previous mapping or header name guess
+                 const preselectedHeader = currentMapped[mapping.id] || headers.find(h => h.toLowerCase().includes(mapping.id.replace('-', ' ')));
+                 if (preselectedHeader && headers.includes(preselectedHeader)) {
+                     select.value = preselectedHeader;
+                 }
+
+
+                itemDiv.appendChild(label);
+                itemDiv.appendChild(select);
+                elements.columnMappingGrid.appendChild(itemDiv);
+            });
+
+            // Add event listeners to selects for validation feedback
+            elements.columnMappingGrid.querySelectorAll('.column-mapping__select').forEach(select => {
+                 select.addEventListener('change', () => {
+                     if (select.hasAttribute('required')) {
+                         select.classList.toggle('is-invalid', !select.value);
+                     }
+                 });
+            });
+
+
+            // Populate Influencing Factors select in Analysis Setup
+            updateInfluencingFactorsSelect(headers, requiredMappings.map(m => m.id));
+        }
+
+        function updateInfluencingFactorsSelect(headers, requiredMappingIds) {
+             elements.influencingFactorsSelect.innerHTML = ''; // Clear previous options
+             const mappedRequiredColumns = requiredMappingIds.map(id => state.mappedColumns[id]).filter(Boolean);
+
+             headers.forEach(header => {
+                 // Exclude core CLTV columns from potential factors IF they have been mapped
+                if (!mappedRequiredColumns.includes(header)) {
+                     const option = document.createElement('option');
+                     option.value = header;
+                     option.textContent = header;
+                     elements.influencingFactorsSelect.appendChild(option);
+                }
+            });
+        }
+
+
+        function saveColumnMapping() {
+            const mappingSelects = elements.columnMappingGrid.querySelectorAll('.column-mapping__select');
+            let allRequiredMapped = true;
+            const mapped = {};
+
+            mappingSelects.forEach(select => {
+                const required = select.hasAttribute('required');
+                const mappedId = select.id.replace('map-', '');
+                if (required && !select.value) {
+                    allRequiredMapped = false;
+                    select.classList.add('is-invalid');
+                } else {
+                    select.classList.remove('is-invalid');
+                    if (select.value) {
+                         mapped[mappedId] = select.value;
+                    }
+                }
+            });
+
+            if (!allRequiredMapped) {
+                alert('Please map all required columns.');
+                return false;
+            }
+
+            state.mappedColumns = mapped;
+            console.log("Saved Mapping:", state.mappedColumns);
+            alert('Column mapping saved successfully!');
+
+             // Update influencing factors options based on the newly saved mapping
+             const requiredMappingIds = ['customer-id', 'transaction-id', 'transaction-date', 'transaction-amount'];
+             updateInfluencingFactorsSelect(state.dataHeaders, requiredMappingIds);
+
+            return true;
+        }
+
+
+        // File Input and Drop Zone Listeners
+        elements.fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        elements.dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            elements.dropZone.classList.add('is-dragover');
+        });
+
+        elements.dropZone.addEventListener('dragleave', () => {
+            elements.dropZone.classList.remove('is-dragover');
+        });
+
+        elements.dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            elements.dropZone.classList.remove('is-dragover');
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+         // Allow drop zone to be activated by keyboard (Enter/Space)
+         elements.dropZone.addEventListener('keypress', (e) => {
+             if (e.key === 'Enter' || e.key === ' ') {
+                 e.preventDefault();
+                 elements.fileInput.click();
+             }
+         });
+
+
+        elements.saveMappingButton.addEventListener('click', saveColumnMapping);
+
+
+        // --- Analysis Configuration ---
+        elements.analysisConfigForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            if (!state.uploadedData || state.uploadedData.length === 0) {
+                 alert('Please upload data first.');
+                 navigateTo('data-upload');
+                 return;
+            }
+
+             // Check if required mappings are done
+             const requiredMappingIds = ['customer-id', 'transaction-id', 'transaction-date', 'transaction-amount'];
+             const allRequiredMapped = requiredMappingIds.every(id => state.mappedColumns[id]);
+
+             if (!allRequiredMapped) {
+                 alert('Please complete the required column mapping on the Data Upload tab.');
+                 navigateTo('data-upload');
+                 return;
+             }
+
+
+            // Collect config
+            state.analysisConfig = {
+                timeHorizon: parseInt(document.getElementById('cltv-time-horizon').value),
+                discountRate: parseFloat(document.getElementById('cltv-discount-rate').value) / 100, // Convert percentage to decimal
+                calculationMethod: document.getElementById('cltv-calculation-method').value,
+                analysisMethod: document.getElementById('analysis-method').value,
+                influencingFactors: Array.from(elements.influencingFactorsSelect.selectedOptions).map(option => option.value),
+                 mappedColumns: state.mappedColumns // Include mapped columns in config
+            };
+
+            console.log("Analysis Config:", state.analysisConfig);
+
+            runAnalysis(state.uploadedData, state.analysisConfig);
+        });
+
+        function runAnalysis(data, config) {
+            elements.runAnalysisButton.disabled = true;
+            elements.runAnalysisButton.classList.add('is-loading');
+            elements.runAnalysisButton.querySelector('.spinner').style.display = 'block';
+            elements.runAnalysisButton.innerHTML = '<span class="spinner" role="status" aria-hidden="true"></span> Running Analysis...'; // Update button text
+            elements.runAnalysisButton.setAttribute('aria-busy', 'true');
+
+
+            // Simulate analysis process
+            setTimeout(() => {
+                // --- Simulate Results ---
+                const simulatedResults = simulateAnalysis(data, config);
+                state.analysisResults = simulatedResults;
+                displayResults(simulatedResults);
+
+                elements.runAnalysisButton.disabled = false;
+                elements.runAnalysisButton.classList.remove('is-loading');
+                 elements.runAnalysisButton.querySelector('.spinner').style.display = 'none';
+                elements.runAnalysisButton.innerHTML = '<span class="spinner" role="status" aria-hidden="true"></span> Run Analysis'; // Reset button text
+                elements.runAnalysisButton.setAttribute('aria-busy', 'false');
+
+
+                navigateTo('results'); // Auto-navigate to results
+            }, 2000); // Simulate a 2-second analysis time
+        }
+
+        function simulateAnalysis(data, config) {
+             console.log("Simulating analysis with config:", config);
+
+             // Use mapped column names
+             const customerIdCol = config.mappedColumns['customer-id'];
+             const transactionDateCol = config.mappedColumns['transaction-date'];
+             const transactionAmountCol = config.mappedColumns['transaction-amount'];
+             const productCategoryCol = config.mappedColumns['product-category']; // Optional
+             const customerSegmentCol = config.mappedColumns['customer-segment']; // Optional
+
+
+            // Basic simulation: Calculate average CLTV, repeat rate, etc.
+            const uniqueCustomers = new Set();
+            const customerTransactions = {}; // { customerId: [{ date, amount }] }
+            let totalRevenue = 0;
+            let repeatCustomers = new Set();
+            const customerData = {}; // To store first/last purchase dates, total spent per customer
+
+            data.forEach(row => {
+                const customerId = row[customerIdCol];
+                const amount = parseFloat(row[transactionAmountCol]) || 0;
+                const date = new Date(row[transactionDateCol]); // Assuming date is parseable
+
+                if (customerId && !isNaN(date.getTime())) {
+                    uniqueCustomers.add(customerId);
+                    totalRevenue += amount;
+
+                    if (!customerTransactions[customerId]) {
+                        customerTransactions[customerId] = [];
+                        customerData[customerId] = {
+                            firstPurchase: date,
+                            lastPurchase: date,
+                            totalSpent: 0,
+                            transactionCount: 0,
+                            segment: customerSegmentCol ? row[customerSegmentCol] : 'Unknown',
+                            categories: new Set() // To track categories purchased
+                         };
+                    }
+                    customerTransactions[customerId].push({ date, amount });
+                     customerData[customerId].totalSpent += amount;
+                     customerData[customerId].transactionCount++;
+                     if (date < customerData[customerId].firstPurchase) customerData[customerId].firstPurchase = date;
+                     if (date > customerData[customerId].lastPurchase) customerData[customerId].lastPurchase = date;
+                     if (productCategoryCol && row[productCategoryCol]) {
+                         customerData[customerId].categories.add(row[productCategoryCol]);
+                     }
+                }
+            });
+
+             // Sort transactions by date for each customer
+             for (const customerId in customerTransactions) {
+                 customerTransactions[customerId].sort((a, b) => a.date - b.date);
+                 if (customerTransactions[customerId].length > 1) {
+                     repeatCustomers.add(customerId);
+                 }
+             }
+
+            const numCustomers = uniqueCustomers.size;
+            const numTransactions = data.length; // Assuming each row is a transaction
+            const numRepeatCustomers = repeatCustomers.size;
+
+            const repeatPurchaseRate = numCustomers > 0 ? (numRepeatCustomers / numCustomers) * 100 : 0;
+            const avgPurchaseFrequency = numCustomers > 0 ? numTransactions / numCustomers : 0;
+            const avgOrderValue = numTransactions > 0 ? totalRevenue / numTransactions : 0;
+
+             // Simple CLTV calculation (Avg Order Value * Purchase Frequency * Customer Lifespan)
+             // This simulation doesn't calculate lifespan accurately, just uses average AOV and Freq
+             // A more complex simulation or predictive model would be needed here.
+            const averageCltv = avgOrderValue * avgPurchaseFrequency * (config.timeHorizon / 12); // Rough estimate based on yearly frequency
+
+            // Simulate segmentation results (example: based on a dummy 'segment' column or just create dummy segments)
+             const segmentCltv = {}; // { segmentName: avgCltv }
+             const segments = new Set();
+             if (customerSegmentCol && data.length > 0 && data[0][customerSegmentCol] !== undefined) {
+                  data.forEach(row => {
+                      const segment = row[customerSegmentCol] || 'Unknown';
+                      segments.add(segment);
+                  });
+                  segments.forEach(segment => {
+                      // Calculate average CLTV for each segment
+                      const segmentCustomers = Object.values(customerData).filter(c => c.segment === segment);
+                      const segmentTotalSpent = segmentCustomers.reduce((sum, c) => sum + c.totalSpent, 0);
+                      const segmentAvgAov = segmentCustomers.reduce((sum, c) => sum + (c.totalSpent / c.transactionCount || 0), 0) / segmentCustomers.length || 0;
+                      const segmentAvgFreq = segmentCustomers.reduce((sum, c) => sum + c.transactionCount, 0) / segmentCustomers.length || 0;
+
+                      // Simple CLTV for segment
+                      segmentCltv[segment] = segmentAvgAov * segmentAvgFreq * (config.timeHorizon / 12);
+                      segmentCltv[segment] = parseFloat(segmentCltv[segment].toFixed(2));
+                  });
+             } else {
+                  // Create dummy segments if no segment column
+                  segmentCltv['High Value (Simulated)'] = averageCltv * 1.5;
+                  segmentCltv['Medium Value (Simulated)'] = averageCltv * 1.0;
+                  segmentCltv['Low Value (Simulated)'] = averageCltv * 0.5;
+                   for (const segment in segmentCltv) {
+                        segmentCltv[segment] = parseFloat(segmentCltv[segment].toFixed(2));
+                   }
+             }
+
+
+             // Simulate Correlation/Regression results (dummy values)
+             const correlationResults = config.influencingFactors.map(factor => ({
+                 factor: factor,
+                 correlation: parseFloat((Math.random() * 1.5 - 0.75).toFixed(2)) // Correlation between -0.75 and 0.75
+             }));
+
+             const regressionResults = config.influencingFactors.map(factor => ({
+                 factor: factor,
+                 coefficient: parseFloat((Math.random() * 100 - 50).toFixed(2)), // Coefficient between -50 and 50
+                 p_value: parseFloat(Math.random().toFixed(3)), // P-value between 0 and 1
+                 significance: Math.random() > 0.5 ? 'Significant' : 'Not Significant'
+             }));
+
+
+            // Simulate Insights based on simulated results
+            const simulatedInsights = [];
+
+            simulatedInsights.push(`The average CLTV over the next ${config.timeHorizon} months is estimated to be $${averageCltv.toFixed(2)}.`);
+            simulatedInsights.push(`Your current repeat purchase rate is ${repeatPurchaseRate.toFixed(1)}%. Increasing this rate is key to boosting CLTV.`);
+
+            if (config.analysisMethod === 'segmentation' && Object.keys(segmentCltv).length > 0) {
+                const sortedSegments = Object.entries(segmentCltv).sort(([, a], [, b]) => b - a);
+                simulatedInsights.push(`<strong>Segment Analysis:</strong> The segment "${escapeHTML(sortedSegments[0][0])}" shows the highest average CLTV ($${sortedSegments[0][1]}). Consider targeted marketing efforts for this group.`);
+                 if (sortedSegments.length > 1) {
+                     simulatedInsights.push(`The segment "${escapeHTML(sortedSegments[sortedSegments.length - 1][0])}" has the lowest CLTV ($${sortedSegments[sortedSegments.length - 1][1]}). Investigate reasons for lower value in this segment.`);
+                 }
+            }
+
+            if (config.analysisMethod === 'regression' && regressionResults.length > 0) {
+                 const significantFactors = regressionResults.filter(r => r.significance === 'Significant');
+                 if (significantFactors.length > 0) {
+                     const topFactor = significantFactors.sort((a, b) => Math.abs(b.coefficient) - Math.abs(a.coefficient))[0];
+                     simulatedInsights.push(`<strong>Regression Analysis:</strong> The factor "${escapeHTML(topFactor.factor)}" appears to be a significant predictor of CLTV (Coefficient: ${topFactor.coefficient}). Focus on strategies that positively influence this factor.`);
+                 } else {
+                     simulatedInsights.push(`<strong>Regression Analysis:</strong> No statistically significant influencing factors were identified in this analysis (Simulated).`);
+                 }
+            }
+
+             if (config.analysisMethod === 'correlation' && correlationResults.length > 0) {
+                 const strongCorrelations = correlationResults.filter(c => Math.abs(c.correlation) > 0.4); // Example threshold
+                 if (strongCorrelations.length > 0) {
+                     const strongest = strongCorrelations.sort((a, b) => Math.abs(b.correlation) - Math.abs(a.correlation))[0];
+                     simulatedInsights.push(`<strong>Correlation Analysis:</strong> The factor "${escapeHTML(strongest.factor)}" shows the strongest correlation with CLTV (Correlation: ${strongest.correlation}). Further investigation into this relationship is recommended.`);
+                 } else {
+                      simulatedInsights.push(`<strong>Correlation Analysis:</strong> No strong correlations between selected factors and CLTV were observed (Simulated).`);
+                 }
+             }
+
+             simulatedInsights.push("Analyze the first purchase experience to improve customer onboarding and encourage a second purchase.");
+             simulatedInsights.push("Implement a customer feedback loop to understand reasons for churn among low-CLTV customers.");
+
+
+            return {
+                summary: {
+                    avgCltv: averageCltv.toFixed(2),
+                    repeatRate: repeatPurchaseRate.toFixed(1) + '%',
+                    avgFreq: avgPurchaseFrequency.toFixed(2),
+                    avgAov: avgOrderValue.toFixed(2),
+                },
+                segmentCltv: segmentCltv,
+                correlationResults: correlationResults,
+                regressionResults: regressionResults,
+                insights: simulatedInsights,
+            };
+        }
+
+
+        // --- Display Results ---
+        function displayResults(results) {
+            elements.noResultsMessage.style.display = 'none';
+            elements.resultsContent.style.display = 'block';
+
+            // Display Summary
+            elements.summaryAvgCltv.textContent = `$${results.summary.avgCltv}`;
+            elements.summaryRepeatRate.textContent = results.summary.repeatRate;
+            elements.summaryAvgFreq.textContent = results.summary.avgFreq;
+            elements.summaryAvgAov.textContent = `$${results.summary.avgAov}`;
+
+            // Display Table Results
+            displayResultsTable(results);
+
+            // Display Charts
+            displayCharts(results);
+
+            // Display Insights
+            displayInsights(results.insights);
+        }
+
+        function displayResultsTable(results) {
+            const table = elements.analysisResultsTable;
+            const tbody = table.querySelector('tbody');
+            const thead = table.querySelector('thead tr');
+
+            tbody.innerHTML = ''; // Clear previous results
+            thead.innerHTML = ''; // Clear previous headers
+
+            const analysisMethod = state.analysisConfig.analysisMethod;
+
+            if (analysisMethod === 'correlation' && results.correlationResults && results.correlationResults.length > 0) {
+                thead.innerHTML = '<th>Factor</th><th tabindex="0" role="columnheader button" aria-sort="none">Correlation Coefficient <span class="material-symbols-rounded sort-icon">swap_vert</span></th>';
+                 results.correlationResults.forEach(item => {
+                     const tr = document.createElement('tr');
+                     tr.innerHTML = `<td>${escapeHTML(item.factor)}</td><td>${item.correlation}</td>`;
+                     tbody.appendChild(tr);
+                 });
+                 // Add sorting event listener
+                 addTableSorting(table, 1, 'number'); // Sort by Correlation Coefficient (index 1) as number
+
+            } else if (analysisMethod === 'regression' && results.regressionResults && results.regressionResults.length > 0) {
+                 thead.innerHTML = '<th>Factor</th><th tabindex="0" role="columnheader button" aria-sort="none">Coefficient <span class="material-symbols-rounded sort-icon">swap_vert</span></th><th tabindex="0" role="columnheader button" aria-sort="none">P-Value <span class="material-symbols-rounded sort-icon">swap_vert</span></th><th>Significance</th>';
+                 results.regressionResults.forEach(item => {
+                     const tr = document.createElement('tr');
+                     tr.innerHTML = `<td>${escapeHTML(item.factor)}</td><td>${item.coefficient}</td><td>${item.p_value}</td><td>${escapeHTML(item.significance)}</td>`;
+                     tbody.appendChild(tr);
+                 });
+                 // Add sorting event listeners
+                 addTableSorting(table, 1, 'number'); // Sort by Coefficient (index 1) as number
+                 addTableSorting(table, 2, 'number'); // Sort by P-Value (index 2) as number
+
+            } else if (analysisMethod === 'segmentation' && results.segmentCltv && Object.keys(results.segmentCltv).length > 0) {
+                 thead.innerHTML = '<th>Segment</th><th tabindex="0" role="columnheader button" aria-sort="none">Average CLTV <span class="material-symbols-rounded sort-icon">swap_vert</span></th>';
+                 for (const segment in results.segmentCltv) {
+                     const tr = document.createElement('tr');
+                     tr.innerHTML = `<td>${escapeHTML(segment)}</td><td>${results.segmentCltv[segment]}</td>`;
+                     tbody.appendChild(tr);
+                 }
+                 // Add sorting event listener
+                 addTableSorting(table, 1, 'currency'); // Sort by Average CLTV (index 1) as currency
+
+            } else {
+                 // Default/Simple CLTV results or no specific results for method
+                 thead.innerHTML = '<th>Metric</th><th>Value</th>';
+                 const simpleMetrics = [
+                     { label: 'Calculated Avg CLTV', value: `$${results.summary.avgCltv}` },
+                     { label: 'Repeat Purchase Rate', value: results.summary.repeatRate },
+                     { label: 'Avg. Purchase Frequency', value: results.summary.avgFreq },
+                     { label: 'Avg. Order Value', value: `$${results.summary.avgAov}` },
+                 ];
+                 simpleMetrics.forEach(item => {
+                     const tr = document.createElement('tr');
+                     tr.innerHTML = `<td>${escapeHTML(item.label)}</td><td>${escapeHTML(item.value)}</td>`;
+                     tbody.appendChild(tr);
+                 });
+            }
+
+             if (tbody.innerHTML === '') {
+                 // Display a message if no detailed results are available for the method
+                 const tr = document.createElement('tr');
+                 tr.innerHTML = `<td colspan="${thead.querySelectorAll('th').length}" class="text-center" style="color: var(--text-light-color);">No detailed results available for the selected analysis method.</td>`;
+                 tbody.appendChild(tr);
+             }
+        }
+
+        function displayCharts(results) {
+            // Destroy existing charts
+            for (const chartId in state.charts) {
+                if (state.charts[chartId]) {
+                    state.charts[chartId].destroy();
+                    state.charts[chartId] = null;
+                }
+            }
+
+            // Hide all chart containers and controls by default
+            elements.chartContainers.forEach(container => {
+                container.style.display = 'none';
+                container.classList.remove('is-active'); // Hide controls
+                container.setAttribute('aria-hidden', 'true');
+            });
+             document.querySelectorAll('.floating-controls').forEach(controls => {
+                 controls.classList.remove('is-active');
+                 controls.setAttribute('aria-hidden', 'true');
+             });
+
+
+            const analysisMethod = state.analysisConfig.analysisMethod;
+
+            if (analysisMethod === 'segmentation' && results.segmentCltv && Object.keys(results.segmentCltv).length > 0) {
+                 const segmentChartContainer = document.getElementById('chart1-container');
+                 segmentChartContainer.style.display = 'block';
+                 segmentChartContainer.setAttribute('aria-hidden', 'false');
+                 renderCltvSegmentChart(results.segmentCltv);
+
+            } else if (analysisMethod === 'correlation' && results.correlationResults && results.correlationResults.length > 0) {
+                 const correlationChartContainer = document.getElementById('chart2-container');
+                 correlationChartContainer.style.display = 'block';
+                 correlationChartContainer.setAttribute('aria-hidden', 'false');
+                 renderCorrelationMatrixChart(results.correlationResults);
+            }
+             // Add more conditions for other analysis methods/charts
+             // If no specific chart for the method, maybe show a default or hide all.
+        }
+
+        function renderCltvSegmentChart(segmentData) {
+             const ctx = elements.cltvSegmentChartCanvas.getContext('2d');
+             const labels = Object.keys(segmentData);
+             const data = Object.values(segmentData);
+
+              const backgroundColors = generateColors(labels.length); // Generate colors
+
+             const config = {
+                 type: 'bar', // Default type
+                 data: {
+                     labels: labels,
+                     datasets: [{
+                         label: 'Average CLTV',
+                         data: data,
+                         backgroundColor: backgroundColors,
+                         borderColor: backgroundColors.map(color => color.replace('rgba', 'rgb').replace(', 0.8)', ')')), // Solid border (use 0.8 alpha from generateColors)
+                         borderWidth: 1
+                     }]
+                 },
+                 options: {
+                     responsive: true,
+                     maintainAspectRatio: false,
+                     plugins: {
+                         legend: {
+                             display: false // Hide legend for simple bar chart
+                         },
+                         tooltip: {
+                             callbacks: {
+                                 label: function(context) {
+                                     let label = context.dataset.label || '';
+                                     if (label) {
+                                         label += ': ';
+                                     }
+                                     if (context.parsed.y !== null) {
+                                         label += '$' + context.parsed.y.toFixed(2);
+                                     } else if (context.parsed !== null) { // Handle pie/doughnut
+                                         label += '$' + context.parsed.toFixed(2);
+                                     }
+                                     return label;
+                                 }
+                             }
+                         }
+                     },
+                     scales: {
+                         y: {
+                             beginAtZero: true,
+                             title: {
+                                 display: true,
+                                 text: 'Average CLTV'
+                             }
+                         },
+                         x: {
+                              title: {
+                                 display: true,
+                                 text: 'Customer Segment'
+                             }
+                         }
+                     },
+                      onClick: (e) => toggleChartControls(elements.cltvSegmentChartControls),
+                 }
+             };
+
+             state.charts.cltvSegmentChart = new Chart(ctx, config);
+
+             // Setup Controls for this chart
+             const chartTypeSelect = elements.cltvSegmentChartControls.querySelector('#cltvSegmentChart-chartType');
+             const barColorInput = elements.cltvSegmentChartControls.querySelector('#cltvSegmentChart-barColor');
+
+             // Sync initial values
+             chartTypeSelect.value = state.charts.cltvSegmentChart.config.type;
+             barColorInput.value = state.charts.cltvSegmentChart.data.datasets[0].backgroundColor[0].replace(', 0.8)', ')').replace('hsla', 'rgba'); // Get a sample color and convert to hex/rgba
+
+
+             chartTypeSelect.onchange = (e) => {
+                 const newType = e.target.value;
+                 state.charts.cltvSegmentChart.config.type = newType;
+
+                 // Adjust options based on chart type
+                 const isPieDoughnut = newType === 'pie' || newType === 'doughnut';
+                 state.charts.cltvSegmentChart.options.scales.x.display = !isPieDoughnut;
+                 state.charts.cltvSegmentChart.options.scales.y.display = !isPieDoughnut;
+                 state.charts.cltvSegmentChart.options.plugins.legend.display = isPieDoughnut;
+
+                 // Update colors if switching from/to pie/doughnut (they use multiple colors)
+                 if (isPieDoughnut || state.charts.cltvSegmentChart.config.type === 'bar') {
+                      state.charts.cltvSegmentChart.data.datasets[0].backgroundColor = isPieDoughnut ? generateColors(labels.length) : [barColorInput.value];
+                      state.charts.cltvSegmentChart.data.datasets[0].borderColor = isPieDoughnut ? generateColors(labels.length).map(color => color.replace('rgba', 'rgb').replace(', 0.8)', ')')) : [barColorInput.value.replace('rgba', 'rgb').replace(', 0.8)', ')')];
+                 }
+
+
+                 state.charts.cltvSegmentChart.update();
+             };
+
+             barColorInput.onchange = (e) => {
+                  // Only update color if chart type is bar
+                 if (state.charts.cltvSegmentChart.config.type === 'bar') {
+                     state.charts.cltvSegmentChart.data.datasets[0].backgroundColor = [e.target.value];
+                     state.charts.cltvSegmentChart.data.datasets[0].borderColor = [e.target.value];
+                     state.charts.cltvSegmentChart.update();
+                 } else {
+                     alert('Color picker only affects Bar chart type.');
+                 }
+             };
+
+
+             // Close controls when clicking outside the chart container
+             document.addEventListener('click', (e) => {
+                 if (!e.target.closest(`#chart1-container`) && elements.cltvSegmentChartControls.classList.contains('is-active')) {
+                     elements.cltvSegmentChartControls.classList.remove('is-active');
+                     elements.cltvSegmentChartControls.setAttribute('aria-hidden', 'true');
+                 }
+             });
+
+              // Close controls on escape key
+             document.addEventListener('keydown', (e) => {
+                 if (e.key === 'Escape' && elements.cltvSegmentChartControls.classList.contains('is-active')) {
+                     elements.cltvSegmentChartControls.classList.remove('is-active');
+                     elements.cltvSegmentChartControls.setAttribute('aria-hidden', 'true');
+                 }
+             });
+        }
+
+         function renderCorrelationMatrixChart(correlationData) {
+             const ctx = elements.correlationMatrixChartCanvas.getContext('2d');
+             const labels = correlationData.map(item => item.factor);
+             const data = correlationData.map(item => item.correlation);
+
+             // Using a scatter plot with colored points to simulate heatmap
+             const matrixSize = labels.length;
+             const matrixData = [];
+             for(let i = 0; i < matrixSize; i++) {
+                 for (let j = 0; j < matrixSize; j++) {
+                     let value;
+                     if (i === j) {
+                         value = 1; // Correlation with self is 1
+                     } else if (i < j) {
+                         // Simulate off-diagonal correlations based on correlation with CLTV
+                         value = (correlationData[i].correlation + correlationData[j].correlation) / 2 + (Math.random() - 0.5) * 0.3;
+                         value = Math.max(-1, Math.min(1, parseFloat(value.toFixed(2)))); // Clamp between -1 and 1
+                     } else {
+                         // Matrix is symmetric - find the value from the upper triangle
+                          const symmetricItem = matrixData.find(item => item.x === j && item.y === i);
+                          value = symmetricItem ? symmetricItem.v : 0;
+                     }
+                     matrixData.push({ x: i, y: j, v: value });
+                 }
+             }
+
+             const config = {
+                 type: 'scatter',
+                 data: {
+                     datasets: [{
+                         label: 'Correlation',
+                         data: matrixData,
+                         backgroundColor: matrixData.map(item => getColorForCorrelation(item.v)),
+                         pointRadius: 15,
+                         pointHoverRadius: 18,
+                     }]
+                 },
+                 options: {
+                     responsive: true,
+                     maintainAspectRatio: false,
+                     plugins: {
+                         legend: {
+                             display: false
+                         },
+                         tooltip: {
+                             callbacks: {
+                                 label: function(context) {
+                                     const item = context.raw;
+                                     const labelX = labels[item.x];
+                                     const labelY = labels[item.y];
+                                     const value = item.v;
+                                     return `${escapeHTML(labelX)} vs ${escapeHTML(labelY)}: ${value.toFixed(2)}`;
+                                 }
+                             }
+                         }
+                     },
+                     scales: {
+                         x: {
+                             type: 'category',
+                             labels: labels,
+                             offset: true,
+                             grid: { display: false },
+                             title: { display: true, text: 'Factor 1' }
+                         },
+                         y: {
+                             type: 'category',
+                             labels: labels,
+                             offset: true,
+                             grid: { display: false },
+                             title: { display: true, text: 'Factor 2' }
+                         }
+                     },
+                      onClick: (e) => toggleChartControls(elements.correlationMatrixChartControls),
+                 }
+             };
+
+             state.charts.correlationMatrixChart = new Chart(ctx, config);
+
+              // Setup Controls for this chart (basic color scale simulation)
+             const colorScaleSelect = elements.correlationMatrixChartControls.querySelector('#correlationMatrixChart-colorScale');
+              // No direct color scale option in standard Chart.js scatter, this control is illustrative
+             colorScaleSelect.onchange = (e) => {
+                 console.log("Color scale selection changed (simulated):", e.target.value);
+                 // In a real implementation with a heatmap plugin, you would update the color scale here
+                 alert(`Selected color scale: ${e.target.value}. (This is a simulated control)`);
+             };
+
+             // Close controls when clicking outside the chart container
+             document.addEventListener('click', (e) => {
+                 if (!e.target.closest(`#chart2-container`) && elements.correlationMatrixChartControls.classList.contains('is-active')) {
+                     elements.correlationMatrixChartControls.classList.remove('is-active');
+                     elements.correlationMatrixChartControls.setAttribute('aria-hidden', 'true');
+                 }
+             });
+
+             // Close controls on escape key
+             document.addEventListener('keydown', (e) => {
+                 if (e.key === 'Escape' && elements.correlationMatrixChartControls.classList.contains('is-active')) {
+                     elements.correlationMatrixChartControls.classList.remove('is-active');
+                     elements.correlationMatrixChartControls.setAttribute('aria-hidden', 'true');
+                 }
+             });
+         }
+
+         // Helper to generate a set of distinct colors
+         function generateColors(numColors) {
+             const colors = [];
+             const baseHue = 220; // Starting hue (blueish)
+             const saturation = 70;
+             const lightness = 60;
+             const step = 360 / numColors;
+
+             for (let i = 0; i < numColors; i++) {
+                 const hue = (baseHue + i * step) % 360;
+                 colors.push(`hsla(${hue}, ${saturation}%, ${lightness}%, 0.8)`);
+             }
+             return colors;
+         }
+
+         // Helper to get color for correlation value (for simulated heatmap)
+         function getColorForCorrelation(value) {
+             // Map value from [-1, 1] to a color scale (e.g., red to blue)
+             // Red for -1 (negative correlation), White for 0, Blue for 1 (positive correlation)
+             const normalized = (value + 1) / 2; // Map to [0, 1]
+             // Use HSL: Hue from 240 (blue) to 0 (red), Saturation 100%, Lightness 50%
+             const hue = (1 - normalized) * 240;
+             return `hsl(${hue}, 100%, 50%)`;
+         }
+
+
+        function displayInsights(insights) {
+            elements.insightsList.innerHTML = ''; // Clear previous insights
+            if (insights.length === 0) {
+                 elements.insightsList.innerHTML = '<li class="insights__list-item" style="color: var(--text-light-color);">No specific insights generated for this analysis.</li>';
+                 elements.exportInsightsButton.style.display = 'none';
+            } else {
+                 insights.forEach(insightText => {
+                     const li = document.createElement('li');
+                     li.classList.add('insights__list-item');
+                     // Basic formatting: make the first sentence bold
+                     const parts = insightText.split('. ');
+                     if (parts.length > 1) {
+                         li.innerHTML = `<strong>${escapeHTML(parts[0])}.</strong> ${escapeHTML(parts.slice(1).join('. '))}`;
+                     } else {
+                          li.textContent = escapeHTML(insightText);
+                     }
+                     elements.insightsList.appendChild(li);
+                 });
+                 elements.exportInsightsButton.style.display = 'inline-flex';
+            }
+        }
+
+        // --- Insights Panel Toggle ---
+        elements.insightsHeader.addEventListener('click', () => {
+            const isExpanded = elements.insightsHeader.classList.toggle('is-expanded');
+            elements.insightsHeader.setAttribute('aria-expanded', isExpanded);
+            elements.insightsContent.classList.toggle('is-expanded');
+            elements.insightsContent.setAttribute('aria-hidden', !isExpanded);
+        });
+
+         elements.insightsHeader.addEventListener('keypress', (e) => {
+             if (e.key === 'Enter' || e.key === ' ') {
+                 e.preventDefault();
+                 elements.insightsHeader.click();
+             }
+         });
+
+         // --- Export Insights ---
+         elements.exportInsightsButton.addEventListener('click', () => {
+             const insights = Array.from(elements.insightsList.querySelectorAll('li')).map(li => {
+                 // Get text content, preserving bold formatting if needed, or just plain text
+                 return li.textContent.trim(); // Simple text export
+             }).join('\n\n'); // Separate insights with double newline
+
+             if (insights) {
+                 const blob = new Blob([insights], { type: 'text/plain' });
+                 const url = URL.createObjectURL(blob);
+                 const a = document.createElement('a');
+                 a.href = url;
+                 a.download = 'cltv_insights.txt';
+                 document.body.appendChild(a);
+                 a.click();
+                 document.body.removeChild(a);
+                 URL.revokeObjectURL(url);
+             } else {
+                 alert('No insights to export.');
+             }
+         });
+
+
+        // --- Table Sorting ---
+        function addTableSorting(table, columnIndex, dataType) {
+            const headerCell = table.querySelector(`thead th:nth-child(${columnIndex + 1})`);
+            if (!headerCell) return;
+
+            // Remove previous sorting listeners from this header
+            // Clone and replace to remove all event listeners efficiently
+            const newHeaderCell = headerCell.cloneNode(true);
+            headerCell.parentNode.replaceChild(newHeaderCell, headerCell);
+            const sortIcon = newHeaderCell.querySelector('.sort-icon');
+            if (!sortIcon) { // Add sort icon if not present
+                 const iconSpan = document.createElement('span');
+                 iconSpan.classList.add('material-symbols-rounded', 'sort-icon');
+                 iconSpan.textContent = 'swap_vert';
+                 newHeaderCell.appendChild(iconSpan);
+            } else {
+                sortIcon.textContent = 'swap_vert'; // Reset icon
+            }
+             newHeaderCell.setAttribute('aria-sort', 'none'); // Reset aria-sort
+
+
+            newHeaderCell.addEventListener('click', () => {
+                const tbody = table.querySelector('tbody');
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+
+                 // Check if there are actual data rows
+                 if (rows.length === 0 || rows[0].classList.contains('no-results-row')) {
+                     console.log("No data rows to sort.");
+                     return; // Don't attempt to sort empty or message rows
+                 }
+
+
+                // Determine sort order (asc/desc)
+                const isAsc = !newHeaderCell.classList.contains('is-sorted') || newHeaderCell.classList.contains('sort-desc');
+                const sortMultiplier = isAsc ? 1 : -1;
+
+                // Remove sorted class from other headers
+                table.querySelectorAll('th').forEach(th => {
+                    if (th !== newHeaderCell) {
+                        th.classList.remove('is-sorted', 'sort-asc', 'sort-desc');
+                         th.setAttribute('aria-sort', 'none');
+                         const icon = th.querySelector('.sort-icon');
+                         if(icon) icon.textContent = 'swap_vert';
+                    }
+                });
+
+                // Update sorted class and icon for the current header
+                newHeaderCell.classList.add('is-sorted');
+                newHeaderCell.classList.toggle('sort-asc', isAsc);
+                newHeaderCell.classList.toggle('sort-desc', !isAsc);
+                 newHeaderCell.setAttribute('aria-sort', isAsc ? 'ascending' : 'descending');
+
+                 const currentIcon = newHeaderCell.querySelector('.sort-icon');
+                 if(currentIcon) currentIcon.textContent = isAsc ? 'arrow_upward' : 'arrow_downward';
+
+
+                // Sort rows
+                rows.sort((rowA, rowB) => {
+                    const cellA = rowA.querySelectorAll('td')[columnIndex].textContent.trim();
+                    const cellB = rowB.querySelectorAll('td')[columnIndex].textContent.trim();
+
+                    let valueA, valueB;
+
+                    if (dataType === 'number') {
+                        valueA = parseFloat(cellA) || 0;
+                        valueB = parseFloat(cellB) || 0;
+                    } else if (dataType === 'currency') {
+                         valueA = parseFloat(cellA.replace(/[^0-9.-]+/g,"")) || 0;
+                         valueB = parseFloat(cellB.replace(/[^0-9.-]+/g,"")) || 0;
+                    }
+                    else { // String or other
+                        valueA = cellA.toLowerCase();
+                        valueB = cellB.toLowerCase();
+                        if (valueA < valueB) return -1 * sortMultiplier;
+                        if (valueA > valueB) return 1 * sortMultiplier;
+                        return 0;
+                    }
+
+                    return (valueA - valueB) * sortMultiplier;
+                });
+
+                // Re-append sorted rows
+                rows.forEach(row => tbody.appendChild(row));
+            });
+
+            // Add keyboard support for sorting
+             newHeaderCell.addEventListener('keypress', (e) => {
+                 if (e.key === 'Enter' || e.key === ' ') {
+                     e.preventDefault();
+                     newHeaderCell.click();
+                 }
+             });
+        }
+
+         // --- Chart Controls Toggle ---
+         function toggleChartControls(controlsElement) {
+             const isActive = controlsElement.classList.contains('is-active');
+
+             // Close any other active controls
+             document.querySelectorAll('.floating-controls.is-active').forEach(ctrl => {
+                 if (ctrl !== controlsElement) {
+                     ctrl.classList.remove('is-active');
+                     ctrl.setAttribute('aria-hidden', 'true');
+                 }
+             });
+
+             // Toggle the clicked chart's controls
+             controlsElement.classList.toggle('is-active', !isActive);
+             controlsElement.setAttribute('aria-hidden', isActive ? 'true' : 'false');
+
+             // Set focus to the first control element when opened
+             if (!isActive) {
+                 const firstControl = controlsElement.querySelector('select, input, button');
+                 if (firstControl) {
+                     firstControl.focus();
+                 }
+             }
+         }
+
+        // --- Utility: Escape HTML for display ---
+        function escapeHTML(str) {
+             if (str === null || str === undefined) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+    </script>
+
+</body>
+</html>

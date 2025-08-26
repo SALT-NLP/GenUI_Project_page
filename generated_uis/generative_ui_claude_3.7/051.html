@@ -1,0 +1,3095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriVision - Precision Farming Dashboard</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet/dist/leaflet.css" />
+    <style>
+        :root {
+            --primary: #4CAF50;
+            --primary-light: #80E27E;
+            --primary-dark: #2E7D32;
+            --secondary: #3F51B5;
+            --secondary-light: #7986CB;
+            --accent: #FF9800;
+            --accent-light: #FFCC80;
+            --accent-dark: #EF6C00;
+            --danger: #F44336;
+            --success: #4CAF50;
+            --warning: #FFC107;
+            --info: #2196F3;
+            --text-primary: #212121;
+            --text-secondary: #757575;
+            --background: #F5F7FA;
+            --card-bg: #FFFFFF;
+            --border-color: #E0E0E0;
+            --shadow: 0 2px 4px rgba(0,0,0,0.1);
+            --shadow-hover: 0 4px 8px rgba(0,0,0,0.15);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: var(--background);
+            color: var(--text-primary);
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            grid-template-rows: 60px 1fr;
+            grid-template-areas:
+                "sidebar header"
+                "sidebar main";
+            height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            grid-area: header;
+            background-color: var(--card-bg);
+            box-shadow: var(--shadow);
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        .header-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 16px;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-dark);
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--secondary-light);
+        }
+
+        .btn-accent {
+            background-color: var(--accent);
+        }
+
+        .btn-accent:hover {
+            background-color: var(--accent-dark);
+        }
+
+        .btn .tooltip {
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 100;
+        }
+
+        .btn:hover .tooltip {
+            opacity: 1;
+            visibility: visible;
+            bottom: -30px;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            grid-area: sidebar;
+            background-color: var(--card-bg);
+            box-shadow: var(--shadow);
+            padding: 20px 0;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            padding: 0 20px 20px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .logo-icon {
+            color: var(--primary);
+            font-size: 32px;
+            margin-right: 10px;
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+
+        .nav-list {
+            list-style: none;
+            margin-top: 10px;
+        }
+
+        .nav-item {
+            margin-bottom: 5px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition);
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background-color: rgba(76, 175, 80, 0.1);
+            color: var(--primary);
+            border-left-color: var(--primary);
+        }
+
+        .nav-link:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: -2px;
+        }
+
+        .nav-icon {
+            margin-right: 12px;
+            font-size: 20px;
+        }
+
+        /* Main Content */
+        .main {
+            grid-area: main;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .content-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .filter-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .select-wrapper {
+            position: relative;
+        }
+
+        .select-wrapper::after {
+            content: "arrow_drop_down";
+            font-family: 'Material Symbols Rounded';
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+        select {
+            appearance: none;
+            padding: 8px 30px 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--card-bg);
+            font-size: 0.9rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        select:hover, select:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+        }
+
+        /* Map Section */
+        .map-section {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .map-container {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            height: 500px;
+            position: relative;
+        }
+
+        #field-map {
+            height: 100%;
+            width: 100%;
+        }
+
+        .map-controls {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .control-title {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .layer-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .layer-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .layer-checkbox {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--border-color);
+            border-radius: 4px;
+            position: relative;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .layer-checkbox:checked {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .layer-checkbox:checked::after {
+            content: "✓";
+            position: absolute;
+            color: white;
+            font-size: 12px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .layer-checkbox:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+        }
+
+        .layer-label {
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .color-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .slider-container {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .range-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 5px;
+            background: var(--border-color);
+            outline: none;
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .range-slider::-webkit-slider-thumb:hover {
+            background: var(--primary-dark);
+            transform: scale(1.1);
+        }
+
+        .range-slider:focus {
+            outline: none;
+        }
+
+        .range-slider:focus::-webkit-slider-thumb {
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+        }
+
+        /* Analytics Section */
+        .analytics-section {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 20px;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-hover);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .card-action-btn {
+            background-color: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+
+        .card-action-btn:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+            color: var(--primary);
+        }
+
+        .card-action-btn:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+
+        .recommendations-list {
+            list-style: none;
+            margin-top: 10px;
+        }
+
+        .recommendation-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .recommendation-item:hover {
+            background-color: rgba(76, 175, 80, 0.05);
+        }
+
+        .recommendation-item:last-child {
+            border-bottom: none;
+        }
+
+        .recommendation-icon {
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+            padding: 8px;
+            border-radius: 50%;
+            margin-right: 12px;
+            font-size: 20px;
+            transition: var(--transition);
+        }
+
+        .recommendation-item:hover .recommendation-icon {
+            transform: scale(1.1);
+        }
+
+        .recommendation-content {
+            flex: 1;
+        }
+
+        .recommendation-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .recommendation-description {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .recommendation-location {
+            font-size: 0.8rem;
+            color: var(--primary);
+            margin-top: 4px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: var(--transition);
+        }
+
+        .recommendation-location:hover {
+            text-decoration: underline;
+            color: var(--primary-dark);
+        }
+
+        .recommendation-location:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        /* Info Panel */
+        .info-panel {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            width: 300px;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow-hover);
+            padding: 15px;
+            z-index: 1000;
+            display: none;
+            transform: translateX(20px);
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        .info-panel.active {
+            display: block;
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .info-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .info-panel-title {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .info-panel-close {
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .info-panel-close:hover {
+            color: var(--danger);
+            transform: scale(1.1);
+        }
+
+        .info-panel-close:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+            color: var(--danger);
+        }
+
+        .info-panel-content {
+            font-size: 0.9rem;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .info-value {
+            font-weight: 600;
+        }
+
+        .info-panel-actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Loading Indicator */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(76, 175, 80, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        .loading-text {
+            position: absolute;
+            margin-top: 70px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Floating Controls for Charts */
+        .floating-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: var(--transition);
+            pointer-events: none;
+            z-index: 5;
+            width: 200px;
+        }
+
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .floating-controls .control-group {
+            margin-bottom: 12px;
+        }
+
+        .floating-controls label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .floating-controls select,
+        .floating-controls input {
+            width: 100%;
+        }
+
+        /* Tooltip */
+        .map-tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        /* Time Series Slider */
+        .time-slider-container {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            z-index: 10;
+        }
+
+        .time-slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .time-slider-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .time-slider-value {
+            font-size: 0.8rem;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Data Upload Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+        }
+
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow-hover);
+            width: 500px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .modal-close:hover {
+            color: var(--danger);
+            transform: scale(1.1);
+        }
+
+        .modal-close:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+            color: var(--danger);
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--primary);
+            background-color: rgba(76, 175, 80, 0.05);
+        }
+
+        .upload-area:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+            border-color: var(--primary);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .upload-text {
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .upload-subtext {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .upload-input {
+            display: none;
+        }
+
+        .upload-progress {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background-color: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary);
+            width: 0;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .upload-files {
+            margin-top: 20px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .file-icon {
+            margin-right: 10px;
+            color: var(--primary);
+        }
+
+        .file-name {
+            flex: 1;
+            font-size: 0.9rem;
+        }
+
+        .file-size {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-right: 10px;
+        }
+
+        .file-remove {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 18px;
+            transition: var(--transition);
+        }
+
+        .file-remove:hover {
+            transform: scale(1.1);
+        }
+
+        .file-remove:focus-visible {
+            outline: 2px solid var(--danger);
+            outline-offset: 2px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 15px 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Export Options */
+        .export-options {
+            position: absolute;
+            top: 60px;
+            right: 20px;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow-hover);
+            padding: 10px 0;
+            z-index: 100;
+            display: none;
+            min-width: 150px;
+        }
+
+        .export-options.active {
+            display: block;
+        }
+
+        .export-item {
+            padding: 8px 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+        }
+
+        .export-item:hover {
+            background-color: rgba(76, 175, 80, 0.1);
+        }
+
+        .export-item:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: -2px;
+            background-color: rgba(76, 175, 80, 0.1);
+        }
+
+        .export-icon {
+            font-size: 18px;
+            color: var(--text-secondary);
+        }
+
+        .export-text {
+            font-size: 0.9rem;
+        }
+
+        /* Keyboard Navigation Highlight */
+        *:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        /* Data Comparison View */
+        .comparison-view {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--background);
+            z-index: 9000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .comparison-view.active {
+            display: block;
+        }
+
+        .comparison-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .comparison-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .comparison-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .comparison-close:hover {
+            color: var(--danger);
+            transform: scale(1.1);
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .comparison-item {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 20px;
+        }
+
+        /* Field History Timeline */
+        .timeline-container {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 4px;
+            background-color: var(--primary-light);
+            transform: translateX(-50%);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 30px;
+            width: 50%;
+        }
+
+        .timeline-item:nth-child(odd) {
+            left: 0;
+            padding-right: 40px;
+        }
+
+        .timeline-item:nth-child(even) {
+            left: 50%;
+            padding-left: 40px;
+        }
+
+        .timeline-item::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background-color: var(--primary);
+            border: 3px solid var(--primary-light);
+            border-radius: 50%;
+            top: 0;
+        }
+
+        .timeline-item:nth-child(odd)::after {
+            right: -8px;
+        }
+
+        .timeline-item:nth-child(even)::after {
+            left: -8px;
+        }
+
+        .timeline-content {
+            background-color: var(--background);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        .timeline-date {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .timeline-title {
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .timeline-description {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .analytics-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .map-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .info-panel {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 90%;
+                max-width: 400px;
+            }
+            
+            .info-panel.active {
+                transform: translate(-50%, -50%);
+            }
+
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+                grid-template-areas:
+                    "header"
+                    "main";
+            }
+
+            .sidebar {
+                position: fixed;
+                left: -240px;
+                top: 0;
+                bottom: 0;
+                transition: var(--transition);
+                z-index: 100;
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+
+            .header {
+                padding-left: 60px;
+            }
+
+            .menu-toggle {
+                position: fixed;
+                left: 20px;
+                top: 15px;
+                z-index: 101;
+                background: none;
+                border: none;
+                color: var(--text-primary);
+                cursor: pointer;
+                font-size: 24px;
+            }
+            
+            .header-actions {
+                gap: 8px;
+            }
+            
+            .header-actions .btn .btn-text {
+                display: none;
+            }
+
+            .timeline::before {
+                left: 30px;
+            }
+
+            .timeline-item {
+                width: 100%;
+                padding-left: 60px;
+                padding-right: 0;
+            }
+
+            .timeline-item:nth-child(odd),
+            .timeline-item:nth-child(even) {
+                left: 0;
+                padding-left: 60px;
+                padding-right: 0;
+            }
+
+            .timeline-item:nth-child(odd)::after,
+            .timeline-item:nth-child(even)::after {
+                left: 22px;
+                right: auto;
+            }
+        }
+
+        /* Keyboard shortcuts help */
+        .keyboard-shortcuts {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow-hover);
+            width: 500px;
+            max-width: 90%;
+            padding: 20px;
+            z-index: 10000;
+            display: none;
+        }
+
+        .keyboard-shortcuts.active {
+            display: block;
+        }
+
+        .shortcuts-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .shortcuts-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .shortcuts-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .shortcuts-close:hover {
+            color: var(--danger);
+            transform: scale(1.1);
+        }
+
+        .shortcuts-group {
+            margin-bottom: 15px;
+        }
+
+        .shortcuts-group-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--primary);
+        }
+
+        .shortcut-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .shortcut-keys {
+            display: flex;
+            gap: 5px;
+        }
+
+        .key {
+            background-color: var(--background);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <button class="menu-toggle" id="menu-toggle" aria-label="Toggle Menu">
+            <span class="material-symbols-rounded">menu</span>
+        </button>
+        
+        <header class="header">
+            <h1 class="header-title">Field Dashboard</h1>
+            <div class="header-actions">
+                <button class="btn btn-secondary" id="upload-btn" aria-label="Upload Data">
+                    <span class="material-symbols-rounded">upload</span>
+                    <span class="btn-text">Upload Data</span>
+                    <span class="tooltip">Upload field data</span>
+                </button>
+                <button class="btn" id="report-btn" aria-label="Generate Report">
+                    <span class="material-symbols-rounded">analytics</span>
+                    <span class="btn-text">Generate Report</span>
+                    <span class="tooltip">Create analysis report</span>
+                </button>
+                <button class="btn btn-accent" id="export-btn" aria-label="Export Data">
+                    <span class="material-symbols-rounded">download</span>
+                    <span class="btn-text">Export</span>
+                    <span class="tooltip">Export data</span>
+                </button>
+                <button class="btn btn-secondary" id="help-btn" aria-label="Keyboard Shortcuts">
+                    <span class="material-symbols-rounded">keyboard</span>
+                    <span class="tooltip">Keyboard shortcuts</span>
+                </button>
+            </div>
+        </header>
+
+        <aside class="sidebar" id="sidebar">
+            <div class="logo">
+                <span class="material-symbols-rounded logo-icon">eco</span>
+                <span class="logo-text">AgriVision</span>
+            </div>
+            <nav class="nav" aria-label="Main Navigation">
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="#" class="nav-link active" aria-current="page">
+                            <span class="material-symbols-rounded nav-icon">dashboard</span>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="material-symbols-rounded nav-icon">map</span>
+                            Fields
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="material-symbols-rounded nav-icon">data_usage</span>
+                            Data
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="material-symbols-rounded nav-icon">insights</span>
+                            Analytics
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="material-symbols-rounded nav-icon">description</span>
+                            Reports
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="material-symbols-rounded nav-icon">history</span>
+                            Field History
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="material-symbols-rounded nav-icon">compare</span>
+                            Season Comparison
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="material-symbols-rounded nav-icon">settings</span>
+                            Settings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="material-symbols-rounded nav-icon">help_outline</span>
+                            Help
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main">
+            <div class="content-header">
+                <h2 class="content-title">North Field Analysis</h2>
+                <div class="filter-controls">
+                    <div class="select-wrapper">
+                        <select id="field-selector" aria-label="Select Field">
+                            <option value="north">North Field</option>
+                            <option value="south">South Field</option>
+                            <option value="east">East Field</option>
+                            <option value="west">West Field</option>
+                        </select>
+                    </div>
+                    <div class="select-wrapper">
+                        <select id="crop-selector" aria-label="Select Crop Type">
+                            <option value="corn">Corn</option>
+                            <option value="soybeans">Soybeans</option>
+                            <option value="wheat">Wheat</option>
+                            <option value="alfalfa">Alfalfa</option>
+                        </select>
+                    </div>
+                    <div class="select-wrapper">
+                        <select id="date-selector" aria-label="Select Date">
+                            <option value="latest">Latest Data (Oct 15, 2023)</option>
+                            <option value="oct10">Oct 10, 2023</option>
+                            <option value="oct5">Oct 5, 2023</option>
+                            <option value="oct1">Oct 1, 2023</option>
+                            <option value="sep25">Sep 25, 2023</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <section class="map-section">
+                <div class="map-container">
+                    <div id="field-map" aria-label="Interactive Field Map"></div>
+                    <div class="time-slider-container">
+                        <div class="time-slider-header">
+                            <span class="time-slider-title">Time Series</span>
+                            <span class="time-slider-value" id="time-slider-value">Oct 15, 2023</span>
+                        </div>
+                        <input type="range" min="0" max="4" value="4" class="range-slider" id="time-slider" aria-label="Time series slider">
+                    </div>
+                    <div class="map-tooltip" id="map-tooltip"></div>
+                </div>
+                <div class="map-controls">
+                    <div class="control-group">
+                        <h3 class="control-title">
+                            <span class="material-symbols-rounded">layers</span>
+                            Data Layers
+                        </h3>
+                        <div class="layer-controls">
+                            <div class="layer-item">
+                                <input type="checkbox" id="drone-ndvi" class="layer-checkbox" checked aria-label="Toggle NDVI Layer">
+                                <label for="drone-ndvi" class="layer-label">
+                                    <span class="color-indicator" style="background-color: #2E7D32;"></span>
+                                    Drone NDVI
+                                </label>
+                            </div>
+                            <div class="layer-item">
+                                <input type="checkbox" id="soil-moisture" class="layer-checkbox" aria-label="Toggle Soil Moisture Layer">
+                                <label for="soil-moisture" class="layer-label">
+                                    <span class="color-indicator" style="background-color: #1976D2;"></span>
+                                    Soil Moisture
+                                </label>
+                            </div>
+                            <div class="layer-item">
+                                <input type="checkbox" id="stress-zones" class="layer-checkbox" aria-label="Toggle Stress Zones Layer">
+                                <label for="stress-zones" class="layer-label">
+                                    <span class="color-indicator" style="background-color: #F44336;"></span>
+                                    Stress Zones
+                                </label>
+                            </div>
+                            <div class="layer-item">
+                                <input type="checkbox" id="yield-prediction" class="layer-checkbox" aria-label="Toggle Yield Prediction Layer">
+                                <label for="yield-prediction" class="layer-label">
+                                    <span class="color-indicator" style="background-color: #FFB300;"></span>
+                                    Yield Prediction
+                                </label>
+                            </div>
+                            <div class="layer-item">
+                                <input type="checkbox" id="weather-data" class="layer-checkbox" aria-label="Toggle Weather Data Layer">
+                                <label for="weather-data" class="layer-label">
+                                    <span class="color-indicator" style="background-color: #9C27B0;"></span>
+                                    Weather Data
+                                </label>
+                            </div>
+                            <div class="layer-item">
+                                <input type="checkbox" id="previous-season" class="layer-checkbox" aria-label="Toggle Previous Season Layer">
+                                <label for="previous-season" class="layer-label">
+                                    <span class="color-indicator" style="background-color: #795548;"></span>
+                                    Previous Season
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <h3 class="control-title">
+                            <span class="material-symbols-rounded">opacity</span>
+                            Layer Opacity
+                        </h3>
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span>0%</span>
+                                <span>100%</span>
+                            </div>
+                            <input type="range" min="0" max="100" value="70" class="range-slider" id="opacity-slider" aria-label="Layer Opacity Slider">
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <h3 class="control-title">
+                            <span class="material-symbols-rounded">tune</span>
+                            Stress Detection Threshold
+                        </h3>
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span>Low</span>
+                                <span>High</span>
+                            </div>
+                            <input type="range" min="0" max="100" value="50" class="range-slider" id="stress-threshold-slider" aria-label="Stress Detection Threshold Slider">
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <h3 class="control-title">
+                            <span class="material-symbols-rounded">filter_alt</span>
+                            Data Filters
+                        </h3>
+                        <div class="select-wrapper" style="margin-bottom: 8px;">
+                            <select id="crop-type-filter" aria-label="Filter by Crop Type">
+                                <option value="all">All Crop Types</option>
+                                <option value="corn">Corn</option>
+                                <option value="soybeans">Soybeans</option>
+                                <option value="wheat">Wheat</option>
+                                <option value="alfalfa">Alfalfa</option>
+                            </select>
+                        </div>
+                        <div class="select-wrapper" style="margin-bottom: 8px;">
+                            <select id="soil-type-filter" aria-label="Filter by Soil Type">
+                                <option value="all">All Soil Types</option>
+                                <option value="clay">Clay</option>
+                                <option value="loam">Loam</option>
+                                <option value="sandy">Sandy</option>
+                                <option value="silt">Silt</option>
+                            </select>
+                        </div>
+                        <div class="select-wrapper">
+                            <select id="view-mode" aria-label="Select View Mode">
+                                <option value="standard">Standard View</option>
+                                <option value="section">Section View</option>
+                                <option value="grid">Grid View</option>
+                                <option value="contour">Contour View</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <h3 class="control-title">
+                            <span class="material-symbols-rounded">compare</span>
+                            Comparison
+                        </h3>
+                        <button class="btn" id="compare-seasons-btn" style="margin-bottom: 8px;" aria-label="Compare Seasons">
+                            <span class="material-symbols-rounded">compare_arrows</span>
+                            Compare Seasons
+                        </button>
+                        <button class="btn" id="view-history-btn" aria-label="View Field History">
+                            <span class="material-symbols-rounded">history</span>
+                            View Field History
+                        </button>
+                    </div>
+
+                    <button class="btn btn-accent" id="refresh-analysis-btn" style="margin-top: 10px;" aria-label="Refresh Analysis">
+                        <span class="material-symbols-rounded">autorenew</span>
+                        Refresh Analysis
+                    </button>
+                </div>
+            </section>
+
+            <section class="analytics-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <span class="material-symbols-rounded">monitoring</span>
+                            Crop Health Trends
+                        </h3>
+                        <div class="card-actions">
+                            <button class="card-action-btn" aria-label="Expand" title="Expand">
+                                <span class="material-symbols-rounded">fullscreen</span>
+                            </button>
+                            <button class="card-action-btn" aria-label="Download" title="Download">
+                                <span class="material-symbols-rounded">download</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-container" id="crop-health-container">
+                        <canvas id="cropHealthChart"></canvas>
+                        <div class="floating-controls" id="crop-health-controls">
+                            <div class="control-group">
+                                <label for="cropHealthChartType">Chart Type</label>
+                                <select id="cropHealthChartType" aria-label="Select Chart Type">
+                                    <option value="line">Line</option>
+                                    <option value="bar">Bar</option>
+                                    <option value="radar">Radar</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label for="cropHealthTimeRange">Time Range</label>
+                                <select id="cropHealthTimeRange" aria-label="Select Time Range">
+                                    <option value="7">Last 7 days</option>
+                                    <option value="30" selected>Last 30 days</option>
+                                    <option value="90">Last 90 days</option>
+                                    <option value="season">Full Season</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label for="cropHealthMetric">Metric</label>
+                                <select id="cropHealthMetric" aria-label="Select Metric">
+                                    <option value="ndvi">NDVI Index</option>
+                                    <option value="evi">Enhanced Vegetation Index</option>
+                                    <option value="ndmi">Moisture Index</option>
+                                    <option value="ndre">Red Edge Index</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label for="cropHealthColor">Line Color</label>
+                                <input type="color" id="cropHealthColor" value="#4CAF50" aria-label="Select Line Color">
+                            </div>
+                            <div class="control-group">
+                                <label for="cropHealthShowAverage">Show Field Average</label>
+                                <input type="checkbox" id="cropHealthShowAverage" checked aria-label="Toggle Field Average">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <span class="material-symbols-rounded">water_drop</span>
+                            Soil Moisture Analysis
+                        </h3>
+                        <div class="card-actions">
+                            <button class="card-action-btn" aria-label="Expand" title="Expand">
+                                <span class="material-symbols-rounded">fullscreen</span>
+                            </button>
+                            <button class="card-action-btn" aria-label="Download" title="Download">
+                                <span class="material-symbols-rounded">download</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-container" id="soil-moisture-container">
+                        <canvas id="soilMoistureChart"></canvas>
+                        <div class="floating-controls" id="soil-moisture-controls">
+                            <div class="control-group">
+                                <label for="soilMoistureChartType">Chart Type</label>
+                                <select id="soilMoistureChartType" aria-label="Select Chart Type">
+                                    <option value="line">Line</option>
+                                    <option value="bar">Bar</option>
+                                    <option value="radar">Radar</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label for="soilMoistureSection">Field Sections</label>
+                                <select id="soilMoistureSection" aria-label="Select Field Section">
+                                    <option value="all">All Sections</option>
+                                    <option value="north">North Section</option>
+                                    <option value="south">South Section</option>
+                                    <option value="east">East Section</option>
+                                    <option value="west">West Section</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label for="soilMoistureDepth">Soil Depth</label>
+                                <select id="soilMoistureDepth" aria-label="Select Soil Depth">
+                                    <option value="surface">Surface (0-6 inches)</option>
+                                    <option value="shallow">Shallow (6-12 inches)</option>
+                                    <option value="deep">Deep (12-24 inches)</option>
+                                    <option value="all">All Depths</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label for="soilMoistureCompare">Compare With</label>
+                                <select id="soilMoistureCompare" aria-label="Select Comparison">
+                                    <option value="none">No Comparison</option>
+                                    <option value="optimal">Optimal Range</option>
+                                    <option value="last-year">Last Year</option>
+                                    <option value="rainfall">Rainfall</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label for="soilMoistureThreshold">Show Critical Threshold</label>
+                                <input type="checkbox" id="soilMoistureThreshold" checked aria-label="Toggle Critical Threshold">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <span class="material-symbols-rounded">trending_up</span>
+                            Yield Prediction
+                        </h3>
+                        <div class="card-actions">
+                            <button class="card-action-btn" aria-label="Expand" title="Expand">
+                                <span class="material-symbols-rounded">fullscreen</span>
+                            </button>
+                            <button class="card-action-btn" aria-label="Download" title="Download">
+                                <span class="material-symbols-rounded">download</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-container" id="yield-prediction-container">
+                        <canvas id="yieldPredictionChart"></canvas>
+                        <div class="floating-controls" id="yield-prediction-controls">
+                            <div class="control-group">
+                                <label for="yieldPredictionChartType">Chart Type</label>
+                                <select id="yieldPredictionChartType" aria-label="Select Chart Type">
+                                    <option value="bar">Bar</option>
+                                    <option value="line">Line</option>
+                                    <option value="pie">Pie</option>
+                                    <option value="doughnut">Doughnut</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label for="yieldCompare">Compare to</label>
+                                <select id="yieldCompare" aria-label="Select Comparison">
+                                    <option value="lastYear">Last Year</option>
+                                    <option value="average">5-Year Average</option>
+                                    <option value="potential">Potential Yield</option>
+                                    <option value="none">No Comparison</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label for="yieldMetric">Yield Metric</label>
+                                <select id="yieldMetric" aria-label="Select Yield Metric">
+                                    <option value="bushels">Bushels per Acre</option>
+                                    <option value="tons">Tons per Acre</option>
+                                    <option value="percent">Percent of Potential</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label for="confidenceInterval">Show Confidence Interval</label>
+                                <input type="checkbox" id="confidenceInterval" checked aria-label="Toggle Confidence Interval">
+                            </div>
+                            <div class="control-group">
+                                <label for="yieldPredictionGranularity">Granularity</label>
+                                <select id="yieldPredictionGranularity" aria-label="Select Granularity">
+                                    <option value="sections">Field Sections</option>
+                                    <option value="grid">Grid Cells</option>
+                                    <option value="zones">Management Zones</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <span class="material-symbols-rounded">recommend</span>
+                            Recommended Actions
+                        </h3>
+                        <div class="card-actions">
+                            <button class="card-action-btn" id="refresh-recommendations-btn" aria-label="Refresh Recommendations" title="Refresh">
+                                <span class="material-symbols-rounded">refresh</span>
+                            </button>
+                            <button class="card-action-btn" aria-label="Export Recommendations" title="Export">
+                                <span class="material-symbols-rounded">download</span>
+                            </button>
+                        </div>
+                    </div>
+                    <ul class="recommendations-list">
+                        <li class="recommendation-item">
+                            <span class="material-symbols-rounded recommendation-icon">water_drop</span>
+                            <div class="recommendation-content">
+                                <h4 class="recommendation-title">Increase Irrigation</h4>
+                                <p class="recommendation-description">Soil moisture levels 15% below optimal in the northeast section. Increase irrigation by 0.5 inches.</p>
+                                <div class="recommendation-location" data-location="northeast" tabindex="0" role="button" aria-label="View northeast section on map">
+                                    <span class="material-symbols-rounded">location_on</span>
+                                    View on Map
+                                </div>
+                            </div>
+                        </li>
+                        <li class="recommendation-item">
+                            <span class="material-symbols-rounded recommendation-icon">grass</span>
+                            <div class="recommendation-content">
+                                <h4 class="recommendation-title">Targeted Fertilization</h4>
+                                <p class="recommendation-description">Apply 15 lbs/acre of nitrogen fertilizer in the southern section to address nutrient deficiency.</p>
+                                <div class="recommendation-location" data-location="south" tabindex="0" role="button" aria-label="View southern section on map">
+                                    <span class="material-symbols-rounded">location_on</span>
+                                    View on Map
+                                </div>
+                            </div>
+                        </li>
+                        <li class="recommendation-item">
+                            <span class="material-symbols-rounded recommendation-icon">bug_report</span>
+                            <div class="recommendation-content">
+                                <h4 class="recommendation-title">Pest Monitoring</h4>
+                                <p class="recommendation-description">Early signs of pest activity detected in the western section. Increase monitoring frequency.</p>
+                                <div class="recommendation-location" data-location="west" tabindex="0" role="button" aria-label="View western section on map">
+                                    <span class="material-symbols-rounded">location_on</span>
+                                    View on Map
+                                </div>
+                            </div>
+                        </li>
+                        <li class="recommendation-item">
+                            <span class="material-symbols-rounded recommendation-icon">thermostat</span>
+                            <div class="recommendation-content">
+                                <h4 class="recommendation-title">Frost Protection</h4>
+                                <p class="recommendation-description">Weather forecast indicates potential frost in 3 days. Prepare protection for sensitive crops in low-lying areas.</p>
+                                <div class="recommendation-location" data-location="lowlands" tabindex="0" role="button" aria-label="View low-lying areas on map">
+                                    <span class="material-symbols-rounded">location_on</span>
+                                    View on Map
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div class="info-panel" id="info-panel">
+        <div class="info-panel-header">
+            <h3 class="info-panel-title">Field Section Details</h3>
+            <span class="material-symbols-rounded info-panel-close" tabindex="0" role="button" aria-label="Close panel">close</span>
+        </div>
+        <div class="info-panel-content">
+            <div class="info-row">
+                <span class="info-label">Section:</span>
+                <span class="info-value" id="info-section">Northeast</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">NDVI:</span>
+                <span class="info-value" id="info-ndvi">0.76</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Soil Moisture:</span>
+                <span class="info-value" id="info-moisture">22%</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Stress Level:</span>
+                <span class="info-value" id="info-stress">Low</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Predicted Yield:</span>
+                <span class="info-value" id="info-yield">42 bu/acre</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Last Rainfall:</span>
+                <span class="info-value" id="info-rainfall">0.5 in (3 days ago)</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Soil Type:</span>
+                <span class="info-value" id="info-soil-type">Loam</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Crop Type:</span>
+                <span class="info-value" id="info-crop-type">Corn</span>
+            </div>
+        </div>
+        <div class="info-panel-actions">
+            <button class="btn" id="history-btn">View History</button>
+            <button class="btn btn-accent" id="action-btn">Take Action</button>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loading-text">Processing data...</div>
+    </div>
+
+    <div class="modal" id="upload-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Upload Field Data</h3>
+                <button class="modal-close" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="upload-area" id="upload-area" tabindex="0">
+                    <span class="material-symbols-rounded upload-icon">cloud_upload</span>
+                    <div class="upload-text">Drag & drop files here or click to browse</div>
+                    <div class="upload-subtext">Supported formats: GeoTIFF, CSV, JSON, SHP (max 50MB)</div>
+                    <input type="file" class="upload-input" id="upload-input" multiple accept=".tif,.tiff,.csv,.json,.shp,.zip">
+                </div>
+                <div class="upload-progress" id="upload-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span id="progress-percent">0%</span>
+                        <span id="progress-size">0 KB / 0 KB</span>
+                    </div>
+                </div>
+                <div class="upload-files" id="upload-files"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" id="cancel-upload-btn">Cancel</button>
+                <button class="btn btn-accent" id="start-upload-btn">Upload Files</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="export-options" id="export-options" tabindex="-1" role="menu">
+        <div class="export-item" id="export-pdf" tabindex="0" role="menuitem">
+            <span class="material-symbols-rounded export-icon">picture_as_pdf</span>
+            <span class="export-text">Export as PDF</span>
+        </div>
+        <div class="export-item" id="export-csv" tabindex="0" role="menuitem">
+            <span class="material-symbols-rounded export-icon">table_view</span>
+            <span class="export-text">Export as CSV</span>
+        </div>
+        <div class="export-item" id="export-image" tabindex="0" role="menuitem">
+            <span class="material-symbols-rounded export-icon">image</span>
+            <span class="export-text">Export as Image</span>
+        </div>
+        <div class="export-item" id="export-shapefile" tabindex="0" role="menuitem">
+            <span class="material-symbols-rounded export-icon">folder_zip</span>
+            <span class="export-text">Export as Shapefile</span>
+        </div>
+        <div class="export-item" id="export-geojson" tabindex="0" role="menuitem">
+            <span class="material-symbols-rounded export-icon">code</span>
+            <span class="export-text">Export as GeoJSON</span>
+        </div>
+    </div>
+
+    <div class="comparison-view" id="comparison-view">
+        <div class="comparison-header">
+            <h2 class="comparison-title">Season Comparison: 2022 vs 2023</h2>
+            <button class="comparison-close" id="comparison-close" aria-label="Close Comparison View">
+                <span class="material-symbols-rounded">close</span>
+            </button>
+        </div>
+        <div class="comparison-grid">
+            <div class="comparison-item">
+                <div class="card-header">
+                    <h3 class="card-title">2022 Season - North Field</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="season2022Chart"></canvas>
+                </div>
+            </div>
+            <div class="comparison-item">
+                <div class="card-header">
+                    <h3 class="card-title">2023 Season - North Field</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="season2023Chart"></canvas>
+                </div>
+            </div>
+            <div class="comparison-item">
+                <div class="card-header">
+                    <h3 class="card-title">Yield Comparison</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="yieldComparisonChart"></canvas>
+                </div>
+            </div>
+            <div class="comparison-item">
+                <div class="card-header">
+                    <h3 class="card-title">Stress Zones Comparison</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="stressComparisonChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="keyboard-shortcuts" id="keyboard-shortcuts">
+        <div class="shortcuts-header">
+            <h3 class="shortcuts-title">Keyboard Shortcuts</h3>
+            <button class="shortcuts-close" id="shortcuts-close" aria-label="Close Shortcuts">
+                <span class="material-symbols-rounded">close</span>
+            </button>
+        </div>
+        <div class="shortcuts-content">
+            <div class="shortcuts-group">
+                <h4 class="shortcuts-group-title">General</h4>
+                <div class="shortcut-item">
+                    <span class="shortcut-description">Toggle Menu</span>
+                    <div class="shortcut-keys">
+                        <span class="key">Alt</span>
+                        <span>+</span>
+                        <span class="key">M</span>
+                    </div>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-description">Upload Data</span>
+                    <div class="shortcut-keys">
+                        <span class="key">Alt</span>
+                        <span>+</span>
+                        <span class="key">U</span>
+                    </div>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-description">Generate Report</span>
+                    <div class="shortcut-keys">
+                        <span class="key">Alt</span>
+                        <span>+</span>
+                        <span class="key">R</span>
+                    </div>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-description">Export Data</span>
+                    <div class="shortcut-keys">
+                        <span class="key">Alt</span>
+                        <span>+</span>
+                        <span class="key">E</span>
+                    </div>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-description">Show Keyboard Shortcuts</span>
+                    <div class="shortcut-keys">
+                        <span class="key">?</span>
+                    </div>
+                </div>
+            </div>
+            <div class="shortcuts-group">
+                <h4 class="shortcuts-group-title">Map Navigation</h4>
+                <div class="shortcut-item">
+                    <span class="shortcut-description">Zoom In</span>
+                    <div class="shortcut-keys">
+                        <span class="key">+</span>
+                    </div>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-description">Zoom Out</span>
+                    <div class="shortcut-keys">
+                        <span class="key">-</span>
+                    </div>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-description">Reset View</span>
+                    <div class="shortcut-keys">
+                        <span class="key">0</span>
+                    </div>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-description">Toggle NDVI Layer</span>
+                    <div class="shortcut-keys">
+                        <span class="key">1</span>
+                    </div>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-description">Toggle Soil Moisture Layer</span>
+                    <div class="shortcut-keys">
+                        <span class="key">2</span>
+                    </div>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-description">Toggle Stress Zones Layer</span>
+                    <div class="shortcut-keys">
+                        <span class="key">3</span>
+                    </div>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-description">Toggle Yield Prediction Layer</span>
+                    <div class="shortcut-keys">
+                        <span class="key">4</span>
+                    </div>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-description">Toggle Weather Data Layer</span>
+                    <div class="shortcut-keys">
+                        <span class="key">5</span>
+                    </div>
+                </div>
+            </div>
+            <div class="shortcuts-group">
+                <h4 class="shortcuts-group-title">Data Analysis</h4>
+                <div class="shortcut-item">
+                    <span class="shortcut-description">Refresh Analysis</span>
+                    <div class="shortcut-keys">
+                        <span class="key">F5</span>
+                    </div>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-description">Compare Seasons</span>
+                    <div class="shortcut-keys">
+                        <span class="key">Alt</span>
+                        <span>+</span>
+                        <span class="key">C</span>
+                    </div>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-description">View Field History</span>
+                    <div class="shortcut-keys">
+                        <span class="key">Alt</span>
+                        <span>+</span>
+                        <span class="key">H</span>
+                    </div>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-description">Next Time Period</span>
+                    <div class="shortcut-keys">
+                        <span class="key">→</span>
+                    </div>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-description">Previous Time Period</span>
+                    <div class="shortcut-keys">
+                        <span class="key">←</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as L from "https://esm.sh/leaflet";
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        // Initialize the map
+        const map = L.map('field-map', {
+            attributionControl: false,
+            zoomControl: true,
+            scrollWheelZoom: true,
+            doubleClickZoom: true,
+            boxZoom: true,
+            keyboard: true
+        }).setView([40.7128, -74.0060], 16);
+
+        // Add base map layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Add attribution control in a better position
+        L.control.attribution({
+            position: 'bottomright'
+        }).addAttribution('© OpenStreetMap contributors').addTo(map);
+
+        // Define field boundaries (example coordinates)
+        const fieldBoundary = [
+            [40.7128, -74.0060],
+            [40.7138, -74.0060],
+            [40.7138, -74.0040],
+            [40.7128, -74.0040]
+        ];
+
+        // Add field boundary to map
+        const field = L.polygon(fieldBoundary, {
+            color: '#4CAF50',
+            weight: 2,
+            fillOpacity: 0.1
+        }).addTo(map);
+
+        // Fit map to field boundary
+        map.fitBounds(field.getBounds());
+
+        // Create sections within the field
+        const northeastSection = L.polygon([
+            [40.7133, -74.0050],
+            [40.7138, -74.0050],
+            [40.7138, -74.0040],
+            [40.7133, -74.0040]
+        ], {
+            color: '#4CAF50',
+            weight: 1,
+            fillOpacity: 0.1
+        }).addTo(map);
+
+        const northwestSection = L.polygon([
+            [40.7133, -74.0060],
+            [40.7138, -74.0060],
+            [40.7138, -74.0050],
+            [40.7133, -74.0050]
+        ], {
+            color: '#4CAF50',
+            weight: 1,
+            fillOpacity: 0.1
+        }).addTo(map);
+
+        const southeastSection = L.polygon([
+            [40.7128, -74.0050],
+            [40.7133, -74.0050],
+            [40.7133, -74.0040],
+            [40.7128, -74.0040]
+        ], {
+            color: '#4CAF50',
+            weight: 1,
+            fillOpacity: 0.1
+        }).addTo(map);
+
+        const southwestSection = L.polygon([
+            [40.7128, -74.0060],
+            [40.7133, -74.0060],
+            [40.7133, -74.0050],
+            [40.7128, -74.0050]
+        ], {
+            color: '#4CAF50',
+            weight: 1,
+            fillOpacity: 0.1
+        }).addTo(map);
+
+        // Create layer groups for different data types
+        const ndviLayer = L.layerGroup().addTo(map);
+        const soilMoistureLayer = L.layerGroup();
+        const stressZonesLayer = L.layerGroup();
+        const yieldPredictionLayer = L.layerGroup();
+        const weatherDataLayer = L.layerGroup();
+        const previousSeasonLayer = L.layerGroup();
+
+        // Time series data (example)
+        const timeSeriesDates = [
+            "Sep 25, 2023",
+            "Oct 1, 2023",
+            "Oct 5, 2023",
+            "Oct 10, 2023",
+            "Oct 15, 2023"
+        ];
+
+        // NDVI Data Visualization (example)
+        function updateNDVILayer(timeIndex = 4) {
+            ndviLayer.clearLayers();
+            
+            // Values change slightly based on time index
+            const timeMultiplier = 1 - (4 - timeIndex) * 0.05;
+            const opacityValue = document.getElementById('opacity-slider').value / 100;
+            
+            // Northeast (high NDVI)
+            L.polygon([
+                [40.7133, -74.0050],
+                [40.7138, -74.0050],
+                [40.7138, -74.0040],
+                [40.7133, -74.0040]
+            ], {
+                color: 'transparent',
+                fillColor: '#2E7D32',
+                fillOpacity: 0.7 * opacityValue
+            }).addTo(ndviLayer)
+            .on('click', function() {
+                showInfoPanel('Northeast', (0.82 * timeMultiplier).toFixed(2), (28 * timeMultiplier).toFixed(0) + '%', 'Low', (46 * timeMultiplier).toFixed(0) + ' bu/acre');
+            })
+            .on('mouseover', function(e) {
+                showMapTooltip(e, `NDVI: ${(0.82 * timeMultiplier).toFixed(2)}`);
+                this.setStyle({ fillOpacity: 0.9 * opacityValue });
+            })
+            .on('mouseout', function() {
+                hideMapTooltip();
+                this.setStyle({ fillOpacity: 0.7 * opacityValue });
+            })
+            .on('keypress', function(e) {
+                if (e.originalEvent.key === 'Enter' || e.originalEvent.key === ' ') {
+                    showInfoPanel('Northeast', (0.82 * timeMultiplier).toFixed(2), (28 * timeMultiplier).toFixed(0) + '%', 'Low', (46 * timeMultiplier).toFixed(0) + ' bu/acre');
+                }
+            })
+            .bindTooltip('Northeast Section', { direction: 'center', permanent: false });
+            
+            // Northwest (medium-high NDVI)
+            L.polygon([
+                [40.7133, -74.0060],
+                [40.7138, -74.0060],
+                [40.7138, -74.0050],
+                [40.7133, -74.0050]
+            ], {
+                color: 'transparent',
+                fillColor: '#4CAF50',
+                fillOpacity: 0.7 * opacityValue
+            }).addTo(ndviLayer)
+            .on('click', function() {
+                showInfoPanel('Northwest', (0.76 * timeMultiplier).toFixed(2), (25 * timeMultiplier).toFixed(0) + '%', 'Low', (44 * timeMultiplier).toFixed(0) + ' bu/acre');
+            })
+            .on('mouseover', function(e) {
+                showMapTooltip(e, `NDVI: ${(0.76 * timeMultiplier).toFixed(2)}`);
+                this.setStyle({ fillOpacity: 0.9 * opacityValue });
+            })
+            .on('mouseout', function() {
+                hideMapTooltip();
+                this.setStyle({ fillOpacity: 0.7 * opacityValue });
+            })
+            .on('keypress', function(e) {
+                if (e.originalEvent.key === 'Enter' || e.originalEvent.key === ' ') {
+                    showInfoPanel('Northwest', (0.76 * timeMultiplier).toFixed(2), (25 * timeMultiplier).toFixed(0) + '%', 'Low', (44 * timeMultiplier).toFixed(0) + ' bu/acre');
+                }
+            })
+            .bindTooltip('Northwest Section', { direction: 'center', permanent: false });
+            
+            // Southeast (medium NDVI)
+            L.polygon([
+                [40.7128, -74.0050],
+                [40.7133, -74.0050],
+                [40.7133, -74.0040],
+                [40.7128, -74.0040]
+            ], {
+                color: 'transparent',
+                fillColor: '#8BC34A',
+                fillOpacity: 0.7 * opacityValue
+            }).addTo(ndviLayer)
+            .on('click', function() {
+                showInfoPanel('Southeast', (0.68 * timeMultiplier).toFixed(2), (22 * timeMultiplier).toFixed(0) + '%', 'Medium', (38 * timeMultiplier).toFixed(0) + ' bu/acre');
+            })
+            .on('mouseover', function(e) {
+                showMapTooltip(e, `NDVI: ${(0.68 * timeMultiplier).toFixed(2)}`);
+                this.setStyle({ fillOpacity: 0.9 * opacityValue });
+            })
+            .on('mouseout', function() {
+                hideMapTooltip();
+                this.setStyle({ fillOpacity: 0.7 * opacityValue });
+            })
+            .on('keypress', function(e) {
+                if (e.originalEvent.key === 'Enter' || e.originalEvent.key === ' ') {
+                    showInfoPanel('Southeast', (0.68 * timeMultiplier).toFixed(2), (22 * timeMultiplier).toFixed(0) + '%', 'Medium', (38 * timeMultiplier).toFixed(0) + ' bu/acre');
+                }
+            })
+            .bindTooltip('Southeast Section', { direction: 'center', permanent: false });
+            
+            // Southwest (low NDVI)
+            L.polygon([
+                [40.7128, -74.0060],
+                [40.7133, -74.0060],
+                [40.7133, -74.0050],
+                [40.7128, -74.0050]
+            ], {
+                color: 'transparent',
+                fillColor: '#CDDC39',
+                fillOpacity: 0.7 * opacityValue
+            }).addTo(ndviLayer)
+            .on('click', function() {
+                showInfoPanel('Southwest', (0.59 * timeMultiplier).toFixed(2), (18 * timeMultiplier).toFixed(0) + '%', 'High', (32 * timeMultiplier).toFixed(0) + ' bu/acre');
+            })
+            .on('mouseover', function(e) {
+                showMapTooltip(e, `NDVI: ${(0.59 * timeMultiplier).toFixed(2)}`);
+                this.setStyle({ fillOpacity: 0.9 * opacityValue });
+            })
+            .on('mouseout', function() {
+                hideMapTooltip();
+                this.setStyle({ fillOpacity: 0.7 * opacityValue });
+            })
+            .on('keypress', function(e) {
+                if (e.originalEvent.key === 'Enter' || e.originalEvent.key === ' ') {
+                    showInfoPanel('Southwest', (0.59 * timeMultiplier).toFixed(2), (18 * timeMultiplier).toFixed(0) + '%', 'High', (32 * timeMultiplier).toFixed(0) + ' bu/acre');
+                }
+            })
+            .bindTooltip('Southwest Section', { direction: 'center', permanent: false });
+        }
+
+        // Soil Moisture Data Visualization
+        function updateSoilMoistureLayer(timeIndex = 4) {
+            soilMoistureLayer.clearLayers();
+            
+            // Values change slightly based on time index
+            const timeMultiplier = 1 - (4 - timeIndex) * 0.05;
+            const opacityValue = document.getElementById('opacity-slider').value / 100;
+            
+            // Northeast (high moisture)
+            L.polygon([
+                [40.7133, -74.0050],
+                [40.7138, -74.0050],
+                [40.7138, -74.0040],
+                [40.7133, -74.0040]
+            ], {
+                color: 'transparent',
+                fillColor: '#1565C0',
+                fillOpacity: 0.7 * opacityValue
+            }).addTo(soilMoistureLayer)
+            .on('click', function() {
+                showInfoPanel('Northeast', (0.82 * timeMultiplier).toFixed(2), (28 * timeMultiplier).toFixed(0) + '%', 'Low', (46 * timeMultiplier).toFixed(0) + ' bu/acre');
+            })
+            .on('mouseover', function(e) {
+                showMapTooltip(e, `Soil Moisture: ${(28 * timeMultiplier).toFixed(0)}%`);
+                this.setStyle({ fillOpacity: 0.9 * opacityValue });
+            })
+            .on('mouseout', function() {
+                hideMapTooltip();
+                this.setStyle({ fillOpacity: 0.7 * opacityValue });
+            })
+            .bindTooltip('Northeast Section', { direction: 'center', permanent: false });
+            
+            // Northwest (medium-high moisture)
+            L.polygon([
+                [40.7133, -74.0060],
+                [40.7138, -74.0060],
+                [40.7138, -74.0050],
+                [40.7133, -74.0050]
+            ], {
+                color: 'transparent',
+                fillColor: '#1976D2',
+                fillOpacity: 0.7 * opacityValue
+            }).addTo(soilMoistureLayer)
+            .on('click', function() {
+                showInfoPanel('Northwest', (0.76 * timeMultiplier).toFixed(2), (25 * timeMultiplier).toFixed(0) + '%', 'Low', (44 * timeMultiplier).toFixed(0) + ' bu/acre');
+            })
+            .on('mouseover', function(e) {
+                showMapTooltip(e, `Soil Moisture: ${(25 * timeMultiplier).toFixed(0)}%`);
+                this.setStyle({ fillOpacity: 0.9 * opacityValue });
+            })
+            .on('mouseout', function() {
+                hideMapTooltip();
+                this.setStyle({ fillOpacity: 0.7 * opacityValue });
+            })
+            .bindTooltip('Northwest Section', { direction: 'center', permanent: false });
+            
+            // Southeast (medium moisture)
+            L.polygon([
+                [40.7128, -74.0050],
+                [40.7133, -74.0050],
+                [40.7133, -74.0040],
+                [40.7128, -74.0040]
+            ], {
+                color: 'transparent',
+                fillColor: '#42A5F5',
+                fillOpacity: 0.7 * opacityValue
+            }).addTo(soilMoistureLayer)
+            .on('click', function() {
+                showInfoPanel('Southeast', (0.68 * timeMultiplier).toFixed(2), (22 * timeMultiplier).toFixed(0) + '%', 'Medium', (38 * timeMultiplier).toFixed(0) + ' bu/acre');
+            })
+            .on('mouseover', function(e) {
+                showMapTooltip(e, `Soil Moisture: ${(22 * timeMultiplier).toFixed(0)}%`);
+                this.setStyle({ fillOpacity: 0.9 * opacityValue });
+            })
+            .on('mouseout', function() {
+                hideMapTooltip();
+                this.setStyle({ fillOpacity: 0.7 * opacityValue });
+            })
+            .bindTooltip('Southeast Section', { direction: 'center', permanent: false });
+            
+            // Southwest (low moisture)
+            L.polygon([
+                [40.7128, -74.0060],
+                [40.7133, -74.0060],
+                [40.7133, -74.0050],
+                [40.7128, -74.0050]
+            ], {
+                color: 'transparent',
+                fillColor: '#90CAF9',
+                fillOpacity: 0.7 * opacityValue
+            }).addTo(soilMoistureLayer)
+            .on('click', function() {
+                showInfoPanel('Southwest', (0.59 * timeMultiplier).toFixed(2), (18 * timeMultiplier).toFixed(0) + '%', 'High', (32 * timeMultiplier).toFixed(0) + ' bu/acre');
+            })
+            .on('mouseover', function(e) {
+                showMapTooltip(e, `Soil Moisture: ${(18 * timeMultiplier).toFixed(0)}%`);
+                this.setStyle({ fillOpacity: 0.9 * opacityValue });
+            })
+            .on('mouseout', function() {
+                hideMapTooltip();
+                this.setStyle({ fillOpacity: 0.7 * opacityValue });
+            })
+            .bindTooltip('Southwest Section', { direction: 'center', permanent: false });
+        }
+
+        // Stress Zones Visualization
+        function updateStressZonesLayer(timeIndex = 4) {
+            stressZonesLayer.clearLayers();
+            
+            // Values change based on time index and threshold
+            const timeMultiplier = 1 - (4 - timeIndex) * 0.05;
+            const threshold = document.getElementById('stress-threshold-slider').value / 100;
+            const opacityValue = document.getElementById('opacity-slider').value / 100;
+            
+            // Northeast (low stress)
+            L.polygon([
+                [40.7133, -74.0050],
+                [40.7138, -74.0050],
+                [40.7138, -74.0040],
+                [40.7133, -74.0040]
+            ], {
+                color: 'transparent',
+                fillColor: threshold > 0.7 ? '#FFA726' : '#81C784',
+                fillOpacity: 0.7 * opacityValue
+            }).addTo(stressZonesLayer)
+            .on('click', function() {
+                showInfoPanel('Northeast', (0.82 * timeMultiplier).toFixed(2), (28 * timeMultiplier).toFixed(0) + '%', threshold > 0.7 ? 'Medium' : 'Low', (46 * timeMultiplier).toFixed(0) + ' bu/acre');
+            })
+            .on('mouseover', function(e) {
+                showMapTooltip(e, `Stress Level: ${threshold > 0.7 ? 'Medium' : 'Low'}`);
+                this.setStyle({ fillOpacity: 0.9 * opacityValue });
+            })
+            .on('mouseout', function() {
+                hideMapTooltip();
+                this.setStyle({ fillOpacity: 0.7 * opacityValue });
+            })
+            .bindTooltip('Northeast Section', { direction: 'center', permanent: false });
+            
+            // Northwest (low stress)
+            L.polygon([
+                [40.7133, -74.0060],
+                [40.7138, -74.0060],
+                [40.7138, -74.0050],
+                [40.7133, -74.0050]
+            ], {
+                color: 'transparent',
+                fillColor: threshold > 0.6 ? '#FFA726' : '#81C784',
+                fillOpacity: 0.7 * opacityValue
+            }).addTo(stressZonesLayer)
+            .on('click', function() {
+                showInfoPanel('Northwest', (0.76 * timeMultiplier).toFixed(2), (25 * timeMultiplier).toFixed(0) + '%', threshold > 0.6 ? 'Medium' : 'Low', (44 * timeMultiplier).toFixed(0) + ' bu/acre');
+            })
+            .on('mouseover', function(e) {
+                showMapTooltip(e, `Stress Level: ${threshold > 0.6 ? 'Medium' : 'Low'}`);
+                this.setStyle({ fillOpacity: 0.9 * opacityValue });
+            })
+            .on('mouseout', function() {
+                hideMapTooltip();
+                this.setStyle({ fillOpacity: 0.7 * opacityValue });
+            })
+            .bindTooltip('Northwest Section', { direction: 'center', permanent: false });
+            
+            // Southeast (medium stress)
+            L.polygon([
+                [40.7128, -74.0050],
+                [40.7133, -74.0050],
+                [40.7133, -74.0040],
+                [40.7128, -74.0040]
+            ], {
+                color: 'transparent',
+                fillColor: threshold > 0.4 ? '#F44336' : '#FFA726',
+                fillOpacity: 0.7 * opacityValue
+            }).addTo(stressZonesLayer)
+            .on('click', function() {
+                showInfoPanel('Southeast', (0.68 * timeMultiplier).toFixed(2), (22 * timeMultiplier).toFixed(0) + '%', threshold > 0.4 ? 'High' : 'Medium', (38 * timeMultiplier).toFixed(0) + ' bu/acre');
+            })
+            .on('mouseover', function(e) {
+                showMapTooltip(e, `Stress Level: ${threshold > 0.4 ? 'High' : 'Medium'}`);
+                this.setStyle({ fillOpacity: 0.9 * opacityValue });
+            })
+            .on('mouseout', function() {
+                hideMapTooltip();
+                this.setStyle({ fillOpacity: 0.7 * opacityValue });
+            })
+            .bindTooltip('Southeast Section', { direction: 'center', permanent: false });
+            
+            // Southwest (high stress)
+            L.polygon([
+                [40.7128, -74.0060],
+                [40.7133, -74.0060],
+                [40.7133, -74.0050],
+                [40.7128, -74.0050]
+            ], {
+                color: 'transparent',
+                fillColor: threshold > 0.2 ? '#F44336' : '#FFA726',
+                fillOpacity: 0.7 * opacityValue
+            }).addTo(stressZonesLayer)
+            .on('click', function() {
+                showInfoPanel('Southwest', (0.59 * timeMultiplier).toFixed(2), (18 * timeMultiplier).toFixed(0) + '%', threshold > 0.2 ? 'High' : 'Medium', (32 * timeMultiplier).toFixed(0) + ' bu/acre');
+            })
+            .on('mouseover', function(e) {
+                showMapTooltip(e, `Stress Level: ${threshold > 0.2 ? 'High' : 'Medium'}`);
+                this.setStyle({ fillOpacity: 0.9 * opacityValue });
+            })
+            .on('mouseout', function() {
+                hideMapTooltip();
+                this.setStyle({ fillOpacity: 0.7 * opacityValue });
+            })
+            .bindTooltip('Southwest Section', { direction: 'center', permanent: false });
+        }
+
+        // Yield Prediction Visualization
+        function updateYieldPredictionLayer(timeIndex = 4) {
+            yieldPredictionLayer.clearLayers();
+            
+            // Values change slightly based on time index
+            const timeMultiplier = 1 - (4 - timeIndex) * 0.05;
+            const opacityValue = document.getElementById('opacity-slider').value / 100;
+            
+            // Northeast (high yield)
+            L.polygon([
+                [40.7133, -74.0050],
+                [40.7138, -74.0050],
+                [40.7138, -74.0040],
+                [40.7133, -74.0040]
+            ], {
+                color: 'transparent',
+                fillColor: '#FFD54F',
+                fillOpacity: 0.7 * opacityValue
+            }).addTo(yieldPredictionLayer)
+            .on('click', function() {
+                showInfoPanel('Northeast', (0.82 * timeMultiplier).toFixed(2), (28 * timeMultiplier).toFixed(0) + '%', 'Low', (46 * timeMultiplier).toFixed(0) + ' bu/acre');
+            })
+            .on('mouseover', function(e) {
+                showMapTooltip(e, `Predicted Yield: ${(46 * timeMultiplier).toFixed(0)} bu/acre`);
+                this.setStyle({ fillOpacity: 0.9 * opacityValue });
+            })
+            .on('mouseout', function() {
+                hideMapTooltip();
+                this.setStyle({ fillOpacity: 0.7 * opacityValue });
+            })
+            .bindTooltip('Northeast Section', { direction: 'center', permanent: false });
+            
+            // Northwest (high yield)
+            L.polygon([
+                [40.7133, -74.0060],
+                [40.7138, -74.0060],
+                [40.7138, -74.0050],
+                [40.7133, -74.0050]
+            ], {
+                color: 'transparent',
+                fillColor: '#FFCA28',
+                fillOpacity: 0.7 * opacityValue
+            }).addTo(yieldPredictionLayer)
+            .on('click', function() {
+                showInfoPanel('Northwest', (0.76 * timeMultiplier).toFixed(2), (25 * timeMultiplier).toFixed(0) + '%', 'Low', (44 * timeMultiplier).toFixed(0) + ' bu/acre');
+            })
+            .on('mouseover', function(e) {
+                showMapTooltip(e, `Predicted Yield: ${(44 * timeMultiplier).toFixed(0)} bu/acre`);
+                this.setStyle({ fillOpacity: 0.9 * opacityValue });
+            })
+            .on('mouseout', function() {
+                hideMapTooltip();
+                this.setStyle({ fillOpacity: 0.7 * opacityValue });
+            })
+            .bindTooltip('Northwest Section', { direction: 'center', permanent: false });
+            
+            // Southeast (medium yield)
+            L.polygon([
+                [40.7128, -74.0050],
+                [40.7133, -74.0050],
+                [40.7133, -74.0040],
+                [40.7128, -74.0040]
+            ], {
+                color: 'transparent',
+                fillColor: '#FFA000',
+                fillOpacity: 0.7 * opacityValue
+            }).addTo(yieldPredictionLayer)
+            .on('click', function() {
+                showInfoPanel('Southeast', (0.68 * timeMultiplier).toFixed(2), (22 * timeMultiplier).toFixed(0) + '%', 'Medium', (38 * timeMultiplier).toFixed(0) + ' bu/acre');
+            })
+            .on('mouseover', function(e) {
+                showMapTooltip(e, `Predicted Yield: ${(38 * timeMultiplier).toFixed(0)} bu/acre`);
+                this.setStyle({ fillOpacity: 0.9 * opacityValue });
+            })
+            .on('mouseout', function() {
+                hideMapTooltip();
+                this.setStyle({ fillOpacity: 0.7 * opacityValue });
+            })
+            .bindTooltip('Southeast Section', { direction: 'center', permanent: false });
+            
+            // Southwest (low yield)
+            L.polygon([
+                [40.7128, -74.0060],
+                [40.7133, -74.0060],
+                [40.7133, -74.0050],
+                [40.7128, -74.0050]
+            ], {
+                color: 'transparent',
+                fillColor: '#FF6F00',
+                fillOpacity: 0.7 * opacityValue
+            }).addTo(yieldPredictionLayer)
+            .on('click', function() {
+                showInfoPanel('Southwest', (0.59 * timeMultiplier).toFixed(2), (18 * timeMultiplier).toFixed(0) + '%', 'High', (32 * timeMultiplier).toFixed(0) + ' bu/acre');
+            })
+            .on('mouseover', function(e) {
+                showMapTooltip(e, `Predicted Yield: ${(32 * timeMultiplier).toFixed(0)} bu/acre`);
+                this.setStyle({ fillOpacity: 0.9 * opacityValue });
+            })
+            .on('mouseout', function() {
+                hideMapTooltip();
+                this.setStyle({ fillOpacity: 0.7 * opacityValue });
+            })
+            .bindTooltip('Southwest Section', { direction: 'center', permanent: false });
+        }
+
+        // Weather Data Visualization
+        function updateWeatherDataLayer(timeIndex = 4) {
+            weatherDataLayer.clearLayers();
+            
+            // Weather station markers
+            const weatherStations = [
+                { lat: 40.7135, lng: -74.0045, name: 'Northeast Station', temp: 72 - timeIndex * 2, humidity: 65 + timeIndex, windSpeed: 5 + Math.round(Math.random() * 3) },
+                { lat: 40.7135, lng: -74.0055, name: 'Northwest Station', temp: 70 - timeIndex * 2, humidity: 68 + timeIndex, windSpeed: 6 + Math.round(Math.random() * 3) },
+                { lat: 40.7130, lng: -74.0045, name: 'Southeast Station', temp: 73 - timeIndex * 2, humidity: 63 + timeIndex, windSpeed: 4 + Math.round(Math.random() * 3) },
+                { lat: 40.7130, lng: -74.0055, name: 'Southwest Station', temp: 71 - timeIndex * 2, humidity: 67 + timeIndex, windSpeed: 7 + Math.round(Math.random() * 3) }
+            ];
+            
+            weatherStations.forEach(station => {
+                L.circleMarker([station.lat, station.lng], {
+                    radius: 6,
+                    color: '#9C27B0',
+                    fillColor: '#CE93D8',
+                    fillOpacity: 0.8,
+                    weight: 2
+                }).addTo(weatherDataLayer)
+                .bindTooltip(`<strong>${station.name}</strong><br>Temp: ${station.temp}°F<br>Humidity: ${station.humidity}%<br>Wind: ${station.windSpeed} mph`, {
+                    direction: 'top',
+                    offset: L.point(0, -10)
+                })
+                .on('click', function() {
+                    showWeatherInfoPanel(station);
+                });
+            });
+            
+            // Add simple rainfall heatmap
+            const rainfallData = [
+                { lat: 40.7136, lng: -74.0045, value: 0.5 - timeIndex * 0.05 },
+                { lat: 40.7136, lng: -74.0055, value: 0.6 - timeIndex * 0.05 },
+                { lat: 40.7130, lng: -74.0045, value: 0.4 - timeIndex * 0.05 },
+                { lat: 40.7130, lng: -74.0055, value: 0.7 - timeIndex * 0.05 }
+            ];
+            
+            rainfallData.forEach(point => {
+                if (point.value > 0) {
+                    L.circle([point.lat, point.lng], {
+                        radius: 50,
+                        color: 'transparent',
+                        fillColor: '#1976D2',
+                        fillOpacity: point.value * 0.5 * (document.getElementById('opacity-slider').value / 100)
+                    }).addTo(weatherDataLayer)
+                    .on('mouseover', function(e) {
+                        showMapTooltip(e, `Rainfall: ${point.value.toFixed(2)} inches`);
+                    })
+                    .on('mouseout', function() {
+                        hideMapTooltip();
+                    });
+                }
+            });
+        }
+
+        // Previous Season Layer
+        function updatePreviousSeasonLayer(timeIndex = 4) {
+            previousSeasonLayer.clearLayers();
+            
+            const opacityValue = document.getElementById('opacity-slider').value / 100;
+            
+            // Northeast (previous season NDVI)
+            L.polygon([
+                [40.7133, -74.0050],
+                [40.7138, -74.0050],
+                [40.7138, -74.0040],
+                [40.7133, -74.0040]
+            ], {
+                color: 'transparent',
+                fillColor: '#795548',
+                fillOpacity: 0.7 * opacityValue
+            }).addTo(previousSeasonLayer)
+            .on('click', function() {
+                showInfoPanel('Northeast (2022)', '0.78', '26%', 'Low', '43 bu/acre', 'Last Season');
+            })
+            .on('mouseover', function(e) {
+                showMapTooltip(e, `2022 NDVI: 0.78`);
+                this.setStyle({ fillOpacity: 0.9 * opacityValue });
+            })
+            .on('mouseout', function() {
+                hideMapTooltip();
+                this.setStyle({ fillOpacity: 0.7 * opacityValue });
+            })
+            .bindTooltip('Northeast 2022', { direction: 'center', permanent: false });
+            
+            // Northwest (previous season NDVI)
+            L.polygon([
+                [40.7133, -74.0060],
+                [40.7138, -74.0060],
+                [40.7138, -74.0050],
+                [40.7133, -74.0050]
+            ], {
+                color: 'transparent',
+                fillColor: '#8D6E63',
+                fillOpacity: 0.7 * opacityValue
+            }).addTo(previousSeasonLayer)
+            .on('click', function() {
+                showInfoPanel('Northwest (2022)', '0.72', '23%', 'Medium', '40 bu/acre', 'Last Season');
+            })
+            .on('mouseover', function(e) {
+                showMapTooltip(e, `2022 NDVI: 0.72`);
+                this.setStyle({ fillOpacity: 0.9 * opacityValue });
+            })
+            .on('mouseout', function() {
+                hideMapTooltip();
+                this.setStyle({ fillOpacity: 0.7 * opacityValue });
+            })
+            .bindTooltip('Northwest 2022', { direction: 'center', permanent: false });
+            
+            // Southeast (previous season NDVI)
+            L.polygon([
+                [40.7128, -74.0050],
+                [40.7133, -74.0050],
+                [40.7133, -74.0040],
+                [40.7128, -74.0040]
+            ], {
+                color: 'transparent',
+                fillColor: '#A1887F',
+                fillOpacity: 0.7 * opacityValue
+            }).addTo(previousSeasonLayer)
+            .on('click', function() {
+                showInfoPanel('Southeast (2022)', '0.65', '20%', 'Medium', '36 bu/acre', 'Last Season');
+            })
+            .on('mouseover', function(e) {
+                showMapTooltip(e, `2022 NDVI: 0.65`);
+                this.setStyle({ fillOpacity: 0.9 * opacityValue });
+            })
+            .on('mouseout', function() {
+                hideMapTooltip();
+                this.setStyle({ fillOpacity: 0.7 * opacityValue });
+            })
+            .bindTooltip('Southeast 2022', { direction: 'center', permanent: false });
+            
+            // Southwest (previous season NDVI)
+            L.polygon([
+                [40.7128, -74.0060],
+                [40.7133, -74.0060],
+                [40.7133, -74.0050],
+                [40.7128, -74.0050]
+            ], {
+                color: 'transparent',
+                fillColor: '#BCAAA4',
+                fillOpacity: 0.7 * opacityValue
+            }).addTo(previousSeasonLayer)
+            .on('click', function() {
+                showInfoPanel('Southwest (2022)', '0.55', '17%', 'High', '30 bu/acre', 'Last Season');
+            })
+            .on('mouseover', function(e) {
+                showMapTooltip(e, `2022 NDVI: 0.55`);
+                this.setStyle({ fillOpacity: 0.9 * opacityValue });
+            })
+            .on('mouseout', function() {
+                hideMapTooltip();
+                this.setStyle({ fillOpacity: 0.7 * opacityValue });
+            })
+            .bindTooltip('Southwest 2022', { direction: 'center', permanent: false });
+        }
+
+        // Initialize layers
+        updateNDVILayer();
+        updateSoilMoistureLayer();
+        updateStressZonesLayer();
+        updateYieldPredictionLayer();
+        updateWeatherDataLayer();
+        updatePreviousSeasonLayer();
+
+        // Layer checkbox event handlers
+        document.getElementById('drone-ndvi').addEventListener('change', function() {
+            if (this.checked) {
+                map.addLayer(ndviLayer);
+            } else {
+                map.removeLayer(ndviLayer);
+            }
+        });
+
+        document.getElementById('soil-moisture').addEventListener('change', function() {
+            if (this.checked) {
+                map.addLayer(soilMoistureLayer);
+            } else {
+                map.removeLayer(soilMoistureLayer);
+            }
+        });
+
+        document.getElementById('stress-zones').addEventListener('change', function() {
+            if (this.checked) {
+                map.addLayer(stressZonesLayer);
+            } else {
+                map.removeLayer(stressZonesLayer);
+            }
+        });
+
+        document.getElementById('yield-prediction').addEventListener('change', function() {
+            if (this.checked) {
+                map.addLayer(yieldPredictionLayer);
+            } else {
+                map.removeLayer(yieldPredictionLayer);
+            }
+        });
+
+        document.getElementById('weather-data').addEventListener('change', function() {
+            if (this.checked) {
+                map.addLayer(weatherDataLayer);
+            } else {
+                map.removeLayer(weatherDataLayer);
+            }
+        });
+
+        document.getElementById('previous-season').addEventListener('change', function() {
+            if (this.checked) {
+                map.addLayer(previousSeasonLayer);
+            } else {
+                map.removeLayer(previousSeasonLayer);
+            }
+        });
+
+        // Opacity slider event handler
+        document.getElementById('opacity-slider').addEventListener('input', function() {
+            updateNDVILayer(parseInt(document.getElementById('time-slider').value));
+            updateSoilMoistureLayer(parseInt(document.getElementById('time-slider').value));
+            updateStressZonesLayer(parseInt(document.getElementById('time-slider').value));
+            updateYieldPredictionLayer(parseInt(document.getElementById('time-slider').value));
+            updateWeatherDataLayer(parseInt(document.getElementById('time-slider').value));
+            updatePreviousSeasonLayer(parseInt(document.getElementById('time-slider').value));
+        });
+
+        // Stress threshold slider
+        document.getElementById('stress-threshold-slider').addEventListener('input', function() {
+            updateStressZonesLayer(parseInt(document.getElementById('time-slider').value));
+        });
+
+        // Time slider
+        document.getElementById('time-slider').addEventListener('input', function() {
+            const timeIndex = parseInt(this.value);
+            document.getElementById('time-slider-value').textContent = timeSeriesDates[timeIndex];
+            document.getElementById('date-selector').value = timeIndex === 4 ? 'latest' : 
+                                                            timeIndex === 3 ? 'oct10' : 
+                                                            timeIndex === 2 ? 'oct5' : 
+                                                            timeIndex === 1 ? 'oct1' : 'sep25';
+            
+            updateNDVILayer(timeIndex);
+            updateSoilMoistureLayer(timeIndex);
+            updateStressZonesLayer(timeIndex);
+            updateYieldPredictionLayer(timeIndex);
+            updateWeatherDataLayer(timeIndex);
+        });
+
+        // Date selector
+        document.getElementById('date-selector').addEventListener('change', function() {
+            const value = this.value;
+            let timeIndex;
+            
+            switch (value) {
+                case 'latest': timeIndex = 4; break;
+                case 'oct10': timeIndex = 3; break;
+                case 'oct5': timeIndex = 2; break;
+                case 'oct1': timeIndex = 1; break;
+                case 'sep25': timeIndex = 0; break;
+                default: timeIndex = 4;
+            }
+            
+            document.getElementById('time-slider').value = timeIndex;
+            document.getElementById('time-slider-value').textContent = timeSeriesDates[timeIndex];
+            
+            updateNDVILayer(timeIndex);
+            updateSoilMoistureLayer(timeIndex);
+            updateStressZonesLayer(timeIndex);
+            updateYieldPredictionLayer(timeIndex);
+            updateWeatherDataLayer(timeIndex);
+        });
+
+        // Field selector
+        document.getElementById('field-selector').addEventListener('change', function() {
+            const fieldName = this.options[this.selectedIndex].text;
+            document.querySelector('.content-title').textContent = fieldName + ' Analysis';
+            
+            // Simulate loading new field data
+            document.getElementById('loading-overlay').classList.add('active');
+            document.getElementById('loading-text').textContent = 'Loading ' + fieldName + ' data...';
+            
+            setTimeout(() => {
+                // Update all layers with slightly different data
+                const randomOffset = Math.random() * 0.2 - 0.1; // -0.1 to 0.1
+                const timeIndex = parseInt(document.getElementById('time-slider').value);
+                
+                updateNDVILayer(timeIndex);
+                updateSoilMoistureLayer(timeIndex);
+                updateStressZonesLayer(timeIndex);
+                updateYieldPredictionLayer(timeIndex);
+                updateWeatherDataLayer(timeIndex);
+                
+                // Refresh charts with new data
+                refreshCharts(randomOffset);
+                
+                document.getElementById('loading-overlay').classList.remove('active');
+            }, 1500);
+        });
+
+        // Crop selector
+        document.getElementById('crop-selector').addEventListener('change', function() {
+            const cropName = this.options[this.selectedIndex].text;
+            
+            // Simulate loading new crop data
+            document.getElementById('loading-overlay').classList.add('active');
+            document.getElementById('loading-text').textContent = 'Loading ' + cropName + ' data...';
+            
+            setTimeout(() => {
+                // Update all layers with crop-specific data
+                const randomOffset = Math.random() * 0.2 - 0.1; // -0.1 to 0.1
+                const timeIndex = parseInt(document.getElementById('time-slider').value);
+                
+                updateNDVILayer(timeIndex);
+                updateSoilMoistureLayer(timeIndex);
+                updateStressZonesLayer(timeIndex);
+                updateYieldPredictionLayer(timeIndex);
+                
+                // Refresh charts with new data
+                refreshCharts(randomOffset);
+                
+                document.getElementById('loading-overlay').classList.remove('active');
+            }, 1500);
+        });
+
+        // Info panel functions
+        function showInfoPanel(section, ndvi, moisture, stress, yield, dataType = 'Current') {
+            const infoPanel = document.getElementById('info-panel');
+            document.getElementById('info-section').textContent = section;
+            document.getElementById('info-ndvi').textContent = ndvi;
+            document.getElementById('info-moisture').textContent = moisture;
+            document.getElementById('info-stress').textContent = stress;
+            document.getElementById('info-yield').textContent = yield;
+            document.getElementById('info-rainfall').textContent = (Math.random() * 0.5 + 0.2).toFixed(1) + ' in (' + Math.floor(Math.random() * 5 + 1) + ' days ago)';
+            
+            // Add soil type and crop type
+            document.getElementById('info-soil-type').textContent = getSoilType(section);
+            document.getElementById('info-crop-type').textContent = document.getElementById('crop-selector').options[document.getElementById('crop-selector').selectedIndex].text;
+            
+            infoPanel.classList.add('active');
+        }
+
+        function getSoilType(section) {
+            // Simple lookup based on section
+            if (section.includes('Northeast')) return 'Loam';
+            if (section.includes('Northwest')) return 'Clay Loam';
+            if (section.includes('Southeast')) return 'Sandy Loam';
+            if (section.includes('Southwest')) return 'Sandy';
+            return 'Loam';
+        }
+
+        function showWeatherInfoPanel(station) {
+            const infoPanel = document.getElementById('info-panel');
+            document.getElementById('info-section').textContent = station.name;
+            document.getElementById('info-ndvi').textContent = 'N/A';
+            document.getElementById('info-moisture').textContent = station.humidity + '%';
+            document.getElementById('info-stress').textContent = 'N/A';
+            document.getElementById('info-yield').textContent = 'N/A';
+            document.getElementById('info-rainfall').textContent = (Math.random() * 0.5 + 0.2).toFixed(1) + ' in (' + Math.floor(Math.random() * 5 + 1) + ' days ago)';
+            document.getElementById('info-soil-type').textContent = 'N/A';
+            document.getElementById('info-crop-type').textContent = 'N/A';
+            
+            infoPanel.classList.add('active');
+        }
+
+        document.querySelector('.info-panel-close').addEventListener('click', function() {
+            document.getElementById('info-panel').classList.remove('active');
+        });
+
+        // Keyboard support for info panel
+        document.querySelector('.info-panel-close').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                document.getElementById('info-panel').classList.remove('active');
+            }
+        });
+
+        // Map tooltip
+        function showMapTooltip(e, content) {
+            const tooltip = document.getElementById('map-tooltip');
+            tooltip.innerHTML = content;
+            tooltip.style.left = e.originalEvent.pageX + 10 + 'px';
+            tooltip.style.top = e.originalEvent.pageY + 10 + 'px';
+            tooltip.style.opacity = '1';
+        }
+
+        function hideMapTooltip() {
+            document.getElementById('map-tooltip').style.opacity = '0';
+        }
+
+        // Recommendation location links
+        document.querySelectorAll('.recommendation-location').forEach(item => {
+            item.addEventListener('click', function() {
+                const location = this.getAttribute('data-location');
+                
+                // Show loading overlay
+                

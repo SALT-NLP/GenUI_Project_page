@@ -1,0 +1,2091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Health Clinic Analytics Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2c7be5;
+            --primary-light: #d2e3fc;
+            --secondary: #6c757d;
+            --success: #00b074;
+            --danger: #e63757;
+            --warning: #f6c343;
+            --info: #39afd1;
+            --dark: #12263f;
+            --light: #f9fbfd;
+            --white: #ffffff;
+            --body-bg: #f9fbfd;
+            --body-color: #12263f;
+            --border-color: #e3ebf6;
+            --sidebar-bg: #ffffff;
+            --sidebar-color: #12263f;
+            --sidebar-width: 250px;
+            --sidebar-collapsed-width: 70px;
+            --header-height: 60px;
+            --transition-speed: 0.3s;
+            --shadow-sm: 0 0.125rem 0.25rem rgba(18, 38, 63, 0.075);
+            --shadow: 0 0.5rem 1rem rgba(18, 38, 63, 0.15);
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--body-bg);
+            color: var(--body-color);
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr;
+            grid-template-rows: var(--header-height) 1fr;
+            grid-template-areas:
+                "sidebar header"
+                "sidebar main";
+            height: 100vh;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .layout.collapsed {
+            grid-template-columns: var(--sidebar-collapsed-width) 1fr;
+        }
+
+        .header {
+            grid-area: header;
+            background-color: var(--white);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 1.5rem;
+            box-shadow: var(--shadow-sm);
+            z-index: 10;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        .header-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            line-height: 1.5;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: middle;
+            cursor: pointer;
+            user-select: none;
+            border: 1px solid transparent;
+            border-radius: 0.25rem;
+            transition: all 0.15s ease-in-out;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: var(--white);
+            border-color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background-color: #2067c9;
+            border-color: #2067c9;
+        }
+
+        .btn-outline-secondary {
+            background-color: transparent;
+            color: var(--secondary);
+            border-color: var(--border-color);
+        }
+
+        .btn-outline-secondary:hover {
+            background-color: var(--light);
+        }
+
+        .btn-icon {
+            width: 2.25rem;
+            height: 2.25rem;
+            padding: 0;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar {
+            grid-area: sidebar;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            transition: all var(--transition-speed) ease;
+            z-index: 20;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            height: var(--header-height);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .logo-icon {
+            margin-right: 0.75rem;
+            font-size: 1.5rem;
+        }
+
+        .logo-text {
+            transition: opacity var(--transition-speed) ease;
+        }
+
+        .layout.collapsed .logo-text {
+            opacity: 0;
+            width: 0;
+        }
+
+        .sidebar-toggle {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: var(--secondary);
+            cursor: pointer;
+            transition: color 0.15s ease-in-out;
+        }
+
+        .sidebar-toggle:hover {
+            color: var(--dark);
+        }
+
+        .sidebar-menu {
+            flex: 1;
+            padding: 1rem 0;
+            overflow-y: auto;
+        }
+
+        .sidebar-item {
+            margin-bottom: 0.25rem;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            color: var(--body-color);
+            text-decoration: none;
+            transition: all 0.15s ease-in-out;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-link:hover {
+            background-color: var(--light);
+            color: var(--primary);
+        }
+
+        .sidebar-link.active {
+            background-color: var(--primary-light);
+            color: var(--primary);
+            border-left-color: var(--primary);
+        }
+
+        .sidebar-icon {
+            margin-right: 0.75rem;
+            font-size: 1.25rem;
+            transition: margin var(--transition-speed) ease;
+        }
+
+        .layout.collapsed .sidebar-icon {
+            margin-right: 0;
+        }
+
+        .sidebar-text {
+            transition: opacity var(--transition-speed) ease;
+        }
+
+        .layout.collapsed .sidebar-text {
+            opacity: 0;
+            width: 0;
+        }
+
+        .main {
+            grid-area: main;
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .page-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .page-subtitle {
+            font-size: 0.875rem;
+            color: var(--secondary);
+        }
+
+        .card {
+            background-color: var(--white);
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 0;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .card-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            background-color: var(--light);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            padding: 1.25rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            color: var(--white);
+        }
+
+        .stat-content {
+            flex: 1;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--secondary);
+        }
+
+        .stat-change {
+            font-size: 0.75rem;
+            margin-left: 0.5rem;
+        }
+
+        .stat-change.positive {
+            color: var(--success);
+        }
+
+        .stat-change.negative {
+            color: var(--danger);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-container.large {
+            height: 400px;
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .filter-section {
+            background-color: var(--light);
+            border-radius: 0.5rem;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .filter-input {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            color: var(--body-color);
+            background-color: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 0.25rem;
+            transition: border-color 0.15s ease-in-out;
+        }
+
+        .filter-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.2rem rgba(44, 123, 229, 0.25);
+        }
+
+        .filter-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+
+        .tab-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1rem;
+        }
+
+        .tab {
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--secondary);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab:hover {
+            color: var(--primary);
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            font-weight: 600;
+            color: var(--secondary);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .data-table td {
+            font-size: 0.875rem;
+            color: var(--body-color);
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .floating-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow);
+            z-index: 5;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .control-group {
+            margin-bottom: 0.75rem;
+        }
+
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 0.5rem;
+            padding: 2rem;
+            text-align: center;
+            background-color: var(--light);
+            transition: all 0.15s ease-in-out;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+            background-color: rgba(44, 123, 229, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            font-size: 1rem;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-hint {
+            font-size: 0.875rem;
+            color: var(--secondary);
+        }
+
+        .progress {
+            height: 0.5rem;
+            background-color: var(--light);
+            border-radius: 0.25rem;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary);
+            border-radius: 0.25rem;
+            width: 0;
+            transition: width 0.3s ease;
+        }
+
+        @media (max-width: 992px) {
+            .layout {
+                grid-template-columns: var(--sidebar-collapsed-width) 1fr;
+            }
+
+            .layout.expanded {
+                grid-template-columns: var(--sidebar-width) 1fr;
+            }
+
+            .logo-text {
+                opacity: 0;
+                width: 0;
+            }
+
+            .layout.expanded .logo-text {
+                opacity: 1;
+                width: auto;
+            }
+
+            .sidebar-text {
+                opacity: 0;
+                width: 0;
+            }
+
+            .layout.expanded .sidebar-text {
+                opacity: 1;
+                width: auto;
+            }
+
+            .sidebar-icon {
+                margin-right: 0;
+            }
+
+            .layout.expanded .sidebar-icon {
+                margin-right: 0.75rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-row {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .filter-group {
+                width: 100%;
+            }
+        }
+
+        /* Accessibility Styles */
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Focus styles */
+        a:focus, button:focus, input:focus, select:focus, textarea:focus {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        /* Skip to content link */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary);
+            color: white;
+            padding: 8px;
+            z-index: 100;
+            transition: top 0.3s;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+    </style>
+</head>
+<body>
+    <a href="#main" class="skip-link">Skip to content</a>
+    <div class="layout" id="layout">
+        <header class="header">
+            <div class="header-content">
+                <h1 class="header-title">Community Health Analytics</h1>
+                <div class="header-actions">
+                    <button class="btn btn-outline-secondary" id="helpButton" aria-label="Help">
+                        <span class="material-icons-round">help_outline</span>
+                    </button>
+                    <button class="btn btn-primary" id="exportButton">
+                        <span class="material-icons-round" style="margin-right: 0.5rem;">download</span>
+                        Export Report
+                    </button>
+                </div>
+            </div>
+        </header>
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="material-icons-round logo-icon">health_and_safety</span>
+                    <span class="logo-text">HealthTracker</span>
+                </div>
+                <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+                    <span class="material-icons-round">menu</span>
+                </button>
+            </div>
+            <nav class="sidebar-menu" aria-label="Main Navigation">
+                <div class="sidebar-item">
+                    <a href="#dashboard" class="sidebar-link active" aria-current="page">
+                        <span class="material-icons-round sidebar-icon">dashboard</span>
+                        <span class="sidebar-text">Dashboard</span>
+                    </a>
+                </div>
+                <div class="sidebar-item">
+                    <a href="#visits" class="sidebar-link">
+                        <span class="material-icons-round sidebar-icon">event_note</span>
+                        <span class="sidebar-text">Patient Visits</span>
+                    </a>
+                </div>
+                <div class="sidebar-item">
+                    <a href="#treatments" class="sidebar-link">
+                        <span class="material-icons-round sidebar-icon">medical_services</span>
+                        <span class="sidebar-text">Treatment Effectiveness</span>
+                    </a>
+                </div>
+                <div class="sidebar-item">
+                    <a href="#resources" class="sidebar-link">
+                        <span class="material-icons-round sidebar-icon">assignment</span>
+                        <span class="sidebar-text">Resource Utilization</span>
+                    </a>
+                </div>
+                <div class="sidebar-item">
+                    <a href="#demographics" class="sidebar-link">
+                        <span class="material-icons-round sidebar-icon">people</span>
+                        <span class="sidebar-text">Demographics</span>
+                    </a>
+                </div>
+                <div class="sidebar-item">
+                    <a href="#reports" class="sidebar-link">
+                        <span class="material-icons-round sidebar-icon">summarize</span>
+                        <span class="sidebar-text">Reports</span>
+                    </a>
+                </div>
+                <div class="sidebar-item">
+                    <a href="#data" class="sidebar-link">
+                        <span class="material-icons-round sidebar-icon">upload_file</span>
+                        <span class="sidebar-text">Data Import</span>
+                    </a>
+                </div>
+                <div class="sidebar-item">
+                    <a href="#settings" class="sidebar-link">
+                        <span class="material-icons-round sidebar-icon">settings</span>
+                        <span class="sidebar-text">Settings</span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
+        <main class="main" id="main">
+            <div class="page-header">
+                <h2 class="page-title">Dashboard Overview</h2>
+                <p class="page-subtitle">A comprehensive view of your clinic's performance and patient trends</p>
+            </div>
+
+            <div class="filter-section">
+                <h3 class="filter-title">Data Filters</h3>
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label for="dateRange" class="filter-label">Date Range</label>
+                        <select id="dateRange" class="filter-input">
+                            <option value="last30">Last 30 Days</option>
+                            <option value="last90">Last 90 Days</option>
+                            <option value="lastYear">Last Year</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="ageGroup" class="filter-label">Age Group</label>
+                        <select id="ageGroup" class="filter-input">
+                            <option value="all">All Age Groups</option>
+                            <option value="0-17">0-17 years</option>
+                            <option value="18-34">18-34 years</option>
+                            <option value="35-50">35-50 years</option>
+                            <option value="51-65">51-65 years</option>
+                            <option value="65+">65+ years</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="gender" class="filter-label">Gender</label>
+                        <select id="gender" class="filter-input">
+                            <option value="all">All</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label for="visitType" class="filter-label">Visit Type</label>
+                        <select id="visitType" class="filter-input">
+                            <option value="all">All Visit Types</option>
+                            <option value="initial">Initial Consultation</option>
+                            <option value="followup">Follow-up</option>
+                            <option value="emergency">Emergency</option>
+                            <option value="routine">Routine Check-up</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="diagnosis" class="filter-label">Diagnosis Category</label>
+                        <select id="diagnosis" class="filter-input">
+                            <option value="all">All Diagnoses</option>
+                            <option value="respiratory">Respiratory</option>
+                            <option value="cardiovascular">Cardiovascular</option>
+                            <option value="musculoskeletal">Musculoskeletal</option>
+                            <option value="gastrointestinal">Gastrointestinal</option>
+                            <option value="mental">Mental Health</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="insurance" class="filter-label">Insurance Status</label>
+                        <select id="insurance" class="filter-input">
+                            <option value="all">All</option>
+                            <option value="private">Private Insurance</option>
+                            <option value="medicare">Medicare</option>
+                            <option value="medicaid">Medicaid</option>
+                            <option value="uninsured">Uninsured</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="filter-actions">
+                    <button class="btn btn-outline-secondary" id="resetFilters">Reset</button>
+                    <button class="btn btn-primary" id="applyFilters">Apply Filters</button>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="card stat-card">
+                    <div class="stat-icon" style="background-color: var(--primary);">
+                        <span class="material-icons-round">people</span>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">5,247</div>
+                        <div class="stat-label">Total Patients</div>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-icon" style="background-color: var(--success);">
+                        <span class="material-icons-round">event</span>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">12,683</div>
+                        <div class="stat-label">Visits YTD</div>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-icon" style="background-color: var(--info);">
+                        <span class="material-icons-round">schedule</span>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">32 min</div>
+                        <div class="stat-label">Avg. Visit Duration</div>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-icon" style="background-color: var(--warning);">
+                        <span class="material-icons-round">trending_up</span>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">87%</div>
+                        <div class="stat-label">Treatment Success Rate</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Patient Visits Trend</h3>
+                    <div class="chart-controls">
+                        <select id="visitTrendPeriod" class="filter-input" style="width: auto;">
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly" selected>Monthly</option>
+                            <option value="quarterly">Quarterly</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container large" id="visitsChart">
+                        <canvas id="visitsChartCanvas"></canvas>
+                        <div class="floating-controls" id="visitsChartControls">
+                            <div class="control-group">
+                                <label for="visitsChartType" class="filter-label">Chart Type</label>
+                                <select id="visitsChartType" class="filter-input">
+                                    <option value="line">Line Chart</option>
+                                    <option value="bar">Bar Chart</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label for="visitsDataPoints" class="filter-label">Data Points</label>
+                                <select id="visitsDataPoints" class="filter-input">
+                                    <option value="12">Last 12 Months</option>
+                                    <option value="24">Last 24 Months</option>
+                                    <option value="36">Last 36 Months</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label for="visitsLineColor" class="filter-label">Line Color</label>
+                                <input type="color" id="visitsLineColor" class="filter-input" value="#2c7be5">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Visit Distribution by Day & Time</h3>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" id="heatmapChart">
+                        <canvas id="heatmapChartCanvas"></canvas>
+                        <div class="floating-controls" id="heatmapChartControls">
+                            <div class="control-group">
+                                <label for="heatmapColorScheme" class="filter-label">Color Scheme</label>
+                                <select id="heatmapColorScheme" class="filter-input">
+                                    <option value="blues">Blues</option>
+                                    <option value="greens">Greens</option>
+                                    <option value="purples">Purples</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label for="heatmapIntensity" class="filter-label">Color Intensity</label>
+                                <input type="range" id="heatmapIntensity" class="filter-input" min="0.5" max="1.5" step="0.1" value="1">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <p style="font-size: 0.875rem; color: var(--secondary);">
+                        This heatmap shows visit frequency by day of week and time of day, helping to optimize staffing schedules.
+                    </p>
+                </div>
+            </div>
+
+            <div class="tab-container">
+                <div class="tabs" role="tablist">
+                    <div class="tab active" role="tab" aria-selected="true" aria-controls="demographicsTab" id="demographicsTabButton">Demographics</div>
+                    <div class="tab" role="tab" aria-selected="false" aria-controls="diagnosesTab" id="diagnosesTabButton">Top Diagnoses</div>
+                    <div class="tab" role="tab" aria-selected="false" aria-controls="treatmentsTab" id="treatmentsTabButton">Treatment Outcomes</div>
+                </div>
+                <div class="tab-content active" id="demographicsTab" role="tabpanel" aria-labelledby="demographicsTabButton">
+                    <div class="card">
+                        <div class="card-body">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                                <div class="chart-container" id="ageChart">
+                                    <canvas id="ageChartCanvas"></canvas>
+                                    <div class="floating-controls" id="ageChartControls">
+                                        <div class="control-group">
+                                            <label for="ageChartType" class="filter-label">Chart Type</label>
+                                            <select id="ageChartType" class="filter-input">
+                                                <option value="bar">Bar Chart</option>
+                                                <option value="pie">Pie Chart</option>
+                                                <option value="doughnut">Doughnut Chart</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="chart-container" id="genderChart">
+                                    <canvas id="genderChartCanvas"></canvas>
+                                    <div class="floating-controls" id="genderChartControls">
+                                        <div class="control-group">
+                                            <label for="genderChartType" class="filter-label">Chart Type</label>
+                                            <select id="genderChartType" class="filter-input">
+                                                <option value="pie">Pie Chart</option>
+                                                <option value="doughnut">Doughnut Chart</option>
+                                                <option value="bar">Bar Chart</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="chart-container" id="ethnicityChart">
+                                    <canvas id="ethnicityChartCanvas"></canvas>
+                                    <div class="floating-controls" id="ethnicityChartControls">
+                                        <div class="control-group">
+                                            <label for="ethnicityChartType" class="filter-label">Chart Type</label>
+                                            <select id="ethnicityChartType" class="filter-input">
+                                                <option value="bar">Bar Chart</option>
+                                                <option value="pie">Pie Chart</option>
+                                                <option value="doughnut">Doughnut Chart</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="chart-container" id="insuranceChart">
+                                    <canvas id="insuranceChartCanvas"></canvas>
+                                    <div class="floating-controls" id="insuranceChartControls">
+                                        <div class="control-group">
+                                            <label for="insuranceChartType" class="filter-label">Chart Type</label>
+                                            <select id="insuranceChartType" class="filter-input">
+                                                <option value="doughnut">Doughnut Chart</option>
+                                                <option value="pie">Pie Chart</option>
+                                                <option value="bar">Bar Chart</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-content" id="diagnosesTab" role="tabpanel" aria-labelledby="diagnosesTabButton">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="chart-container" id="diagnosesChart">
+                                <canvas id="diagnosesChartCanvas"></canvas>
+                                <div class="floating-controls" id="diagnosesChartControls">
+                                    <div class="control-group">
+                                        <label for="diagnosesChartType" class="filter-label">Chart Type</label>
+                                        <select id="diagnosesChartType" class="filter-input">
+                                            <option value="bar">Bar Chart</option>
+                                            <option value="horizontalBar">Horizontal Bar</option>
+                                        </select>
+                                    </div>
+                                    <div class="control-group">
+                                        <label for="diagnosesCount" class="filter-label">Number of Diagnoses</label>
+                                        <select id="diagnosesCount" class="filter-input">
+                                            <option value="5">Top 5</option>
+                                            <option value="10">Top 10</option>
+                                            <option value="15">Top 15</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <table class="data-table" style="margin-top: 1.5rem;">
+                                <thead>
+                                    <tr>
+                                        <th>Diagnosis</th>
+                                        <th>Count</th>
+                                        <th>% of Total</th>
+                                        <th>Avg. Treatment Duration</th>
+                                        <th>Success Rate</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Hypertension</td>
+                                        <td>847</td>
+                                        <td>12.3%</td>
+                                        <td>6 months</td>
+                                        <td>83%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Type 2 Diabetes</td>
+                                        <td>723</td>
+                                        <td>10.5%</td>
+                                        <td>Ongoing</td>
+                                        <td>79%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Upper Respiratory Infection</td>
+                                        <td>651</td>
+                                        <td>9.5%</td>
+                                        <td>10 days</td>
+                                        <td>95%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Anxiety</td>
+                                        <td>542</td>
+                                        <td>7.9%</td>
+                                        <td>3 months</td>
+                                        <td>68%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Lower Back Pain</td>
+                                        <td>489</td>
+                                        <td>7.1%</td>
+                                        <td>45 days</td>
+                                        <td>72%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-content" id="treatmentsTab" role="tabpanel" aria-labelledby="treatmentsTabButton">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="chart-container" id="treatmentOutcomesChart">
+                                <canvas id="treatmentOutcomesChartCanvas"></canvas>
+                                <div class="floating-controls" id="treatmentOutcomesChartControls">
+                                    <div class="control-group">
+                                        <label for="treatmentCategory" class="filter-label">Treatment Category</label>
+                                        <select id="treatmentCategory" class="filter-input">
+                                            <option value="all">All Categories</option>
+                                            <option value="medication">Medication</option>
+                                            <option value="therapy">Therapy</option>
+                                            <option value="procedure">Procedures</option>
+                                        </select>
+                                    </div>
+                                    <div class="control-group">
+                                        <label for="outcomeMetric" class="filter-label">Outcome Metric</label>
+                                        <select id="outcomeMetric" class="filter-input">
+                                            <option value="success">Success Rate</option>
+                                            <option value="time">Time to Recovery</option>
+                                            <option value="cost">Cost Effectiveness</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chart-container" id="treatmentComparisonChart" style="margin-top: 1.5rem;">
+                                <canvas id="treatmentComparisonChartCanvas"></canvas>
+                                <div class="floating-controls" id="treatmentComparisonChartControls">
+                                    <div class="control-group">
+                                        <label for="comparisonDiagnosis" class="filter-label">Diagnosis</label>
+                                        <select id="comparisonDiagnosis" class="filter-input">
+                                            <option value="hypertension">Hypertension</option>
+                                            <option value="diabetes">Type 2 Diabetes</option>
+                                            <option value="anxiety">Anxiety</option>
+                                            <option value="backPain">Lower Back Pain</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Underserved Populations Analysis</h3>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" id="accessChart">
+                        <canvas id="accessChartCanvas"></canvas>
+                        <div class="floating-controls" id="accessChartControls">
+                            <div class="control-group">
+                                <label for="accessMetric" class="filter-label">Metric</label>
+                                <select id="accessMetric" class="filter-input">
+                                    <option value="visits">Visits per Capita</option>
+                                    <option value="outcomes">Health Outcomes</option>
+                                    <option value="access">Access Barriers</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label for="accessSegment" class="filter-label">Population Segment</label>
+                                <select id="accessSegment" class="filter-input">
+                                    <option value="zipcode">By Zip Code</option>
+                                    <option value="income">By Income Level</option>
+                                    <option value="insurance">By Insurance Status</option>
+                                    <option value="ethnicity">By Ethnicity</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 1.5rem;">
+                        <h4 style="font-size: 1rem; margin-bottom: 0.75rem;">Key Findings</h4>
+                        <ul style="padding-left: 1.5rem; font-size: 0.875rem;">
+                            <li style="margin-bottom: 0.5rem;">Residents from zip codes 28714 and 28722 have 43% fewer visits per capita compared to clinic average</li>
+                            <li style="margin-bottom: 0.5rem;">Uninsured patients are 3.2x less likely to receive follow-up care for chronic conditions</li>
+                            <li style="margin-bottom: 0.5rem;">Hispanic/Latino patients report transportation as the primary barrier to access (62% vs. 27% average)</li>
+                            <li style="margin-bottom: 0.5rem;">Patients aged 55+ from low-income households show 38% lower preventative screening rates</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <p style="font-size: 0.875rem; color: var(--secondary);">
+                        This analysis identifies communities with healthcare access disparities to help target outreach programs and resource allocation.
+                    </p>
+                </div>
+            </div>
+
+            <div id="data" class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Data Import</h3>
+                </div>
+                <div class="card-body">
+                    <div class="upload-area" id="dropZone">
+                        <span class="material-icons-round upload-icon">cloud_upload</span>
+                        <h4 class="upload-text">Drag & Drop Files or Click to Upload</h4>
+                        <p class="upload-hint">Supported formats: CSV, Excel (XLSX, XLS)</p>
+                        <input type="file" id="fileInput" style="display: none;" accept=".csv, .xlsx, .xls">
+                    </div>
+                    <div id="uploadProgress" style="display: none;">
+                        <div class="progress">
+                            <div class="progress-bar" id="progressBar"></div>
+                        </div>
+                        <p id="uploadStatus" style="font-size: 0.875rem; text-align: center;"></p>
+                    </div>
+                    <div id="uploadedFiles" style="margin-top: 1.5rem; display: none;">
+                        <h4 style="font-size: 1rem; margin-bottom: 0.75rem;">Uploaded Files</h4>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>File Name</th>
+                                    <th>Size</th>
+                                    <th>Date Uploaded</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="filesList">
+                                <!-- Files will be listed here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { Chart, registerables } from "https://esm.sh/chart.js/auto";
+        Chart.register(...registerables);
+
+        // DOM Elements
+        const layout = document.getElementById('layout');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebarLinks = document.querySelectorAll('.sidebar-link');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const progressBar = document.getElementById('progressBar');
+        const uploadStatus = document.getElementById('uploadStatus');
+        const uploadProgress = document.getElementById('uploadProgress');
+        const uploadedFiles = document.getElementById('uploadedFiles');
+        const filesList = document.getElementById('filesList');
+        const resetFiltersBtn = document.getElementById('resetFilters');
+        const applyFiltersBtn = document.getElementById('applyFilters');
+        const exportButton = document.getElementById('exportButton');
+        const helpButton = document.getElementById('helpButton');
+        const charts = {};
+        const chartControls = {};
+
+        // Toggle sidebar
+        sidebarToggle.addEventListener('click', () => {
+            layout.classList.toggle('collapsed');
+        });
+
+        // Navigation
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                sidebarLinks.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+                
+                // Simulate navigation - in a real app, you'd load content or navigate
+                const targetId = link.getAttribute('href').substring(1);
+                document.querySelector('.page-title').textContent = link.querySelector('.sidebar-text').textContent;
+            });
+        });
+
+        // Tab functionality
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.getAttribute('aria-controls');
+                
+                // Update tab state
+                tabs.forEach(t => {
+                    t.classList.remove('active');
+                    t.setAttribute('aria-selected', 'false');
+                });
+                tab.classList.add('active');
+                tab.setAttribute('aria-selected', 'true');
+                
+                // Update tab content
+                tabContents.forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // Chart Controls Toggle
+        function setupChartControls(chartId) {
+            const container = document.getElementById(chartId);
+            const controls = document.getElementById(`${chartId}Controls`);
+            
+            if (!container || !controls) return;
+            
+            container.addEventListener('click', () => {
+                controls.classList.toggle('active');
+            });
+            
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest(`#${chartId}`) && !e.target.closest(`#${chartId}Controls`)) {
+                    controls.classList.remove('active');
+                }
+            });
+        }
+
+        // Initialize Charts
+        function initializeCharts() {
+            // Visits Chart
+            const visitsCtx = document.getElementById('visitsChartCanvas').getContext('2d');
+            charts.visits = new Chart(visitsCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [{
+                        label: 'Patient Visits',
+                        data: [1050, 1120, 1380, 1250, 1460, 1520, 1320, 1490, 1680, 1580, 1750, 1830],
+                        backgroundColor: 'rgba(44, 123, 229, 0.2)',
+                        borderColor: 'rgba(44, 123, 229, 1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        pointBackgroundColor: 'rgba(44, 123, 229, 1)',
+                        pointBorderColor: '#fff',
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            titleColor: '#12263f',
+                            bodyColor: '#12263f',
+                            borderColor: '#e3ebf6',
+                            borderWidth: 1,
+                            cornerRadius: 4,
+                            padding: 12,
+                            boxPadding: 6,
+                            usePointStyle: true,
+                            callbacks: {
+                                label: function(context) {
+                                    return `Visits: ${context.parsed.y}`;
+                                }
+                            }
+                        },
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Heatmap Chart (Visit Distribution)
+            const heatmapCtx = document.getElementById('heatmapChartCanvas').getContext('2d');
+            const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            const hoursOfDay = ['8 AM', '9 AM', '10 AM', '11 AM', '12 PM', '1 PM', '2 PM', '3 PM', '4 PM', '5 PM'];
+            
+            // Sample data for the heatmap
+            const heatmapData = [
+                [25, 40, 65, 50, 35, 15, 5],   // 8 AM
+                [35, 55, 70, 60, 45, 20, 8],   // 9 AM
+                [45, 65, 80, 75, 60, 25, 10],  // 10 AM
+                [50, 70, 85, 80, 65, 30, 12],  // 11 AM
+                [30, 50, 60, 55, 40, 20, 8],   // 12 PM
+                [40, 60, 75, 70, 55, 25, 10],  // 1 PM
+                [45, 65, 80, 75, 60, 30, 12],  // 2 PM
+                [40, 60, 75, 70, 55, 25, 10],  // 3 PM
+                [30, 50, 65, 60, 45, 20, 8],   // 4 PM
+                [20, 35, 50, 45, 30, 15, 5]    // 5 PM
+            ];
+            
+            // Create datasets for each hour
+            const heatmapDatasets = hoursOfDay.map((hour, index) => {
+                return {
+                    label: hour,
+                    data: heatmapData[index],
+                    backgroundColor: function(context) {
+                        const value = context.dataset.data[context.dataIndex];
+                        const alpha = value / 85; // Normalize to 0-1
+                        return `rgba(44, 123, 229, ${alpha})`;
+                    },
+                    borderColor: 'rgba(255, 255, 255, 0.5)',
+                    borderWidth: 1,
+                    borderRadius: 2
+                };
+            });
+            
+            charts.heatmap = new Chart(heatmapCtx, {
+                type: 'bar',
+                data: {
+                    labels: daysOfWeek,
+                    datasets: heatmapDatasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'x',
+                    scales: {
+                        x: {
+                            stacked: true,
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                boxWidth: 12
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: function(tooltipItems) {
+                                    return `${tooltipItems[0].label}, ${tooltipItems[0].dataset.label}`;
+                                },
+                                label: function(context) {
+                                    return `Visits: ${context.parsed.y}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Age Distribution Chart
+            const ageCtx = document.getElementById('ageChartCanvas').getContext('2d');
+            charts.age = new Chart(ageCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['0-17', '18-34', '35-50', '51-65', '65+'],
+                    datasets: [{
+                        label: 'Patients by Age Group',
+                        data: [832, 1245, 1378, 1053, 739],
+                        backgroundColor: [
+                            'rgba(44, 123, 229, 0.7)',
+                            'rgba(57, 175, 209, 0.7)',
+                            'rgba(0, 176, 116, 0.7)',
+                            'rgba(246, 195, 67, 0.7)',
+                            'rgba(230, 55, 87, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(44, 123, 229, 1)',
+                            'rgba(57, 175, 209, 1)',
+                            'rgba(0, 176, 116, 1)',
+                            'rgba(246, 195, 67, 1)',
+                            'rgba(230, 55, 87, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Patient Age Distribution',
+                            font: {
+                                size: 16
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Gender Distribution Chart
+            const genderCtx = document.getElementById('genderChartCanvas').getContext('2d');
+            charts.gender = new Chart(genderCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Female', 'Male', 'Other'],
+                    datasets: [{
+                        data: [2846, 2378, 23],
+                        backgroundColor: [
+                            'rgba(230, 55, 87, 0.7)',
+                            'rgba(44, 123, 229, 0.7)',
+                            'rgba(57, 175, 209, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(230, 55, 87, 1)',
+                            'rgba(44, 123, 229, 1)',
+                            'rgba(57, 175, 209, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Patient Gender Distribution',
+                            font: {
+                                size: 16
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Ethnicity Chart
+            const ethnicityCtx = document.getElementById('ethnicityChartCanvas').getContext('2d');
+            charts.ethnicity = new Chart(ethnicityCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['White', 'Black', 'Hispanic', 'Asian', 'Other'],
+                    datasets: [{
+                        label: 'Patients by Ethnicity',
+                        data: [2156, 1543, 923, 425, 200],
+                        backgroundColor: [
+                            'rgba(44, 123, 229, 0.7)',
+                            'rgba(230, 55, 87, 0.7)',
+                            'rgba(246, 195, 67, 0.7)',
+                            'rgba(0, 176, 116, 0.7)',
+                            'rgba(57, 175, 209, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(44, 123, 229, 1)',
+                            'rgba(230, 55, 87, 1)',
+                            'rgba(246, 195, 67, 1)',
+                            'rgba(0, 176, 116, 1)',
+                            'rgba(57, 175, 209, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Patient Ethnicity Distribution',
+                            font: {
+                                size: 16
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Insurance Chart
+            const insuranceCtx = document.getElementById('insuranceChartCanvas').getContext('2d');
+            charts.insurance = new Chart(insuranceCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Private Insurance', 'Medicare', 'Medicaid', 'Uninsured'],
+                    datasets: [{
+                        data: [1857, 1243, 1568, 579],
+                        backgroundColor: [
+                            'rgba(44, 123, 229, 0.7)',
+                            'rgba(0, 176, 116, 0.7)',
+                            'rgba(246, 195, 67, 0.7)',
+                            'rgba(230, 55, 87, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(44, 123, 229, 1)',
+                            'rgba(0, 176, 116, 1)',
+                            'rgba(246, 195, 67, 1)',
+                            'rgba(230, 55, 87, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Patient Insurance Status',
+                            font: {
+                                size: 16
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Top Diagnoses Chart
+            const diagnosesCtx = document.getElementById('diagnosesChartCanvas').getContext('2d');
+            charts.diagnoses = new Chart(diagnosesCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Hypertension', 'Type 2 Diabetes', 'Upper Respiratory Infection', 'Anxiety', 'Lower Back Pain'],
+                    datasets: [{
+                        label: 'Number of Cases',
+                        data: [847, 723, 651, 542, 489],
+                        backgroundColor: 'rgba(44, 123, 229, 0.7)',
+                        borderColor: 'rgba(44, 123, 229, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Top 5 Diagnoses',
+                            font: {
+                                size: 16
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Treatment Outcomes Chart
+            const treatmentOutcomesCtx = document.getElementById('treatmentOutcomesChartCanvas').getContext('2d');
+            charts.treatmentOutcomes = new Chart(treatmentOutcomesCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Medication', 'Physical Therapy', 'Counseling', 'Surgery', 'Lifestyle Changes'],
+                    datasets: [{
+                        label: 'Success Rate (%)',
+                        data: [82, 75, 68, 91, 65],
+                        backgroundColor: 'rgba(0, 176, 116, 0.7)',
+                        borderColor: 'rgba(0, 176, 116, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Treatment Success Rates by Category',
+                            font: {
+                                size: 16
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Treatment Comparison Chart
+            const treatmentComparisonCtx = document.getElementById('treatmentComparisonChartCanvas').getContext('2d');
+            charts.treatmentComparison = new Chart(treatmentComparisonCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['ACE Inhibitors', 'Beta Blockers', 'Diuretics', 'Calcium Channel Blockers', 'Lifestyle Only'],
+                    datasets: [{
+                        label: 'Success Rate (%)',
+                        data: [87, 82, 78, 85, 63],
+                        backgroundColor: 'rgba(44, 123, 229, 0.7)',
+                        borderColor: 'rgba(44, 123, 229, 1)',
+                        borderWidth: 1
+                    }, {
+                        label: 'Adherence Rate (%)',
+                        data: [76, 82, 68, 73, 92],
+                        backgroundColor: 'rgba(246, 195, 67, 0.7)',
+                        borderColor: 'rgba(246, 195, 67, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Hypertension Treatment Comparison',
+                            font: {
+                                size: 16
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Access Chart (Underserved Populations)
+            const accessCtx = document.getElementById('accessChartCanvas').getContext('2d');
+            charts.access = new Chart(accessCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['28710', '28712', '28714', '28718', '28722', '28726', '28730'],
+                    datasets: [{
+                        label: 'Visits per 100 Residents',
+                        data: [32, 28, 18, 35, 15, 30, 25],
+                        backgroundColor: 'rgba(44, 123, 229, 0.7)',
+                        borderColor: 'rgba(44, 123, 229, 1)',
+                        borderWidth: 1
+                    }, {
+                        label: 'County Average',
+                        data: [31.5, 31.5, 31.5, 31.5, 31.5, 31.5, 31.5],
+                        type: 'line',
+                        backgroundColor: 'rgba(230, 55, 87, 0.2)',
+                        borderColor: 'rgba(230, 55, 87, 1)',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Healthcare Access by Zip Code',
+                            font: {
+                                size: 16
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Visits per 100 Residents'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Zip Code'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Setup chart controls
+            setupChartControls('visitsChart');
+            setupChartControls('heatmapChart');
+            setupChartControls('ageChart');
+            setupChartControls('genderChart');
+            setupChartControls('ethnicityChart');
+            setupChartControls('insuranceChart');
+            setupChartControls('diagnosesChart');
+            setupChartControls('treatmentOutcomesChart');
+            setupChartControls('treatmentComparisonChart');
+            setupChartControls('accessChart');
+
+            // Chart controls event listeners
+            document.getElementById('visitsChartType').addEventListener('change', (e) => {
+                charts.visits.config.type = e.target.value;
+                charts.visits.update();
+            });
+
+            document.getElementById('visitsLineColor').addEventListener('change', (e) => {
+                charts.visits.data.datasets[0].borderColor = e.target.value;
+                charts.visits.data.datasets[0].backgroundColor = `${e.target.value}33`; // Add transparency
+                charts.visits.update();
+            });
+
+            document.getElementById('ageChartType').addEventListener('change', (e) => {
+                charts.age.config.type = e.target.value;
+                charts.age.update();
+            });
+
+            document.getElementById('genderChartType').addEventListener('change', (e) => {
+                charts.gender.config.type = e.target.value;
+                charts.gender.update();
+            });
+
+            document.getElementById('ethnicityChartType').addEventListener('change', (e) => {
+                charts.ethnicity.config.type = e.target.value;
+                charts.ethnicity.update();
+            });
+
+            document.getElementById('insuranceChartType').addEventListener('change', (e) => {
+                charts.insurance.config.type = e.target.value;
+                charts.insurance.update();
+            });
+
+            document.getElementById('diagnosesChartType').addEventListener('change', (e) => {
+                if (e.target.value === 'horizontalBar') {
+                    charts.diagnoses.options.indexAxis = 'y';
+                } else {
+                    charts.diagnoses.options.indexAxis = 'x';
+                }
+                charts.diagnoses.update();
+            });
+
+            document.getElementById('heatmapColorScheme').addEventListener('change', (e) => {
+                const colorScheme = e.target.value;
+                let baseColor;
+                
+                switch (colorScheme) {
+                    case 'blues':
+                        baseColor = 'rgba(44, 123, 229,';
+                        break;
+                    case 'greens':
+                        baseColor = 'rgba(0, 176, 116,';
+                        break;
+                    case 'purples':
+                        baseColor = 'rgba(153, 102, 255,';
+                        break;
+                    default:
+                        baseColor = 'rgba(44, 123, 229,';
+                }
+                
+                charts.heatmap.data.datasets.forEach(dataset => {
+                    dataset.backgroundColor = function(context) {
+                        const value = context.dataset.data[context.dataIndex];
+                        const alpha = value / 85; // Normalize to 0-1
+                        return `${baseColor} ${alpha})`;
+                    };
+                });
+                
+                charts.heatmap.update();
+            });
+
+            document.getElementById('treatmentCategory').addEventListener('change', (e) => {
+                // Simulating data change based on selection
+                let newData;
+                
+                switch (e.target.value) {
+                    case 'medication':
+                        newData = [82, 78, 85, 79, 81];
+                        break;
+                    case 'therapy':
+                        newData = [75, 68, 72, 77, 70];
+                        break;
+                    case 'procedure':
+                        newData = [91, 88, 93, 87, 84];
+                        break;
+                    default: // 'all'
+                        newData = [82, 75, 68, 91, 65];
+                }
+                
+                charts.treatmentOutcomes.data.datasets[0].data = newData;
+                charts.treatmentOutcomes.update();
+            });
+
+            document.getElementById('comparisonDiagnosis').addEventListener('change', (e) => {
+                // Simulating data change based on selected diagnosis
+                let newLabels, newSuccessData, newAdherenceData, newTitle;
+                
+                switch (e.target.value) {
+                    case 'diabetes':
+                        newLabels = ['Metformin', 'Sulfonylureas', 'DPP-4 Inhibitors', 'GLP-1 Agonists', 'Insulin'];
+                        newSuccessData = [76, 72, 81, 85, 89];
+                        newAdherenceData = [82, 75, 70, 65, 58];
+                        newTitle = 'Type 2 Diabetes Treatment Comparison';
+                        break;
+                    case 'anxiety':
+                        newLabels = ['SSRIs', 'SNRIs', 'Benzodiazepines', 'Therapy Only', 'Combined Approach'];
+                        newSuccessData = [65, 62, 58, 70, 82];
+                        newAdherenceData = [72, 68, 60, 85, 78];
+                        newTitle = 'Anxiety Treatment Comparison';
+                        break;
+                    case 'backPain':
+                        newLabels = ['NSAIDs', 'Physical Therapy', 'Steroid Injection', 'Surgery', 'Alternative Medicine'];
+                        newSuccessData = [62, 78, 75, 85, 55];
+                        newAdherenceData = [88, 75, 95, 98, 65];
+                        newTitle = 'Lower Back Pain Treatment Comparison';
+                        break;
+                    default: // 'hypertension'
+                        newLabels = ['ACE Inhibitors', 'Beta Blockers', 'Diuretics', 'Calcium Channel Blockers', 'Lifestyle Only'];
+                        newSuccessData = [87, 82, 78, 85, 63];
+                        newAdherenceData = [76, 82, 68, 73, 92];
+                        newTitle = 'Hypertension Treatment Comparison';
+                }
+                
+                charts.treatmentComparison.data.labels = newLabels;
+                charts.treatmentComparison.data.datasets[0].data = newSuccessData;
+                charts.treatmentComparison.data.datasets[1].data = newAdherenceData;
+                charts.treatmentComparison.options.plugins.title.text = newTitle;
+                charts.treatmentComparison.update();
+            });
+
+            document.getElementById('accessSegment').addEventListener('change', (e) => {
+                // Simulating data change based on selected population segment
+                let newLabels, newData, newTitle, newXTitle;
+                
+                switch (e.target.value) {
+                    case 'income':
+                        newLabels = ['<$25K', '$25-50K', '$50-75K', '$75-100K', '>$100K'];
+                        newData = [15, 22, 28, 35, 42];
+                        newTitle = 'Healthcare Access by Income Level';
+                        newXTitle = 'Annual Household Income';
+                        break;
+                    case 'insurance':
+                        newLabels = ['Private', 'Medicare', 'Medicaid', 'Uninsured'];
+                        newData = [35, 30, 25, 10];
+                        newTitle = 'Healthcare Access by Insurance Status';
+                        newXTitle = 'Insurance Status';
+                        break;
+                    case 'ethnicity':
+                        newLabels = ['White', 'Black', 'Hispanic', 'Asian', 'Other'];
+                        newData = [32, 25, 20, 33, 22];
+                        newTitle = 'Healthcare Access by Ethnicity';
+                        newXTitle = 'Ethnicity';
+                        break;
+                    default: // 'zipcode'
+                        newLabels = ['28710', '28712', '28714', '28718', '28722', '28726', '28730'];
+                        newData = [32, 28, 18, 35, 15, 30, 25];
+                        newTitle = 'Healthcare Access by Zip Code';
+                        newXTitle = 'Zip Code';
+                }
+                
+                const avgValue = newData.reduce((sum, val) => sum + val, 0) / newData.length;
+                const avgData = Array(newData.length).fill(avgValue);
+                
+                charts.access.data.labels = newLabels;
+                charts.access.data.datasets[0].data = newData;
+                charts.access.data.datasets[1].data = avgData;
+                charts.access.options.plugins.title.text = newTitle;
+                charts.access.options.scales.x.title.text = newXTitle;
+                charts.access.update();
+            });
+        }
+
+        // File Upload Handling
+        dropZone.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'var(--primary)';
+            dropZone.style.backgroundColor = 'rgba(44, 123, 229, 0.05)';
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.style.borderColor = 'var(--border-color)';
+            dropZone.style.backgroundColor = 'var(--light)';
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'var(--border-color)';
+            dropZone.style.backgroundColor = 'var(--light)';
+            
+            const files = e.dataTransfer.files;
+            if (files.length) {
+                handleFileUpload(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                handleFileUpload(e.target.files[0]);
+            }
+        });
+
+        function handleFileUpload(file) {
+            // Display upload progress
+            uploadProgress.style.display = 'block';
+            uploadStatus.textContent = `Uploading ${file.name}...`;
+            
+            // Simulate upload progress
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 5;
+                progressBar.style.width = `${progress}%`;
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    uploadStatus.textContent = 'Processing data...';
+                    
+                    // Simulate processing delay
+                    setTimeout(() => {
+                        uploadStatus.textContent = 'Upload complete!';
+                        
+                        // Add file to list
+                        addFileToList(file);
+                        
+                        // Show uploaded files section
+                        uploadedFiles.style.display = 'block';
+                        
+                        // Reset progress after a delay
+                        setTimeout(() => {
+                            uploadProgress.style.display = 'none';
+                            progressBar.style.width = '0%';
+                        }, 2000);
+                    }, 1500);
+                }
+            }, 100);
+        }
+
+        function addFileToList(file) {
+            const now = new Date();
+            const formattedDate = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+            const fileSize = formatFileSize(file.size);
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${file.name}</td>
+                <td>${fileSize}</td>
+                <td>${formattedDate}</td>
+                <td><span style="color: var(--success);">Processed</span></td>
+                <td class="data-table-actions">
+                    <button class="btn btn-outline-secondary btn-icon" title="View Data">
+                        <span class="material-icons-round" style="font-size: 1rem;">visibility</span>
+                    </button>
+                    <button class="btn btn-outline-secondary btn-icon" title="Delete File">
+                        <span class="material-icons-round" style="font-size: 1rem;">delete</span>
+                    </button>
+                </td>
+            `;
+            
+            filesList.appendChild(row);
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            else return (bytes / 1048576).toFixed(1) + ' MB';
+        }
+
+        // Filter reset and apply buttons
+        resetFiltersBtn.addEventListener('click', () => {
+            document.querySelectorAll('.filter-input').forEach(input => {
+                if (input.tagName === 'SELECT') {
+                    input.selectedIndex = 0;
+                } else {
+                    input.value = input.defaultValue;
+                }
+            });
+        });
+
+        applyFiltersBtn.addEventListener('click', () => {
+            // In a real application, this would update the data based on filters
+            // For this demo, we'll just show a notification
+            alert('Filters applied! In a real application, the data would be updated accordingly.');
+        });
+
+        // Export button
+        exportButton.addEventListener('click', () => {
+            alert('Report export functionality would be implemented here. This would generate a PDF or Excel file with the current dashboard data and charts.');
+        });
+
+        // Help button
+        helpButton.addEventListener('click', () => {
+            alert('Help and guidance content would appear here, providing context-specific assistance for using the analytics dashboard.');
+        });
+
+        // Initialize everything when the page loads
+        window.addEventListener('load', () => {
+            initializeCharts();
+        });
+    </script>
+</body>
+</html>

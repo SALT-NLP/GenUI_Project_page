@@ -1,0 +1,1920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Traffic Dashboard</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet/dist/leaflet.css" />
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --primary-dark: #0056b3;
+            --secondary-color: #6c757d;
+            --background-color: #f8f9fa;
+            --surface-color: #ffffff;
+            --text-color: #343a40;
+            --text-light: #6c757d;
+            --border-color: #dee2e6;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --border-radius: 8px;
+            --box-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+            --box-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-y: scroll; /* Ensure scrollbar is visible */
+        }
+
+        /* Custom Scrollbar */
+        body::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        body::-webkit-scrollbar-track {
+            background: var(--background-color);
+        }
+
+        body::-webkit-scrollbar-thumb {
+            background-color: var(--border-color);
+            border-radius: 10px;
+            border: 2px solid var(--background-color);
+        }
+
+        body::-webkit-scrollbar-thumb:hover {
+            background-color: var(--secondary-color);
+        }
+
+
+        header {
+            background-color: var(--surface-color);
+            padding: var(--spacing-md) var(--spacing-lg);
+            box-shadow: var(--box-shadow-sm);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            flex-wrap: wrap;
+            gap: var(--spacing-md);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8em;
+            color: var(--primary-color);
+        }
+
+        nav ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            gap: var(--spacing-md);
+        }
+
+        nav a {
+            text-decoration: none;
+            color: var(--text-light);
+            font-weight: 500;
+            padding: var(--spacing-sm) 0;
+            transition: color 0.2s ease, border-bottom-color 0.2s ease;
+            outline-offset: 4px; /* For keyboard focus */
+        }
+
+        nav a:hover,
+        nav a.active {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+         nav a:focus {
+            outline: 2px solid var(--primary-color);
+            border-radius: 2px;
+         }
+
+        .container {
+            flex-grow: 1;
+            padding: var(--spacing-lg);
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .controls {
+            background-color: var(--surface-color);
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow-sm);
+            margin-bottom: var(--spacing-lg);
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-md);
+            align-items: flex-end; /* Align buttons/inputs at the bottom */
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+            min-width: 150px; /* Give controls a minimum width */
+        }
+
+        .control-group label {
+            font-size: 0.9em;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .control-group select,
+        .control-group input[type="date"],
+        .control-group button {
+            padding: var(--spacing-sm);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            color: var(--text-color);
+            background-color: var(--surface-color);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            min-height: 40px; /* Ensure consistent height */
+            box-sizing: border-box; /* Include padding and border in element's total width and height */
+        }
+
+        .control-group select:focus,
+        .control-group input[type="date"]:focus,
+        .control-group button:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        button {
+            cursor: pointer;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            transition: background-color 0.2s ease, opacity 0.2s ease, transform 0.1s ease;
+             min-height: 40px; /* Ensure consistent height */
+             box-sizing: border-box;
+        }
+
+        button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        button:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+
+        button:disabled {
+            background-color: var(--secondary-color);
+            cursor: not-allowed;
+            opacity: 0.7;
+            transform: none;
+        }
+
+        .dashboard-section {
+            display: none;
+            margin-bottom: var(--spacing-lg);
+            transition: opacity 0.3s ease;
+        }
+
+        .dashboard-section.active {
+            display: block;
+        }
+
+        .section-title {
+            font-size: 1.6em;
+            margin-bottom: var(--spacing-md); /* Reduced margin */
+            color: var(--text-color);
+            font-weight: 600;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* Adjusted min width */
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .metric-card {
+            background-color: var(--surface-color);
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow-sm);
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+            border: 1px solid transparent; /* For hover effect */
+        }
+
+        .metric-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--box-shadow-md);
+            border-color: var(--primary-color);
+        }
+
+        .metric-card .title {
+            font-size: 1em;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .metric-card .value {
+            font-size: 2em;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .metric-card .change {
+            font-size: 0.9em;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .metric-card .change.positive {
+            color: var(--success-color);
+        }
+
+        .metric-card .change.negative {
+            color: var(--danger-color);
+        }
+
+        .metric-card .change .material-symbols-rounded {
+            font-size: 1.1em;
+        }
+
+        .chart-card,
+        .table-card,
+        .map-card {
+            background-color: var(--surface-color);
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow-sm);
+            margin-bottom: var(--spacing-lg);
+            position: relative; /* Needed for floating controls */
+        }
+
+        .chart-card .chart-container {
+            position: relative;
+            height: 350px; /* Increased default height for charts */
+            cursor: pointer;
+            margin-top: var(--spacing-md); /* Add space below title */
+        }
+
+        .map-card .map-container {
+            position: relative;
+            height: 400px; /* Height for the map */
+            margin-top: var(--spacing-md);
+        }
+
+        .chart-card .floating-controls,
+        .map-card .floating-controls {
+            position: absolute;
+            top: var(--spacing-md);
+            right: var(--spacing-md);
+            background: rgba(255, 255, 255, 0.98); /* More opaque background */
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow-md);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 10;
+            min-width: 200px; /* Ensure controls have space */
+        }
+
+        .chart-card .floating-controls.active,
+        .map-card .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .chart-card .floating-controls .control-group,
+        .map-card .floating-controls .control-group {
+            margin-bottom: var(--spacing-sm);
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+            min-width: auto; /* Override control-group min-width */
+        }
+
+        .chart-card .floating-controls label,
+        .map-card .floating-controls label {
+            font-size: 0.9em;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .chart-card .floating-controls input[type="color"],
+        .chart-card .floating-controls select,
+        .chart-card .floating-controls input[type="number"],
+        .map-card .floating-controls select {
+             padding: var(--spacing-sm);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            color: var(--text-color);
+            background-color: var(--surface-color);
+            width: 100%; /* Make inputs fill container */
+            box-sizing: border-box;
+            min-height: 35px; /* Slightly smaller height for controls */
+        }
+
+         .chart-card .floating-controls input[type="color"] {
+             padding: 4px; /* Adjust padding for color input */
+             min-height: 35px;
+         }
+
+
+        .table-card table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: var(--spacing-md);
+            table-layout: auto; /* Allow columns to size naturally */
+        }
+
+        .table-card th,
+        .table-card td {
+            padding: var(--spacing-sm) var(--spacing-md);
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            word-break: break-word; /* Prevent long words from overflowing */
+        }
+
+        .table-card th {
+            background-color: var(--background-color);
+            font-weight: 600;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .table-card tbody tr:nth-child(even) {
+            background-color: #f1f1f1; /* Subtle zebra striping */
+        }
+         .table-card tbody tr:hover {
+             background-color: #e9ecef; /* Highlight row on hover */
+         }
+
+
+        .table-card th:hover {
+            background-color: #e9ecef;
+        }
+
+         .table-card th .material-symbols-rounded {
+             font-size: 1em;
+             vertical-align: middle;
+             margin-left: var(--spacing-xs);
+         }
+
+
+        .table-card .pagination {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-md);
+            font-size: 0.9em;
+            color: var(--text-light);
+        }
+
+        .table-card .pagination button {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            padding: 4px 8px;
+            font-size: 0.9em;
+            min-height: auto; /* Override button height */
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+         .table-card .pagination button:hover:not(:disabled) {
+             background-color: var(--primary-color);
+             color: white;
+         }
+
+        .table-card .pagination button:disabled {
+            color: var(--text-light);
+            border-color: var(--border-color);
+            background-color: transparent;
+            cursor: not-allowed;
+        }
+
+        .loading-spinner {
+            position: fixed; /* Use fixed to center in viewport */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8); /* Semi-transparent overlay */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000; /* Above other content */
+            transition: opacity 0.3s ease;
+            pointer-events: none; /* Allow clicks through when hidden */
+            opacity: 0; /* Start hidden */
+        }
+
+         .loading-spinner.visible {
+             opacity: 1;
+             pointer-events: all; /* Block clicks when visible */
+         }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .export-button {
+            display: inline-flex; /* Use inline-flex to wrap */
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-md);
+            text-decoration: none; /* If using <a> tag */
+            color: white; /* If using <a> tag */
+        }
+
+        .export-button .material-symbols-rounded {
+            font-size: 1.2em;
+        }
+
+        .error-message {
+            color: var(--danger-color);
+            margin-top: var(--spacing-md);
+            padding: var(--spacing-md);
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: var(--border-radius);
+            display: none; /* Hidden by default */
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+         .error-message.visible {
+             display: flex;
+         }
+
+         .error-message .material-symbols-rounded {
+             font-size: 1.5em;
+         }
+
+         .visually-hidden {
+             position: absolute;
+             width: 1px;
+             height: 1px;
+             margin: -1px;
+             padding: 0;
+             overflow: hidden;
+             clip: rect(0, 0, 0, 0);
+             border: 0;
+         }
+
+
+        /* Responsive adjustments */
+        @media (max-width: 992px) {
+             .controls {
+                 align-items: flex-start; /* Align items to top when stacking */
+             }
+             .control-group {
+                 min-width: 120px; /* Allow controls to be smaller */
+             }
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: var(--spacing-md);
+            }
+
+            nav ul {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .control-group {
+                width: 100%;
+                min-width: auto; /* Remove min-width on small screens */
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-card .chart-container {
+                 height: 300px; /* Adjust height for smaller screens */
+            }
+
+             .table-card table,
+             .table-card thead,
+             .table-card tbody,
+             .table-card th,
+             .table-card td,
+             .table-card tr {
+                 display: block; /* Stack table elements */
+             }
+
+             .table-card thead tr {
+                 position: absolute;
+                 top: -9999px;
+                 left: -9999px; /* Hide header */
+             }
+
+             .table-card tr {
+                 border: 1px solid var(--border-color);
+                 margin-bottom: var(--spacing-sm);
+                 border-radius: var(--border-radius);
+                 padding: var(--spacing-sm);
+             }
+
+             .table-card td {
+                 border: none;
+                 border-bottom: 1px solid var(--border-color);
+                 position: relative;
+                 padding-left: 50%; /* Make space for data label */
+                 text-align: right; /* Align data to the right */
+             }
+
+             .table-card td:last-child {
+                 border-bottom: 0;
+             }
+
+             .table-card td::before {
+                 /* Use data-label for mobile headers */
+                 content: attr(data-label);
+                 position: absolute;
+                 top: 0;
+                 left: var(--spacing-sm);
+                 width: 45%; /* Space for label */
+                 padding-right: var(--spacing-sm);
+                 white-space: nowrap;
+                 font-weight: 600;
+                 color: var(--text-color);
+                 text-align: left; /* Align label to the left */
+             }
+
+             .table-card .pagination {
+                 justify-content: center; /* Center pagination on small screens */
+             }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>📊 Analytics Dashboard</h1>
+        <nav aria-label="Main Navigation">
+            <ul role="tablist">
+                <li><a href="#overview" data-section="overview" class="active" role="tab" aria-selected="true" aria-controls="overview" id="overview-tab" tabindex="0">Overview</a></li>
+                <li><a href="#sources" data-section="sources" role="tab" aria-selected="false" aria-controls="sources" id="sources-tab" tabindex="-1">Sources</a></li>
+                <li><a href="#behavior" data-section="behavior" role="tab" aria-selected="false" aria-controls="behavior" id="behavior-tab" tabindex="-1">Behavior</a></li>
+                <li><a href="#audience" data-section="audience" role="tab" aria-selected="false" aria-controls="audience" id="audience-tab" tabindex="-1">Audience</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container" role="main">
+        <section class="controls" aria-label="Dashboard Filters">
+            <div class="control-group">
+                <label for="date-range">Date Range:</label>
+                <select id="date-range">
+                    <option value="today">Today</option>
+                    <option value="yesterday">Yesterday</option>
+                    <option value="last7">Last 7 Days</option>
+                    <option value="last30" selected>Last 30 Days</option>
+                    <option value="thisMonth">This Month</option>
+                    <option value="lastMonth">Last Month</option>
+                    <option value="custom">Custom Range</option>
+                </select>
+            </div>
+            <div class="control-group custom-date-inputs" style="display: none;">
+                 <label for="start-date">From:</label>
+                 <input type="date" id="start-date">
+            </div>
+             <div class="control-group custom-date-inputs" style="display: none;">
+                 <label for="end-date">To:</label>
+                 <input type="date" id="end-date">
+            </div>
+            <div class="control-group">
+                <label for="filter-device">Device:</label>
+                <select id="filter-device">
+                    <option value="all">All</option>
+                    <option value="desktop">Desktop</option>
+                    <option value="mobile">Mobile</option>
+                    <option value="tablet">Tablet</option>
+                </select>
+            </div>
+             <div class="control-group">
+                <label for="filter-country">Country:</label>
+                <select id="filter-country">
+                    <option value="all">All</option>
+                    <option value="us">United States</option>
+                    <option value="ca">Canada</option>
+                    <option value="gb">United Kingdom</option>
+                    <option value="de">Germany</option>
+                    <option value="fr">France</option>
+                    <!-- More options -->
+                </select>
+            </div>
+            <button id="apply-filters" aria-label="Apply selected filters">Apply Filters</button>
+        </section>
+
+        <!-- Loading Spinner Placeholder -->
+        <div id="loading-indicator" class="loading-spinner" aria-hidden="true">
+            <div class="spinner"></div>
+            <div class="visually-hidden" aria-live="polite">Loading data...</div> <!-- Accessible loading message -->
+        </div>
+
+         <!-- Error Message Placeholder -->
+        <div id="error-message" class="error-message" role="alert" aria-live="assertive">
+            <span class="material-symbols-rounded" aria-hidden="true">error</span>
+            <span id="error-text">An error occurred while loading data. Please try again.</span>
+        </div>
+
+
+        <section id="overview" class="dashboard-section active" role="tabpanel" aria-labelledby="overview-tab">
+            <h2 class="section-title">Overview</h2>
+            <div class="metrics-grid" aria-label="Key Metrics">
+                <div class="metric-card" tabindex="0" role="region" aria-label="Total Visitors Metric">
+                    <div class="title">Total Visitors</div>
+                    <div class="value" id="metric-visitors">15,450</div>
+                    <div class="change positive"><span class="material-symbols-rounded" aria-hidden="true">arrow_upward</span> 5.2% vs Last Period</div>
+                </div>
+                <div class="metric-card" tabindex="0" role="region" aria-label="Page Views Metric">
+                    <div class="title">Page Views</div>
+                    <div class="value" id="metric-pageviews">45,120</div>
+                    <div class="change positive"><span class="material-symbols-rounded" aria-hidden="true">arrow_upward</span> 7.1% vs Last Period</div>
+                </div>
+                 <div class="metric-card" tabindex="0" role="region" aria-label="Bounce Rate Metric">
+                    <div class="title">Bounce Rate</div>
+                    <div class="value" id="metric-bounce">35.5%</div>
+                    <div class="change negative"><span class="material-symbols-rounded" aria-hidden="true">arrow_downward</span> 2.1% vs Last Period</div>
+                </div>
+                 <div class="metric-card" tabindex="0" role="region" aria-label="Average Session Duration Metric">
+                    <div class="title">Avg. Session Duration</div>
+                    <div class="value" id="metric-duration">00:03:15</div>
+                    <div class="change positive"><span class="material-symbols-rounded" aria-hidden="true">arrow_upward</span> 1.5% vs Last Period</div>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3 class="section-title">Visitors Over Time</h3>
+                <div class="chart-container" id="visitors-chart-container" role="img" aria-label="Line chart showing visitors over time. Click within the chart area to show chart controls.">
+                     <canvas id="visitorsChart"></canvas>
+                     <div class="floating-controls" id="visitorsChartControls" aria-hidden="true">
+                        <div class="control-group">
+                            <label for="visitorsChartType">Chart Type</label>
+                            <select id="visitorsChartType">
+                                <option value="line">Line</option>
+                                <option value="bar">Bar</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label for="visitorsLineColor">Line Color</label>
+                            <input type="color" id="visitorsLineColor" value="#007bff">
+                        </div>
+                        <div class="control-group">
+                            <label for="visitorsFillColor">Fill Color</label>
+                            <input type="color" id="visitorsFillColor" value="#007bff40">
+                        </div>
+                         <div class="control-group">
+                            <label for="visitorsFontSize">Font Size</label>
+                            <input type="number" id="visitorsFontSize" value="12" min="8" max="20">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+             <div class="table-card">
+                <h3 class="section-title">Top Pages</h3>
+                <table id="top-pages-table" aria-label="Table showing top visited pages">
+                    <thead>
+                        <tr>
+                            <th data-column="pagePath" aria-sort="none" scope="col" tabindex="0">Page Path <span class="material-symbols-rounded" aria-hidden="true">unfold_more</span></th>
+                            <th data-column="pageViews" aria-sort="none" scope="col" tabindex="0">Page Views <span class="material-symbols-rounded" aria-hidden="true">unfold_more</span></th>
+                            <th data-column="uniqueViews" aria-sort="none" scope="col" tabindex="0">Unique Views <span class="material-symbols-rounded" aria-hidden="true">unfold_more</span></th>
+                            <th data-column="avgTime" aria-sort="none" scope="col" tabindex="0">Avg. Time on Page <span class="material-symbols-rounded" aria-hidden="true">unfold_more</span></th>
+                            <th data-column="bounceRate" aria-sort="none" scope="col" tabindex="0">Bounce Rate <span class="material-symbols-rounded" aria-hidden="true">unfold_more</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Table rows will be populated by JS -->
+                    </tbody>
+                </table>
+                 <div class="pagination" id="top-pages-pagination">
+                    <span id="top-pages-rows-info"></span>
+                    <button id="top-pages-prev" aria-label="Previous page" disabled>&lt;</button>
+                    <button id="top-pages-next" aria-label="Next page" disabled>&gt;</button>
+                 </div>
+            </div>
+
+             <button class="export-button" aria-label="Export Overview Data as CSV">
+                <span class="material-symbols-rounded" aria-hidden="true">download</span>
+                Export Overview Data
+            </button>
+
+        </section>
+
+        <section id="sources" class="dashboard-section" role="tabpanel" aria-labelledby="sources-tab" hidden aria-hidden="true">
+             <h2 class="section-title">Traffic Sources</h2>
+             <div class="chart-card">
+                <h3 class="section-title">Traffic Source Distribution</h3>
+                <div class="chart-container" id="sources-chart-container" role="img" aria-label="Pie chart showing traffic source distribution. Click within the chart area to show chart controls.">
+                     <canvas id="sourcesChart"></canvas>
+                     <div class="floating-controls" id="sourcesChartControls" aria-hidden="true">
+                        <div class="control-group">
+                            <label for="sourcesChartType">Chart Type</label>
+                            <select id="sourcesChartType">
+                                <option value="pie">Pie</option>
+                                <option value="doughnut">Doughnut</option>
+                                <option value="bar">Bar</option>
+                            </select>
+                        </div>
+                         <div class="control-group">
+                            <label for="sourcesFontSize">Font Size</label>
+                            <input type="number" id="sourcesFontSize" value="12" min="8" max="20">
+                        </div>
+                    </div>
+                </div>
+            </div>
+             <div class="table-card">
+                <h3 class="section-title">Source Details</h3>
+                 <table id="source-details-table" aria-label="Table showing details for traffic sources">
+                    <thead>
+                        <tr>
+                            <th data-column="source" aria-sort="none" scope="col" tabindex="0">Source <span class="material-symbols-rounded" aria-hidden="true">unfold_more</span></th>
+                            <th data-column="visitors" aria-sort="none" scope="col" tabindex="0">Visitors <span class="material-symbols-rounded" aria-hidden="true">unfold_more</span></th>
+                            <th data-column="pageViews" aria-sort="none" scope="col" tabindex="0">Page Views <span class="material-symbols-rounded" aria-hidden="true">unfold_more</span></th>
+                            <th data-column="bounceRate" aria-sort="none" scope="col" tabindex="0">Bounce Rate <span class="material-symbols-rounded" aria-hidden="true">unfold_more</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                         <!-- Table rows will be populated by JS -->
+                    </tbody>
+                </table>
+                 <div class="pagination" id="source-details-pagination">
+                    <span id="source-details-rows-info"></span>
+                    <button id="source-details-prev" aria-label="Previous page" disabled>&lt;</button>
+                    <button id="source-details-next" aria-label="Next page" disabled>&gt;</button>
+                 </div>
+            </div>
+             <button class="export-button" aria-label="Export Sources Data as CSV">
+                <span class="material-symbols-rounded" aria-hidden="true">download</span>
+                Export Sources Data
+            </button>
+        </section>
+
+        <section id="behavior" class="dashboard-section" role="tabpanel" aria-labelledby="behavior-tab" hidden aria-hidden="true">
+            <h2 class="section-title">User Behavior</h2>
+             <div class="table-card">
+                <h3 class="section-title">Entry Pages</h3>
+                 <table id="entry-pages-table" aria-label="Table showing entry pages">
+                    <thead>
+                        <tr>
+                            <th data-column="pagePath" aria-sort="none" scope="col" tabindex="0">Page Path <span class="material-symbols-rounded" aria-hidden="true">unfold_more</span></th>
+                            <th data-column="entrances" aria-sort="none" scope="col" tabindex="0">Entrances <span class="material-symbols-rounded" aria-hidden="true">unfold_more</span></th>
+                            <th data-column="bounceRate" aria-sort="none" scope="col" tabindex="0">Bounce Rate <span class="material-symbols-rounded" aria-hidden="true">unfold_more</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                         <!-- Table rows will be populated by JS -->
+                    </tbody>
+                </table>
+                 <div class="pagination" id="entry-pages-pagination">
+                    <span id="entry-pages-rows-info"></span>
+                    <button id="entry-pages-prev" aria-label="Previous page" disabled>&lt;</button>
+                    <button id="entry-pages-next" aria-label="Next page" disabled>&gt;</button>
+                 </div>
+            </div>
+             <div class="table-card">
+                <h3 class="section-title">Exit Pages</h3>
+                 <table id="exit-pages-table" aria-label="Table showing exit pages">
+                    <thead>
+                        <tr>
+                            <th data-column="pagePath" aria-sort="none" scope="col" tabindex="0">Page Path <span class="material-symbols-rounded" aria-hidden="true">unfold_more</span></th>
+                            <th data-column="exits" aria-sort="none" scope="col" tabindex="0">Exits <span class="material-symbols-rounded" aria-hidden="true">unfold_more</span></th>
+                            <th data-column="exitPercent" aria-sort="none" scope="col" tabindex="0">% Exit <span class="material-symbols-rounded" aria-hidden="true">unfold_more</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                         <!-- Table rows will be populated by JS -->
+                    </tbody>
+                </table>
+                 <div class="pagination" id="exit-pages-pagination">
+                    <span id="exit-pages-rows-info"></span>
+                    <button id="exit-pages-prev" aria-label="Previous page" disabled>&lt;</button>
+                    <button id="exit-pages-next" aria-label="Next page" disabled>&gt;</button>
+                 </div>
+            </div>
+             <button class="export-button" aria-label="Export Behavior Data as CSV">
+                <span class="material-symbols-rounded" aria-hidden="true">download</span>
+                Export Behavior Data
+            </button>
+        </section>
+
+        <section id="audience" class="dashboard-section" role="tabpanel" aria-labelledby="audience-tab" hidden aria-hidden="true">
+            <h2 class="section-title">Audience</h2>
+             <div class="chart-card">
+                <h3 class="section-title">Device Category Distribution</h3>
+                <div class="chart-container" id="device-chart-container" role="img" aria-label="Pie chart showing device category distribution. Click within the chart area to show chart controls.">
+                     <canvas id="deviceChart"></canvas>
+                     <div class="floating-controls" id="deviceChartControls" aria-hidden="true">
+                        <div class="control-group">
+                            <label for="deviceChartType">Chart Type</label>
+                            <select id="deviceChartType">
+                                <option value="pie">Pie</option>
+                                <option value="doughnut">Doughnut</option>
+                                <option value="bar">Bar</option>
+                            </select>
+                        </div>
+                         <div class="control-group">
+                            <label for="deviceFontSize">Font Size</label>
+                            <input type="number" id="deviceFontSize" value="12" min="8" max="20">
+                        </div>
+                    </div>
+                </div>
+            </div>
+             <div class="map-card">
+                 <h3 class="section-title">Audience by Location (Placeholder)</h3>
+                 <div class="map-container" id="audience-map-container" role="img" aria-label="Interactive map showing audience distribution by location.">
+                     <div id="audienceMap" style="height: 100%;"></div>
+                     <!-- Map controls could go here if needed -->
+                 </div>
+             </div>
+             <div class="table-card">
+                <h3 class="section-title">Audience by Country</h3>
+                 <table id="country-audience-table" aria-label="Table showing audience details by country">
+                    <thead>
+                        <tr>
+                            <th data-column="country" aria-sort="none" scope="col" tabindex="0">Country <span class="material-symbols-rounded" aria-hidden="true">unfold_more</span></th>
+                            <th data-column="visitors" aria-sort="none" scope="col" tabindex="0">Visitors <span class="material-symbols-rounded" aria-hidden="true">unfold_more</span></th>
+                            <th data-column="pageViews" aria-sort="none" scope="col" tabindex="0">Page Views <span class="material-symbols-rounded" aria-hidden="true">unfold_more</span></th>
+                            <th data-column="avgSessionDuration" aria-sort="none" scope="col" tabindex="0">Avg. Session Duration <span class="material-symbols-rounded" aria-hidden="true">unfold_more</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                         <!-- Table rows will be populated by JS -->
+                    </tbody>
+                </table>
+                 <div class="pagination" id="country-audience-pagination">
+                    <span id="country-audience-rows-info"></span>
+                    <button id="country-audience-prev" aria-label="Previous page" disabled>&lt;</button>
+                    <button id="country-audience-next" aria-label="Next page" disabled>&gt;</button>
+                 </div>
+            </div>
+             <button class="export-button" aria-label="Export Audience Data as CSV">
+                <span class="material-symbols-rounded" aria-hidden="true">download</span>
+                Export Audience Data
+            </button>
+        </section>
+
+    </main>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+        import zoomPlugin from 'https://esm.sh/chartjs-plugin-zoom';
+        import * as L from "https://esm.sh/leaflet";
+
+        // Register the zoom plugin globally
+        Chart.register(zoomPlugin);
+
+
+        // --- DOM Elements ---
+        const navLinks = document.querySelectorAll('nav a');
+        const sections = document.querySelectorAll('.dashboard-section');
+        const dateRangeSelect = document.getElementById('date-range');
+        const customDateInputs = document.querySelectorAll('.custom-date-inputs');
+        const startDateInput = document.getElementById('start-date');
+        const endDateInput = document.getElementById('end-date');
+        const deviceFilterSelect = document.getElementById('filter-device');
+        const countryFilterSelect = document.getElementById('filter-country');
+        const applyFiltersButton = document.getElementById('apply-filters');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const errorMessage = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+
+        // --- State ---
+        let currentSection = 'overview';
+        let currentFilters = {
+            dateRange: 'last30',
+            startDate: null,
+            endDate: null,
+            device: 'all',
+            country: 'all'
+        };
+        let tableData = {}; // Store data for each table
+        let tablePagination = {}; // Store pagination state for each table
+        const rowsPerPage = 10; // Default rows per page
+
+        // --- Chart Instances ---
+        let visitorsChart = null;
+        let sourcesChart = null;
+        let deviceChart = null;
+
+        // --- Map Instance ---
+        let audienceMap = null;
+
+        // --- Placeholder Data ---
+        const placeholderData = {
+            overview: {
+                metrics: {
+                    visitors: 15450,
+                    pageviews: 45120,
+                    bounce: 35.5,
+                    duration: '00:03:15'
+                },
+                visitorsChart: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+                    datasets: [{
+                        label: 'Visitors',
+                        data: [1000, 1200, 1500, 1300, 1600, 1800, 2000],
+                        backgroundColor: "rgba(0, 123, 255, 0.25)", /* Use rgba for fill */
+                        borderColor: "var('--primary-color')",
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                topPagesTable: [
+                    { pagePath: '/', pageViews: 5123, uniqueViews: 3567, avgTime: '00:02:45', bounceRate: '40.1%' },
+                    { pagePath: '/products', pageViews: 3456, uniqueViews: 2110, avgTime: '00:03:10', bounceRate: '32.5%' },
+                    { pagePath: '/about', pageViews: 1890, uniqueViews: 1500, avgTime: '00:01:55', bounceRate: '55.0%' },
+                    { pagePath: '/contact', pageViews: 1200, uniqueViews: 900, avgTime: '00:01:30', bounceRate: '60.5%' },
+                    { pagePath: '/blog', pageViews: 950, uniqueViews: 700, avgTime: '00:04:00', bounceRate: '25.0%' },
+                    { pagePath: '/products/item-1', pageViews: 800, uniqueViews: 600, avgTime: '00:03:40', bounceRate: '30.0%' },
+                    { pagePath: '/services', pageViews: 750, uniqueViews: 550, avgTime: '00:02:10', bounceRate: '48.0%' },
+                    { pagePath: '/pricing', pageViews: 600, uniqueViews: 400, avgTime: '00:05:00', bounceRate: '20.0%' },
+                    { pagePath: '/faq', pageViews: 550, uniqueViews: 450, avgTime: '00:01:00', bounceRate: '70.0%' },
+                    { pagePath: '/careers', pageViews: 400, uniqueViews: 300, avgTime: '00:02:00', bounceRate: '50.0%' },
+                     { pagePath: '/terms', pageViews: 300, uniqueViews: 200, avgTime: '00:00:45', bounceRate: '80.0%' },
+                     { pagePath: '/privacy', pageViews: 250, uniqueViews: 180, avgTime: '00:00:50', bounceRate: '75.0%' },
+                     { pagePath: '/sitemap', pageViews: 100, uniqueViews: 80, avgTime: '00:00:30', bounceRate: '90.0%' },
+                ]
+            },
+            sources: {
+                 sourcesChart: {
+                    labels: ['Direct', 'Organic Search', 'Referral', 'Social'],
+                    datasets: [{
+                        label: 'Sessions',
+                        data: [4500, 6000, 2000, 2950],
+                        backgroundColor: [
+                            "rgba(0, 123, 255, 0.8)", /* primary-color */
+                            "rgba(40, 167, 69, 0.8)", /* success-color */
+                            "rgba(255, 193, 7, 0.8)", /* warning-color */
+                            "rgba(23, 162, 184, 0.8)" /* info-color */
+                        ],
+                        borderColor: "var('--surface-color')",
+                        borderWidth: 2
+                    }]
+                },
+                 sourceDetailsTable: [
+                    { source: 'Direct', visitors: 4500, pageViews: 12000, bounceRate: '30.0%' },
+                    { source: 'Organic Search', visitors: 6000, pageViews: 18000, bounceRate: '28.5%' },
+                    { source: 'Referral', visitors: 2000, pageViews: 6000, bounceRate: '40.0%' },
+                    { source: 'Social', visitors: 2950, pageViews: 9120, bounceRate: '38.0%' },
+                     { source: 'Email', visitors: 500, pageViews: 1500, bounceRate: '25.0%' },
+                     { source: 'Paid Search', visitors: 1000, pageViews: 3000, bounceRate: '35.0%' },
+                 ]
+            },
+            behavior: {
+                 entryPagesTable: [
+                    { pagePath: '/', entrances: 8000, bounceRate: '40.1%' },
+                    { pagePath: '/products', entrances: 3000, bounceRate: '32.5%' },
+                    { pagePath: '/blog/latest-post', entrances: 1500, bounceRate: '45.0%' },
+                     { pagePath: '/contact', entrances: 800, bounceRate: '60.5%' },
+                     { pagePath: '/pricing', entrances: 500, bounceRate: '20.0%' },
+                 ],
+                 exitPagesTable: [
+                    { pagePath: '/', exits: 7500, exitPercent: '48.5%' },
+                    { pagePath: '/checkout/thank-you', exits: 2500, exitPercent: '16.2%' },
+                    { pagePath: '/contact', exits: 1000, exitPercent: '6.5%' },
+                     { pagePath: '/pricing', exits: 800, exitPercent: '10.0%' },
+                     { pagePath: '/error-page', exits: 500, exitPercent: '3.2%' },
+                 ]
+            },
+            audience: {
+                 deviceChart: {
+                    labels: ['Desktop', 'Mobile', 'Tablet'],
+                    datasets: [{
+                        label: 'Visitors',
+                        data: [8000, 6000, 1450],
+                        backgroundColor: [
+                            "var('--primary-color')",
+                            "var('--success-color')",
+                            "var('--warning-color')"
+                        ],
+                        borderColor: "var('--surface-color')",
+                        borderWidth: 2
+                    }]
+                },
+                 countryAudienceTable: [
+                    { country: 'United States', visitors: 8000, pageViews: 25000, avgSessionDuration: '00:03:30' },
+                    { country: 'Canada', visitors: 2000, pageViews: 6000, avgSessionDuration: '00:03:00' },
+                    { country: 'United Kingdom', visitors: 1500, pageViews: 4500, avgSessionDuration: '00:03:15' },
+                     { country: 'Germany', visitors: 1000, pageViews: 3000, avgSessionDuration: '00:03:05' },
+                     { country: 'France', visitors: 800, pageViews: 2500, avgSessionDuration: '00:02:50' },
+                 ],
+                 mapData: [ // Placeholder data for map markers/circles
+                    { coords: [39.8283, -98.5795], name: 'USA', visitors: 8000 }, // Center of USA
+                    { coords: [56.1304, -106.3468], name: 'Canada', visitors: 2000 }, // Center of Canada
+                    { coords: [55.3781, -3.4360], name: 'UK', visitors: 1500 }, // Center of UK
+                    { coords: [51.1657, 10.4515], name: 'Germany', visitors: 1000 }, // Center of Germany
+                    { coords: [46.2276, 2.2137], name: 'France', visitors: 800 }, // Center of France
+                 ]
+            }
+        };
+
+        // Initialize table data and pagination state
+        tableData = {
+             'top-pages-table': placeholderData.overview.topPagesTable,
+             'source-details-table': placeholderData.sources.sourceDetailsTable,
+             'entry-pages-table': placeholderData.behavior.entryPagesTable,
+             'exit-pages-table': placeholderData.behavior.exitPagesTable,
+             'country-audience-table': placeholderData.audience.countryAudienceTable,
+        };
+
+         Object.keys(tableData).forEach(tableId => {
+             tablePagination[tableId] = {
+                 currentPage: 1,
+                 sortColumn: null,
+                 sortDirection: 'none' // 'asc', 'desc', 'none'
+             };
+         });
+
+
+        // --- Functions ---
+
+        // Function to show a specific dashboard section
+        function showSection(sectionId) {
+            sections.forEach(section => {
+                section.classList.remove('active');
+                section.setAttribute('hidden', 'true');
+                section.setAttribute('aria-hidden', 'true');
+            });
+            const activeSection = document.getElementById(sectionId);
+            activeSection.classList.add('active');
+            activeSection.removeAttribute('hidden');
+             activeSection.setAttribute('aria-hidden', 'false');
+            currentSection = sectionId;
+
+            navLinks.forEach(link => {
+                const linkSectionId = link.getAttribute('data-section');
+                if (linkSectionId === sectionId) {
+                    link.classList.add('active');
+                    link.setAttribute('aria-selected', 'true');
+                    link.setAttribute('tabindex', '0');
+                } else {
+                    link.classList.remove('active');
+                    link.setAttribute('aria-selected', 'false');
+                     link.setAttribute('tabindex', '-1'); // Make non-active tabs not focusable
+                }
+            });
+
+            // Render charts, tables, and maps for the active section
+            renderSectionContent(sectionId);
+        }
+
+        // Render content (charts, tables, maps) for a given section
+        function renderSectionContent(sectionId) {
+            // Destroy existing charts and map first
+            if (visitorsChart) { visitorsChart.destroy(); visitorsChart = null; }
+            if (sourcesChart) { sourcesChart.destroy(); sourcesChart = null; }
+            if (deviceChart) { deviceChart.destroy(); deviceChart = null; }
+            if (audienceMap) { audienceMap.remove(); audienceMap = null; } // Remove Leaflet map instance
+
+            // Close all floating controls
+            document.querySelectorAll('.floating-controls').forEach(c => {
+                c.classList.remove('active');
+                 c.setAttribute('aria-hidden', 'true');
+            });
+
+
+            if (sectionId === 'overview') {
+                updateMetricsDisplay(placeholderData.overview.metrics);
+                visitorsChart = createVisitorsChart('visitorsChart', placeholderData.overview.visitorsChart);
+                renderTable('top-pages-table', tableData['top-pages-table']);
+            } else if (sectionId === 'sources') {
+                sourcesChart = createSourcesChart('sourcesChart', placeholderData.sources.sourcesChart);
+                renderTable('source-details-table', tableData['sources'].sourceDetailsTable);
+            } else if (sectionId === 'behavior') {
+                 renderTable('entry-pages-table', tableData['behavior'].entryPagesTable);
+                 renderTable('exit-pages-table', tableData['behavior'].exitPagesTable);
+            } else if (sectionId === 'audience') {
+                 deviceChart = createDeviceChart('deviceChart', placeholderData.audience.deviceChart);
+                 audienceMap = createAudienceMap('audienceMap', placeholderData.audience.mapData);
+                 renderTable('country-audience-table', tableData['audience'].countryAudienceTable);
+            }
+        }
+
+        // Update metric cards display
+        function updateMetricsDisplay(metrics) {
+             document.getElementById('metric-visitors').textContent = metrics.visitors.toLocaleString();
+             document.getElementById('metric-pageviews').textContent = metrics.pageviews.toLocaleString();
+             document.getElementById('metric-bounce').textContent = metrics.bounce.toFixed(1) + '%';
+             document.getElementById('metric-duration').textContent = metrics.duration;
+             // Add logic for change indicators if needed (placeholder data doesn't include previous period)
+        }
+
+
+        // Create Visitors Chart
+        function createVisitorsChart(canvasId, data) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            const chart = new Chart(ctx, {
+                type: 'line', // Default type
+                data: {
+                    labels: data.labels,
+                    datasets: data.datasets.map(dataset => ({
+                        ...dataset,
+                        borderColor: dataset.borderColor.startsWith('var(') ? getComputedStyle(document.documentElement).getPropertyValue(dataset.borderColor.match(/var\(([^)]+)\)/)[1]).trim() : dataset.borderColor,
+                        backgroundColor: dataset.backgroundColor.startsWith('var(') ? getComputedStyle(document.documentElement).getPropertyValue(dataset.backgroundColor.match(/var\(([^)]+)\)/)[1]).trim() : dataset.backgroundColor,
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                font: {
+                                    size: parseInt(document.getElementById('visitorsFontSize')?.value || 12)
+                                }
+                            }
+                        },
+                        tooltip: {
+                             mode: 'index',
+                             intersect: false,
+                        },
+                        zoom: {
+                            zoom: {
+                                wheel: {
+                                    enabled: true,
+                                },
+                                pinch: {
+                                    enabled: true
+                                },
+                                mode: 'xy',
+                            },
+                            pan: {
+                                enabled: true,
+                                mode: 'xy',
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Date',
+                                font: {
+                                    size: parseInt(document.getElementById('visitorsFontSize')?.value || 12)
+                                }
+                            },
+                            ticks: {
+                                font: {
+                                    size: parseInt(document.getElementById('visitorsFontSize')?.value || 12)
+                                }
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                             title: {
+                                display: true,
+                                text: 'Visitors',
+                                font: {
+                                    size: parseInt(document.getElementById('visitorsFontSize')?.value || 12)
+                                }
+                            },
+                             ticks: {
+                                font: {
+                                    size: parseInt(document.getElementById('visitorsFontSize')?.value || 12)
+                                }
+                            }
+                        }
+                    },
+                     onClick: (e) => toggleControls('visitorsChartControls', e),
+                }
+            });
+             setupChartControls('visitorsChartControls', chart);
+            return chart;
+        }
+
+        // Create Sources Chart
+        function createSourcesChart(canvasId, data) {
+             const ctx = document.getElementById(canvasId).getContext('2d');
+            const chart = new Chart(ctx, {
+                type: 'pie', // Default type
+                 data: {
+                    labels: data.labels,
+                    datasets: data.datasets.map(dataset => ({
+                        ...dataset,
+                         // Convert CSS variables in colors if necessary
+                        backgroundColor: Array.isArray(dataset.backgroundColor) ?
+                                         dataset.backgroundColor.map(color => color.startsWith('var(') ? getComputedStyle(document.documentElement).getPropertyValue(color.match(/var\(([^)]+)\)/)[1]).trim() : color) :
+                                         (dataset.backgroundColor.startsWith('var(') ? getComputedStyle(document.documentElement).getPropertyValue(dataset.backgroundColor.match(/var\(([^)]+)\)/)[1]).trim() : dataset.backgroundColor),
+                        borderColor: Array.isArray(dataset.borderColor) ?
+                                     dataset.borderColor.map(color => color.startsWith('var(') ? getComputedStyle(document.documentElement).getPropertyValue(color.match(/var\(([^)]+)\)/)[1]).trim() : color) :
+                                     (dataset.borderColor.startsWith('var(') ? getComputedStyle(document.documentElement).getPropertyValue(dataset.borderColor.match(/var\(([^)]+)\)/)[1]).trim() : dataset.borderColor),
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                             labels: {
+                                font: {
+                                    size: parseInt(document.getElementById('sourcesFontSize')?.value || 12)
+                                }
+                            }
+                        },
+                        tooltip: {
+                             callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                     if (context.parsed !== null) {
+                                        const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+                                        const percentage = ((context.parsed / total) * 100).toFixed(1) + '%';
+                                        label += context.parsed.toLocaleString() + ' (' + percentage + ')';
+                                    }
+                                    return label;
+                                }
+                             }
+                        }
+                    },
+                     onClick: (e) => toggleControls('sourcesChartControls', e),
+                }
+            });
+             setupChartControls('sourcesChartControls', chart);
+            return chart;
+        }
+
+         // Create Device Chart
+        function createDeviceChart(canvasId, data) {
+             const ctx = document.getElementById(canvasId).getContext('2d');
+            const chart = new Chart(ctx, {
+                type: 'pie', // Default type
+                 data: {
+                    labels: data.labels,
+                    datasets: data.datasets.map(dataset => ({
+                        ...dataset,
+                         // Convert CSS variables in colors if necessary
+                        backgroundColor: Array.isArray(dataset.backgroundColor) ?
+                                         dataset.backgroundColor.map(color => color.startsWith('var(') ? getComputedStyle(document.documentElement).getPropertyValue(color.match(/var\(([^)]+)\)/)[1]).trim() : color) :
+                                         (dataset.backgroundColor.startsWith('var(') ? getComputedStyle(document.documentElement).getPropertyValue(dataset.backgroundColor.match(/var\(([^)]+)\)/)[1]).trim() : dataset.backgroundColor),
+                        borderColor: Array.isArray(dataset.borderColor) ?
+                                     dataset.borderColor.map(color => color.startsWith('var(') ? getComputedStyle(document.documentElement).getPropertyValue(color.match(/var\(([^)]+)\)/)[1]).trim() : color) :
+                                     (dataset.borderColor.startsWith('var(') ? getComputedStyle(document.documentElement).getPropertyValue(dataset.borderColor.match(/var\(([^)]+)\)/)[1]).trim() : dataset.borderColor),
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                             labels: {
+                                font: {
+                                    size: parseInt(document.getElementById('deviceFontSize')?.value || 12)
+                                }
+                            }
+                        },
+                        tooltip: {
+                             callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                     if (context.parsed !== null) {
+                                        const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+                                        const percentage = ((context.parsed / total) * 100).toFixed(1) + '%';
+                                        label += context.parsed.toLocaleString() + ' (' + percentage + ')';
+                                    }
+                                    return label;
+                                }
+                             }
+                        }
+                    },
+                     onClick: (e) => toggleControls('deviceChartControls', e),
+                }
+            });
+             setupChartControls('deviceChartControls', chart);
+            return chart;
+        }
+
+        // Create Audience Map (Placeholder)
+        function createAudienceMap(mapId, data) {
+            const mapElement = document.getElementById(mapId);
+            if (!mapElement) return null;
+
+            // Initialize map centered roughly on the US
+            const map = L.map(mapId).setView([39.8283, -98.5795], 3);
+
+            // Add OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Add placeholder markers/circles based on data
+            data.forEach(item => {
+                L.circleMarker(item.coords, {
+                    radius: Math.sqrt(item.visitors) / 10, // Scale radius by visitor count
+                    fillColor: getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim(),
+                    color: getComputedStyle(document.documentElement).getPropertyValue('--primary-dark').trim(),
+                    weight: 1,
+                    opacity: 1,
+                    fillOpacity: 0.6
+                }).addTo(map)
+                .bindPopup(`<b>${item.name}</b><br>Visitors: ${item.visitors.toLocaleString()}`);
+            });
+
+            return map;
+        }
+
+
+        // Toggle floating controls visibility
+        function toggleControls(controlsId, event) {
+            const controls = document.getElementById(controlsId);
+            const chartContainer = event.target.closest('.chart-container');
+
+            if (!controls || !chartContainer) return;
+
+             // Check if the click was actually on the canvas, not just the container whitespace
+             const rect = chartContainer.getBoundingClientRect();
+             const clickX = event.clientX - rect.left;
+             const clickY = event.clientY - rect.top;
+             const canvas = chartContainer.querySelector('canvas');
+             const canvasRect = canvas.getBoundingClientRect();
+
+             // Check if click is within the canvas bounds
+             const isClickInsideCanvas = clickX >= (canvasRect.left - rect.left) && clickX <= (canvasRect.right - rect.left) &&
+                                         clickY >= (canvasRect.top - rect.top) && clickY <= (canvasRect.bottom - rect.top);
+
+             if (!isClickInsideCanvas) {
+                 // Click was outside the canvas bounds but inside the container
+                 return; // Do nothing
+             }
+
+
+            // Close all other controls
+            document.querySelectorAll('.floating-controls').forEach(c => {
+                if (c.id !== controlsId) {
+                    c.classList.remove('active');
+                    c.setAttribute('aria-hidden', 'true');
+                }
+            });
+
+            const isActive = controls.classList.toggle('active');
+             controls.setAttribute('aria-hidden', !isActive);
+        }
+
+        // Setup listeners for chart controls
+        function setupChartControls(controlsId, chartInstance) {
+            const controls = document.getElementById(controlsId);
+            if (!controls || !chartInstance) return;
+
+            const chartTypeSelect = controls.querySelector('select[id$="ChartType"]');
+            const lineColorInput = controls.querySelector('input[id$="LineColor"]');
+            const fillColorInput = controls.querySelector('input[id$="FillColor"]');
+            const fontSizeInput = controls.querySelector('input[id$="FontSize"]');
+
+            // Set initial values
+            if (chartTypeSelect) {
+                 chartTypeSelect.value = chartInstance.config.type;
+            }
+             if (lineColorInput && chartInstance.data.datasets.length > 0) {
+                 // Find the first color that is likely a border color
+                 let initialColor = chartInstance.data.datasets[0].borderColor; // Prefer border color
+                 if (!initialColor && chartInstance.data.datasets[0].backgroundColor) {
+                      // If no border color, use background color (useful for pie/doughnut)
+                      initialColor = Array.isArray(chartInstance.data.datasets[0].backgroundColor) ? chartInstance.data.datasets[0].backgroundColor[0] : chartInstance.data.datasets[0].backgroundColor;
+                 }
+
+                 if (Array.isArray(initialColor)) {
+                     initialColor = initialColor[0]; // Use the first color if it's an array
+                 }
+                 // Ensure color is in hex format if possible, or just use as is
+                 lineColorInput.value = initialColor ? (initialColor.startsWith('var(') ? getComputedStyle(document.documentElement).getPropertyValue(initialColor.match(/var\(([^)]+)\)/)[1]).trim() : initialColor.replace(/, ?\d(\.\d+)?\)/, ')').replace('rgba(', '#').replace('rgb(', '#')) : '#000000'; // Default black if no color found
+            }
+             if (fillColorInput && chartInstance.data.datasets.length > 0) {
+                 // Find the first color that is likely a fill color
+                 let initialColor = chartInstance.data.datasets[0].backgroundColor; // Prefer background color
+                 if (!initialColor && chartInstance.data.datasets[0].borderColor) {
+                     // If no background color, use border color
+                      initialColor = Array.isArray(chartInstance.data.datasets[0].borderColor) ? chartInstance.data.datasets[0].borderColor[0] : chartInstance.data.datasets[0].borderColor;
+                 }
+
+                  if (Array.isArray(initialColor)) {
+                     initialColor = initialColor[0]; // Use the first color if it's an array
+                 }
+                 // Ensure color is in hex format if possible, or just use as is
+                 fillColorInput.value = initialColor ? (initialColor.startsWith('var(') ? getComputedStyle(document.documentElement).getPropertyValue(initialColor.match(/var\(([^)]+)\)/)[1]).trim() : initialColor.replace(/, ?\d(\.\d+)?\)/, ')').replace('rgba(', '#').replace('rgb(', '#')) : '#ffffff'; // Default white if no color found
+            }
+             if (fontSizeInput) {
+                 // Get font size from legend or scale ticks
+                 const initialFontSize = chartInstance.options.plugins.legend?.labels?.font?.size ||
+                                        chartInstance.options.scales?.x?.ticks?.font?.size ||
+                                        chartInstance.options.scales?.y?.ticks?.font?.size || 12;
+                 fontSizeInput.value = initialFontSize;
+            }
+
+
+            // Add event listeners
+            if (chartTypeSelect) {
+                 chartTypeSelect.addEventListener('change', (e) => {
+                     const newType = e.target.value;
+                     chartInstance.config.type = newType;
+                     // Adjust dataset properties based on new type if necessary (e.g., fill for line)
+                     chartInstance.data.datasets.forEach(dataset => {
+                          if (newType === 'line') {
+                              dataset.fill = true;
+                              dataset.tension = 0.3;
+                          } else {
+                              dataset.fill = false;
+                              dataset.tension = 0;
+                          }
+                     });
+                     chartInstance.update();
+                 });
+            }
+
+            if (lineColorInput && chartInstance.data.datasets.length > 0) {
+                 lineColorInput.addEventListener('input', (e) => { // Use input for real-time update
+                     chartInstance.data.datasets.forEach(dataset => {
+                          if (Array.isArray(dataset.borderColor)) {
+                             // If multiple colors, just update the first one as an example
+                             dataset.borderColor[0] = e.target.value;
+                          } else {
+                             dataset.borderColor = e.target.value;
+                          }
+                     });
+                     chartInstance.update();
+                 });
+            }
+
+             if (fillColorInput && chartInstance.data.datasets.length > 0) {
+                 fillColorInput.addEventListener('input', (e) => { // Use input for real-time update
+                     chartInstance.data.datasets.forEach(dataset => {
+                         if (chartInstance.config.type === 'line') {
+                              dataset.backgroundColor = e.target.value + '40'; // Add some transparency for fill
+                         } else { // For bar/pie, update background color
+                              if (Array.isArray(dataset.backgroundColor)) {
+                                dataset.backgroundColor[0] = e.target.value; // Update first color
+                             } else {
+                                 dataset.backgroundColor = e.target.value;
+                             }
+                         }
+                     });
+                     chartInstance.update();
+                 });
+            }
+
+             if (fontSizeInput) {
+                 fontSizeInput.addEventListener('input', (e) => { // Use input for real-time update
+                     const newSize = parseInt(e.target.value);
+                     if (!isNaN(newSize)) {
+                         // Update font size in various places
+                         if (chartInstance.options.plugins.legend?.labels?.font) {
+                             chartInstance.options.plugins.legend.labels.font.size = newSize;
+                         }
+                         if (chartInstance.options.scales?.x?.ticks?.font) {
+                             chartInstance.options.scales.x.ticks.font.size = newSize;
+                         }
+                         if (chartInstance.options.scales?.y?.ticks?.font) {
+                             chartInstance.options.scales.y.ticks.font.size = newSize;
+                         }
+                          // For pie/doughnut labels if applicable (requires chartjs-plugin-datalabels)
+                          // if (chartInstance.options.plugins.datalabels?.font) {
+                          //    chartInstance.options.plugins.datalabels.font.size = newSize;
+                          // }
+                         chartInstance.update();
+                     }
+                 });
+            }
+
+        }
+
+
+        // Function to handle date range selection change
+        function handleDateRangeChange() {
+            const selectedValue = dateRangeSelect.value;
+            if (selectedValue === 'custom') {
+                customDateInputs.forEach(inputGroup => inputGroup.style.display = 'flex');
+                 // Set default custom dates if none are set
+                 if (!startDateInput.value) startDateInput.valueAsDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+                 if (!endDateInput.value) endDateInput.valueAsDate = new Date();
+            } else {
+                customDateInputs.forEach(inputGroup => inputGroup.style.display = 'none');
+            }
+        }
+
+        // Function to apply filters (simulated)
+        function applyFilters() {
+            currentFilters.dateRange = dateRangeSelect.value;
+            if (currentFilters.dateRange === 'custom') {
+                currentFilters.startDate = startDateInput.value;
+                currentFilters.endDate = endDateInput.value;
+            } else {
+                 currentFilters.startDate = null;
+                 currentFilters.endDate = null;
+            }
+            currentFilters.device = deviceFilterSelect.value;
+            currentFilters.country = countryFilterSelect.value;
+
+            hideErrorMessage(); // Hide any previous errors
+
+            // Simulate data loading
+            showLoadingIndicator();
+            console.log("Applying filters:", currentFilters); // Placeholder for actual data fetching
+
+            // Simulate fetching and processing data
+            setTimeout(() => {
+                 try {
+                     // Simulate potential error
+                     // if (Math.random() < 0.1) { // 10% chance of error
+                     //     throw new Error("Failed to fetch data from API.");
+                     // }
+
+                     // In a real app, you would fetch new data here based on currentFilters
+                     // For now, we'll just re-render existing placeholder data
+                     console.log("Data updated for filters:", currentFilters);
+
+                     // Update metrics (placeholder simulation)
+                     updateMetricsDisplay(placeholderData.overview.metrics); // Use base data for now
+
+                     // Re-render charts and tables with potentially new data (using filtered/processed placeholders)
+                     // Note: Placeholder data is static, so re-rendering just shows the same data
+                     renderSectionContent(currentSection);
+
+                     hideLoadingIndicator();
+
+                 } catch (error) {
+                     console.error("Error applying filters:", error);
+                     hideLoadingIndicator();
+                     showErrorMessage(error.message || "An unexpected error occurred.");
+                 }
+
+            }, 1500); // Simulate a network request delay
+        }
+
+        // Render table content for a specific table ID
+        function renderTable(tableId, data) {
+             const tableBody = document.querySelector(`#${tableId} tbody`);
+             const paginationInfo = document.getElementById(`${tableId}-rows-info`);
+             const prevButton = document.getElementById(`${tableId}-prev`);
+             const nextButton = document.getElementById(`${tableId}-next`);
+             const tableHeaders = document.querySelectorAll(`#${tableId} th`);
+
+             if (!tableBody || !paginationInfo || !prevButton || !nextButton) {
+                 console.error(`Could not find all elements for table ID: ${tableId}`);
+                 return;
+             }
+
+             const paginationState = tablePagination[tableId];
+             let sortedData = [...data]; // Work with a copy
+
+             // Apply sorting
+             if (paginationState.sortColumn) {
+                 sortedData.sort((a, b) => {
+                     const valA = a[paginationState.sortColumn];
+                     const valB = b[paginationState.sortColumn];
+
+                     // Basic type handling for sorting
+                     if (typeof valA === 'string' && typeof valB === 'string') {
+                         if (valA.startsWith('00:') || /^\d{1,2}:\d{2}(:\d{2})?$/.test(valA)) { // Handle time format HH:MM:SS or MM:SS
+                             const timeToSeconds = (timeStr) => {
+                                 if (!timeStr) return 0;
+                                 const parts = timeStr.split(':').map(Number);
+                                 if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+                                 if (parts.length === 2) return parts[0] * 60 + parts[1]; // Handle MM:SS
+                                 return 0;
+                             };
+                             return paginationState.sortDirection === 'asc' ?
+                                    timeToSeconds(valA) - timeToSeconds(valB) :
+                                    timeToSeconds(valB) - timeToSeconds(valA);
+                         } else if (valA.endsWith('%')) { // Handle percentage
+                             const percentToNumber = (percentStr) => parseFloat(percentStr);
+                              return paginationState.sortDirection === 'asc' ?
+                                    percentToNumber(valA) - percentToNumber(valB) :
+                                    percentToNumber(valB) - percentToNumber(valA);
+                         }
+                          // Default string comparison
+                         return paginationState.sortDirection === 'asc' ?
+                                valA.localeCompare(valB) :
+                                valB.localeCompare(valA);
+                     } else if (typeof valA === 'number' && typeof valB === 'number') {
+                          return paginationState.sortDirection === 'asc' ? valA - valB : valB - valA;
+                     } else {
+                         // Fallback for mixed types or other formats
+                          const strA = String(valA);
+                          const strB = String(valB);
+                          return paginationState.sortDirection === 'asc' ?
+                                strA.localeCompare(strB) :
+                                strB.localeCompare(strA);
+                     }
+                 });
+             }
+
+             // Update ARIA sort attributes and icons
+             tableHeaders.forEach(header => {
+                 const column = header.getAttribute('data-column');
+                 const icon = header.querySelector('.material-symbols-rounded');
+                 header.setAttribute('aria-sort', 'none'); // Reset all first
+                 if (icon) {
+                     icon.textContent = 'unfold_more';
+                 }
+
+                 if (column === paginationState.sortColumn) {
+                     header.setAttribute('aria-sort', paginationState.sortDirection);
+                      if (icon) {
+                          icon.textContent = paginationState.sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward';
+                      }
+                 }
+             });
+
+
+             // Apply pagination
+             const totalRows = sortedData.length;
+             const totalPages = Math.ceil(totalRows / rowsPerPage);
+             const start = (paginationState.currentPage - 1) * rowsPerPage;
+             const end = start + rowsPerPage;
+             const paginatedData = sortedData.slice(start, end);
+
+             // Update pagination info text
+             const startRow = totalRows > 0 ? start + 1 : 0;
+             const endRow = Math.min(start + rowsPerPage, totalRows);
+             paginationInfo.textContent = `Rows per page: ${rowsPerPage} | ${startRow}-${endRow} of ${totalRows}`;
+
+             // Update pagination button states
+             prevButton.disabled = paginationState.currentPage <= 1;
+             nextButton.disabled = paginationState.currentPage >= totalPages;
+
+             // Populate table body
+             tableBody.innerHTML = ''; // Clear existing rows
+             if (paginatedData.length === 0) {
+                 const noDataRow = document.createElement('tr');
+                 const noDataCell = document.createElement('td');
+                 noDataCell.setAttribute('colspan', tableHeaders.length);
+                 noDataCell.textContent = 'No data available.';
+                 noDataCell.style.textAlign = 'center';
+                 noDataRow.appendChild(noDataCell);
+                 tableBody.appendChild(noDataRow);
+             } else {
+                 paginatedData.forEach(rowData => {
+                     const row = document.createElement('tr');
+                     for (const key in rowData) {
+                         const cell = document.createElement('td');
+                         cell.textContent = rowData[key];
+                          // Add data-label for mobile view
+                         const headerText = document.querySelector(`#${tableId} th[data-column="${key}"]`)?.textContent.trim().replace(' unfold_more', '').replace(' arrow_upward', '').replace(' arrow_downward', '') || key;
+                         cell.setAttribute('data-label', headerText);
+                         row.appendChild(cell);
+                     }
+                     tableBody.appendChild(row);
+                 });
+             }
+        }
+
+        // Handle table header click for sorting
+        function handleTableSort(event) {
+            const header = event.target.closest('th');
+            if (!header) return;
+
+            const tableId = header.closest('table')?.id;
+            const column = header.getAttribute('data-column');
+            if (!tableId || !column || !tableData[tableId]) return;
+
+            const paginationState = tablePagination[tableId];
+
+            let newSortDirection = 'asc';
+            if (paginationState.sortColumn === column) {
+                // Cycle through 'asc', 'desc', 'none'
+                if (paginationState.sortDirection === 'asc') newSortDirection = 'desc';
+                else if (paginationState.sortDirection === 'desc') newSortDirection = 'none';
+                 else newSortDirection = 'asc'; // Was 'none', now 'asc'
+            }
+
+            paginationState.sortColumn = newSortDirection === 'none' ? null : column;
+            paginationState.sortDirection = newSortDirection;
+            paginationState.currentPage = 1; // Reset to first page on sort
+
+            renderTable(tableId, tableData[tableId]); // Re-render the table
+        }
+
+        // Handle pagination button click
+        function handlePaginationClick(event) {
+            const button = event.target.closest('button');
+            if (!button || button.disabled) return;
+
+            const paginationDiv = button.closest('.pagination');
+            const tableId = paginationDiv?.id.replace('-pagination', '');
+            if (!tableId || !tablePagination[tableId] || !tableData[tableId]) return;
+
+            const paginationState = tablePagination[tableId];
+            const totalRows = tableData[tableId].length;
+            const totalPages = Math.ceil(totalRows / rowsPerPage);
+
+            if (button.id.endsWith('-prev')) {
+                if (paginationState.currentPage > 1) {
+                    paginationState.currentPage--;
+                }
+            } else if (button.id.endsWith('-next')) {
+                if (paginationState.currentPage < totalPages) {
+                    paginationState.currentPage++;
+                }
+            }
+
+            renderTable(tableId, tableData[tableId]); // Re-render the table
+        }
+
+        // Handle export button click (Placeholder)
+        function exportData(sectionId) {
+            console.log(`Exporting data for section: ${sectionId}`);
+            // In a real application, you would fetch the data based on current filters
+            // and section, format it (e.g., CSV), and trigger a download.
+            showLoadingIndicator(); // Simulate export process
+            setTimeout(() => {
+                alert(`Simulating export for ${sectionId} data.`);
+                hideLoadingIndicator();
+            }, 1000);
+        }
+
+
+        // Function to show loading indicator
+        function showLoadingIndicator() {
+            loadingIndicator.classList.add('visible');
+            sections.forEach(section => section.style.opacity = '0.5');
+            applyFiltersButton.disabled = true;
+        }
+
+        // Function to hide loading indicator
+        function hideLoadingIndicator() {
+            loadingIndicator.classList.remove('visible');
+             sections.forEach(section => section.style.opacity = '1');
+             applyFiltersButton.disabled = false;
+        }
+
+         // Function to show error message
+         function showErrorMessage(message) {
+             errorText.textContent = message;
+             errorMessage.classList.add('visible');
+         }
+
+         // Function to hide error message
+         function hideErrorMessage() {
+             errorMessage.classList.remove('visible');
+             errorText.textContent = ''; // Clear text
+         }
+
+
+        // --- Event Listeners ---
+
+        // Navigation clicks
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const sectionId = link.getAttribute('data-section');
+                // Only navigate if not already active
+                if (!link.classList.contains('active')) {
+                   showSection(sectionId);
+                }
+            });
+             // Add keyboard navigation for tabs
+             link.addEventListener('keydown', (e) => {
+                 // Handle left/right arrow keys
+                 if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                     e.preventDefault();
+                     const currentLi = link.parentElement;
+                     let targetLi;
+                     if (e.key === 'ArrowLeft') {
+                         targetLi = currentLi.previousElementSibling || currentLi.parentElement.lastElementChild;
+                     } else { // ArrowRight
+                         targetLi = currentLi.nextElementSibling || currentLi.parentElement.firstElementChild;
+                     }
+                     if (targetLi && targetLi.querySelector('a')) {
+                         targetLi.querySelector('a').focus();
+                     }
+                 } else if (e.key === 'Enter' || e.key === ' ') {
+                     // Activate tab on Enter or Space
+                     e.preventDefault();
+                     link.click();
+                 }
+             });
+        });
+
+        // Date range select change
+        dateRangeSelect.addEventListener('change', handleDateRangeChange);
+
+        // Apply filters button click
+        applyFiltersButton.addEventListener('click', applyFilters);
+
+        // Close floating controls when clicking outside charts/controls
+        document.addEventListener('click', (e) => {
+            // Check if the click target is NOT inside any floating-controls AND NOT inside any chart-container
+            const isInsideControls = e.target.closest('.floating-controls');
+            const isInsideChartContainer = e.target.closest('.chart-container');
+            const isInsideMapContainer = e.target.closest('.map-container');
+
+
+            if (!isInsideControls && !isInsideChartContainer && !isInsideMapContainer) {
+                document.querySelectorAll('.floating-controls.active').forEach(c => {
+                    c.classList.remove('active');
+                    c.setAttribute('aria-hidden', 'true');
+                });
+            }
+        });
+
+         // Add event listeners for table sorting (delegation)
+         document.querySelectorAll('.table-card table thead').forEach(thead => {
+             thead.addEventListener('click', handleTableSort);
+             // Add keyboard support for sorting headers
+             thead.querySelectorAll('th').forEach(th => {
+                 // tabindex="0" is already in HTML
+                 th.addEventListener('keydown', (e) => {
+                     if (e.key === 'Enter' || e.key === ' ') {
+                         e.preventDefault();
+                         handleTableSort({ target: th }); // Trigger sort logic
+                     }
+                 });
+             });
+         });
+
+
+        // Add event listeners for pagination buttons (delegation)
+         document.querySelectorAll('.table-card .pagination button').forEach(button => {
+             button.addEventListener('click', handlePaginationClick);
+         });
+
+         // Add event listeners for export buttons
+         document.querySelectorAll('.export-button').forEach(button => {
+             button.addEventListener('click', (e) => {
+                 const sectionId = button.closest('.dashboard-section')?.id;
+                 if (sectionId) {
+                     exportData(sectionId);
+                 }
+             });
+         });
+
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set initial state for custom date inputs
+            handleDateRangeChange();
+
+            // Find the active navigation link and show its section
+            const initialSection = document.querySelector('nav a.active')?.getAttribute('data-section') || 'overview';
+            showSection(initialSection);
+
+             // Add ARIA roles and properties to navigation tabs (already done in HTML, ensure JS doesn't break it)
+             // Add ARIA roles to sections (already done in HTML, ensure JS doesn't break it)
+        });
+
+    </script>
+</body>
+</html>

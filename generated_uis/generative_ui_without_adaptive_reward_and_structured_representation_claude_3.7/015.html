@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How Google's Algorithm Works</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+    <style>
+        :root {
+            --primary-color: #4285F4; /* Google Blue */
+            --secondary-color: #34A853; /* Google Green */
+            --accent-color: #FBBC05; /* Google Yellow */
+            --danger-color: #EA4335; /* Google Red */
+            --background-white: #FFFFFF;
+            --background-light: #F8F9FA; /* Light grey background */
+            --background-details-closed: #F1F3F4; /* Light grey for collapsible sections */
+            --background-details-closed-hover: #E8EAED; /* Slightly darker on hover */
+            --text-dark: #202124;
+            --text-medium: #5F6368;
+            --text-light: #80868B;
+            --border-color: #DADCE0;
+            --shadow-subtle: 0 1px 3px rgba(60, 64, 67, 0.3), 0 1px 2px rgba(60, 64, 67, 0.15);
+            --shadow-medium: 0 4px 8px rgba(0, 0, 0, 0.1);
+            --spacing-extra-small: 4px;
+            --spacing-small: 8px;
+            --spacing-medium: 16px;
+            --spacing-large: 24px;
+            --border-radius: 8px;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background-color: var(--background-light);
+            margin: 0;
+            padding: var(--spacing-large);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background-color: var(--background-white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-medium);
+            padding: var(--spacing-large);
+        }
+
+        h1, h2, h3 {
+            color: var(--text-dark);
+            margin-bottom: var(--spacing-medium);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: var(--spacing-large);
+        }
+
+        h2 {
+            font-size: 1.8em;
+            font-weight: 500;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: var(--spacing-small);
+            margin-top: var(--spacing-large);
+        }
+
+        h3 {
+            font-size: 1.4em;
+            font-weight: 500;
+            margin-top: var(--spacing-medium);
+        }
+
+        p {
+            margin-bottom: var(--spacing-medium);
+            color: var(--text-medium);
+        }
+
+        .flow-diagram {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: var(--spacing-large);
+            flex-wrap: wrap;
+            gap: var(--spacing-medium); /* Use gap for consistent spacing */
+        }
+
+        .flow-stage {
+            background-color: var(--primary-color);
+            color: var(--background-white);
+            padding: var(--spacing-medium) var(--spacing-large);
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            text-align: center;
+            box-shadow: var(--shadow-subtle);
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+
+        .flow-arrow {
+            font-size: 2em;
+            color: var(--text-medium);
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+
+        @media (max-width: 600px) {
+            .flow-diagram {
+                flex-direction: column;
+                gap: var(--spacing-small); /* Adjust gap for column layout */
+            }
+            .flow-arrow {
+                transform: rotate(90deg); /* Rotate arrow downwards */
+            }
+        }
+
+
+        details {
+            background-color: var(--background-details-closed);
+            border-radius: var(--border-radius);
+            margin-bottom: var(--spacing-medium);
+            padding: var(--spacing-medium);
+            cursor: pointer;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
+            overflow: hidden; /* Hide overflow during transition */
+        }
+
+        details:hover {
+            background-color: var(--background-details-closed-hover);
+        }
+
+        details summary {
+            font-weight: 500;
+            font-size: 1.2em;
+            color: var(--text-dark);
+            list-style: none; /* Remove default arrow */
+            position: relative;
+            padding-left: calc(var(--spacing-large) + var(--spacing-small)); /* Space for custom arrow */
+            outline: none; /* Remove default focus outline */
+            transition: color 0.2s ease;
+        }
+
+        details summary::before {
+            content: '+'; /* Custom plus sign */
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5em;
+            line-height: 1;
+            transition: transform 0.2s ease, content 0.2s ease; /* Transition content change */
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        details[open] summary::before {
+            content: '-'; /* Custom minus sign when open */
+            transform: translateY(-50%) rotate(0deg); /* Ensure it doesn't rotate */
+        }
+
+        details[open] {
+            background-color: var(--background-white); /* White when open */
+            box-shadow: var(--shadow-subtle);
+        }
+
+        details[open] summary {
+             border-bottom: 1px dashed var(--border-color); /* Separator when open */
+             padding-bottom: var(--spacing-small);
+             margin-bottom: var(--spacing-small);
+             color: var(--primary-color); /* Highlight summary when open */
+        }
+
+        details p {
+            margin-top: var(--spacing-small);
+            margin-bottom: 0;
+            padding-left: var(--spacing-small); /* Indent content */
+            color: var(--text-medium);
+            transition: opacity 0.3s ease; /* Fade in content */
+            opacity: 1;
+        }
+
+        details:not([open]) p {
+             opacity: 0; /* Hide content when closed */
+             height: 0; /* Collapse space */
+             overflow: hidden;
+             margin-top: 0;
+             padding-left: 0;
+        }
+
+        details ul {
+             padding-left: calc(var(--spacing-large) + var(--spacing-small)); /* Indent list */
+             margin-top: var(--spacing-small);
+             margin-bottom: 0;
+             color: var(--text-medium);
+             transition: opacity 0.3s ease; /* Fade in content */
+             opacity: 1;
+        }
+
+         details:not([open]) ul {
+             opacity: 0; /* Hide content when closed */
+             height: 0; /* Collapse space */
+             overflow: hidden;
+             margin-top: 0;
+             padding-left: var(--spacing-large); /* Keep base indent */
+        }
+
+
+        details ul li {
+            margin-bottom: var(--spacing-small);
+        }
+
+
+        strong {
+            color: var(--text-dark);
+        }
+
+        ul {
+            margin-bottom: var(--spacing-medium);
+            padding-left: var(--spacing-large);
+            color: var(--text-medium);
+        }
+
+        ul li {
+            margin-bottom: var(--spacing-small);
+        }
+
+        /* Accessibility: Add focus state for keyboard navigation */
+        details summary:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 3px; /* Increased offset */
+            border-radius: var(--border-radius); /* Match details border radius */
+        }
+
+        /* Add font-display swap for better performance */
+        @font-face {
+          font-family: 'Roboto';
+          font-style: normal;
+          font-weight: 300;
+          src: url(https://fonts.gstatic.com/s/roboto/v29/KFOlCnqEu92FNymoJfVKAMvLEzP.woff2) format('woff2');
+          unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+          font-display: swap;
+        }
+         @font-face {
+          font-family: 'Roboto';
+          font-style: normal;
+          font-weight: 400;
+          src: url(https://fonts.gstatic.com/s/roboto/v29/KFOmCnqEu92FNymoAuthenticationCF.woff2) format('woff2');
+          unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+          font-display: swap;
+        }
+         @font-face {
+          font-family: 'Roboto';
+          font-style: normal;
+          font-weight: 500;
+          src: url(https://fonts.gstatic.com/s/roboto/v29/KFOlCnqEu92FNymoJfVKAMvMExP.woff2) format('woff2');
+          unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+          font-display: swap;
+        }
+         @font-face {
+          font-family: 'Roboto';
+          font-style: normal;
+          font-weight: 700;
+          src: url(https://fonts.gstatic.com/s/roboto/v29/KFOlCnqEu92FNymoJfVKAMvSEzP.woff2) format('woff2');
+          unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+          font-display: swap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>How Google Search Works</h1>
+        <p>Google Search is powered by complex algorithms that constantly analyze and rank billions of webpages to provide the most relevant results for a user's query. While the exact details are proprietary and constantly evolving, the process can be broken down into three main stages: Crawling, Indexing, and Ranking.</p>
+
+        <div class="flow-diagram">
+            <div class="flow-stage">1. Crawling</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-stage">2. Indexing</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-stage">3. Ranking</div>
+        </div>
+
+        <details>
+            <summary>1. Crawling: Discovering Webpages</summary>
+            <p>The first step is for Google to find pages on the web. This is done by automated programs called crawlers (often referred to as spiders or Googlebot).</p>
+            <ul>
+                <li><strong>Following Links:</strong> Crawlers start with a list of web addresses from previous crawls and sitemaps provided by website owners. They then follow the links on those pages to discover new pages.</li>
+                <li><strong>Sitemaps:</strong> Website owners can submit sitemaps (XML files listing important pages on a site) to Google Search Console, which helps Google find pages more efficiently.</li>
+                <li><strong>Discovering New Content:</strong> Crawlers are constantly exploring the web, looking for new or updated content.</li>
+            </ul>
+        </details>
+
+        <details>
+            <summary>2. Indexing: Understanding and Organizing Content</summary>
+            <p>Once a page is crawled, Google needs to understand what the page is about and store it in its massive index – a giant database of all the webpages it knows about.</p>
+            <ul>
+                <li><strong>Analyzing Content:</strong> Google analyzes the text, images, videos, and other content on the page. It looks at keywords, titles, headings, and the overall structure to understand the page's topic.</li>
+                <li><strong>Storing in the Index:</strong> The information is then organized and stored in Google's index. Think of the index like a library catalog, but for the entire web. When you search, Google doesn't search the live web; it searches its index.</li>
+            </ul>
+        </details>
+
+        <details>
+            <summary>3. Ranking: Delivering Relevant Results</summary>
+            <p>When a user enters a search query, Google's algorithms determine the best possible results from its index. This involves considering hundreds of factors to rank pages by relevance and quality.</p>
+            <ul>
+                <li><strong>Relevance:</strong> How well does the content of a page match the user's query? This includes looking at keywords, synonyms, and the overall topic.</li>
+                <li><strong>Authority:</strong> Is the page from a reputable source? Google uses various signals, including PageRank (a system that counts links from other authoritative pages as "votes"), to determine a page's authority and trustworthiness.</li>
+                <li><strong>User Experience:</strong> Factors like page speed, mobile-friendliness, and how easy the site is to use influence ranking.</li>
+                <li><strong>Context:</strong> The user's location, search settings, and search history can also influence the results.</li>
+                <li><strong>Query Type:</strong> Google's algorithms understand different types of queries (e.g., informational, navigational, transactional) and tailor results accordingly.</li>
+            </ul>
+        </details>
+
+        <details>
+            <summary>Spam Detection</summary>
+            <p>Google employs sophisticated systems to detect and penalize spam, such as pages with hidden text, keyword stuffing, or manipulative link schemes, to ensure high-quality results.</p>
+        </details>
+
+        <details>
+            <summary>Algorithm Updates</summary>
+            <p>Google constantly updates its algorithms to improve search results, adapt to new trends, and combat spam. Major updates are sometimes announced, while minor tweaks happen frequently.</p>
+        </details>
+
+        <h2>Key Ranking Factors (Examples)</h2>
+        <p>While the exact weight of each factor is secret, some important categories include:</p>
+        <ul>
+            <li>Keywords in title, headings, and content</li>
+            <li>Quality and depth of content</li>
+            <li>Mobile-friendliness</li>
+            <li>Page loading speed</li>
+            <li>Backlinks from authoritative websites</li>
+            <li>User engagement signals (though debated)</li>
+            <li>HTTPS security</li>
+            <li>Schema markup and structured data</li>
+        </ul>
+
+        <p>In summary, Google's algorithm is a complex system designed to understand search queries and deliver the most relevant, reliable, and user-friendly content from the web's vast index.</p>
+    </div>
+</body>
+</html>

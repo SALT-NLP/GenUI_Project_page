@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recommendation System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-primary: #4A90E2; /* Soft Blue */
+            --color-primary-dark: #357ABD;
+            --color-secondary: #50E3C2; /* Vibrant Green */
+            --color-background: #F7F9FC; /* Light Gray Background */
+            --color-card-background: #FFFFFF; /* Pure White */
+            --color-text-dark: #333333; /* Dark Gray */
+            --color-text-medium: #555555; /* Medium Gray */
+            --color-border: #DDDDDD; /* Light Gray Border */
+            --color-success: #4CAF50; /* Green */
+            --color-warning: #F5A623; /* Orange */
+            --color-error: #F44336; /* Red */
+            --spacing-xsmall: 4px;
+            --spacing-small: 8px;
+            --spacing-medium: 16px;
+            --spacing-large: 24px;
+            --spacing-xlarge: 32px;
+            --border-radius: 8px;
+            --box-shadow-subtle: 0 2px 6px rgba(0, 0, 0, 0.05);
+            --box-shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --transition-duration: 0.3s;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: var(--color-text-medium);
+            background-color: var(--color-background);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        header {
+            background-color: var(--color-card-background);
+            box-shadow: var(--box-shadow-subtle);
+            padding: var(--spacing-medium) var(--spacing-large);
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        header h1 {
+            margin: 0;
+            color: var(--color-text-dark);
+            font-size: 1.8em;
+            font-weight: 500;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: var(--spacing-xlarge) auto;
+            padding: 0 var(--spacing-large);
+            flex-grow: 1;
+            display: grid;
+            grid-template-columns: 1fr; /* Default to one column */
+            gap: var(--spacing-xlarge);
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); /* 2 columns on tablet */
+            }
+        }
+
+        @media (min-width: 1024px) {
+             .container {
+                grid-template-columns: 1fr 2fr; /* Input on left (1/3), Results on right (2/3) */
+            }
+        }
+
+        .section {
+            background-color: var(--color-card-background);
+            padding: var(--spacing-large);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow-medium);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section-heading {
+            color: var(--color-text-dark);
+            font-size: 1.5em;
+            font-weight: 500;
+            margin-top: 0;
+            margin-bottom: var(--spacing-large);
+        }
+
+        .input-group {
+            margin-bottom: var(--spacing-large);
+            flex-grow: 1; /* Allows textarea to take available space */
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            display: block;
+            margin-bottom: var(--spacing-small);
+            color: var(--color-text-dark);
+            font-weight: 500;
+        }
+
+        textarea {
+            width: 100%;
+            padding: var(--spacing-medium);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            font-family: 'Roboto', sans-serif;
+            font-size: 1em;
+            color: var(--color-text-medium);
+            transition: border-color var(--transition-duration), box-shadow var(--transition-duration);
+            resize: vertical;
+            min-height: 150px;
+            box-sizing: border-box;
+            flex-grow: 1; /* Allows textarea to fill the input group */
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+        }
+
+        button {
+            display: inline-block;
+            background-color: var(--color-primary);
+            color: white;
+            padding: var(--spacing-medium) var(--spacing-large);
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color var(--transition-duration), opacity var(--transition-duration), box-shadow var(--transition-duration);
+            min-width: 150px;
+            text-align: center;
+            box-shadow: var(--box-shadow-subtle);
+        }
+
+        button:hover {
+            background-color: var(--color-primary-dark);
+            box-shadow: var(--box-shadow-medium);
+        }
+
+        button:active {
+            background-color: #2A6DAA;
+            box-shadow: none;
+        }
+
+        button:disabled {
+            background-color: #CCCCCC;
+            cursor: not-allowed;
+            opacity: 0.7;
+            box-shadow: none;
+        }
+
+        .loading-indicator {
+            display: none; /* Hidden by default */
+            margin-top: var(--spacing-large);
+            text-align: center;
+            color: var(--color-primary);
+            font-weight: 500;
+            animation: pulse 1.5s infinite ease-in-out;
+            padding: var(--spacing-small);
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+
+        .results-content {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .results-placeholder {
+            text-align: center;
+            color: var(--color-text-medium);
+            padding: var(--spacing-xlarge);
+            border: 2px dashed var(--color-border);
+            border-radius: var(--border-radius);
+            margin-top: var(--spacing-large);
+            font-style: italic;
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .recommendation-list {
+            display: grid;
+            gap: var(--spacing-medium);
+            grid-template-columns: 1fr; /* Default to one column */
+            margin-top: var(--spacing-large);
+            opacity: 0; /* Hidden by default */
+            transform: translateY(20px);
+            transition: opacity var(--transition-duration) ease-out, transform var(--transition-duration) ease-out;
+            flex-grow: 1;
+        }
+
+        .recommendation-list.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @media (min-width: 600px) {
+            .recommendation-list {
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* 2-3 cards on wider screens */
+            }
+        }
+
+        .recommendation-card {
+            background-color: var(--color-card-background);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-medium);
+            box-shadow: var(--box-shadow-subtle);
+            transition: transform var(--transition-duration), box-shadow var(--transition-duration);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            cursor: pointer; /* Indicate it's clickable */
+        }
+
+        .recommendation-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--box-shadow-medium);
+        }
+
+        .recommendation-card:focus-within { /* Style for keyboard navigation */
+             outline: 2px solid var(--color-primary);
+             outline-offset: 2px;
+             box-shadow: var(--box-shadow-medium);
+        }
+
+
+        .card-title {
+            color: var(--color-text-dark);
+            font-size: 1.2em;
+            font-weight: 500;
+            margin-top: 0;
+            margin-bottom: var(--spacing-small);
+        }
+
+        .card-description {
+            font-size: 0.95em;
+            color: var(--color-text-medium);
+            margin-bottom: var(--spacing-small);
+            flex-grow: 1; /* Allows description to take available space */
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: var(--spacing-small);
+        }
+
+        .score-indicator {
+            font-weight: 700;
+            font-size: 0.9em;
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: white;
+        }
+
+        .score-indicator.high {
+            background-color: var(--color-success);
+        }
+
+        .score-indicator.medium {
+             background-color: var(--color-warning);
+        }
+
+        .score-indicator.low {
+             background-color: var(--color-error);
+        }
+
+
+        .card-action-button {
+            background: none;
+            color: var(--color-primary);
+            border: 1px solid var(--color-primary);
+            padding: 6px 12px;
+            font-size: 0.9em;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: background-color var(--transition-duration), color var(--transition-duration), box-shadow var(--transition-duration);
+            min-width: auto; /* Override button min-width */
+            box-shadow: none; /* No shadow on secondary button */
+        }
+
+        .card-action-button:hover {
+            background-color: var(--color-primary);
+            color: white;
+            box-shadow: var(--box-shadow-subtle);
+        }
+
+         .card-action-button:active {
+            background-color: var(--color-primary-dark);
+            color: white;
+            box-shadow: none;
+        }
+
+
+        /* Accessibility: Focus states */
+        button:focus,
+        .card-action-button:focus {
+             outline: 2px solid var(--color-primary);
+             outline-offset: 2px;
+        }
+
+        /* Chart Styling */
+        .chart-container {
+            margin-top: var(--spacing-large);
+            padding-top: var(--spacing-large);
+            border-top: 1px solid var(--color-border);
+            position: relative; /* For floating controls */
+        }
+
+        .chart-container h3 {
+            color: var(--color-text-dark);
+            font-size: 1.2em;
+            font-weight: 500;
+            margin-top: 0;
+            margin-bottom: var(--spacing-medium);
+            text-align: center;
+        }
+
+        #scoreChartCanvas {
+            max-height: 300px; /* Limit chart height */
+        }
+
+        .floating-controls {
+            position: absolute;
+            top: var(--spacing-large);
+            right: var(--spacing-large);
+            background: rgba(255, 255, 255, 0.95);
+            padding: var(--spacing-medium);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow-subtle);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all var(--transition-duration) ease;
+            pointer-events: none;
+            z-index: 10; /* Above chart */
+        }
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+        .control-group {
+            margin-bottom: var(--spacing-small);
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-xsmall);
+        }
+        .control-group label {
+            font-size: 0.9em;
+            margin-bottom: 0;
+            font-weight: 400;
+        }
+         .control-group input[type="color"],
+         .control-group select {
+            padding: 4px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            font-size: 0.9em;
+            font-family: 'Roboto', sans-serif;
+            color: var(--color-text-medium);
+         }
+
+
+        footer {
+            margin-top: var(--spacing-xlarge);
+            padding: var(--spacing-medium) var(--spacing-large);
+            text-align: center;
+            color: var(--color-text-medium);
+            font-size: 0.9em;
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Recommendation System</h1>
+    </header>
+
+    <main class="container">
+        <section class="section input-section" aria-labelledby="input-heading">
+            <h2 id="input-heading" class="section-heading">Input Your Criteria</h2>
+            <div class="input-group">
+                <label for="criteria-input">Enter details or criteria for recommendations:</label>
+                <textarea id="criteria-input" placeholder="e.g., 'Looking for a sci-fi book with strong female leads', 'Recommend a restaurant in London with vegetarian options', 'Suggest a movie similar to Inception'" aria-describedby="input-help"></textarea>
+                <small id="input-help" class="visually-hidden">Enter your preferences or requirements for recommendations.</small>
+            </div>
+            <button id="get-recommendations-button" aria-label="Get Recommendations">Get Recommendations</button>
+            <div id="loading-indicator" class="loading-indicator" aria-live="polite" aria-hidden="true">Processing...</div>
+        </section>
+
+        <section class="section results-section" aria-labelledby="results-heading">
+            <h2 id="results-heading" class="section-heading">Recommendations</h2>
+             <div class="results-content">
+                <div id="results-placeholder" class="results-placeholder" aria-live="polite">
+                    Your recommendations will appear here after processing.
+                </div>
+                <div id="recommendation-list" class="recommendation-list" aria-live="polite">
+                    <!-- Recommendation cards will be injected here by JavaScript -->
+                </div>
+                 <div id="chart-section" class="chart-container" style="display: none;">
+                    <h3>Recommendation Score Distribution</h3>
+                    <canvas id="scoreChartCanvas"></canvas>
+                     <div class="floating-controls" id="chart-controls">
+                        <div class="control-group">
+                            <label for="chartType">Chart Type</label>
+                            <select id="chartType">
+                                <option value="bar">Bar</option>
+                                <option value="pie">Pie</option>
+                                <option value="doughnut">Doughnut</option>
+                            </select>
+                        </div>
+                         <div class="control-group">
+                            <label for="barColor">Bar/Slice Color</label>
+                            <input type="color" id="barColor" value="#4A90E2">
+                        </div>
+                    </div>
+                </div>
+             </div>
+        </section>
+    </main>
+
+    <footer>
+        &copy; 2023 Recommendation System. All rights reserved.
+    </footer>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputTextArea = document.getElementById('criteria-input');
+            const getRecommendationsButton = document.getElementById('get-recommendations-button');
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const resultsPlaceholder = document.getElementById('results-placeholder');
+            const recommendationList = document.getElementById('recommendation-list');
+            const chartSection = document.getElementById('chart-section');
+            const scoreChartCanvas = document.getElementById('scoreChartCanvas');
+             const chartControls = document.getElementById('chart-controls');
+             const chartTypeSelect = document.getElementById('chartType');
+             const barColorInput = document.getElementById('barColor');
+
+            let scoreChart = null; // To hold the Chart.js instance
+
+            getRecommendationsButton.addEventListener('click', handleGetRecommendations);
+            inputTextArea.addEventListener('keypress', (event) => {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault(); // Prevent newline
+                    handleGetRecommendations();
+                }
+            });
+
+            // Chart controls event listeners
+            chartTypeSelect.addEventListener('change', updateChart);
+            barColorInput.addEventListener('input', updateChart); // Use input for real-time color change
+
+            // Toggle chart controls visibility on click
+            scoreChartCanvas.closest('.chart-container').addEventListener('click', (event) => {
+                 // Don't toggle if clicking inside controls
+                 if (!event.target.closest('.floating-controls')) {
+                    chartControls.classList.toggle('active');
+                 }
+            });
+
+             // Close controls when clicking outside chart container or controls
+            document.addEventListener('click', (event) => {
+                 const isClickInsideChartContainer = event.target.closest('.chart-container');
+                 const isClickInsideControls = event.target.closest('.floating-controls');
+                 if (!isClickInsideChartContainer && !isClickInsideControls) {
+                     chartControls.classList.remove('active');
+                 }
+            });
+
+
+            function handleGetRecommendations() {
+                const criteria = inputTextArea.value.trim();
+
+                if (!criteria) {
+                    alert('Please enter some criteria.'); // Basic validation
+                    return;
+                }
+
+                // Disable button and show loading indicator
+                getRecommendationsButton.disabled = true;
+                loadingIndicator.style.display = 'block';
+                loadingIndicator.setAttribute('aria-hidden', 'false');
+                resultsPlaceholder.style.display = 'none';
+                recommendationList.innerHTML = ''; // Clear previous results
+                recommendationList.classList.remove('visible'); // Hide list before showing
+                chartSection.style.display = 'none'; // Hide chart
+                if (scoreChart) {
+                    scoreChart.destroy(); // Destroy previous chart instance
+                    scoreChart = null;
+                }
+                 chartControls.classList.remove('active'); // Hide controls
+
+                // Simulate an API call
+                setTimeout(() => {
+                    // Simulate receiving recommendations
+                    const recommendations = generateMockRecommendations(criteria);
+
+                    // Hide loading, enable button
+                    loadingIndicator.style.display = 'none';
+                    loadingIndicator.setAttribute('aria-hidden', 'true');
+                    getRecommendationsButton.disabled = false;
+
+                    if (recommendations.length > 0) {
+                        displayRecommendations(recommendations);
+                        displayScoreChart(recommendations);
+                    } else {
+                        resultsPlaceholder.textContent = 'No recommendations found for your criteria.';
+                        resultsPlaceholder.style.display = 'block';
+                    }
+
+                }, 1500); // Simulate a 1.5-second delay
+            }
+
+            function generateMockRecommendations(criteria) {
+                // Simple mock based on input length or keywords
+                const lowerCriteria = criteria.toLowerCase();
+                const mockData = [
+                    { title: 'The Martian', description: 'A gripping sci-fi novel about an astronaut stranded on Mars.', score: 9.2, category: 'Book' },
+                    { title: 'Dune', description: 'Epic science fiction saga set on the desert planet Arrakis.', score: 8.8, category: 'Book' },
+                    { title: 'Ancillary Justice', description: 'Award-winning space opera with unique perspective.', score: 9.0, category: 'Book' },
+                    { title: 'Project Hail Mary', description: 'Another R. K. classic, sci-fi adventure.', score: 9.4, category: 'Book' },
+                    { title: 'Restaurant A', description: 'Cozy Italian place with great pasta.', score: 7.5, category: 'Restaurant' },
+                    { title: 'Restaurant B', description: 'Modern British cuisine, try the tasting menu.', score: 8.5, category: 'Restaurant' },
+                    { title: 'Restaurant C', description: 'Vegan-friendly cafe with excellent coffee.', score: 9.1, category: 'Restaurant' },
+                    { title: 'Restaurant D', description: 'Authentic Indian food in the heart of London.', score: 8.9, category: 'Restaurant' },
+                    { title: 'Inception', description: 'A mind-bending heist film set in the world of dreams.', score: 9.3, category: 'Movie' },
+                    { title: 'Interstellar', description: 'A team of explorers travel through a wormhole in space.', score: 9.0, category: 'Movie' },
+                    { title: 'Arrival', description: 'A linguist works with the military to communicate with alien lifeforms.', score: 8.7, category: 'Movie' },
+                    { title: 'Blade Runner 2049', description: 'Sequel to the classic sci-fi film.', score: 8.5, category: 'Movie' }
+                ];
+
+                // Filter or select based on simple logic
+                if (lowerCriteria.includes('sci-fi') || lowerCriteria.includes('book')) {
+                    return mockData.filter(rec => rec.category === 'Book' || (rec.category === 'Movie' && (rec.title.includes('Interstellar') || rec.title.includes('Arrival') || rec.title.includes('Blade Runner'))));
+                } else if (lowerCriteria.includes('restaurant') || lowerCriteria.includes('london') || lowerCriteria.includes('food') || lowerCriteria.includes('eat')) {
+                     return mockData.filter(rec => rec.category === 'Restaurant');
+                } else if (lowerCriteria.includes('movie') || lowerCriteria.includes('film') || lowerCriteria.includes('similar to inception')) {
+                     return mockData.filter(rec => rec.category === 'Movie' || (rec.category === 'Book' && (rec.title.includes('Martian') || rec.title.includes('Project Hail Mary'))));
+                } else {
+                    // Return a mix or a subset if no specific keywords
+                    // Shuffle and take a random subset (2-6 items)
+                    const shuffled = mockData.sort(() => 0.5 - Math.random());
+                    return shuffled.slice(0, Math.floor(Math.random() * 5) + 2);
+                }
+            }
+
+            function displayRecommendations(recommendations) {
+                recommendationList.innerHTML = ''; // Clear existing cards
+                recommendations.forEach(rec => {
+                    const card = document.createElement('div');
+                    card.classList.add('recommendation-card');
+                    card.setAttribute('tabindex', '0'); // Make card focusable for keyboard nav
+                    card.setAttribute('role', 'article'); // Semantic role
+
+                    let scoreClass = 'low';
+                    if (rec.score >= 8.0) scoreClass = 'medium';
+                    if (rec.score >= 9.0) scoreClass = 'high';
+
+                    card.innerHTML = `
+                        <h3 class="card-title">${rec.title}</h3>
+                        <p class="card-description">${rec.description}</p>
+                        <div class="card-footer">
+                            <span class="score-indicator ${scoreClass}" aria-label="Score: ${rec.score.toFixed(1)}">${rec.score.toFixed(1)}</span>
+                            <button class="card-action-button" aria-label="View details for ${rec.title}">View Details</button>
+                        </div>
+                    `;
+                    recommendationList.appendChild(card);
+
+                    // Add event listener to the action button
+                    card.querySelector('.card-action-button').addEventListener('click', (event) => {
+                        event.stopPropagation(); // Prevent card click event
+                        alert(`Viewing details for: ${rec.title}`);
+                    });
+
+                     // Add event listener for card click
+                    card.addEventListener('click', () => {
+                         alert(`Card clicked: ${rec.title}`);
+                    });
+                });
+
+                // Add fade-in/slide-up effect
+                setTimeout(() => { // Allow cards to be added to DOM before animating
+                     recommendationList.classList.add('visible');
+                }, 50);
+            }
+
+            function displayScoreChart(recommendations) {
+                 if (!recommendations || recommendations.length === 0) {
+                     chartSection.style.display = 'none';
+                     if (scoreChart) {
+                        scoreChart.destroy();
+                        scoreChart = null;
+                     }
+                     return;
+                 }
+
+                 chartSection.style.display = 'block';
+
+                 // Count recommendations by score category
+                 const scoreCounts = { high: 0, medium: 0, low: 0 };
+                 recommendations.forEach(rec => {
+                     if (rec.score >= 9.0) scoreCounts.high++;
+                     else if (rec.score >= 8.0) scoreCounts.medium++;
+                     else scoreCounts.low++;
+                 });
+
+                 const labels = ['High Score (>= 9.0)', 'Medium Score (>= 8.0)', 'Low Score (< 8.0)'];
+                 const data = [scoreCounts.high, scoreCounts.medium, scoreCounts.low];
+                 const backgroundColors = [
+                     "var('--color-success')", // High
+                     "var('--color-warning')", // Medium
+                     "var('--color-error')"    // Low
+                 ];
+
+                 const chartConfig = {
+                    type: chartTypeSelect.value, // Use selected type
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Number of Recommendations',
+                            data: data,
+                            backgroundColor: chartTypeSelect.value === 'bar' ? barColorInput.value : backgroundColors, // Use single color for bars, multiple for pie/doughnut
+                            borderColor: "var('--color-card-background')", // White border for pie/doughnut slices
+                            borderWidth: chartTypeSelect.value !== 'bar' ? 2 : 1 // Border for pie/doughnut
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: chartTypeSelect.value !== 'bar', // Hide legend for bar chart
+                                position: 'bottom',
+                                labels: {
+                                    color: "var('--color-text-medium')",
+                                    font: {
+                                        family: 'Roboto',
+                                        size: 12
+                                    }
+                                }
+                            },
+                            title: {
+                                display: false, // Title handled by H3
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed !== null) {
+                                            label += context.parsed;
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                display: chartTypeSelect.value === 'bar', // Hide x-axis for pie/doughnut
+                                ticks: { color: "var('--color-text-medium')", font: { family: 'Roboto' } }
+                            },
+                            y: {
+                                display: chartTypeSelect.value === 'bar', // Hide y-axis for pie/doughnut
+                                beginAtZero: true,
+                                ticks: {
+                                     color: "var('--color-text-medium')",
+                                     font: { family: 'Roboto' },
+                                     precision: 0 // Ensure integer ticks
+                                }
+                            }
+                        },
+                         animation: {
+                             duration: 800,
+                             easing: 'easeOutQuart'
+                         }
+                    }
+                };
+
+                 // Destroy existing chart if it exists
+                 if (scoreChart) {
+                     scoreChart.destroy();
+                 }
+
+                 // Create new chart
+                 scoreChart = new Chart(scoreChartCanvas, chartConfig);
+            }
+
+            function updateChart() {
+                if (!scoreChart) return;
+
+                const newChartType = chartTypeSelect.value;
+                const newBarColor = barColorInput.value;
+
+                scoreChart.config.type = newChartType;
+
+                 // Update colors based on type
+                 if (newChartType === 'bar') {
+                     scoreChart.config.data.datasets[0].backgroundColor = newBarColor;
+                     scoreChart.config.data.datasets[0].borderColor = "var('--color-border')";
+                     scoreChart.config.data.datasets[0].borderWidth = 1;
+                 } else { // Pie or Doughnut
+                      const backgroundColors = [
+                         "var('--color-success')", // High
+                         "var('--color-warning')", // Medium
+                         "var('--color-error')"    // Low
+                     ];
+                     scoreChart.config.data.datasets[0].backgroundColor = backgroundColors;
+                     scoreChart.config.data.datasets[0].borderColor = "var('--color-card-background')";
+                     scoreChart.config.data.datasets[0].borderWidth = 2;
+                 }
+
+
+                // Update scale and legend display based on type
+                scoreChart.options.scales.x.display = newChartType === 'bar';
+                scoreChart.options.scales.y.display = newChartType === 'bar';
+                scoreChart.options.plugins.legend.display = newChartType !== 'bar';
+
+
+                scoreChart.update();
+            }
+        });
+    </script>
+</body>
+</html>

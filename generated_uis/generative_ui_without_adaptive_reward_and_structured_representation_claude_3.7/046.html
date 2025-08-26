@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CI Workflow Setup Wizard</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+        :root {
+            --primary-color: #007acc;
+            --primary-color-dark: #005f99;
+            --secondary-color: #e9ecef; /* Lighter grey */
+            --secondary-color-dark: #ced4da;
+            --text-color: #212529; /* Darker text */
+            --text-color-light: #6c757d; /* Muted text */
+            --border-color: #dee2e6; /* Light border */
+            --success-color: #28a745; /* Green */
+            --error-color: #dc3545; /* Red */
+            --warning-color: #ffc107; /* Yellow */
+            --background-color: #f8f9fa; /* Very light grey background */
+            --card-background: #fff; /* White card */
+            --spacing-unit: 16px;
+            --border-radius: 8px;
+            --transition-speed: 0.3s;
+            --box-shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.08);
+            --box-shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: var(--spacing-unit);
+        }
+
+        .container {
+            background-color: var(--card-background);
+            padding: calc(var(--spacing-unit) * 2);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow-medium);
+            width: 100%;
+            max-width: 900px; /* Increased max-width */
+            margin-top: calc(var(--spacing-unit) * 2);
+        }
+
+        h1, h2 {
+            color: var(--primary-color-dark);
+            text-align: center;
+            margin-bottom: calc(var(--spacing-unit) * 2.5);
+            font-weight: 600;
+        }
+
+        h2 {
+             font-size: 1.5rem;
+             margin-bottom: calc(var(--spacing-unit) * 2);
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            position: relative;
+            padding: 0 calc(var(--spacing-unit) * 2); /* Add padding to align dots with line */
+        }
+
+        .step-indicator-line {
+            position: absolute;
+            top: 50%;
+            left: calc(var(--spacing-unit) * 3.5); /* Adjust based on dot size */
+            right: calc(var(--spacing-unit) * 3.5); /* Adjust based on dot size */
+            height: 4px;
+            background-color: var(--border-color);
+            transform: translateY(-50%);
+            z-index: 0;
+        }
+
+        .step-indicator-progress {
+            position: absolute;
+            top: 50%;
+            left: calc(var(--spacing-unit) * 3.5); /* Adjust based on dot size */
+            height: 4px;
+            background-color: var(--primary-color);
+            transform: translateY(-50%);
+            z-index: 1;
+            width: 0%;
+            transition: width var(--transition-speed) ease-in-out;
+        }
+
+        .step-dot {
+            width: calc(var(--spacing-unit) * 3); /* Increased dot size */
+            height: calc(var(--spacing-unit) * 3); /* Increased dot size */
+            border-radius: 50%;
+            background-color: var(--border-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 600;
+            color: var(--text-color-light);
+            position: relative;
+            z-index: 2;
+            transition: background-color var(--transition-speed) ease-in-out, color var(--transition-speed) ease-in-out;
+            cursor: pointer; /* Make dots clickable */
+            border: 3px solid transparent; /* Add border for focus */
+        }
+
+        .step-dot.active {
+            background-color: var(--primary-color);
+            color: var(--card-background);
+            border-color: var(--primary-color-dark); /* Highlight active */
+        }
+
+        .step-dot.completed {
+             background-color: var(--success-color);
+            color: var(--card-background);
+        }
+
+         .step-dot:focus {
+             outline: none;
+             border-color: var(--primary-color);
+             box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.2);
+         }
+
+
+        .step-content {
+            display: none;
+            animation: fadeIn var(--transition-speed) ease-in-out;
+        }
+
+        .step-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: calc(var(--spacing-unit) * 1.5);
+            position: relative; /* For help icon positioning */
+        }
+
+        label {
+            display: block;
+            margin-bottom: calc(var(--spacing-unit) * 0.5);
+            font-weight: 600;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+        }
+
+         label .required-indicator {
+             color: var(--error-color);
+             margin-left: 4px;
+         }
+
+        input[type="text"],
+        input[type="url"],
+        input[type="password"],
+        select,
+        textarea {
+            width: 100%;
+            padding: var(--spacing-unit);
+            border: 1px solid var(--border-color);
+            border-radius: calc(var(--border-radius) * 0.5);
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color var(--transition-speed) ease-in-out, box-shadow var(--transition-speed) ease-in-out;
+            font-family: 'Inter', sans-serif;
+        }
+
+        input[type="text"]:focus,
+        input[type="url"]:focus,
+        input[type="password"]:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.2);
+        }
+
+        textarea {
+            min-height: 120px; /* Slightly reduced height */
+            resize: vertical;
+        }
+
+        .code-editor-container {
+            border: 1px solid var(--border-color);
+            border-radius: calc(var(--border-radius) * 0.5);
+            overflow: hidden;
+            height: 250px; /* Increased height for editors */
+            position: relative;
+            box-shadow: var(--box-shadow-subtle);
+        }
+
+         .monaco-editor {
+            width: 100%;
+            height: 100%;
+         }
+
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: calc(var(--spacing-unit) * 2.5);
+            gap: var(--spacing-unit); /* Add gap for spacing */
+        }
+
+        button {
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            border: none;
+            border-radius: calc(var(--border-radius) * 0.5);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color var(--transition-speed) ease-in-out, opacity var(--transition-speed) ease-in-out, box-shadow var(--transition-speed) ease-in-out;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button.primary {
+            background-color: var(--primary-color);
+            color: var(--card-background);
+        }
+
+        button.primary:hover {
+            background-color: var(--primary-color-dark);
+            box-shadow: var(--box-shadow-subtle);
+        }
+
+         button.primary:focus {
+             outline: none;
+             box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.4);
+         }
+
+
+        button.secondary {
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        button.secondary:hover {
+            background-color: var(--secondary-color-dark);
+             box-shadow: var(--box-shadow-subtle);
+        }
+
+         button.secondary:focus {
+             outline: none;
+             box-shadow: 0 0 0 3px rgba(173, 181, 189, 0.4);
+         }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .validation-error {
+            color: var(--error-color);
+            font-size: 0.875rem;
+            margin-top: calc(var(--spacing-unit) * 0.25);
+            display: none;
+        }
+
+        input:invalid:not(:placeholder-shown),
+        select:invalid:not(:placeholder-shown),
+        textarea:invalid:not(:placeholder-shown) {
+            border-color: var(--error-color);
+        }
+
+        input:invalid:not(:placeholder-shown) + .validation-error,
+        select:invalid:not(:placeholder-shown) + .validation-error,
+        textarea:invalid:not(:placeholder-shown) + .validation-error,
+         .code-editor-container + .validation-error { /* Show error for editor */
+            display: block;
+        }
+
+        .status-message {
+            text-align: center;
+            margin-top: var(--spacing-unit);
+            font-weight: 600;
+            min-height: 1.2em; /* Reserve space */
+        }
+
+        .status-message.success {
+            color: var(--success-color);
+        }
+
+        .status-message.error {
+            color: var(--error-color);
+        }
+
+        .status-message.loading {
+            color: var(--primary-color);
+        }
+
+        .material-symbols-rounded {
+            font-variation-settings:
+                'FILL' 0,
+                'wght' 400,
+                'GRAD' 0,
+                'opsz' 24;
+            vertical-align: middle;
+            margin-right: 8px; /* Increased margin */
+             font-size: 1.2em;
+        }
+
+         .material-symbols-rounded.spin {
+             animation: spin 1s linear infinite;
+         }
+
+         @keyframes spin {
+             0% { transform: rotate(0deg); }
+             100% { transform: rotate(360deg); }
+         }
+
+         .help-icon {
+             font-variation-settings:
+                'FILL' 0,
+                'wght' 400,
+                'GRAD' 0,
+                'opsz' 20;
+             color: var(--text-color-light);
+             cursor: pointer;
+             margin-left: 8px;
+             font-size: 1em;
+             transition: color var(--transition-speed) ease-in-out;
+         }
+
+         .help-icon:hover {
+             color: var(--primary-color);
+         }
+
+         .help-tooltip {
+             position: absolute;
+             top: 100%;
+             left: 0;
+             right: 0;
+             background-color: var(--secondary-color);
+             border: 1px solid var(--border-color);
+             border-radius: var(--border-radius) * 0.5;
+             padding: var(--spacing-unit);
+             font-size: 0.9rem;
+             color: var(--text-color);
+             z-index: 10;
+             margin-top: 4px;
+             display: none;
+             animation: fadeIn 0.2s ease-out;
+         }
+
+         .help-icon:hover + .help-tooltip,
+         .help-tooltip:hover {
+             display: block;
+         }
+
+         #review-content h3 {
+             font-size: 1.2rem;
+             margin-top: calc(var(--spacing-unit) * 1.5);
+             margin-bottom: var(--spacing-unit);
+             color: var(--primary-color-dark);
+             border-bottom: 1px solid var(--border-color);
+             padding-bottom: var(--spacing-unit) * 0.5;
+         }
+
+         #review-content p {
+             margin-bottom: var(--spacing-unit) * 0.75;
+         }
+
+         #review-content strong {
+             color: var(--text-color);
+         }
+
+         #review-content pre {
+             background-color: var(--background-color);
+             border: 1px solid var(--border-color);
+             border-radius: calc(var(--border-radius) * 0.5);
+             padding: var(--spacing-unit);
+             overflow-x: auto;
+             white-space: pre-wrap; /* Wrap long lines */
+             word-wrap: break-word;
+             margin-top: var(--spacing-unit) * 0.5;
+             margin-bottom: var(--spacing-unit);
+             font-size: 0.9rem;
+             line-height: 1.5;
+         }
+
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) { /* Adjusted breakpoint */
+            .container {
+                padding: var(--spacing-unit);
+                margin-top: var(--spacing-unit);
+            }
+
+            .step-indicator {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 0; /* Remove padding on small screens */
+            }
+
+            .step-dot {
+                margin-bottom: var(--spacing-unit);
+                width: calc(var(--spacing-unit) * 2.5);
+                height: calc(var(--spacing-unit) * 2.5);
+            }
+
+            .step-indicator-line,
+            .step-indicator-progress {
+                display: none; /* Hide line on small screens */
+            }
+
+            .button-group {
+                flex-direction: column;
+                gap: var(--spacing-unit);
+            }
+
+            button {
+                width: 100%;
+            }
+
+             .code-editor-container {
+                 height: 200px; /* Adjust height on smaller screens */
+             }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Setup CI Workflow</h1>
+
+        <div class="step-indicator">
+            <div class="step-indicator-line"></div>
+            <div class="step-indicator-progress" id="progress-bar"></div>
+            <div class="step-dot active" data-step="1" tabindex="0" role="button" aria-label="Step 1: General Information" aria-current="step">1</div>
+            <div class="step-dot" data-step="2" tabindex="0" role="button" aria-label="Step 2: Repository Details">2</div>
+            <div class="step-dot" data-step="3" tabindex="0" role="button" aria-label="Step 3: Build Configuration">3</div>
+            <div class="step-dot" data-step="4" tabindex="0" role="button" aria-label="Step 4: Test Configuration">4</div>
+            <div class="step-dot" data-step="5" tabindex="0" role="button" aria-label="Step 5: Deployment Configuration">5</div>
+            <div class="step-dot" data-step="6" tabindex="0" role="button" aria-label="Step 6: Review and Save">6</div>
+        </div>
+
+        <form id="ci-workflow-form" novalidate> <!-- novalidate to handle validation manually -->
+            <!-- Step 1: General Info -->
+            <div class="step-content active" data-step="1" role="region" aria-labelledby="step1-heading">
+                <h2 id="step1-heading">General Information</h2>
+                <div class="form-group">
+                    <label for="workflow-name">Workflow Name <span class="required-indicator">*</span>
+                         <span class="material-symbols-rounded help-icon" aria-label="Help: Enter a unique name for your CI workflow." tabindex="0">help</span>
+                         <div class="help-tooltip">Enter a unique and descriptive name for your CI workflow.</div>
+                    </label>
+                    <input type="text" id="workflow-name" name="workflowName" required aria-required="true" placeholder="e.g., My Project CI">
+                    <div class="validation-error" aria-live="polite">Workflow name is required.</div>
+                </div>
+                <div class="form-group">
+                    <label for="workflow-description">Description
+                         <span class="material-symbols-rounded help-icon" aria-label="Help: Provide a brief description of what this workflow does." tabindex="0">help</span>
+                         <div class="help-tooltip">Provide a brief description of what this workflow does.</div>
+                    </label>
+                    <textarea id="workflow-description" name="workflowDescription" placeholder="Briefly describe this workflow"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="vcs-type">Version Control System <span class="required-indicator">*</span>
+                         <span class="material-symbols-rounded help-icon" aria-label="Help: Select the version control system your repository uses." tabindex="0">help</span>
+                         <div class="help-tooltip">Select the version control system your repository uses (e.g., Git, SVN).</div>
+                    </label>
+                    <select id="vcs-type" name="vcsType" required aria-required="true">
+                        <option value="">Select VCS</option>
+                        <option value="git">Git</option>
+                        <option value="svn">SVN</option>
+                        <!-- Add more VCS options -->
+                    </select>
+                    <div class="validation-error" aria-live="polite">Version control system is required.</div>
+                </div>
+            </div>
+
+            <!-- Step 2: Repository Details -->
+            <div class="step-content" data-step="2" role="region" aria-labelledby="step2-heading">
+                <h2 id="step2-heading">Repository Details</h2>
+                 <div class="form-group">
+                    <label for="repo-url">Repository URL <span class="required-indicator">*</span>
+                         <span class="material-symbols-rounded help-icon" aria-label="Help: Enter the URL of your code repository." tabindex="0">help</span>
+                         <div class="help-tooltip">Enter the URL of your code repository (e.g., HTTPS or SSH URL).</div>
+                    </label>
+                    <input type="url" id="repo-url" name="repoUrl" required aria-required="true" placeholder="e.g., https://github.com/user/repo.git">
+                     <div class="validation-error" aria-live="polite">Repository URL is required and must be a valid URL.</div>
+                </div>
+                 <div class="form-group">
+                    <label for="repo-branch">Branch <span class="required-indicator">*</span>
+                         <span class="material-symbols-rounded help-icon" aria-label="Help: Specify the branch to build from." tabindex="0">help</span>
+                         <div class="help-tooltip">Specify the main branch to build from (e.g., main, develop, master).</div>
+                    </label>
+                    <input type="text" id="repo-branch" name="repoBranch" required aria-required="true" value="main" placeholder="e.g., main or develop">
+                     <div class="validation-error" aria-live="polite">Branch is required.</div>
+                </div>
+                <div class="form-group">
+                    <label for="auth-method">Authentication Method
+                         <span class="material-symbols-rounded help-icon" aria-label="Help: Choose how to authenticate with your repository." tabindex="0">help</span>
+                         <div class="help-tooltip">Choose the method to authenticate with your version control system.</div>
+                    </label>
+                    <select id="auth-method" name="authMethod">
+                        <option value="ssh">SSH Key</option>
+                        <option value="token">Personal Access Token</option>
+                        <option value="username-password">Username/Password</option>
+                    </select>
+                </div>
+                 <div id="auth-details">
+                    <!-- Authentication details will be dynamically added here -->
+                 </div>
+            </div>
+
+            <!-- Step 3: Build Configuration -->
+            <div class="step-content" data-step="3" role="region" aria-labelledby="step3-heading">
+                <h2 id="step3-heading">Build Configuration</h2>
+                <div class="form-group">
+                    <label for="build-script">Build Script <span class="required-indicator">*</span>
+                         <span class="material-symbols-rounded help-icon" aria-label="Help: Enter the script to build your project." tabindex="0">help</span>
+                         <div class="help-tooltip">Enter the shell or command script required to build your project. This typically includes commands like `npm install`, `npm run build`, `mvn clean install`, etc.</div>
+                    </label>
+                     <div class="code-editor-container">
+                        <div id="build-script-editor" class="monaco-editor"></div>
+                     </div>
+                     <div class="validation-error" id="build-script-error" aria-live="polite">Build script is required.</div>
+                </div>
+                 <div class="form-group">
+                    <label for="build-env">Environment Variables (JSON)
+                         <span class="material-symbols-rounded help-icon" aria-label="Help: Provide environment variables for the build process in JSON format." tabindex="0">help</span>
+                         <div class="help-tooltip">Provide environment variables needed during the build process as a JSON object (e.g., `{"NODE_ENV": "production", "API_KEY": "your_key"}`).</div>
+                    </label>
+                     <div class="code-editor-container">
+                        <div id="build-env-editor" class="monaco-editor"></div>
+                     </div>
+                     <div class="validation-error" id="build-env-error" aria-live="polite">Invalid JSON format.</div>
+                </div>
+            </div>
+
+            <!-- Step 4: Test Configuration -->
+            <div class="step-content" data-step="4" role="region" aria-labelledby="step4-heading">
+                <h2 id="step4-heading">Test Configuration</h2>
+                <div class="form-group">
+                    <label for="test-script">Test Script <span class="required-indicator">*</span>
+                         <span class="material-symbols-rounded help-icon" aria-label="Help: Enter the script to run your tests." tabindex="0">help</span>
+                         <div class="help-tooltip">Enter the shell or command script required to run your project's tests. This could be `npm test`, `mvn test`, `pytest`, etc.</div>
+                    </label>
+                     <div class="code-editor-container">
+                        <div id="test-script-editor" class="monaco-editor"></div>
+                     </div>
+                     <div class="validation-error" id="test-script-error" aria-live="polite">Test script is required.</div>
+                </div>
+                 <div class="form-group">
+                    <label for="test-env">Environment Variables (JSON)
+                         <span class="material-symbols-rounded help-icon" aria-label="Help: Provide environment variables for the test process in JSON format." tabindex="0">help</span>
+                         <div class="help-tooltip">Provide environment variables needed during the test process as a JSON object.</div>
+                    </label>
+                     <div class="code-editor-container">
+                        <div id="test-env-editor" class="monaco-editor"></div>
+                     </div>
+                     <div class="validation-error" id="test-env-error" aria-live="polite">Invalid JSON format.</div>
+                </div>
+            </div>
+
+            <!-- Step 5: Deployment Configuration -->
+            <div class="step-content" data-step="5" role="region" aria-labelledby="step5-heading">
+                <h2 id="step5-heading">Deployment Configuration</h2>
+                <div class="form-group">
+                    <label for="deploy-target">Deployment Target
+                         <span class="material-symbols-rounded help-icon" aria-label="Help: Specify the target environment or service for deployment." tabindex="0">help</span>
+                         <div class="help-tooltip">Specify the target environment or service for deployment (e.g., Production Server, AWS S3, Docker Registry).</div>
+                    </label>
+                    <input type="text" id="deploy-target" name="deployTarget" placeholder="e.g., Production Server, Staging">
+                </div>
+                <div class="form-group">
+                    <label for="deploy-script">Deployment Script
+                         <span class="material-symbols-rounded help-icon" aria-label="Help: Enter the script to deploy your project." tabindex="0">help</span>
+                         <div class="help-tooltip">Enter the shell or command script required to deploy your project. This step is optional.</div>
+                    </label>
+                     <div class="code-editor-container">
+                        <div id="deploy-script-editor" class="monaco-editor"></div>
+                     </div>
+                </div>
+                 <div class="form-group">
+                    <label for="deploy-env">Environment Variables (JSON)
+                         <span class="material-symbols-rounded help-icon" aria-label="Help: Provide environment variables for the deployment process in JSON format." tabindex="0">help</span>
+                         <div class="help-tooltip">Provide environment variables needed during the deployment process as a JSON object. This is optional.</div>
+                    </label>
+                     <div class="code-editor-container">
+                        <div id="deploy-env-editor" class="monaco-editor"></div>
+                     </div>
+                     <div class="validation-error" id="deploy-env-error" aria-live="polite">Invalid JSON format.</div>
+                </div>
+            </div>
+
+             <!-- Step 6: Review and Save -->
+            <div class="step-content" data-step="6" role="region" aria-labelledby="step6-heading">
+                <h2 id="step6-heading">Review and Save</h2>
+                <div id="review-content">
+                    <!-- Review summary will be populated here -->
+                </div>
+                 <p style="margin-top: calc(var(--spacing-unit) * 1.5); text-align: center; font-size: 1.1rem;">Click "Save Workflow" to finalize your continuous integration setup.</p>
+            </div>
+
+            <div class="button-group">
+                <button type="button" class="secondary" id="back-button" disabled aria-label="Go to previous step">
+                     <span class="material-symbols-rounded">arrow_back</span> Back
+                 </button>
+                <button type="button" class="primary" id="next-button" aria-label="Go to next step">
+                     Next <span class="material-symbols-rounded">arrow_forward</span>
+                 </button>
+                 <button type="submit" class="primary" id="save-button" style="display: none;" aria-label="Save workflow configuration">
+                     <span class="material-symbols-rounded">save</span> Save Workflow
+                 </button>
+            </div>
+             <div class="status-message" id="status-message" role="status" aria-live="polite"></div>
+        </form>
+    </div>
+
+    <script type="module">
+        import loader from 'https://esm.sh/@monaco-editor/loader';
+
+        let currentStep = 1;
+        const totalSteps = 6;
+        const form = document.getElementById('ci-workflow-form');
+        const steps = form.querySelectorAll('.step-content');
+        const stepDots = document.querySelectorAll('.step-dot');
+        const progressBar = document.getElementById('progress-bar');
+        const backButton = document.getElementById('back-button');
+        const nextButton = document.getElementById('next-button');
+        const saveButton = document.getElementById('save-button');
+        const authMethodSelect = document.getElementById('auth-method');
+        const authDetailsDiv = document.getElementById('auth-details');
+        const statusMessageDiv = document.getElementById('status-message');
+        const reviewContentDiv = document.getElementById('review-content');
+
+        let buildScriptEditor, buildEnvEditor, testScriptEditor, testEnvEditor, deployScriptEditor, deployEnvEditor;
+
+        // Monaco Editor Initialization
+        loader.config({
+            paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs' }
+        });
+
+        async function initMonacoEditors() {
+             try {
+                 await loader.init();
+                 buildScriptEditor = monaco.editor.create(document.getElementById('build-script-editor'), {
+                    value: '',
+                    language: 'shell', // Default language, could be configurable
+                    theme: 'vs-light',
+                    minimap: { enabled: false },
+                    automaticLayout: true,
+                    scrollBeyondLastLine: false,
+                    fontSize: 14,
+                    fontFamily: 'Fira Code, Menlo, monospace',
+                    wordWrap: 'on'
+                });
+                 buildEnvEditor = monaco.editor.create(document.getElementById('build-env-editor'), {
+                    value: '{}',
+                    language: 'json',
+                    theme: 'vs-light',
+                    minimap: { enabled: false },
+                    automaticLayout: true,
+                    scrollBeyondLastLine: false,
+                    fontSize: 14,
+                     fontFamily: 'Fira Code, Menlo, monospace',
+                     wordWrap: 'on'
+                });
+                 testScriptEditor = monaco.editor.create(document.getElementById('test-script-editor'), {
+                    value: '',
+                    language: 'shell',
+                    theme: 'vs-light',
+                    minimap: { enabled: false },
+                    automaticLayout: true,
+                    scrollBeyondLastLine: false,
+                    fontSize: 14,
+                     fontFamily: 'Fira Code, Menlo, monospace',
+                     wordWrap: 'on'
+                });
+                 testEnvEditor = monaco.editor.create(document.getElementById('test-env-editor'), {
+                    value: '{}',
+                    language: 'json',
+                    theme: 'vs-light',
+                    minimap: { enabled: false },
+                    automaticLayout: true,
+                    scrollBeyondLastLine: false,
+                    fontSize: 14,
+                     fontFamily: 'Fira Code, Menlo, monospace',
+                     wordWrap: 'on'
+                });
+                 deployScriptEditor = monaco.editor.create(document.getElementById('deploy-script-editor'), {
+                    value: '',
+                    language: 'shell',
+                    theme: 'vs-light',
+                    minimap: { enabled: false },
+                    automaticLayout: true,
+                    scrollBeyondLastLine: false,
+                    fontSize: 14,
+                     fontFamily: 'Fira Code, Menlo, monospace',
+                     wordWrap: 'on'
+                });
+                 deployEnvEditor = monaco.editor.create(document.getElementById('deploy-env-editor'), {
+                    value: '{}',
+                    language: 'json',
+                    theme: 'vs-light',
+                    minimap: { enabled: false },
+                    automaticLayout: true,
+                    scrollBeyondLastLine: false,
+                    fontSize: 14,
+                     fontFamily: 'Fira Code, Menlo, monospace',
+                     wordWrap: 'on'
+                });
+
+                 // Add validation listeners for JSON editors
+                 buildEnvEditor.onDidChangeModelContent(() => validateJsonEditor(buildEnvEditor, 'build-env-error'));
+                 testEnvEditor.onDidChangeModelContent(() => validateJsonEditor(testEnvEditor, 'test-env-error'));
+                 deployEnvEditor.onDidChangeModelContent(() => validateJsonEditor(deployEnvEditor, 'deploy-env-error'));
+
+             } catch (error) {
+                 console.error("Failed to load Monaco Editor:", error);
+                 // Optionally show a user-friendly message
+                 document.querySelectorAll('.code-editor-container').forEach(container => {
+                     container.innerHTML = '<p style="color: var(--error-color); padding: var(--spacing-unit);">Error loading code editor. Please check your internet connection.</p>';
+                     container.style.height = 'auto';
+                 });
+             }
+        }
+
+        function validateJsonEditor(editor, errorElementId) {
+            const value = editor.getValue().trim();
+            const errorElement = document.getElementById(errorElementId);
+            if (value === '' || value === '{}') {
+                 errorElement.style.display = 'none';
+                 return true;
+            }
+            try {
+                JSON.parse(value);
+                errorElement.style.display = 'none';
+                return true;
+            } catch (e) {
+                errorElement.style.display = 'block';
+                return false;
+            }
+        }
+
+
+        // Update UI based on current step
+        function updateStepUI() {
+            steps.forEach(step => step.classList.remove('active'));
+            steps[currentStep - 1].classList.add('active');
+
+            stepDots.forEach((dot, index) => {
+                dot.classList.remove('active', 'completed');
+                dot.setAttribute('aria-current', 'false');
+                if (index < currentStep - 1) {
+                    dot.classList.add('completed');
+                } else if (index === currentStep - 1) {
+                    dot.classList.add('active');
+                    dot.setAttribute('aria-current', 'step');
+                }
+            });
+
+            // Update progress bar
+            const progress = ((currentStep - 1) / (totalSteps - 1)) * 100;
+            progressBar.style.width = `${progress}%`;
+
+            // Update button visibility and state
+            backButton.disabled = currentStep === 1;
+            nextButton.style.display = currentStep === totalSteps ? 'none' : 'inline-flex';
+            saveButton.style.display = currentStep === totalSteps ? 'inline-flex' : 'none';
+
+            // Handle specific step logic (like review)
+            if (currentStep === totalSteps) {
+                populateReviewStep();
+            }
+
+             // Ensure Monaco editors resize if their container was hidden
+             if (buildScriptEditor) { // Check if editors were initialized
+                 [buildScriptEditor, buildEnvEditor, testScriptEditor, testEnvEditor, deployScriptEditor, deployEnvEditor].forEach(editor => {
+                     if (editor) editor.layout();
+                 });
+             }
+
+             // Hide status message on step change
+             statusMessageDiv.textContent = '';
+             statusMessageDiv.className = 'status-message';
+        }
+
+        // Populate authentication details based on selected method
+        function updateAuthDetails() {
+            authDetailsDiv.innerHTML = ''; // Clear previous fields
+            const method = authMethodSelect.value;
+
+            if (method === 'ssh') {
+                authDetailsDiv.innerHTML = `
+                    <div class="form-group">
+                        <label for="ssh-key">SSH Private Key <span class="required-indicator">*</span>
+                             <span class="material-symbols-rounded help-icon" aria-label="Help: Paste your SSH private key here." tabindex="0">help</span>
+                             <div class="help-tooltip">Paste the content of your SSH private key file here. Ensure it starts with '-----BEGIN...'.</div>
+                        </label>
+                        <textarea id="ssh-key" name="sshKey" required aria-required="true" placeholder="-----BEGIN RSA PRIVATE KEY-----..."></textarea>
+                        <div class="validation-error" aria-live="polite">SSH Private Key is required.</div>
+                    </div>
+                `;
+            } else if (method === 'token') {
+                 authDetailsDiv.innerHTML = `
+                    <div class="form-group">
+                        <label for="access-token">Personal Access Token <span class="required-indicator">*</span>
+                             <span class="material-symbols-rounded help-icon" aria-label="Help: Enter your personal access token." tabindex="0">help</span>
+                             <div class="help-tooltip">Enter your Personal Access Token generated from your VCS provider (e.g., GitHub, GitLab).</div>
+                        </label>
+                        <input type="password" id="access-token" name="accessToken" required aria-required="true" placeholder="Enter your token">
+                        <div class="validation-error" aria-live="polite">Personal Access Token is required.</div>
+                    </div>
+                `;
+            } else if (method === 'username-password') {
+                 authDetailsDiv.innerHTML = `
+                    <div class="form-group">
+                        <label for="username">Username <span class="required-indicator">*</span>
+                             <span class="material-symbols-rounded help-icon" aria-label="Help: Enter your VCS username." tabindex="0">help</span>
+                             <div class="help-tooltip">Enter your username for your VCS account.</div>
+                        </label>
+                        <input type="text" id="username" name="username" required aria-required="true" placeholder="Enter your username">
+                        <div class="validation-error" aria-live="polite">Username is required.</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password <span class="required-indicator">*</span>
+                             <span class="material-symbols-rounded help-icon" aria-label="Help: Enter your VCS password." tabindex="0">help</span>
+                             <div class="help-tooltip">Enter your password for your VCS account. Consider using an access token instead for better security if available.</div>
+                        </label>
+                        <input type="password" id="password" name="password" required aria-required="true" placeholder="Enter your password">
+                        <div class="validation-error" aria-live="polite">Password is required.</div>
+                    </div>
+                `;
+            }
+        }
+
+        // Validate current step before proceeding
+        function validateStep(stepIndex) {
+            const currentStepElement = steps[stepIndex - 1];
+            const inputs = currentStepElement.querySelectorAll('input[required], select[required], textarea[required]');
+            let isValid = true;
+
+            // Validate standard form inputs
+            inputs.forEach(input => {
+                if (!input.value.trim()) {
+                    input.setCustomValidity('required'); // Mark as invalid
+                    isValid = false;
+                } else {
+                    input.setCustomValidity(''); // Mark as valid
+                }
+                 // Trigger validation message display
+                input.reportValidity();
+            });
+
+            // Specific validation for Code Editors (Monaco) and JSON
+            if (stepIndex === 3) { // Build step
+                 const buildScriptValid = buildScriptEditor.getValue().trim() !== '';
+                 document.getElementById('build-script-error').style.display = buildScriptValid ? 'none' : 'block';
+                 isValid = isValid && buildScriptValid && validateJsonEditor(buildEnvEditor, 'build-env-error');
+            }
+             if (stepIndex === 4) { // Test step
+                 const testScriptValid = testScriptEditor.getValue().trim() !== '';
+                 document.getElementById('test-script-error').style.display = testScriptValid ? 'none' : 'block';
+                 isValid = isValid && testScriptValid && validateJsonEditor(testEnvEditor, 'test-env-error');
+            }
+             if (stepIndex === 5) { // Deploy step
+                 // Deploy script is optional, but JSON must be valid if present
+                 isValid = isValid && validateJsonEditor(deployEnvEditor, 'deploy-env-error');
+             }
+
+            return isValid;
+        }
+
+        // Populate review step with collected data
+        function populateReviewStep() {
+            const formData = new FormData(form);
+            const data = {};
+            formData.forEach((value, key) => {
+                data[key] = value;
+            });
+
+             // Add Monaco editor content
+             data.buildScript = buildScriptEditor ? buildScriptEditor.getValue() : 'Editor not loaded';
+             data.buildEnv = buildEnvEditor ? buildEnvEditor.getValue() : 'Editor not loaded';
+             data.testScript = testScriptEditor ? testScriptEditor.getValue() : 'Editor not loaded';
+             data.testEnv = testEnvEditor ? testEnvEditor.getValue() : 'Editor not loaded';
+             data.deployScript = deployScriptEditor ? deployScriptEditor.getValue() : 'Editor not loaded';
+             data.deployEnv = deployEnvEditor ? deployEnvEditor.getValue() : 'Editor not loaded';
+
+
+            let reviewHtml = '<h3>General Information</h3>';
+            reviewHtml += `<p><strong>Workflow Name:</strong> ${escapeHTML(data.workflowName) || 'N/A'}</p>`;
+            reviewHtml += `<p><strong>Description:</strong> ${escapeHTML(data.workflowDescription) || 'N/A'}</p>`;
+            reviewHtml += `<p><strong>VCS Type:</strong> ${escapeHTML(data.vcsType) || 'N/A'}</p>`;
+
+            reviewHtml += '<h3>Repository Details</h3>';
+            reviewHtml += `<p><strong>Repository URL:</strong> ${escapeHTML(data.repoUrl) || 'N/A'}</p>`;
+            reviewHtml += `<p><strong>Branch:</strong> ${escapeHTML(data.repoBranch) || 'N/A'}</p>`;
+            reviewHtml += `<p><strong>Authentication Method:</strong> ${escapeHTML(data.authMethod) || 'N/A'}</p>`;
+
+            // Add auth details based on method (avoid showing sensitive data)
+            if (data.authMethod === 'ssh') {
+                reviewHtml += `<p><strong>SSH Key:</strong> ${data.sshKey && data.sshKey.trim() ? 'Provided' : 'N/A'}</p>`;
+            } else if (data.authMethod === 'token') {
+                reviewHtml += `<p><strong>Personal Access Token:</strong> ${data.accessToken && data.accessToken.trim() ? 'Provided' : 'N/A'}</p>`;
+            } else if (data.authMethod === 'username-password') {
+                 reviewHtml += `<p><strong>Username:</strong> ${escapeHTML(data.username) || 'N/A'}</p>`;
+                 reviewHtml += `<p><strong>Password:</strong> ${data.password && data.password.trim() ? 'Provided' : 'N/A'}</p>`;
+            }
+
+
+            reviewHtml += '<h3>Configuration Scripts</h3>';
+            reviewHtml += `<p><strong>Build Script:</strong></p><pre>${escapeHTML(data.buildScript) || 'N/A'}</pre>`;
+            reviewHtml += `<p><strong>Build Environment:</strong></p><pre>${escapeHTML(data.buildEnv) || '{}'}</pre>`;
+            reviewHtml += `<p><strong>Test Script:</strong></p><pre>${escapeHTML(data.testScript) || 'N/A'}</pre>`;
+            reviewHtml += `<p><strong>Test Environment:</strong></p><pre>${escapeHTML(data.testEnv) || '{}'}</pre>`;
+            reviewHtml += `<p><strong>Deployment Target:</strong> ${escapeHTML(data.deployTarget) || 'N/A'}</p>`;
+            reviewHtml += `<p><strong>Deployment Script:</strong></p><pre>${escapeHTML(data.deployScript) || 'N/A'}</pre>`;
+            reviewHtml += `<p><strong>Deployment Environment:</strong></p><pre>${escapeHTML(data.deployEnv) || '{}'}</pre>`;
+
+
+            reviewContentDiv.innerHTML = reviewHtml;
+        }
+
+        function escapeHTML(str) {
+             if (str === null || str === undefined) return '';
+             let s = String(str);
+             return s.replace(/&/g, '&amp;')
+                       .replace(/</g, '&lt;')
+                       .replace(/>/g, '&gt;')
+                       .replace(/"/g, '&quot;')
+                       .replace(/'/g, '&#039;');
+        }
+
+
+        // Navigation functions
+        function nextStep() {
+            if (validateStep(currentStep)) {
+                currentStep++;
+                if (currentStep > totalSteps) currentStep = totalSteps;
+                updateStepUI();
+            } else {
+                 // Find first invalid element and focus it
+                 const currentStepElement = steps[currentStep - 1];
+                 const firstInvalid = currentStepElement.querySelector(':invalid, .validation-error[style*="block"] + .monaco-editor');
+                 if (firstInvalid) {
+                     if (firstInvalid.classList.contains('monaco-editor')) {
+                         // For Monaco editor, focus the editor instance
+                         let editor;
+                         if (firstInvalid.id === 'build-script-editor') editor = buildScriptEditor;
+                         else if (firstInvalid.id === 'build-env-editor') editor = buildEnvEditor;
+                         else if (firstInvalid.id === 'test-script-editor') editor = testScriptEditor;
+                         else if (firstInvalid.id === 'test-env-editor') editor = testEnvEditor;
+                         else if (firstInvalid.id === 'deploy-script-editor') editor = deployScriptEditor;
+                         else if (firstInvalid.id === 'deploy-env-editor') editor = deployEnvEditor;
+                         if (editor) editor.focus();
+                     } else {
+                         firstInvalid.focus();
+                     }
+                 }
+            }
+        }
+
+        function prevStep() {
+            currentStep--;
+            if (currentStep < 1) currentStep = 1;
+            updateStepUI();
+        }
+
+        function goToStep(stepNumber) {
+             if (stepNumber >= 1 && stepNumber <= totalSteps) {
+                 // Optional: Add validation check before allowing jump to future steps
+                 // For now, allow direct jumps for simplicity
+                 currentStep = stepNumber;
+                 updateStepUI();
+             }
+        }
+
+        // Event Listeners
+        nextButton.addEventListener('click', nextStep);
+        backButton.addEventListener('click', prevStep);
+        authMethodSelect.addEventListener('change', updateAuthDetails);
+
+        // Add listeners to step dots for direct navigation
+        stepDots.forEach(dot => {
+            dot.addEventListener('click', () => {
+                const step = parseInt(dot.dataset.step, 10);
+                // Allow going back or to completed/current steps directly
+                if (step <= currentStep || dot.classList.contains('completed')) {
+                     goToStep(step);
+                } else {
+                     // Optionally show a message or prevent jumping ahead
+                     console.log(`Complete step ${currentStep} before jumping to step ${step}`);
+                }
+            });
+             dot.addEventListener('keydown', (event) => {
+                 if (event.key === 'Enter' || event.key === ' ') {
+                     event.preventDefault();
+                     const step = parseInt(dot.dataset.step, 10);
+                     if (step <= currentStep || dot.classList.contains('completed')) {
+                        goToStep(step);
+                     }
+                 }
+             });
+        });
+
+
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            if (currentStep === totalSteps) {
+                // Ensure review step data is fresh before submitting
+                populateReviewStep();
+
+                // Handle form submission (e.g., send data to backend)
+                statusMessageDiv.className = 'status-message loading';
+                statusMessageDiv.innerHTML = '<span class="material-symbols-rounded spin">sync</span> Saving workflow...';
+                saveButton.disabled = true;
+                backButton.disabled = true;
+                nextButton.disabled = true; // Disable next button too if visible (shouldn't be)
+
+                const formData = new FormData(form);
+                const workflowData = {};
+                 formData.forEach((value, key) => {
+                    // Basic sanitization/handling for sensitive data before logging/sending
+                    if (key === 'sshKey' || key === 'accessToken' || key === 'password') {
+                        workflowData[key] = value ? '[REDACTED]' : ''; // Don't log sensitive data
+                    } else {
+                         workflowData[key] = value;
+                    }
+                });
+
+                 // Add Monaco editor content (use actual values for submission)
+                 workflowData.buildScript = buildScriptEditor ? buildScriptEditor.getValue() : '';
+                 workflowData.buildEnv = buildEnvEditor ? buildEnvEditor.getValue() : '{}';
+                 workflowData.testScript = testScriptEditor ? testScriptEditor.getValue() : '';
+                 workflowData.testEnv = testEnvEditor ? testEnvEditor.getValue() : '{}';
+                 workflowData.deployScript = deployScriptEditor ? deployScriptEditor.getValue() : '';
+                 workflowData.deployEnv = deployEnvEditor ? deployEnvEditor.getValue() : '{}';
+
+                console.log('Simulating API call with data:', workflowData); // Log data for demonstration
+
+                // Simulate API call
+                setTimeout(() => {
+                    // Simulate success or failure
+                    const success = Math.random() > 0.1; // 90% success rate for demo
+
+                    if (success) {
+                        statusMessageDiv.className = 'status-message success';
+                        statusMessageDiv.innerHTML = '<span class="material-symbols-rounded">check_circle</span> Workflow saved successfully!';
+                        saveButton.style.display = 'none'; // Hide save button after success
+                        backButton.style.display = 'none';
+                        // Optionally show a link to a dashboard or next steps
+                        // statusMessageDiv.innerHTML += '<p style="font-size: 0.9em; margin-top: 8px;"><a href="#" style="color: var(--success-color); text-decoration: underline;">View Dashboard</a></p>';
+                    } else {
+                         statusMessageDiv.className = 'status-message error';
+                         statusMessageDiv.innerHTML = '<span class="material-symbols-rounded">error</span> Failed to save workflow. Please try again.';
+                         saveButton.disabled = false; // Re-enable save
+                         backButton.disabled = false; // Re-enable back
+                         // Keep save button visible to allow retrying
+                    }
+
+                     nextButton.disabled = false; // Should already be hidden, but good practice
+                }, 2000); // Simulate 2-second save time
+            }
+        });
+
+        // Initial setup
+        updateAuthDetails(); // Set initial auth fields
+        initMonacoEditors(); // Initialize code editors
+        updateStepUI(); // Render initial step UI
+    </script>
+</body>
+</html>

@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>French Vocabulary Trainer</title>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --accent: #f72585;
+            --correct: #4caf50;
+            --incorrect: #f44336;
+            --light-bg: #f8f9fa;
+            --dark-text: #333;
+            --light-text: #fff;
+            --border-radius: 8px;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--light-bg);
+            color: var(--dark-text);
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+        
+        .subtitle {
+            color: var(--secondary);
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .category-selector {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .exercise-selector {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            background-color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        select:hover, select:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+        
+        .progress-container {
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary);
+            width: 0;
+            transition: width 0.3s ease;
+        }
+        
+        .vocabulary-card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 30px;
+            margin-bottom: 30px;
+            position: relative;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .vocabulary-card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+        
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .card-back {
+            transform: rotateY(180deg);
+        }
+        
+        .french-word {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+        
+        .english-translation {
+            font-size: 1.8rem;
+            color: var(--secondary);
+            margin-bottom: 15px;
+        }
+        
+        .pronunciation {
+            font-style: italic;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .audio-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 20px;
+        }
+        
+        .audio-btn:hover {
+            background-color: var(--secondary);
+            transform: scale(1.1);
+        }
+        
+        .exercise-container {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .exercise-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+        
+        .matching-exercise {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .matching-item {
+            background-color: var(--light-bg);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            user-select: none;
+        }
+        
+        .matching-item:hover {
+            background-color: #e9ecef;
+        }
+        
+        .matching-item.selected {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .matching-item.correct {
+            background-color: var(--correct);
+            color: white;
+        }
+        
+        .matching-item.incorrect {
+            background-color: var(--incorrect);
+            color: white;
+        }
+        
+        .fill-blanks-exercise {
+            margin-bottom: 20px;
+        }
+        
+        .fill-blanks-sentence {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            line-height: 2;
+        }
+        
+        .fill-blank {
+            border: none;
+            border-bottom: 2px solid var(--primary);
+            padding: 5px;
+            margin: 0 5px;
+            font-size: 1.1rem;
+            width: 120px;
+            text-align: center;
+            outline: none;
+        }
+        
+        .fill-blank.correct {
+            border-bottom-color: var(--correct);
+            background-color: rgba(76, 175, 80, 0.1);
+        }
+        
+        .fill-blank.incorrect {
+            border-bottom-color: var(--incorrect);
+            background-color: rgba(244, 67, 54, 0.1);
+        }
+        
+        .multiple-choice-exercise {
+            margin-bottom: 20px;
+        }
+        
+        .question {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+        
+        .options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .option {
+            padding: 15px;
+            background-color: var(--light-bg);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .option:hover {
+            background-color: #e9ecef;
+        }
+        
+        .option.selected {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .option.correct {
+            background-color: var(--correct);
+            color: white;
+        }
+        
+        .option.incorrect {
+            background-color: var(--incorrect);
+            color: white;
+        }
+        
+        .feedback {
+            background-color: var(--light-bg);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin-top: 20px;
+            text-align: center;
+            font-weight: bold;
+            opacity: 0;
+            transition: var(--transition);
+        }
+        
+        .feedback.show {
+            opacity: 1;
+        }
+        
+        .feedback.correct {
+            background-color: rgba(76, 175, 80, 0.2);
+            color: var(--correct);
+        }
+        
+        .feedback.incorrect {
+            background-color: rgba(244, 67, 54, 0.2);
+            color: var(--incorrect);
+        }
+        
+        .action-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: var(--transition);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary);
+        }
+        
+        .btn-secondary {
+            background-color: #e0e0e0;
+            color: var(--dark-text);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #d0d0d0;
+        }
+        
+        .btn-accent {
+            background-color: var(--accent);
+            color: white;
+        }
+        
+        .btn-accent:hover {
+            background-color: #e5007d;
+        }
+        
+        /* Flashcard animation */
+        @keyframes flipIn {
+            from {
+                transform: rotateY(90deg);
+            }
+            to {
+                transform: rotateY(0deg);
+            }
+        }
+        
+        .flashcard-animation {
+            animation: flipIn 0.5s ease-out;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .vocabulary-card {
+                padding: 20px;
+            }
+            
+            .french-word {
+                font-size: 2rem;
+            }
+            
+            .english-translation {
+                font-size: 1.5rem;
+            }
+            
+            .exercise-container {
+                padding: 20px;
+            }
+            
+            .matching-exercise {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>French Vocabulary Trainer</h1>
+            <p class="subtitle">Apprenez le français de façon interactive!</p>
+        </header>
+        
+        <div class="controls">
+            <div class="category-selector">
+                <select id="category-select">
+                    <option value="basics">Basics</option>
+                    <option value="food">Food & Dining</option>
+                    <option value="travel">Travel</option>
+                    <option value="business">Business</option>
+                    <option value="emotions">Emotions & Feelings</option>
+                </select>
+            </div>
+            <div class="exercise-selector">
+                <select id="exercise-select">
+                    <option value="flashcards">Flashcards</option>
+                    <option value="matching">Matching Pairs</option>
+                    <option value="fill-blanks">Fill in the Blanks</option>
+                    <option value="multiple-choice">Multiple Choice</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        
+        <!-- Flashcards Exercise -->
+        <div id="flashcards-container" class="exercise-container">
+            <h2 class="exercise-title">Flashcards</h2>
+            <div class="vocabulary-card" id="flashcard">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <div class="french-word">Bonjour</div>
+                        <div class="pronunciation">[bɔ̃.ʒuʁ]</div>
+                        <button class="audio-btn" id="play-audio">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                            </svg>
+                        </button>
+                        <p>Click to see translation</p>
+                    </div>
+                    <div class="card-back">
+                        <div class="english-translation">Hello</div>
+                        <div class="pronunciation">[bɔ̃.ʒuʁ]</div>
+                        <button class="audio-btn" id="play-audio-back">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                            </svg>
+                        </button>
+                        <p>Click to see French word</p>
+                    </div>
+                </div>
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-secondary" id="prev-flashcard">Previous</button>
+                <button class="btn btn-primary" id="flip-flashcard">Flip Card</button>
+                <button class="btn btn-accent" id="next-flashcard">Next</button>
+            </div>
+        </div>
+        
+        <!-- Matching Exercise -->
+        <div id="matching-container" class="exercise-container" style="display: none;">
+            <h2 class="exercise-title">Match the French words with their English translations</h2>
+            <div class="matching-exercise" id="matching-exercise">
+                <!-- Matching items will be dynamically generated -->
+            </div>
+            <div class="feedback" id="matching-feedback">
+                Great job! You've matched all the pairs correctly.
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-secondary" id="reset-matching">Reset</button>
+                <button class="btn btn-primary" id="check-matching">Check Answers</button>
+                <button class="btn btn-accent" id="new-matching">New Set</button>
+            </div>
+        </div>
+        
+        <!-- Fill in the Blanks Exercise -->
+        <div id="fill-blanks-container" class="exercise-container" style="display: none;">
+            <h2 class="exercise-title">Fill in the blanks with the correct French words</h2>
+            <div class="fill-blanks-exercise" id="fill-blanks-exercise">
+                <!-- Fill in the blanks will be dynamically generated -->
+            </div>
+            <div class="feedback" id="fill-blanks-feedback">
+                Well done! You've filled in all the blanks correctly.
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-secondary" id="reset-fill-blanks">Reset</button>
+                <button class="btn btn-primary" id="check-fill-blanks">Check Answers</button>
+                <button class="btn btn-accent" id="new-fill-blanks">New Sentence</button>
+            </div>
+        </div>
+        
+        <!-- Multiple Choice Exercise -->
+        <div id="multiple-choice-container" class="exercise-container" style="display: none;">
+            <h2 class="exercise-title">Choose the correct translation</h2>
+            <div class="multiple-choice-exercise" id="multiple-choice-exercise">
+                <!-- Multiple choice questions will be dynamically generated -->
+            </div>
+            <div class="feedback" id="multiple-choice-feedback">
+                Correct! That's the right translation.
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-secondary" id="reset-multiple-choice">Reset</button>
+                <button class="btn btn-primary" id="check-multiple-choice">Check Answer</button>
+                <button class="btn btn-accent" id="next-multiple-choice">Next Question</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Vocabulary Data
+        const vocabularyData = {
+            basics: [
+                { french: "Bonjour", english: "Hello", pronunciation: "[bɔ̃.ʒuʁ]" },
+                { french: "Au revoir", english: "Goodbye", pronunciation: "[o ʁə.vwaʁ]" },
+                { french: "Merci", english: "Thank you", pronunciation: "[mɛʁ.si]" },
+                { french: "S'il vous plaît", english: "Please", pronunciation: "[sil vu plɛ]" },
+                { french: "Excusez-moi", english: "Excuse me", pronunciation: "[ɛk.sky.ze mwa]" },
+                { french: "Oui", english: "Yes", pronunciation: "[wi]" },
+                { french: "Non", english: "No", pronunciation: "[nɔ̃]" },
+                { french: "Comment allez-vous?", english: "How are you?", pronunciation: "[kɔ.mɑ̃t‿a.le vu]" }
+            ],
+            food: [
+                { french: "Le pain", english: "Bread", pronunciation: "[lə pɛ̃]" },
+                { french: "Le fromage", english: "Cheese", pronunciation: "[lə fʁɔ.maʒ]" },
+                { french: "Le vin", english: "Wine", pronunciation: "[lə vɛ̃]" },
+                { french: "La soupe", english: "Soup", pronunciation: "[la sup]" },
+                { french: "Le dessert", english: "Dessert", pronunciation: "[lə de.sɛʁ]" },
+                { french: "Le restaurant", english: "Restaurant", pronunciation: "[lə ʁɛs.to.ʁɑ̃]" },
+                { french: "Le menu", english: "Menu", pronunciation: "[lə mə.ny]" },
+                { french: "L'addition", english: "The bill", pronunciation: "[la.di.sjɔ̃]" }
+            ],
+            travel: [
+                { french: "L'hôtel", english: "Hotel", pronunciation: "[lo.tɛl]" },
+                { french: "La gare", english: "Train station", pronunciation: "[la gaʁ]" },
+                { french: "L'aéroport", english: "Airport", pronunciation: "[la.e.ʁɔ.pɔʁ]" },
+                { french: "Le passeport", english: "Passport", pronunciation: "[lə pas.pɔʁ]" },
+                { french: "Le billet", english: "Ticket", pronunciation: "[lə bi.jɛ]" },
+                { french: "La valise", english: "Suitcase", pronunciation: "[la va.liz]" },
+                { french: "La carte", english: "Map", pronunciation: "[la kaʁt]" },
+                { french: "Le voyage", english: "Journey", pronunciation: "[lə vwa.jaʒ]" }
+            ],
+            business: [
+                { french: "La réunion", english: "Meeting", pronunciation: "[la ʁe.y.njɔ̃]" },
+                { french: "Le bureau", english: "Office", pronunciation: "[lə by.ʁo]" },
+                { french: "Le rapport", english: "Report", pronunciation: "[lə ʁa.pɔʁ]" },
+                { french: "Le client", english: "Client", pronunciation: "[lə kli.ɑ̃]" },
+                { french: "L'entreprise", english: "Company", pronunciation: "[lɑ̃.tʁə.pʁiz]" },
+                { french: "Le contrat", english: "Contract", pronunciation: "[lə kɔ̃.tʁa]" },
+                { french: "Le projet", english: "Project", pronunciation: "[lə pʁɔ.ʒɛ]" },
+                { french: "L'équipe", english: "Team", pronunciation: "[le.kip]" }
+            ],
+            emotions: [
+                { french: "Heureux", english: "Happy", pronunciation: "[ø.ʁø]" },
+                { french: "Triste", english: "Sad", pronunciation: "[tʁist]" },
+                { french: "En colère", english: "Angry", pronunciation: "[ɑ̃ kɔ.lɛʁ]" },
+                { french: "Fatigué", english: "Tired", pronunciation: "[fa.ti.ɡe]" },
+                { french: "Surpris", english: "Surprised", pronunciation: "[syʁ.pʁi]" },
+                { french: "Inquiet", english: "Worried", pronunciation: "[ɛ̃.kjɛ]" },
+                { french: "Content", english: "Pleased", pronunciation: "[kɔ̃.tɑ̃]" },
+                { french: "Effrayé", english: "Scared", pronunciation: "[e.fʁɛ.je]" }
+            ]
+        };
+        
+        // Fill in the Blanks Sentences
+        const fillBlanksData = {
+            basics: [
+                { sentence: "_____ ! Comment allez-vous?", answer: "Bonjour", translation: "Hello! How are you?" },
+                { sentence: "_____, je m'appelle Jean.", answer: "Bonjour", translation: "Hello, my name is Jean." },
+                { sentence: "_____ beaucoup pour votre aide.", answer: "Merci", translation: "Thank you very much for your help." },
+                { sentence: "_____, pouvez-vous m'aider?", answer: "Excusez-moi", translation: "Excuse me, can you help me?" }
+            ],
+            food: [
+                { sentence: "J'aime manger _____ avec du fromage.", answer: "le pain", translation: "I like to eat bread with cheese." },
+                { sentence: "Je voudrais voir _____, s'il vous plaît.", answer: "le menu", translation: "I would like to see the menu, please." },
+                { sentence: "L'addition, _____.", answer: "s'il vous plaît", translation: "The bill, please." },
+                { sentence: "Ce _____ français est délicieux.", answer: "vin", translation: "This French wine is delicious." }
+            ],
+            travel: [
+                { sentence: "Où est _____, s'il vous plaît?", answer: "la gare", translation: "Where is the train station, please?" },
+                { sentence: "J'ai perdu mon _____.", answer: "passeport", translation: "I lost my passport." },
+                { sentence: "Je voudrais réserver une chambre à _____.", answer: "l'hôtel", translation: "I would like to book a room at the hotel." },
+                { sentence: "Mon _____ est à 15h30.", answer: "vol", translation: "My flight is at 3:30 PM." }
+            ],
+            business: [
+                { sentence: "La _____ commence à 9h.", answer: "réunion", translation: "The meeting starts at 9 AM." },
+                { sentence: "Notre _____ travaille sur un nouveau projet.", answer: "équipe", translation: "Our team is working on a new project." },
+                { sentence: "J'ai signé le _____ hier.", answer: "contrat", translation: "I signed the contract yesterday." },
+                { sentence: "Mon _____ est au troisième étage.", answer: "bureau", translation: "My office is on the third floor." }
+            ],
+            emotions: [
+                { sentence: "Je suis _____ de te voir.", answer: "heureux", translation: "I am happy to see you." },
+                { sentence: "Elle est _____ parce qu'elle a perdu son chat.", answer: "triste", translation: "She is sad because she lost her cat." },
+                { sentence: "Il est _____ après une longue journée.", answer: "fatigué", translation: "He is tired after a long day." },
+                { sentence: "Nous sommes _____ par les bonnes nouvelles.", answer: "surpris", translation: "We are surprised by the good news." }
+            ]
+        };
+        
+        // Elements
+        const categorySelect = document.getElementById('category-select');
+        const exerciseSelect = document.getElementById('exercise-select');
+        const progressBar = document.getElementById('progress-bar');
+        
+        const flashcardsContainer = document.getElementById('flashcards-container');
+        const matchingContainer = document.getElementById('matching-container');
+        const fillBlanksContainer = document.getElementById('fill-blanks-container');
+        const multipleChoiceContainer = document.getElementById('multiple-choice-container');
+        
+        const flashcard = document.getElementById('flashcard');
+        const flipFlashcardBtn = document.getElementById('flip-flashcard');
+        const nextFlashcardBtn = document.getElementById('next-flashcard');
+        const prevFlashcardBtn = document.getElementById('prev-flashcard');
+        const playAudioBtn = document.getElementById('play-audio');
+        const playAudioBackBtn = document.getElementById('play-audio-back');
+        
+        const matchingExercise = document.getElementById('matching-exercise');
+        const matchingFeedback = document.getElementById('matching-feedback');
+        const checkMatchingBtn = document.getElementById('check-matching');
+        const resetMatchingBtn = document.getElementById('reset-matching');
+        const newMatchingBtn = document.getElementById('new-matching');
+        
+        const fillBlanksExercise = document.getElementById('fill-blanks-exercise');
+        const fillBlanksFeedback = document.getElementById('fill-blanks-feedback');
+        const checkFillBlanksBtn = document.getElementById('check-fill-blanks');
+        const resetFillBlanksBtn = document.getElementById('reset-fill-blanks');
+        const newFillBlanksBtn = document.getElementById('new-fill-blanks');
+        
+        const multipleChoiceExercise = document.getElementById('multiple-choice-exercise');
+        const multipleChoiceFeedback = document.getElementById('multiple-choice-feedback');
+        const checkMultipleChoiceBtn = document.getElementById('check-multiple-choice');
+        const resetMultipleChoiceBtn = document.getElementById('reset-multiple-choice');
+        const nextMultipleChoiceBtn = document.getElementById('next-multiple-choice');
+        
+        // State
+        let currentCategory = 'basics';
+        let currentExerciseType = 'flashcards';
+        let currentFlashcardIndex = 0;
+        let currentVocabulary = [];
+        let selectedPairs = [];
+        let currentFillBlanksSentence = null;
+        let currentMultipleChoiceQuestion = null;
+        let currentProgress = 0;
+        
+        // Initialize
+        function init() {
+            currentVocabulary = vocabularyData[currentCategory];
+            updateFlashcard();
+            setupEventListeners();
+            showExercise(currentExerciseType);
+        }
+        
+        // Setup Event Listeners
+        function setupEventListeners() {
+            categorySelect.addEventListener('change', function() {
+                currentCategory = this.value;
+                currentVocabulary = vocabularyData[currentCategory];
+                currentFlashcardIndex = 0;
+                updateFlashcard();
+                generateMatchingExercise();
+                generateFillBlanksExercise();
+                generateMultipleChoiceExercise();
+                resetProgress();
+            });
+            
+            exerciseSelect.addEventListener('change', function() {
+                currentExerciseType = this.value;
+                showExercise(currentExerciseType);
+                resetProgress();
+            });
+            
+            flashcard.addEventListener('click', function() {
+                this.classList.toggle('flipped');
+            });
+            
+            flipFlashcardBtn.addEventListener('click', function() {
+                flashcard.classList.toggle('flipped');
+            });
+            
+            nextFlashcardBtn.addEventListener('click', function() {
+                if (currentFlashcardIndex < currentVocabulary.length - 1) {
+                    currentFlashcardIndex++;
+                    updateFlashcard();
+                    updateProgress((currentFlashcardIndex / (currentVocabulary.length - 1)) * 100);
+                }
+            });
+            
+            prevFlashcardBtn.addEventListener('click', function() {
+                if (currentFlashcardIndex > 0) {
+                    currentFlashcardIndex--;
+                    updateFlashcard();
+                    updateProgress((currentFlashcardIndex / (currentVocabulary.length - 1)) * 100);
+                }
+            });
+            
+            playAudioBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                playPronunciation(currentVocabulary[currentFlashcardIndex].french);
+            });
+            
+            playAudioBackBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                playPronunciation(currentVocabulary[currentFlashcardIndex].french);
+            });
+            
+            checkMatchingBtn.addEventListener('click', checkMatchingAnswers);
+            resetMatchingBtn.addEventListener('click', resetMatchingExercise);
+            newMatchingBtn.addEventListener('click', generateMatchingExercise);
+            
+            checkFillBlanksBtn.addEventListener('click', checkFillBlanksAnswers);
+            resetFillBlanksBtn.addEventListener('click', resetFillBlanksExercise);
+            newFillBlanksBtn.addEventListener('click', generateFillBlanksExercise);
+            
+            checkMultipleChoiceBtn.addEventListener('click', checkMultipleChoiceAnswer);
+            resetMultipleChoiceBtn.addEventListener('click', resetMultipleChoiceExercise);
+            nextMultipleChoiceBtn.addEventListener('click', generateMultipleChoiceExercise);
+        }
+        
+        // Show Exercise
+        function showExercise(exerciseType) {
+            flashcardsContainer.style.display = 'none';
+            matchingContainer.style.display = 'none';
+            fillBlanksContainer.style.display = 'none';
+            multipleChoiceContainer.style.display = 'none';
+            
+            switch (exerciseType) {
+                case 'flashcards':
+                    flashcardsContainer.style.display = 'block';
+                    break;
+                case 'matching':
+                    matchingContainer.style.display = 'block';
+                    generateMatchingExercise();
+                    break;
+                case 'fill-blanks':
+                    fillBlanksContainer.style.display = 'block';
+                    generateFillBlanksExercise();
+                    break;
+                case 'multiple-choice':
+                    multipleChoiceContainer.style.display = 'block';
+                    generateMultipleChoiceExercise();
+                    break;
+            }
+        }
+        
+        // Update Flashcard
+        function updateFlashcard() {
+            const item = currentVocabulary[currentFlashcardIndex];
+            
+            const frenchWordElements = document.querySelectorAll('.french-word');
+            const englishTranslationElements = document.querySelectorAll('.english-translation');
+            const pronunciationElements = document.querySelectorAll('.pronunciation');
+            
+            frenchWordElements.forEach(el => el.textContent = item.french);
+            englishTranslationElements.forEach(el => el.textContent = item.english);
+            pronunciationElements.forEach(el => el.textContent = item.pronunciation);
+            
+            flashcard.classList.remove('flipped');
+            flashcard.classList.add('flashcard-animation');
+            
+            setTimeout(() => {
+                flashcard.classList.remove('flashcard-animation');
+            }, 500);
+        }
+        
+        // Generate Matching Exercise
+        function generateMatchingExercise() {
+            matchingExercise.innerHTML = '';
+            selectedPairs = [];
+            matchingFeedback.classList.remove('show', 'correct', 'incorrect');
+            
+            // Get 4 random vocabulary items
+            const shuffledVocabulary = [...currentVocabulary].sort(() => 0.5 - Math.random()).slice(0, 4);
+            
+            // Create French items
+            shuffledVocabulary.forEach((item, index) => {
+                const frenchItem = document.createElement('div');
+                frenchItem.className = 'matching-item';
+                frenchItem.dataset.index = index;
+                frenchItem.dataset.type = 'french';
+                frenchItem.textContent = item.french;
+                frenchItem.addEventListener('click', handleMatchingItemClick);
+                matchingExercise.appendChild(frenchItem);
+            });
+            
+            // Create English items (shuffled)
+            [...shuffledVocabulary]
+                .sort(() => 0.5 - Math.random())
+                .forEach((item, index) => {
+                    const englishItem = document.createElement('div');
+                    englishItem.className = 'matching-item';
+                    englishItem.dataset.index = shuffledVocabulary.findIndex(v => v.english === item.english);
+                    englishItem.dataset.type = 'english';
+                    englishItem.textContent = item.english;
+                    englishItem.addEventListener('click', handleMatchingItemClick);
+                    matchingExercise.appendChild(englishItem);
+                });
+            
+            resetProgress();
+        }
+        
+        // Handle Matching Item Click
+        function handleMatchingItemClick() {
+            const alreadySelected = this.classList.contains('selected');
+            
+            if (alreadySelected) {
+                this.classList.remove('selected');
+                selectedPairs = selectedPairs.filter(item => item !== this);
+                return;
+            }
+            
+            const selectedType = this.dataset.type;
+            const otherSelectedType = selectedType === 'french' ? 'english' : 'french';
+            
+            // If we already have a selected item of the same type, deselect it
+            const sameTypeSelected = selectedPairs.find(item => item.dataset.type === selectedType);
+            if (sameTypeSelected) {
+                sameTypeSelected.classList.remove('selected');
+                selectedPairs = selectedPairs.filter(item => item !== sameTypeSelected);
+            }
+            
+            // Add this item to selected
+            this.classList.add('selected');
+            selectedPairs.push(this);
+            
+            // Check if we have a pair
+            if (selectedPairs.length === 2) {
+                const frenchItem = selectedPairs.find(item => item.dataset.type === 'french');
+                const englishItem = selectedPairs.find(item => item.dataset.type === 'english');
+                
+                if (frenchItem.dataset.index === englishItem.dataset.index) {
+                    // Correct match
+                    frenchItem.classList.add('correct');
+                    englishItem.classList.add('correct');
+                    frenchItem.classList.remove('selected');
+                    englishItem.classList.remove('selected');
+                    
+                    // Remove event listeners from matched items
+                    frenchItem.removeEventListener('click', handleMatchingItemClick);
+                    englishItem.removeEventListener('click', handleMatchingItemClick);
+                    
+                    // Play pronunciation
+                    playPronunciation(frenchItem.textContent);
+                    
+                    selectedPairs = [];
+                    
+                    // Check if all pairs are matched
+                    const correctPairs = document.querySelectorAll('.matching-item.correct');
+                    if (correctPairs.length === matchingExercise.childElementCount) {
+                        matchingFeedback.textContent = "Great job! You've matched all the pairs correctly.";
+                        matchingFeedback.classList.add('show', 'correct');
+                        updateProgress(100);
+                    } else {
+                        updateProgress((correctPairs.length / matchingExercise.childElementCount) * 100);
+                    }
+                } else {
+                    // Incorrect match
+                    setTimeout(() => {
+                        frenchItem.classList.remove('selected');
+                        englishItem.classList.remove('selected');
+                        selectedPairs = [];
+                    }, 1000);
+                }
+            }
+        }
+        
+        // Check Matching Answers
+        function checkMatchingAnswers() {
+            const matchingItems = document.querySelectorAll('.matching-item:not(.correct)');
+            if (matchingItems.length === 0) return;
+            
+            // Clear any selected items
+            document.querySelectorAll('.matching-item.selected').forEach(item => {
+                item.classList.remove('selected');
+            });
+            selectedPairs = [];
+            
+            // Group items by their data-index
+            const itemsByIndex = {};
+            matchingItems.forEach(item => {
+                const index = item.dataset.index;
+                if (!itemsByIndex[index]) {
+                    itemsByIndex[index] = [];
+                }
+                itemsByIndex[index].push(item);
+            });
+            
+            // Mark correct and incorrect pairs
+            Object.values(itemsByIndex).forEach(items => {
+                if (items.length === 2) {
+                    const french = items.find(item => item.dataset.type === 'french');
+                    const english = items.find(item => item.dataset.type === 'english');
+                    
+                    if (french && english) {
+                        french.classList.add('correct');
+                        english.classList.add('correct');
+                        
+                        // Remove event listeners from matched items
+                        french.removeEventListener('click', handleMatchingItemClick);
+                        english.removeEventListener('click', handleMatchingItemClick);
+                    }
+                }
+            });
+            
+            // Show feedback
+            const allCorrect = document.querySelectorAll('.matching-item:not(.correct)').length === 0;
+            if (allCorrect) {
+                matchingFeedback.textContent = "Great job! You've matched all the pairs correctly.";
+                matchingFeedback.classList.add('show', 'correct');
+                updateProgress(100);
+            } else {
+                matchingFeedback.textContent = "Some pairs are still not matched correctly. Try again!";
+                matchingFeedback.classList.add('show', 'incorrect');
+                
+                const correctPairs = document.querySelectorAll('.matching-item.correct');
+                updateProgress((correctPairs.length / matchingExercise.childElementCount) * 100);
+            }
+        }
+        
+        // Reset Matching Exercise
+        function resetMatchingExercise() {
+            document.querySelectorAll('.matching-item').forEach(item => {
+                item.classList.remove('selected', 'correct', 'incorrect');
+                item.addEventListener('click', handleMatchingItemClick);
+            });
+            
+            selectedPairs = [];
+            matchingFeedback.classList.remove('show', 'correct', 'incorrect');
+            resetProgress();
+        }
+        
+        // Generate Fill in the Blanks Exercise
+        function generateFillBlanksExercise() {
+            fillBlanksExercise.innerHTML = '';
+            fillBlanksFeedback.classList.remove('show', 'correct', 'incorrect');
+            
+            // Get a random sentence
+            const sentences = fillBlanksData[currentCategory];
+            currentFillBlanksSentence = sentences[Math.floor(Math.random() * sentences.length)];
+            
+            // Create sentence with input field
+            const sentenceContainer = document.createElement('div');
+            sentenceContainer.className = 'fill-blanks-sentence';
+            
+            // Split the sentence by the blank marker
+            const parts = currentFillBlanksSentence.sentence.split('_____');
+            
+            sentenceContainer.appendChild(document.createTextNode(parts[0]));
+            
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'fill-blank';
+            input.id = 'fill-blank-input';
+            input.placeholder = 'Type here';
+            input.setAttribute('aria-label', 'Fill in the blank');
+            sentenceContainer.appendChild(input);
+            
+            if (parts[1]) {
+                sentenceContainer.appendChild(document.createTextNode(parts[1]));
+            }
+            
+            fillBlanksExercise.appendChild(sentenceContainer);
+            
+            // Add translation
+            const translationContainer = document.createElement('div');
+            translationContainer.className = 'translation';
+            translationContainer.textContent = `English: ${currentFillBlanksSentence.translation}`;
+            fillBlanksExercise.appendChild(translationContainer);
+            
+            // Focus the input
+            setTimeout(() => {
+                input.focus();
+            }, 100);
+            
+            resetProgress();
+        }
+        
+        // Check Fill in the Blanks Answers
+        function checkFillBlanksAnswers() {
+            const input = document.getElementById('fill-blank-input');
+            const userAnswer = input.value.trim().toLowerCase();
+            const correctAnswer = currentFillBlanksSentence.answer.toLowerCase();
+            
+            if (userAnswer === correctAnswer) {
+                input.classList.add('correct');
+                input.classList.remove('incorrect');
+                fillBlanksFeedback.textContent = "Correct! That's the right word.";
+                fillBlanksFeedback.classList.add('show', 'correct');
+                updateProgress(100);
+                
+                // Play pronunciation
+                playPronunciation(currentFillBlanksSentence.answer);
+            } else {
+                input.classList.add('incorrect');
+                input.classList.remove('correct');
+                fillBlanksFeedback.textContent = `Incorrect. The correct answer is "${currentFillBlanksSentence.answer}".`;
+                fillBlanksFeedback.classList.add('show', 'incorrect');
+                updateProgress(0);
+            }
+        }
+        
+        // Reset Fill in the Blanks Exercise
+        function resetFillBlanksExercise() {
+            const input = document.getElementById('fill-blank-input');
+            input.value = '';
+            input.classList.remove('correct', 'incorrect');
+            input.focus();
+            
+            fillBlanksFeedback.classList.remove('show', 'correct', 'incorrect');
+            resetProgress();
+        }
+        
+        // Generate Multiple Choice Exercise
+        function generateMultipleChoiceExercise() {
+            multipleChoiceExercise.innerHTML = '';
+            multipleChoiceFeedback.classList.remove('show', 'correct', 'incorrect');
+            
+            // Get a random word
+            const randomIndex = Math.floor(Math.random() * currentVocabulary.length);
+            const correctItem = currentVocabulary[randomIndex];
+            
+            // Get 3 random incorrect options
+            const incorrectOptions = [...currentVocabulary]
+                .filter(item => item !== correctItem)
+                .sort(() => 0.5 - Math.random())
+                .slice(0, 3)
+                .map(item => item.english);
+            
+            // Create all options and shuffle them
+            const allOptions = [correctItem.english, ...incorrectOptions].sort(() => 0.5 - Math.random());
+            
+            currentMultipleChoiceQuestion = {
+                word: correctItem.french,
+                pronunciation: correctItem.pronunciation,
+                correctAnswer: correctItem.english,
+                options: allOptions
+            };
+            
+            // Create question
+            const questionContainer = document.createElement('div');
+            questionContainer.className = 'question';
+            questionContainer.innerHTML = `What is the English translation of <strong>${correctItem.french}</strong> <span class="pronunciation">${correctItem.pronunciation}</span>?`;
+            
+            // Add pronunciation button
+            const audioBtn = document.createElement('button');
+            audioBtn.className = 'audio-btn';
+            audioBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                </svg>
+            `;
+            audioBtn.addEventListener('click', () => {
+                playPronunciation(correctItem.french);
+            });
+            
+            questionContainer.appendChild(audioBtn);
+            multipleChoiceExercise.appendChild(questionContainer);
+            
+            // Create options
+            const optionsContainer = document.createElement('div');
+            optionsContainer.className = 'options';
+            
+            allOptions.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option';
+                optionElement.textContent = option;
+                optionElement.dataset.value = option;
+                optionElement.addEventListener('click', handleMultipleChoiceOptionClick);
+                optionsContainer.appendChild(optionElement);
+            });
+            
+            multipleChoiceExercise.appendChild(optionsContainer);
+            
+            resetProgress();
+        }
+        
+        // Handle Multiple Choice Option Click
+        function handleMultipleChoiceOptionClick() {
+            // Remove selected class from all options
+            document.querySelectorAll('.option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Add selected class to clicked option
+            this.classList.add('selected');
+        }
+        
+        // Check Multiple Choice Answer
+        function checkMultipleChoiceAnswer() {
+            const selectedOption = document.querySelector('.option.selected');
+            if (!selectedOption) {
+                multipleChoiceFeedback.textContent = "Please select an answer.";
+                multipleChoiceFeedback.classList.add('show');
+                return;
+            }
+            
+            const userAnswer = selectedOption.dataset.value;
+            const correctAnswer = currentMultipleChoiceQuestion.correctAnswer;
+            
+            document.querySelectorAll('.option').forEach(option => {
+                option.removeEventListener('click', handleMultipleChoiceOptionClick);
+                
+                if (option.dataset.value === correctAnswer) {
+                    option.classList.add('correct');
+                }
+            });
+            
+            if (userAnswer === correctAnswer) {
+                multipleChoiceFeedback.textContent = "Correct! That's the right translation.";
+                multipleChoiceFeedback.classList.add('show', 'correct');
+                updateProgress(100);
+                
+                // Play pronunciation
+                playPronunciation(currentMultipleChoiceQuestion.word);
+            } else {
+                selectedOption.classList.add('incorrect');
+                multipleChoiceFeedback.textContent = `Incorrect. The correct answer is "${correctAnswer}".`;
+                multipleChoiceFeedback.classList.add('show', 'incorrect');
+                updateProgress(0);
+            }
+        }
+        
+        // Reset Multiple Choice Exercise
+        function resetMultipleChoiceExercise() {
+            document.querySelectorAll('.option').forEach(option => {
+                option.classList.remove('selected', 'correct', 'incorrect');
+                option.addEventListener('click', handleMultipleChoiceOptionClick);
+            });
+            
+            multipleChoiceFeedback.classList.remove('show', 'correct', 'incorrect');
+            resetProgress();
+        }
+        
+        // Play Pronunciation
+        function playPronunciation(word) {
+            // Using the Web Speech API for text-to-speech
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(word);
+                utterance.lang = 'fr-FR';
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+        
+        // Update Progress Bar
+        function updateProgress(percent) {
+            progressBar.style.width = `${percent}%`;
+            currentProgress = percent;
+        }
+        
+        // Reset Progress
+        function resetProgress() {
+            updateProgress(0);
+        }
+        
+        // Initialize the app
+        init();
+    </script>
+</body>
+</html>

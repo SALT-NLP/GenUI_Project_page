@@ -1,0 +1,1690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recommendation System Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --primary-dark: #0056b3;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --background-color: #f8f9fa;
+            --surface-color: #ffffff;
+            --border-color: #dee2e6;
+            --text-color: #212529;
+            --text-light: #6c757d;
+            --shadow-color: rgba(0, 0, 0, 0.08);
+            --spacing-unit: 8px;
+            --border-radius: 8px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: grid;
+            grid-template-areas: "sidebar header" "sidebar main";
+            grid-template-columns: 250px 1fr;
+            grid-template-rows: auto 1fr;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        header {
+            grid-area: header;
+            background-color: var(--surface-color);
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 3);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px var(--shadow-color);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            color: var(--text-color);
+        }
+
+        aside {
+            grid-area: sidebar;
+            background-color: var(--surface-color);
+            padding: calc(var(--spacing-unit) * 2);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 4px var(--shadow-color);
+        }
+
+        aside .logo {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: calc(var(--spacing-unit) * 4);
+        }
+
+        aside nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        aside nav ul li {
+            margin-bottom: var(--spacing-unit);
+        }
+
+        aside nav ul li a {
+            display: flex;
+            align-items: center;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            color: var(--text-color);
+            text-decoration: none;
+            border-radius: var(--border-radius);
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        aside nav ul li a .material-symbols-rounded {
+            margin-right: var(--spacing-unit);
+            font-size: 20px;
+        }
+
+        aside nav ul li a:hover,
+        aside nav ul li a.active {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+        }
+
+        main {
+            grid-area: main;
+            padding: calc(var(--spacing-unit) * 3);
+            overflow-y: auto;
+        }
+
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        /* Dashboard Styles */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: calc(var(--spacing-unit) * 3);
+            margin-bottom: calc(var(--spacing-unit) * 4);
+        }
+
+        .metric-card {
+            background-color: var(--surface-color);
+            padding: calc(var(--spacing-unit) * 3);
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 8px var(--shadow-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .metric-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .metric-card .label {
+            font-size: 0.9em;
+            color: var(--text-light);
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .metric-card .value {
+            font-size: 2em;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .metric-card .trend {
+            font-size: 0.8em;
+            color: var(--success-color);
+        }
+
+        .metric-card .trend.negative {
+            color: var(--danger-color);
+        }
+
+        .metric-card .trend .material-symbols-rounded {
+            font-size: 16px;
+            vertical-align: middle;
+        }
+
+        /* Table Styles */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: calc(var(--spacing-unit) * 3);
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: 0 2px 8px var(--shadow-color);
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: calc(var(--spacing-unit) * 2) calc(var(--spacing-unit) * 3);
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            background-color: #e9ecef;
+            font-weight: 600;
+            color: var(--text-color);
+            text-transform: uppercase;
+            font-size: 0.9em;
+        }
+
+        .data-table tbody tr:hover {
+            background-color: #f1f3f5;
+        }
+
+        .data-table td .action-buttons button {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            margin-right: var(--spacing-unit);
+            padding: var(--spacing-unit);
+            border-radius: var(--border-radius);
+            transition: background-color 0.2s ease;
+        }
+
+        .data-table td .action-buttons button:hover {
+            background-color: rgba(0, 123, 255, 0.1);
+        }
+
+        .data-table td .action-buttons button:last-child {
+            margin-right: 0;
+        }
+
+        .data-table td .action-buttons button.delete {
+            color: var(--danger-color);
+        }
+
+        .data-table td .action-buttons button.delete:hover {
+            background-color: rgba(220, 53, 69, 0.1);
+        }
+
+        /* Form/Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(5px);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--surface-color);
+            padding: calc(var(--spacing-unit) * 4);
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 12px var(--shadow-color);
+            width: 90%;
+            max-width: 800px;
+            position: relative;
+            transform: translateY(-20px);
+            opacity: 0;
+            animation: modal-fade-in 0.3s ease forwards;
+        }
+
+        @keyframes modal-fade-in {
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-content .close-button {
+            position: absolute;
+            top: calc(var(--spacing-unit) * 2);
+            right: calc(var(--spacing-unit) * 2);
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--text-light);
+            cursor: pointer;
+            border: none;
+            background: none;
+        }
+
+        .modal-content h2 {
+            margin-top: 0;
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            color: var(--text-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: var(--spacing-unit);
+        }
+
+        .form-group {
+            margin-bottom: calc(var(--spacing-unit) * 3);
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: var(--spacing-unit);
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .form-group input[type="text"]:focus,
+        .form-group input[type="number"]:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            outline: none;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+            font-family: 'Inter', sans-serif; /* Ensure consistent font */
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: var(--spacing-unit);
+            margin-top: calc(var(--spacing-unit) * 4);
+        }
+
+        .button {
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 3);
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: background-color 0.2s ease, opacity 0.2s ease;
+        }
+
+        .button-primary {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+        }
+
+        .button-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .button-secondary {
+            background-color: var(--secondary-color);
+            color: var(--surface-color);
+        }
+
+        .button-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .button-outline {
+            background-color: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .button-outline:hover {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+        }
+
+        /* Strategy Form Specifics */
+        .strategy-type-selector {
+            display: flex;
+            gap: calc(var(--spacing-unit) * 2);
+            margin-bottom: calc(var(--spacing-unit) * 3);
+        }
+
+        .strategy-type-card {
+            flex: 1;
+            padding: calc(var(--spacing-unit) * 3);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: var(--surface-color);
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .strategy-type-card:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.1rem rgba(0, 123, 255, 0.25);
+        }
+
+        .strategy-type-card.selected {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            background-color: #e9f5ff; /* Light primary background */
+        }
+
+        .strategy-type-card h4 {
+            margin-top: 0;
+            margin-bottom: var(--spacing-unit);
+            color: var(--text-color);
+        }
+
+        .strategy-type-card p {
+            font-size: 0.9em;
+            color: var(--text-light);
+            margin-bottom: 0;
+        }
+
+        .sql-editor-container {
+            position: relative;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+
+        .sql-editor-container textarea {
+            border: none;
+            padding: calc(var(--spacing-unit) * 2);
+            font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+            font-size: 0.9em;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        /* Chart Styles */
+        .chart-container {
+            background-color: var(--surface-color);
+            padding: calc(var(--spacing-unit) * 3);
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 8px var(--shadow-color);
+            margin-top: calc(var(--spacing-unit) * 3);
+            position: relative; /* Needed for floating controls */
+        }
+
+        .chart-container h3 {
+            margin-top: 0;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            color: var(--text-color);
+        }
+
+        .chart-canvas {
+            height: 300px; /* Fixed height for chart */
+            width: 100%;
+        }
+
+        .floating-controls {
+            position: absolute;
+            top: calc(var(--spacing-unit) * 2);
+            right: calc(var(--spacing-unit) * 2);
+            background: rgba(255, 255, 255, 0.95);
+            padding: calc(var(--spacing-unit) * 2);
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 8px var(--shadow-color);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 10;
+            min-width: 200px;
+        }
+
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .control-group {
+            margin-bottom: calc(var(--spacing-unit) * 1.5);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .control-group label {
+            font-size: 0.9em;
+            color: var(--text-light);
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .control-group input[type="color"],
+        .control-group input[type="number"],
+        .control-group select {
+            padding: var(--spacing-unit);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 0.9em;
+            box-sizing: border-box;
+        }
+
+        .chart-container:hover .floating-controls {
+             opacity: 1; /* Show controls on hover for simplicity */
+             transform: translateY(0);
+             pointer-events: all;
+        }
+
+
+        /* Utility Classes */
+        .mb-3 {
+            margin-bottom: calc(var(--spacing-unit) * 3);
+        }
+
+        .mt-3 {
+            margin-top: calc(var(--spacing-unit) * 3);
+        }
+
+        .flex-end {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                grid-template-areas: "header" "sidebar" "main";
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto 1fr;
+            }
+
+            aside {
+                flex-direction: row;
+                justify-content: center;
+                padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                box-shadow: 0 2px 4px var(--shadow-color);
+            }
+
+            aside .logo {
+                display: none; /* Hide logo on small screens */
+            }
+
+            aside nav ul {
+                display: flex;
+                gap: calc(var(--spacing-unit) * 2);
+            }
+
+            aside nav ul li {
+                margin-bottom: 0;
+            }
+
+            aside nav ul li a {
+                padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+                flex-direction: column;
+                align-items: center;
+                font-size: 0.8em;
+            }
+
+            aside nav ul li a .material-symbols-rounded {
+                margin-right: 0;
+                margin-bottom: var(--spacing-unit) * 0.5;
+            }
+
+            header {
+                padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            }
+
+            main {
+                padding: calc(var(--spacing-unit) * 2);
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: calc(var(--spacing-unit) * 3);
+            }
+
+            .strategy-type-selector {
+                flex-direction: column;
+            }
+        }
+
+        /* Tooltip Styles */
+        [data-tooltip] {
+            position: relative;
+            cursor: help;
+        }
+
+        [data-tooltip]::before,
+        [data-tooltip]::after {
+            --scale: 0;
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: 50%;
+            transform: translateX(-50%) translateY(var(--translate-y, 0)) scale(var(--scale));
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        [data-tooltip]::before {
+            --translate-y: -10px;
+            content: attr(data-tooltip);
+            background: var(--text-color);
+            color: var(--surface-color);
+            padding: calc(var(--spacing-unit) * 0.75) calc(var(--spacing-unit) * 1.25);
+            border-radius: var(--border-radius);
+            font-size: 0.8em;
+            white-space: nowrap;
+        }
+
+        [data-tooltip]:hover::before,
+        [data-tooltip]:hover::after {
+            --scale: 1;
+            opacity: 1;
+        }
+
+        [data-tooltip]::after {
+            --translate-y: -4px;
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 5px solid var(--text-color);
+        }
+    </style>
+</head>
+<body>
+
+    <aside>
+        <div class="logo">RecSys Manager</div>
+        <nav>
+            <ul>
+                <li><a href="#dashboard" class="nav-link active" data-section="dashboard"><span class="material-symbols-rounded">dashboard</span> <span>Dashboard</span></a></li>
+                <li><a href="#strategies" class="nav-link" data-section="strategies"><span class="material-symbols-rounded">rule_settings</span> <span>Strategies</span></a></li>
+                <li><a href="#datasources" class="nav-link" data-section="datasources"><span class="material-symbols-rounded">database</span> <span>Data Sources</span></a></li>
+                <li><a href="#abtesting" class="nav-link" data-section="abtesting"><span class="material-symbols-rounded">experiment</span> <span>A/B Testing</span></a></li>
+                <li><a href="#reports" class="nav-link" data-section="reports"><span class="material-symbols-rounded">analytics</span> <span>Reports</span></a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <header>
+        <h1 id="section-title">Dashboard</h1>
+        <div>
+            <!-- User/Account related items could go here -->
+        </div>
+    </header>
+
+    <main>
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="content-section active">
+            <h2>Recommendation Performance Overview</h2>
+            <div class="dashboard-grid">
+                <div class="metric-card" data-tooltip="Overall conversion rate lift from recommendations over the last 30 days.">
+                    <div class="label">Conversion Lift (30 Days)</div>
+                    <div class="value">12.5%</div>
+                    <div class="trend"><span class="material-symbols-rounded">arrow_upward</span> 2.1% vs Last Period</div>
+                </div>
+                <div class="metric-card" data-tooltip="Average Order Value increase attributed to recommended products.">
+                    <div class="label">AOV Increase</div>
+                    <div class="value">$8.75</div>
+                    <div class="trend"><span class="material-symbols-rounded">arrow_upward</span> 1.5% vs Last Period</div>
+                </div>
+                <div class="metric-card" data-tooltip="Total number of recommendations served across all placements.">
+                    <div class="label">Recommendations Served</div>
+                    <div class="value">1.2M</div>
+                    <div class="trend"><span class="material-symbols-rounded">arrow_upward</span> 10% vs Last Period</div>
+                </div>
+                <div class="metric-card" data-tooltip="Click-Through Rate on recommendation blocks.">
+                    <div class="label">CTR (Avg)</div>
+                    <div class="value">4.8%</div>
+                    <div class="trend negative"><span class="material-symbols-rounded">arrow_downward</span> 0.5% vs Last Period</div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3>Conversion Rate Trend (Last 90 Days)</h3>
+                 <div class="floating-controls" id="chart1-controls">
+                    <div class="control-group">
+                        <label for="chart1-type">Chart Type</label>
+                        <select id="chart1-type">
+                            <option value="line">Line</option>
+                            <option value="bar">Bar</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="chart1-color">Line Color</label>
+                        <input type="color" id="chart1-color" value="#007bff">
+                    </div>
+                     <div class="control-group">
+                        <label for="chart1-font-size">Font Size</label>
+                        <input type="number" id="chart1-font-size" value="12" min="8" max="20">
+                    </div>
+                </div>
+                <canvas id="conversionRateChart" class="chart-canvas"></canvas>
+            </div>
+
+             <div class="chart-container">
+                <h3>Recommendation Strategy Distribution (Last 30 Days)</h3>
+                 <div class="floating-controls" id="chart2-controls">
+                     <div class="control-group">
+                        <label for="chart2-type">Chart Type</label>
+                        <select id="chart2-type">
+                            <option value="pie">Pie</option>
+                            <option value="doughnut">Doughnut</option>
+                        </select>
+                    </div>
+                     <div class="control-group">
+                        <label for="chart2-font-size">Font Size</label>
+                        <input type="number" id="chart2-font-size" value="12" min="8" max="20">
+                    </div>
+                 </div>
+                <canvas id="strategyDistributionChart" class="chart-canvas"></canvas>
+            </div>
+        </section>
+
+        <!-- Strategies Section -->
+        <section id="strategies" class="content-section">
+            <h2>Recommendation Strategies</h2>
+            <button class="button button-primary mb-3" id="createStrategyBtn"><span class="material-symbols-rounded">add</span> Create New Strategy</button>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Performance Metric</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Homepage Popular</td>
+                        <td>Most Popular</td>
+                        <td>Active</td>
+                        <td>CTR: 5.1%</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button data-tooltip="Edit Strategy"><span class="material-symbols-rounded">edit</span></button>
+                                <button data-tooltip="Duplicate Strategy"><span class="material-symbols-rounded">content_copy</span></button>
+                                <button data-tooltip="Deactivate Strategy"><span class="material-symbols-rounded">toggle_on</span></button>
+                                <button class="delete" data-tooltip="Delete Strategy"><span class="material-symbols-rounded">delete</span></button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Product Page Related</td>
+                        <td>SQL Query</td>
+                        <td>Active</td>
+                        <td>Conversion Lift: 1.2%</td>
+                         <td>
+                            <div class="action-buttons">
+                                <button data-tooltip="Edit Strategy"><span class="material-symbols-rounded">edit</span></button>
+                                <button data-tooltip="Duplicate Strategy"><span class="material-symbols-rounded">content_copy</span></button>
+                                <button data-tooltip="Deactivate Strategy"><span class="material-symbols-rounded">toggle_on</span></button>
+                                <button class="delete" data-tooltip="Delete Strategy"><span class="material-symbols-rounded">delete</span></button>
+                            </div>
+                        </td>
+                    </tr>
+                     <tr>
+                        <td>Cart Upsell</td>
+                        <td>Simple Algorithm</td>
+                        <td>Active</td>
+                        <td>AOV Increase: $1.50</td>
+                         <td>
+                            <div class="action-buttons">
+                                <button data-tooltip="Edit Strategy"><span class="material-symbols-rounded">edit</span></button>
+                                <button data-tooltip="Duplicate Strategy"><span class="material-symbols-rounded">content_copy</span></button>
+                                <button data-tooltip="Deactivate Strategy"><span class="material-symbols-rounded">toggle_on</span></button>
+                                <button class="delete" data-tooltip="Delete Strategy"><span class="material-symbols-rounded">delete</span></button>
+                            </div>
+                        </td>
+                    </tr>
+                     <tr>
+                        <td>Seasonal Picks (Inactive)</td>
+                        <td>Rules-Based</td>
+                        <td>Inactive</td>
+                        <td>N/A</td>
+                         <td>
+                            <div class="action-buttons">
+                                <button data-tooltip="Edit Strategy"><span class="material-symbols-rounded">edit</span></button>
+                                <button data-tooltip="Duplicate Strategy"><span class="material-symbols-rounded">content_copy</span></button>
+                                <button data-tooltip="Activate Strategy"><span class="material-symbols-rounded">toggle_off</span></button>
+                                <button class="delete" data-tooltip="Delete Strategy"><span class="material-symbols-rounded">delete</span></button>
+                            </div>
+                        </td>
+                    </tr>
+                    <!-- More strategies here -->
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Data Sources Section -->
+        <section id="datasources" class="content-section">
+            <h2>Data Sources</h2>
+            <button class="button button-primary mb-3" id="addDataSourceBtn"><span class="material-symbols-rounded">add</span> Add New Data Source</button>
+
+             <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Connection String (Partial)</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>CustomerDB</td>
+                        <td>SQL (PostgreSQL)</td>
+                        <td>host=...;database=...</td>
+                        <td>Connected</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button data-tooltip="Edit Connection"><span class="material-symbols-rounded">edit</span></button>
+                                <button data-tooltip="Test Connection"><span class="material-symbols-rounded">link</span></button>
+                                <button class="delete" data-tooltip="Delete Source"><span class="material-symbols-rounded">delete</span></button>
+                            </div>
+                        </td>
+                    </tr>
+                     <tr>
+                        <td>ProductCatalog</td>
+                        <td>SQL (MySQL)</td>
+                        <td>host=...;database=...</td>
+                        <td>Connected</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button data-tooltip="Edit Connection"><span class="material-symbols-rounded">edit</span></button>
+                                <button data-tooltip="Test Connection"><span class="material-symbols-rounded">link</span></button>
+                                <button class="delete" data-tooltip="Delete Source"><span class="material-symbols-rounded">delete</span></button>
+                            </div>
+                        </td>
+                    </tr>
+                     <tr>
+                        <td>SalesHistory</td>
+                        <td>SQL (SQL Server)</td>
+                        <td>host=...;database=...</td>
+                        <td>Error</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button data-tooltip="Edit Connection"><span class="material-symbols-rounded">edit</span></button>
+                                <button data-tooltip="Test Connection"><span class="material-symbols-rounded">link</span></button>
+                                <button class="delete" data-tooltip="Delete Source"><span class="material-symbols-rounded">delete</span></button>
+                            </div>
+                        </td>
+                    </tr>
+                    <!-- More data sources -->
+                </tbody>
+            </table>
+        </section>
+
+        <!-- A/B Testing Section -->
+        <section id="abtesting" class="content-section">
+            <h2>A/B Tests</h2>
+            <button class="button button-primary mb-3" id="createABTestBtn"><span class="material-symbols-rounded">add</span> Create New A/B Test</button>
+
+             <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Variants</th>
+                        <th>Traffic Split</th>
+                        <th>Duration</th>
+                        <th>Winning Variant</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Homepage Strategy Test</td>
+                        <td>Running</td>
+                        <td>Popular vs SQL Query</td>
+                        <td>50/50</td>
+                        <td>7 Days Left</td>
+                        <td>N/A</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button data-tooltip="View Details"><span class="material-symbols-rounded">visibility</span></button>
+                                <button data-tooltip="Pause Test"><span class="material-symbols-rounded">pause</span></button>
+                                <button class="delete" data-tooltip="End Test"><span class="material-symbols-rounded">stop_circle</span></button>
+                            </div>
+                        </td>
+                    </tr>
+                     <tr>
+                        <td>Product Page Placement Test</td>
+                        <td>Completed</td>
+                        <td>Variant A vs Variant B</td>
+                        <td>60/40</td>
+                        <td>14 Days</td>
+                        <td>Variant A (+3% CVR)</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button data-tooltip="View Details"><span class="material-symbols-rounded">visibility</span></button>
+                                <button class="delete" data-tooltip="Archive Test"><span class="material-symbols-rounded">archive</span></button>
+                            </div>
+                        </td>
+                    </tr>
+                    <!-- More A/B tests -->
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Reports Section -->
+        <section id="reports" class="content-section">
+            <h2>Reports & Analytics</h2>
+             <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Report Name</th>
+                        <th>Type</th>
+                        <th>Last Generated</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Overall Performance Summary</td>
+                        <td>Summary</td>
+                        <td>2023-10-27</td>
+                        <td>
+                             <div class="action-buttons">
+                                <button data-tooltip="View Report"><span class="material-symbols-rounded">visibility</span></button>
+                                <button data-tooltip="Download Report"><span class="material-symbols-rounded">download</span></button>
+                            </div>
+                        </td>
+                    </tr>
+                     <tr>
+                        <td>Strategy Specific Performance</td>
+                        <td>Detail</td>
+                        <td>2023-10-27</td>
+                         <td>
+                             <div class="action-buttons">
+                                <button data-tooltip="View Report"><span class="material-symbols-rounded">visibility</span></button>
+                                <button data-tooltip="Download Report"><span class="material-symbols-rounded">download</span></button>
+                            </div>
+                        </td>
+                    </tr>
+                    <!-- More reports -->
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <!-- Strategy Configuration Modal -->
+    <div id="strategyModal" class="modal">
+        <div class="modal-content">
+            <button class="close-button" aria-label="Close modal">&times;</button>
+            <h2 id="modalTitle">Create New Strategy</h2>
+
+            <!-- Step 1: Choose Type -->
+            <div id="strategyStep1" class="modal-step">
+                <p class="mb-3">Select the type of recommendation strategy you want to create.</p>
+                <div class="strategy-type-selector">
+                    <div class="strategy-type-card" data-type="popular">
+                        <h4>Most Popular</h4>
+                        <p>Show items with the highest sales or views.</p>
+                    </div>
+                    <div class="strategy-type-card" data-type="sql">
+                        <h4>SQL Query</h4>
+                        <p>Define recommendations using a custom SQL query.</p>
+                    </div>
+                    <div class="strategy-type-card" data-type="simple-algo">
+                        <h4>Simple Algorithm</h4>
+                        <p>Use basic algorithms like 'Related Items' or 'Frequently Bought Together'.</p>
+                    </div>
+                    <div class="strategy-type-card" data-type="rules">
+                        <h4>Rules-Based</h4>
+                        <p>Set up rules based on product attributes, categories, etc.</p>
+                    </div>
+                </div>
+                <div class="flex-end">
+                     <button class="button button-primary" id="nextStep1" disabled>Next</button>
+                </div>
+            </div>
+
+            <!-- Step 2: Configure Details -->
+             <div id="strategyStep2" class="modal-step" style="display: none;">
+                <p class="mb-3">Configure the details for your <strong id="selectedStrategyType"></strong> strategy.</p>
+
+                <div class="form-group">
+                    <label for="strategyName">Strategy Name</label>
+                    <input type="text" id="strategyName" placeholder="e.g., Homepage Popular Products">
+                </div>
+
+                 <div class="form-group">
+                    <label for="strategyDescription">Description (Optional)</label>
+                    <textarea id="strategyDescription" placeholder="Brief description of the strategy"></textarea>
+                </div>
+
+                 <div class="form-group">
+                    <label for="dataSource">Data Source</label>
+                    <select id="dataSource">
+                        <option value="">Select a data source</option>
+                        <option value="customerdb">CustomerDB</option>
+                        <option value="productcatalog">ProductCatalog</option>
+                        <option value="saleshistory">SalesHistory</option>
+                    </select>
+                </div>
+
+                 <!-- Dynamic Configuration based on Type -->
+                 <div id="typeSpecificConfig">
+                     <!-- Content will be injected based on selected type -->
+                 </div>
+
+                <div class="form-actions">
+                    <button class="button button-secondary" id="prevStep2">Back</button>
+                    <button class="button button-primary" id="nextStep2">Review & Save</button>
+                </div>
+            </div>
+
+             <!-- Step 3: Review & Save -->
+             <div id="strategyStep3" class="modal-step" style="display: none;">
+                 <p class="mb-3">Review your strategy configuration before saving.</p>
+
+                 <div class="form-group">
+                     <label>Strategy Name:</label>
+                     <strong id="reviewName"></strong>
+                 </div>
+                 <div class="form-group">
+                     <label>Strategy Type:</label>
+                     <strong id="reviewType"></strong>
+                 </div>
+                  <div class="form-group">
+                     <label>Data Source:</label>
+                     <strong id="reviewDataSource"></strong>
+                 </div>
+                  <div class="form-group">
+                     <label>Configuration:</label>
+                     <pre id="reviewConfig" style="background-color: #f4f4f4; padding: var(--spacing-unit); border-radius: var(--border-radius);"></pre>
+                 </div>
+
+
+                 <div class="form-actions">
+                    <button class="button button-secondary" id="prevStep3">Back</button>
+                    <button class="button button-primary" id="saveStrategyBtn">Save Strategy</button>
+                </div>
+             </div>
+        </div>
+    </div>
+
+     <!-- Data Source Modal -->
+    <div id="dataSourceModal" class="modal">
+        <div class="modal-content">
+            <button class="close-button" aria-label="Close modal">&times;</button>
+            <h2>Add New Data Source</h2>
+
+            <div class="form-group">
+                <label for="dsName">Source Name</label>
+                <input type="text" id="dsName" placeholder="e.g., ProductCatalogDB">
+            </div>
+
+            <div class="form-group">
+                <label for="dsType">Database Type</label>
+                <select id="dsType">
+                    <option value="">Select database type</option>
+                    <option value="postgresql">PostgreSQL</option>
+                    <option value="mysql">MySQL</option>
+                    <option value="sqlserver">SQL Server</option>
+                    <option value="other">Other SQL</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="dsConnectionString">Connection String</label>
+                <input type="text" id="dsConnectionString" placeholder="e.g., host=localhost;database=mydb;user=myuser;password=mypassword">
+            </div>
+
+             <div class="form-group">
+                <button class="button button-outline" id="testConnectionBtn">Test Connection</button>
+                <span id="connectionStatus" style="margin-left: var(--spacing-unit); font-size: 0.9em;"></span>
+            </div>
+
+
+            <div class="form-actions">
+                <button class="button button-secondary" id="cancelDataSourceBtn">Cancel</button>
+                <button class="button button-primary" id="saveDataSourceBtn">Save Data Source</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        const navLinks = document.querySelectorAll('.nav-link');
+        const contentSections = document.querySelectorAll('.content-section');
+        const sectionTitle = document.getElementById('section-title');
+
+        const strategyModal = document.getElementById('strategyModal');
+        const dataSourceModal = document.getElementById('dataSourceModal');
+        const createStrategyBtn = document.getElementById('createStrategyBtn');
+        const addDataSourceBtn = document.getElementById('addDataSourceBtn');
+        const closeButtons = document.querySelectorAll('.modal .close-button');
+
+        const strategyStep1 = document.getElementById('strategyStep1');
+        const strategyStep2 = document.getElementById('strategyStep2');
+        const strategyStep3 = document.getElementById('strategyStep3');
+        const nextStep1Btn = document.getElementById('nextStep1');
+        const nextStep2Btn = document.getElementById('nextStep2');
+        const prevStep2Btn = document.getElementById('prevStep2');
+        const prevStep3Btn = document.getElementById('prevStep3');
+        const saveStrategyBtn = document.getElementById('saveStrategyBtn');
+        const strategyTypeCards = document.querySelectorAll('.strategy-type-card');
+        const selectedStrategyTypeSpan = document.getElementById('selectedStrategyType');
+        const typeSpecificConfigDiv = document.getElementById('typeSpecificConfig');
+
+        const strategyNameInput = document.getElementById('strategyName');
+        const strategyDescriptionInput = document.getElementById('strategyDescription');
+        const dataSourceSelect = document.getElementById('dataSource');
+
+        const reviewNameElem = document.getElementById('reviewName');
+        const reviewTypeElem = document.getElementById('reviewType');
+        const reviewDataSourceElem = document.getElementById('reviewDataSource');
+        const reviewConfigElem = document.getElementById('reviewConfig');
+
+        const dsNameInput = document.getElementById('dsName');
+        const dsTypeSelect = document.getElementById('dsType');
+        const dsConnectionStringInput = document.getElementById('dsConnectionString');
+        const testConnectionBtn = document.getElementById('testConnectionBtn');
+        const connectionStatusSpan = document.getElementById('connectionStatus');
+        const cancelDataSourceBtn = document.getElementById('cancelDataSourceBtn');
+        const saveDataSourceBtn = document.getElementById('saveDataSourceBtn');
+
+
+        let currentModalStep = 1;
+        let selectedStrategyType = null;
+
+        // --- Navigation ---
+        function showSection(sectionId) {
+            contentSections.forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionId).classList.add('active');
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('data-section') === sectionId) {
+                    link.classList.add('active');
+                }
+            });
+
+            // Update header title
+            const titleMap = {
+                'dashboard': 'Dashboard',
+                'strategies': 'Recommendation Strategies',
+                'datasources': 'Data Sources',
+                'abtesting': 'A/B Testing',
+                'reports': 'Reports & Analytics'
+            };
+            sectionTitle.textContent = titleMap[sectionId] || 'RecSys Manager';
+
+             // Update URL hash
+            history.pushState(null, '', `#${sectionId}`);
+        }
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const sectionId = link.getAttribute('data-section');
+                showSection(sectionId);
+            });
+        });
+
+        // Handle initial hash on page load
+        const initialHash = window.location.hash.substring(1);
+        if (initialHash && document.getElementById(initialHash)) {
+            showSection(initialHash);
+        } else {
+            showSection('dashboard'); // Default to dashboard
+        }
+
+
+        // --- Modals ---
+        function openModal(modalElement) {
+            modalElement.classList.add('active');
+            // Trap focus within the modal (basic implementation)
+            const focusableElements = modalElement.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+            const firstElement = focusableElements[0];
+            const lastElement = focusableElements[focusableElements.length - 1];
+
+             if (firstElement) firstElement.focus();
+
+             modalElement.addEventListener('keydown', function(e) {
+                const isTabPressed = e.key === 'Tab';
+                if (!isTabPressed) {
+                    return;
+                }
+
+                if (e.shiftKey) { // Shift + Tab
+                    if (document.activeElement === firstElement) {
+                        lastElement.focus();
+                        e.preventDefault();
+                    }
+                } else { // Tab
+                    if (document.activeElement === lastElement) {
+                        firstElement.focus();
+                        e.preventDefault();
+                    }
+                }
+             });
+        }
+
+        function closeModal(modalElement) {
+            modalElement.classList.remove('active');
+             // Reset focus to the element that opened the modal (if possible)
+             // For simplicity, we won't implement complex focus management here
+        }
+
+        closeButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const modal = e.target.closest('.modal');
+                if (modal) {
+                    closeModal(modal);
+                    // Reset strategy modal steps
+                    if (modal.id === 'strategyModal') {
+                         resetStrategyModal();
+                    }
+                }
+            });
+        });
+
+        // Close modal on outside click
+        window.addEventListener('click', (event) => {
+            if (event.target.classList.contains('modal')) {
+                 closeModal(event.target);
+                 // Reset strategy modal steps
+                 if (event.target.id === 'strategyModal') {
+                    resetStrategyModal();
+                 }
+            }
+        });
+
+        // Close modal on Escape key
+        window.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                const openModalElement = document.querySelector('.modal.active');
+                if (openModalElement) {
+                    closeModal(openModalElement);
+                     // Reset strategy modal steps
+                    if (openModalElement.id === 'strategyModal') {
+                        resetStrategyModal();
+                    }
+                }
+            }
+        });
+
+
+        // --- Strategy Modal Steps ---
+        function showStrategyStep(step) {
+             document.querySelectorAll('.modal-step').forEach(s => s.style.display = 'none');
+             document.getElementById(`strategyStep${step}`).style.display = 'block';
+             currentModalStep = step;
+
+             // Update modal title
+             const title = step === 1 ? 'Create New Strategy' :
+                           step === 2 ? 'Configure Strategy Details' :
+                           'Review & Save Strategy';
+             document.getElementById('modalTitle').textContent = title;
+        }
+
+        function resetStrategyModal() {
+            showStrategyStep(1);
+            strategyTypeCards.forEach(card => card.classList.remove('selected'));
+            nextStep1Btn.disabled = true;
+            selectedStrategyType = null;
+            typeSpecificConfigDiv.innerHTML = ''; // Clear dynamic config
+            strategyNameInput.value = '';
+            strategyDescriptionInput.value = '';
+            dataSourceSelect.value = '';
+            reviewNameElem.textContent = '';
+            reviewTypeElem.textContent = '';
+            reviewDataSourceElem.textContent = '';
+            reviewConfigElem.textContent = '';
+        }
+
+
+        createStrategyBtn.addEventListener('click', () => {
+            openModal(strategyModal);
+            showStrategyStep(1);
+        });
+
+        strategyTypeCards.forEach(card => {
+            card.addEventListener('click', () => {
+                strategyTypeCards.forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                selectedStrategyType = card.getAttribute('data-type');
+                nextStep1Btn.disabled = false;
+            });
+        });
+
+        nextStep1Btn.addEventListener('click', () => {
+            if (selectedStrategyType) {
+                selectedStrategyTypeSpan.textContent = selectedStrategyType.replace('-', ' ').toUpperCase();
+                renderTypeSpecificConfig(selectedStrategyType);
+                showStrategyStep(2);
+            }
+        });
+
+        prevStep2Btn.addEventListener('click', () => {
+            showStrategyStep(1);
+        });
+
+        nextStep2Btn.addEventListener('click', () => {
+            // Basic validation
+            if (!strategyNameInput.value || !dataSourceSelect.value) {
+                alert('Please fill in Strategy Name and Data Source.');
+                return;
+            }
+            // Populate review step
+            reviewNameElem.textContent = strategyNameInput.value;
+            reviewTypeElem.textContent = selectedStrategyType.replace('-', ' ').toUpperCase();
+            reviewDataSourceElem.textContent = dataSourceSelect.options[dataSourceSelect.selectedIndex].text;
+            // Simulate capturing config - in a real app, this would collect data from dynamic inputs
+            const configDetails = {
+                name: strategyNameInput.value,
+                type: selectedStrategyType,
+                dataSource: dataSourceSelect.value,
+                // Add dynamic config here
+                dynamicConfig: {} // Placeholder
+            };
+            reviewConfigElem.textContent = JSON.stringify(configDetails, null, 2);
+
+            showStrategyStep(3);
+        });
+
+        prevStep3Btn.addEventListener('click', () => {
+            showStrategyStep(2);
+        });
+
+        saveStrategyBtn.addEventListener('click', () => {
+            // Simulate saving strategy
+            alert('Strategy saved!');
+            closeModal(strategyModal);
+            resetStrategyModal();
+            // In a real app, you'd send data to backend and update table
+        });
+
+        function renderTypeSpecificConfig(type) {
+            let html = '';
+            if (type === 'popular') {
+                html = `
+                    <div class="form-group">
+                        <label for="popularMetric">Metric for Popularity</label>
+                        <select id="popularMetric">
+                            <option value="sales">Sales Volume</option>
+                            <option value="views">Product Views</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="popularTimeframe">Timeframe (Days)</label>
+                        <input type="number" id="popularTimeframe" value="30" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="popularLimit">Number of Products to Recommend</label>
+                        <input type="number" id="popularLimit" value="10" min="1">
+                    </div>
+                `;
+            } else if (type === 'sql') {
+                html = `
+                    <div class="form-group">
+                        <label for="sqlQuery">SQL Query</label>
+                        <div class="sql-editor-container">
+                            <textarea id="sqlQuery" placeholder="Enter your SQL query here..."></textarea>
+                        </div>
+                         <p style="font-size: 0.8em; color: var(--text-light); margin-top: var(--spacing-unit);">Your query should return a list of product IDs.</p>
+                    </div>
+                `;
+            } else if (type === 'simple-algo') {
+                 html = `
+                    <div class="form-group">
+                        <label for="algorithmType">Algorithm</label>
+                        <select id="algorithmType">
+                            <option value="related">Related Items (based on co-views)</option>
+                            <option value="bought-together">Frequently Bought Together</option>
+                        </select>
+                    </div>
+                     <div class="form-group">
+                        <label for="algoLimit">Number of Products to Recommend</label>
+                        <input type="number" id="algoLimit" value="5" min="1">
+                    </div>
+                 `;
+            } else if (type === 'rules') {
+                 html = `
+                    <p style="font-size: 0.9em; color: var(--text-light); margin-bottom: var(--spacing-unit) * 2;">Define rules to filter or boost products. (Simplified Rule Builder Placeholder)</p>
+                    <div class="form-group">
+                        <label for="rule1">Rule 1</label>
+                        <input type="text" id="rule1" placeholder="e.g., Category = 'Electronics'">
+                    </div>
+                     <div class="form-group">
+                        <label for="rule2">Rule 2</label>
+                        <input type="text" id="rule2" placeholder="e.g., Price > 100">
+                    </div>
+                     <button class="button button-outline" disabled><span class="material-symbols-rounded" style="font-size: 1em; margin-right: var(--spacing-unit);">add</span> Add Another Rule</button>
+                 `;
+            }
+            typeSpecificConfigDiv.innerHTML = html;
+        }
+
+
+        // --- Data Source Modal ---
+        addDataSourceBtn.addEventListener('click', () => {
+            openModal(dataSourceModal);
+             // Reset form
+            dsNameInput.value = '';
+            dsTypeSelect.value = '';
+            dsConnectionStringInput.value = '';
+            connectionStatusSpan.textContent = '';
+            saveDataSourceBtn.disabled = false; // Enable save by default
+        });
+
+        cancelDataSourceBtn.addEventListener('click', () => {
+            closeModal(dataSourceModal);
+        });
+
+        saveDataSourceBtn.addEventListener('click', () => {
+            // Basic validation
+            if (!dsNameInput.value || !dsTypeSelect.value || !dsConnectionStringInput.value) {
+                alert('Please fill in all fields.');
+                return;
+            }
+            // Simulate saving data source
+            alert('Data Source saved!');
+            closeModal(dataSourceModal);
+             // In a real app, you'd send data to backend and update table
+        });
+
+        testConnectionBtn.addEventListener('click', async () => {
+            const name = dsNameInput.value;
+            const type = dsTypeSelect.value;
+            const connectionString = dsConnectionStringInput.value;
+
+            if (!name || !type || !connectionString) {
+                connectionStatusSpan.textContent = 'Please fill in connection details first.';
+                connectionStatusSpan.style.color = var("--warning-color");
+                return;
+            }
+
+            connectionStatusSpan.textContent = 'Testing...';
+            connectionStatusSpan.style.color = var("--text-light");
+            saveDataSourceBtn.disabled = true; // Disable save while testing
+
+            // Simulate API call delay
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            // Simulate success or failure randomly
+            const success = Math.random() > 0.2; // 80% chance of success
+
+            if (success) {
+                connectionStatusSpan.textContent = 'Connection Successful!';
+                connectionStatusSpan.style.color = var("--success-color");
+                saveDataSourceBtn.disabled = false; // Enable save on success
+            } else {
+                connectionStatusSpan.textContent = 'Connection Failed. Check credentials/string.';
+                connectionStatusSpan.style.color = var("--danger-color");
+                 saveDataSourceBtn.disabled = true; // Keep save disabled on failure
+            }
+        });
+
+
+        // --- Chart Integration ---
+        // Data for charts (simulated)
+        const conversionRateData = {
+            labels: ['Aug 1', 'Aug 8', 'Aug 15', 'Aug 22', 'Aug 29', 'Sep 5', 'Sep 12', 'Sep 19', 'Sep 26', 'Oct 3', 'Oct 10', 'Oct 17', 'Oct 24'],
+            datasets: [{
+                label: 'Conversion Rate (%)',
+                data: [2.1, 2.3, 2.2, 2.5, 2.4, 2.6, 2.7, 2.8, 2.9, 3.1, 3.2, 3.3, 3.4],
+                borderColor: var("--primary-color"),
+                backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                fill: true,
+                tension: 0.3
+            }]
+        };
+
+         const strategyDistributionData = {
+            labels: ['Most Popular', 'SQL Query', 'Simple Algorithm', 'Rules-Based'],
+            datasets: [{
+                label: 'Recommendations Served',
+                data: [45, 30, 15, 10], // Percentages
+                backgroundColor: [
+                    '#007bff', // Primary
+                    '#28a745', // Success
+                    '#ffc107', // Warning
+                    '#17a2b8'  // Info
+                ],
+                borderColor: var("--surface-color"),
+                borderWidth: 2
+            }]
+        };
+
+
+        let conversionChart;
+        let distributionChart;
+
+        function renderCharts() {
+            const ctx1 = document.getElementById('conversionRateChart').getContext('2d');
+            conversionChart = new Chart(ctx1, {
+                type: 'line',
+                data: conversionRateData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false,
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y + '%';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: {
+                                display: true,
+                                text: 'Conversion Rate (%)',
+                                color: var("--text-color")
+                            },
+                             ticks: {
+                                font: { size: 12, family: 'Inter, sans-serif' },
+                                color: var("--text-light")
+                            },
+                            grid: {
+                                color: var("--border-color")
+                            }
+                        },
+                         x: {
+                            ticks: {
+                                font: { size: 12, family: 'Inter, sans-serif' },
+                                color: var("--text-light")
+                            },
+                             grid: {
+                                color: var("--border-color")
+                            }
+                        }
+                    }
+                }
+            });
+
+             const ctx2 = document.getElementById('strategyDistributionChart').getContext('2d');
+             distributionChart = new Chart(ctx2, {
+                type: 'pie',
+                data: strategyDistributionData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                     plugins: {
+                        legend: {
+                            position: 'right',
+                             labels: {
+                                font: { size: 12, family: 'Inter, sans-serif' },
+                                color: var("--text-color")
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                     if (context.parsed !== null) {
+                                        label += context.parsed + '%';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Render charts initially when dashboard is active
+        document.getElementById('dashboard').addEventListener('transitionend', (event) => {
+            if (event.propertyName === 'display' && document.getElementById('dashboard').classList.contains('active')) {
+                 if (!conversionChart) renderCharts();
+            }
+        });
+
+         // Or render on page load if dashboard is the default
+         if (document.getElementById('dashboard').classList.contains('active')) {
+             renderCharts();
+         }
+
+
+        // Chart Controls (Conversion Rate Chart)
+        const chart1TypeSelect = document.getElementById('chart1-type');
+        const chart1ColorInput = document.getElementById('chart1-color');
+        const chart1FontSizeInput = document.getElementById('chart1-font-size');
+
+        chart1TypeSelect.addEventListener('change', (e) => {
+            if (conversionChart) {
+                conversionChart.config.type = e.target.value;
+                conversionChart.update();
+            }
+        });
+
+        chart1ColorInput.addEventListener('input', (e) => { // Use input for real-time update
+             if (conversionChart) {
+                conversionChart.config.data.datasets[0].borderColor = e.target.value;
+                conversionChart.config.data.datasets[0].backgroundColor = e.target.value.replace('rgb(', 'rgba(').replace(')', ', 0.1)'); // Simple alpha change
+                conversionChart.update();
+            }
+        });
+
+         chart1FontSizeInput.addEventListener('change', (e) => {
+            const newSize = parseInt(e.target.value);
+            if (conversionChart && !isNaN(newSize)) {
+                const updateFont = (obj) => obj?.font && (obj.font.size = newSize);
+                updateFont(conversionChart.options.scales?.y?.ticks);
+                updateFont(conversionChart.options.scales?.x?.ticks);
+                conversionChart.update();
+            }
+        });
+
+        // Chart Controls (Distribution Chart)
+        const chart2TypeSelect = document.getElementById('chart2-type');
+        const chart2FontSizeInput = document.getElementById('chart2-font-size');
+
+         chart2TypeSelect.addEventListener('change', (e) => {
+            if (distributionChart) {
+                distributionChart.config.type = e.target.value;
+                distributionChart.update();
+            }
+        });
+
+         chart2FontSizeInput.addEventListener('change', (e) => {
+            const newSize = parseInt(e.target.value);
+            if (distributionChart && !isNaN(newSize)) {
+                const updateFont = (obj) => obj?.font && (obj.font.size = newSize);
+                updateFont(distributionChart.options.plugins.legend.labels);
+                distributionChart.update();
+            }
+        });
+
+
+         // --- Basic Form Validation (Example for Strategy Step 2) ---
+         function validateStrategyStep2() {
+             const isValid = strategyNameInput.value.trim() !== '' && dataSourceSelect.value !== '';
+             nextStep2Btn.disabled = !isValid;
+         }
+
+         strategyNameInput.addEventListener('input', validateStrategyStep2);
+         dataSourceSelect.addEventListener('change', validateStrategyStep2);
+
+         // Initial validation check
+         validateStrategyStep2();
+
+
+         // --- Toast Notification Placeholder ---
+         // In a real app, you'd add a toast container and functions to show/hide toasts
+         function showToast(message, type = 'info') {
+             console.log(`Toast (${type}): ${message}`); // Placeholder
+             // Example: Add a div to the body, style it, show, then hide after a few seconds
+         }
+
+         // Example usage (replace alert in save/test functions)
+         // alert('Strategy saved!') -> showToast('Strategy "'+ strategyNameInput.value +'" saved successfully!', 'success');
+         // alert('Please fill in all fields.') -> showToast('Please fill in all required fields.', 'warning');
+
+    </script>
+
+</body>
+</html>

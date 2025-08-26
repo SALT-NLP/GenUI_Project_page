@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Traffic Analytics Dashboard</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #4895ef;
+            --secondary: #3f37c9;
+            --success: #4cc9f0;
+            --danger: #f72585;
+            --warning: #f8961e;
+            --info: #4895ef;
+            --dark: #1e293b;
+            --light: #f8f9fa;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-400: #ced4da;
+            --gray-500: #adb5bd;
+            --gray-600: #6c757d;
+            --gray-700: #495057;
+            --gray-800: #343a40;
+            --gray-900: #212529;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f5f7fa;
+            color: var(--gray-800);
+            line-height: 1.5;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+            padding: 24px;
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        @media (min-width: 992px) {
+            .dashboard {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            grid-column: 1 / -1;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .date-range {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .date-input {
+            display: flex;
+            align-items: center;
+            background-color: white;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--border-radius);
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .date-input:hover {
+            border-color: var(--primary);
+        }
+
+        .date-input span {
+            margin-right: 8px;
+            color: var(--gray-600);
+        }
+
+        .card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 24px;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background-color: var(--gray-100);
+            color: var(--gray-600);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-icon:hover {
+            background-color: var(--gray-200);
+            color: var(--gray-800);
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            grid-column: 1 / -1;
+        }
+
+        .metric-card {
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+        }
+
+        .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: var(--gray-900);
+        }
+
+        .metric-label {
+            font-size: 14px;
+            color: var(--gray-600);
+        }
+
+        .metric-change {
+            display: flex;
+            align-items: center;
+            margin-top: 8px;
+            font-size: 12px;
+        }
+
+        .metric-change.positive {
+            color: #10b981;
+        }
+
+        .metric-change.negative {
+            color: #ef4444;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 16px;
+        }
+
+        .visitors-chart {
+            grid-column: 1 / -1;
+        }
+
+        .sources-chart {
+            grid-column: span 1;
+        }
+
+        @media (max-width: 991px) {
+            .sources-chart {
+                grid-column: 1 / -1;
+            }
+        }
+
+        .pages-chart {
+            grid-column: span 2;
+        }
+
+        @media (max-width: 991px) {
+            .pages-chart {
+                grid-column: 1 / -1;
+            }
+        }
+
+        .data-table {
+            grid-column: 1 / -1;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        th {
+            font-weight: 600;
+            color: var(--gray-700);
+            background-color: var(--gray-100);
+        }
+
+        tr:hover {
+            background-color: var(--gray-50);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-top: 16px;
+            gap: 8px;
+        }
+
+        .page-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--gray-300);
+            background-color: white;
+            color: var(--gray-700);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .page-btn:hover {
+            background-color: var(--gray-100);
+        }
+
+        .page-btn.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .floating-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 12px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            display: none;
+            z-index: 10;
+        }
+
+        .floating-controls.active {
+            display: block;
+        }
+
+        .control-group {
+            margin-bottom: 12px;
+        }
+
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 12px;
+            color: var(--gray-700);
+        }
+
+        .control-group select,
+        .control-group input {
+            width: 100%;
+            padding: 6px 8px;
+            border-radius: 4px;
+            border: 1px solid var(--gray-300);
+            font-size: 14px;
+        }
+
+        .device-distribution {
+            grid-column: span 1;
+        }
+
+        @media (max-width: 991px) {
+            .device-distribution {
+                grid-column: 1 / -1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>Website Traffic Analytics</h1>
+            <div class="date-range">
+                <div class="date-input">
+                    <span class="material-symbols-rounded">calendar_today</span>
+                    <span id="date-range-text">Last 30 days</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="metrics">
+            <div class="card metric-card">
+                <div class="metric-value">45,782</div>
+                <div class="metric-label">Total Visitors</div>
+                <div class="metric-change positive">
+                    <span class="material-symbols-rounded">trending_up</span>
+                    12.3% vs previous period
+                </div>
+            </div>
+            <div class="card metric-card">
+                <div class="metric-value">2:45</div>
+                <div class="metric-label">Avg. Session Duration</div>
+                <div class="metric-change positive">
+                    <span class="material-symbols-rounded">trending_up</span>
+                    5.7% vs previous period
+                </div>
+            </div>
+            <div class="card metric-card">
+                <div class="metric-value">3.8</div>
+                <div class="metric-label">Pages per Session</div>
+                <div class="metric-change negative">
+                    <span class="material-symbols-rounded">trending_down</span>
+                    2.1% vs previous period
+                </div>
+            </div>
+            <div class="card metric-card">
+                <div class="metric-value">42.7%</div>
+                <div class="metric-label">Bounce Rate</div>
+                <div class="metric-change negative">
+                    <span class="material-symbols-rounded">trending_down</span>
+                    1.5% vs previous period
+                </div>
+            </div>
+        </div>
+
+        <div class="card visitors-chart">
+            <div class="card-header">
+                <h2 class="card-title">Visitors Over Time</h2>
+                <div class="card-actions">
+                    <button class="btn-icon" id="toggle-visitors-controls">
+                        <span class="material-symbols-rounded">tune</span>
+                    </button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="visitorsChart"></canvas>
+                <div class="floating-controls" id="visitors-controls">
+                    <div class="control-group">
+                        <label for="visitors-chart-type">Chart Type</label>
+                        <select id="visitors-chart-type">
+                            <option value="line">Line</option>
+                            <option value="bar">Bar</option>
+                            <option value="area">Area</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="visitors-data-granularity">Data Granularity</label>
+                        <select id="visitors-data-granularity">
+                            <option value="day">Daily</option>
+                            <option value="week">Weekly</option>
+                            <option value="month">Monthly</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="visitors-line-color">Line Color</label>
+                        <input type="color" id="visitors-line-color" value="#4361ee">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card sources-chart">
+            <div class="card-header">
+                <h2 class="card-title">Traffic Sources</h2>
+                <div class="card-actions">
+                    <button class="btn-icon" id="toggle-sources-controls">
+                        <span class="material-symbols-rounded">tune</span>
+                    </button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="sourcesChart"></canvas>
+                <div class="floating-controls" id="sources-controls">
+                    <div class="control-group">
+                        <label for="sources-chart-type">Chart Type</label>
+                        <select id="sources-chart-type">
+                            <option value="pie">Pie</option>
+                            <option value="doughnut">Doughnut</option>
+                            <option value="polarArea">Polar Area</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Show Labels</label>
+                        <input type="checkbox" id="sources-show-labels" checked>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card device-distribution">
+            <div class="card-header">
+                <h2 class="card-title">Device Distribution</h2>
+                <div class="card-actions">
+                    <button class="btn-icon" id="toggle-devices-controls">
+                        <span class="material-symbols-rounded">tune</span>
+                    </button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="devicesChart"></canvas>
+                <div class="floating-controls" id="devices-controls">
+                    <div class="control-group">
+                        <label for="devices-chart-type">Chart Type</label>
+                        <select id="devices-chart-type">
+                            <option value="doughnut">Doughnut</option>
+                            <option value="pie">Pie</option>
+                            <option value="bar">Bar</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Show Percentage</label>
+                        <input type="checkbox" id="devices-show-percentage" checked>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card pages-chart">
+            <div class="card-header">
+                <h2 class="card-title">Top Pages</h2>
+                <div class="card-actions">
+                    <button class="btn-icon" id="toggle-pages-controls">
+                        <span class="material-symbols-rounded">tune</span>
+                    </button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="pagesChart"></canvas>
+                <div class="floating-controls" id="pages-controls">
+                    <div class="control-group">
+                        <label for="pages-chart-type">Chart Type</label>
+                        <select id="pages-chart-type">
+                            <option value="bar">Bar</option>
+                            <option value="horizontalBar">Horizontal Bar</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="pages-limit">Number of Pages</label>
+                        <select id="pages-limit">
+                            <option value="5">5</option>
+                            <option value="10" selected>10</option>
+                            <option value="15">15</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="pages-bar-color">Bar Color</label>
+                        <input type="color" id="pages-bar-color" value="#4cc9f0">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card data-table">
+            <div class="card-header">
+                <h2 class="card-title">Detailed Traffic Data</h2>
+                <div class="card-actions">
+                    <button class="btn-icon" id="export-table">
+                        <span class="material-symbols-rounded">download</span>
+                    </button>
+                </div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Page</th>
+                        <th>Visitors</th>
+                        <th>Unique Visitors</th>
+                        <th>Bounce Rate</th>
+                        <th>Avg. Time on Page</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>/home</td>
+                        <td>12,543</td>
+                        <td>10,234</td>
+                        <td>32.5%</td>
+                        <td>2:15</td>
+                    </tr>
+                    <tr>
+                        <td>/products</td>
+                        <td>8,721</td>
+                        <td>7,123</td>
+                        <td>28.7%</td>
+                        <td>3:42</td>
+                    </tr>
+                    <tr>
+                        <td>/blog</td>
+                        <td>6,432</td>
+                        <td>5,876</td>
+                        <td>45.2%</td>
+                        <td>4:12</td>
+                    </tr>
+                    <tr>
+                        <td>/about</td>
+                        <td>4,321</td>
+                        <td>4,012</td>
+                        <td>51.8%</td>
+                        <td>1:45</td>
+                    </tr>
+                    <tr>
+                        <td>/contact</td>
+                        <td>3,876</td>
+                        <td>3,654</td>
+                        <td>38.4%</td>
+                        <td>2:32</td>
+                    </tr>
+                    <tr>
+                        <td>/services</td>
+                        <td>3,542</td>
+                        <td>3,123</td>
+                        <td>42.1%</td>
+                        <td>2:56</td>
+                    </tr>
+                    <tr>
+                        <td>/blog/article-1</td>
+                        <td>2,987</td>
+                        <td>2,765</td>
+                        <td>35.6%</td>
+                        <td>5:23</td>
+                    </tr>
+                    <tr>
+                        <td>/products/category-1</td>
+                        <td>2,654</td>
+                        <td>2,432</td>
+                        <td>29.8%</td>
+                        <td>3:12</td>
+                    </tr>
+                    <tr>
+                        <td>/blog/article-2</td>
+                        <td>2,321</td>
+                        <td>2,154</td>
+                        <td>40.2%</td>
+                        <td>4:45</td>
+                    </tr>
+                    <tr>
+                        <td>/products/category-2</td>
+                        <td>1,987</td>
+                        <td>1,876</td>
+                        <td>31.5%</td>
+                        <td>2:54</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="pagination">
+                <button class="page-btn">
+                    <span class="material-symbols-rounded">chevron_left</span>
+                </button>
+                <button class="page-btn active">1</button>
+                <button class="page-btn">2</button>
+                <button class="page-btn">3</button>
+                <button class="page-btn">
+                    <span class="material-symbols-rounded">chevron_right</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        // Configure Chart.js defaults
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = '#6c757d';
+        Chart.defaults.responsive = true;
+        Chart.defaults.maintainAspectRatio = false;
+
+        // Visitors Chart
+        const visitorsChartCtx = document.getElementById('visitorsChart').getContext('2d');
+        const visitorsChartData = {
+            labels: ['Jan 1', 'Jan 2', 'Jan 3', 'Jan 4', 'Jan 5', 'Jan 6', 'Jan 7', 'Jan 8', 'Jan 9', 'Jan 10', 
+                    'Jan 11', 'Jan 12', 'Jan 13', 'Jan 14', 'Jan 15', 'Jan 16', 'Jan 17', 'Jan 18', 'Jan 19', 'Jan 20',
+                    'Jan 21', 'Jan 22', 'Jan 23', 'Jan 24', 'Jan 25', 'Jan 26', 'Jan 27', 'Jan 28', 'Jan 29', 'Jan 30'],
+            datasets: [{
+                label: 'Visitors',
+                data: [1200, 1350, 1250, 1420, 1500, 1350, 1300, 1450, 1700, 1800, 
+                      1750, 1650, 1550, 1700, 1850, 1950, 1850, 1750, 1900, 2050,
+                      1950, 1850, 1750, 1900, 2100, 2200, 2150, 2050, 2300, 2450],
+                borderColor: '#4361ee',
+                backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        };
+        const visitorsChart = new Chart(visitorsChartCtx, {
+            type: 'line',
+            data: visitorsChartData,
+            options: {
+                plugins: {
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        titleColor: '#212529',
+                        bodyColor: '#495057',
+                        borderColor: '#dee2e6',
+                        borderWidth: 1,
+                        padding: 12,
+                        boxPadding: 6,
+                        usePointStyle: true,
+                        callbacks: {
+                            label: function(context) {
+                                return `Visitors: ${context.raw.toLocaleString()}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            maxRotation: 0,
+                            autoSkip: true,
+                            maxTicksLimit: 10
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            borderDash: [2, 2]
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value >= 1000 ? (value / 1000) + 'k' : value;
+                            }
+                        }
+                    }
+                },
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                onClick: function() {
+                    document.getElementById('visitors-controls').classList.toggle('active');
+                }
+            }
+        });
+
+        // Traffic Sources Chart
+        const sourcesChartCtx = document.getElementById('sourcesChart').getContext('2d');
+        const sourcesChartData = {
+            labels: ['Organic Search', 'Direct', 'Social Media', 'Referral', 'Email', 'Other'],
+            datasets: [{
+                data: [45, 25, 15, 10, 3, 2],
+                backgroundColor: [
+                    '#4361ee', '#4895ef', '#4cc9f0', '#3f37c9', '#f72585', '#f8961e'
+                ],
+                borderWidth: 0
+            }]
+        };
+        const sourcesChart = new Chart(sourcesChartCtx, {
+            type: 'doughnut',
+            data: sourcesChartData,
+            options: {
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.label}: ${context.raw}%`;
+                            }
+                        }
+                    }
+                },
+                cutout: '65%',
+                onClick: function() {
+                    document.getElementById('sources-controls').classList.toggle('active');
+                }
+            }
+        });
+
+        // Devices Chart
+        const devicesChartCtx = document.getElementById('devicesChart').getContext('2d');
+        const devicesChartData = {
+            labels: ['Desktop', 'Mobile', 'Tablet'],
+            datasets: [{
+                data: [55, 40, 5],
+                backgroundColor: [
+                    '#4361ee', '#4cc9f0', '#f72585'
+                ],
+                borderWidth: 0
+            }]
+        };
+        const devicesChart = new Chart(devicesChartCtx, {
+            type: 'doughnut',
+            data: devicesChartData,
+            options: {
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.label}: ${context.raw}%`;
+                            }
+                        }
+                    }
+                },
+                cutout: '65%',
+                onClick: function() {
+                    document.getElementById('devices-controls').classList.toggle('active');
+                }
+            }
+        });
+
+        // Top Pages Chart
+        const pagesChartCtx = document.getElementById('pagesChart').getContext('2d');
+        const pagesChartData = {
+            labels: ['/home', '/products', '/blog', '/about', '/contact', '/services', '/blog/article-1', '/products/category-1', '/blog/article-2', '/products/category-2'],
+            datasets: [{
+                label: 'Page Views',
+                data: [12543, 8721, 6432, 4321, 3876, 3542, 2987, 2654, 2321, 1987],
+                backgroundColor: '#4cc9f0',
+                borderWidth: 0,
+                borderRadius: 4
+            }]
+        };
+        const pagesChart = new Chart(pagesChartCtx, {
+            type: 'bar',
+            data: pagesChartData,
+            options: {
+                indexAxis: 'y',
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Views: ${context.raw.toLocaleString()}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value >= 1000 ? (value / 1000) + 'k' : value;
+                            }
+                        }
+                    },
+                    y: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                onClick: function() {
+                    document.getElementById('pages-controls').classList.toggle('active');
+                }
+            }
+        });
+
+        // Control panel toggle buttons
+        document.getElementById('toggle-visitors-controls').addEventListener('click', function() {
+            document.getElementById('visitors-controls').classList.toggle('active');
+        });
+
+        document.getElementById('toggle-sources-controls').addEventListener('click', function() {
+            document.getElementById('sources-controls').classList.toggle('active');
+        });
+
+        document.getElementById('toggle-devices-controls').addEventListener('click', function() {
+            document.getElementById('devices-controls').classList.toggle('active');
+        });
+
+        document.getElementById('toggle-pages-controls').addEventListener('click', function() {
+            document.getElementById('pages-controls').classList.toggle('active');
+        });
+
+        // Visitors chart controls
+        document.getElementById('visitors-chart-type').addEventListener('change', function(e) {
+            const chartType = e.target.value;
+            visitorsChart.config.type = chartType;
+            
+            if (chartType === 'line') {
+                visitorsChart.data.datasets[0].tension = 0.4;
+                visitorsChart.data.datasets[0].fill = true;
+            } else if (chartType === 'bar') {
+                visitorsChart.data.datasets[0].tension = 0;
+                visitorsChart.data.datasets[0].fill = false;
+            } else if (chartType === 'area') {
+                visitorsChart.config.type = 'line';
+                visitorsChart.data.datasets[0].tension = 0.4;
+                visitorsChart.data.datasets[0].fill = true;
+            }
+            
+            visitorsChart.update();
+        });
+
+        document.getElementById('visitors-data-granularity').addEventListener('change', function(e) {
+            const granularity = e.target.value;
+            let labels = [];
+            let data = [];
+            
+            if (granularity === 'day') {
+                labels = ['Jan 1', 'Jan 2', 'Jan 3', 'Jan 4', 'Jan 5', 'Jan 6', 'Jan 7', 'Jan 8', 'Jan 9', 'Jan 10', 
+                        'Jan 11', 'Jan 12', 'Jan 13', 'Jan 14', 'Jan 15', 'Jan 16', 'Jan 17', 'Jan 18', 'Jan 19', 'Jan 20',
+                        'Jan 21', 'Jan 22', 'Jan 23', 'Jan 24', 'Jan 25', 'Jan 26', 'Jan 27', 'Jan 28', 'Jan 29', 'Jan 30'];
+                data = [1200, 1350, 1250, 1420, 1500, 1350, 1300, 1450, 1700, 1800, 
+                      1750, 1650, 1550, 1700, 1850, 1950, 1850, 1750, 1900, 2050,
+                      1950, 1850, 1750, 1900, 2100, 2200, 2150, 2050, 2300, 2450];
+            } else if (granularity === 'week') {
+                labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+                data = [8370, 11950, 13350, 12150];
+            } else if (granularity === 'month') {
+                labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+                data = [45820, 52340, 48750, 51200, 54300, 58100];
+            }
+            
+            visitorsChart.data.labels = labels;
+            visitorsChart.data.datasets[0].data = data;
+            visitorsChart.update();
+        });
+
+        document.getElementById('visitors-line-color').addEventListener('change', function(e) {
+            const color = e.target.value;
+            visitorsChart.data.datasets[0].borderColor = color;
+            visitorsChart.data.datasets[0].backgroundColor = `${color}1A`; // 10% opacity
+            visitorsChart.update();
+        });
+
+        // Sources chart controls
+        document.getElementById('sources-chart-type').addEventListener('change', function(e) {
+            sourcesChart.config.type = e.target.value;
+            sourcesChart.update();
+        });
+
+        document.getElementById('sources-show-labels').addEventListener('change', function(e) {
+            sourcesChart.options.plugins.legend.display = e.target.checked;
+            sourcesChart.update();
+        });
+
+        // Devices chart controls
+        document.getElementById('devices-chart-type').addEventListener('change', function(e) {
+            devicesChart.config.type = e.target.value;
+            devicesChart.update();
+        });
+
+        document.getElementById('devices-show-percentage').addEventListener('change', function(e) {
+            devicesChart.options.plugins.tooltip.enabled = e.target.checked;
+            devicesChart.update();
+        });
+
+        // Pages chart controls
+        document.getElementById('pages-chart-type').addEventListener('change', function(e) {
+            const chartType = e.target.value;
+            if (chartType === 'horizontalBar') {
+                pagesChart.options.indexAxis = 'y';
+            } else {
+                pagesChart.options.indexAxis = 'x';
+            }
+            pagesChart.update();
+        });
+
+        document.getElementById('pages-limit').addEventListener('change', function(e) {
+            const limit = parseInt(e.target.value);
+            const allLabels = ['/home', '/products', '/blog', '/about', '/contact', '/services', '/blog/article-1', '/products/category-1', '/blog/article-2', '/products/category-2', '/faq', '/terms', '/privacy', '/blog/article-3', '/products/category-3'];
+            const allData = [12543, 8721, 6432, 4321, 3876, 3542, 2987, 2654, 2321, 1987, 1854, 1765, 1654, 1543, 1432];
+            
+            pagesChart.data.labels = allLabels.slice(0, limit);
+            pagesChart.data.datasets[0].data = allData.slice(0, limit);
+            pagesChart.update();
+        });
+
+        document.getElementById('pages-bar-color').addEventListener('change', function(e) {
+            pagesChart.data.datasets[0].backgroundColor = e.target.value;
+            pagesChart.update();
+        });
+
+        // Date range picker functionality
+        document.querySelector('.date-input').addEventListener('click', function() {
+            // In a real implementation, this would open a date picker
+            const dateOptions = ['Last 7 days', 'Last 30 days', 'Last 90 days', 'Year to date', 'Custom range'];
+            const currentText = document.getElementById('date-range-text').textContent;
+            const currentIndex = dateOptions.indexOf(currentText);
+            const nextIndex = (currentIndex + 1) % dateOptions.length;
+            document.getElementById('date-range-text').textContent = dateOptions[nextIndex];
+        });
+
+        // Export table functionality
+        document.getElementById('export-table').addEventListener('click', function() {
+            alert('Table data would be exported to CSV in a real implementation');
+        });
+
+        // Pagination functionality
+        document.querySelectorAll('.pagination .page-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                if (!this.classList.contains('active') && !this.querySelector('.material-symbols-rounded')) {
+                    document.querySelector('.pagination .active').classList.remove('active');
+                    this.classList.add('active');
+                }
+            });
+        });
+
+        // Close control panels when clicking outside
+        document.addEventListener('click', function(e) {
+            const controls = document.querySelectorAll('.floating-controls');
+            controls.forEach(control => {
+                const isClickInside = control.contains(e.target);
+                const isClickOnToggle = e.target.closest('.btn-icon');
+                if (!isClickInside && !isClickOnToggle && control.classList.contains('active')) {
+                    control.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

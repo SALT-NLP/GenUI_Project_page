@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Traffic Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --white-color: #ffffff;
+            --border-color: #dee2e6;
+            --card-background: var(--white-color);
+            --text-color: var(--dark-color);
+            --text-secondary-color: var(--secondary-color);
+            --hover-color: #e9ecef;
+            --active-color: #0056b3;
+            --chart-tooltip-bg: rgba(0, 0, 0, 0.8);
+            --chart-tooltip-text: var(--white-color);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--light-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        header {
+            background-color: var(--white-color);
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8em;
+            color: var(--primary-color);
+        }
+
+        nav ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            gap: 20px;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: var(--text-secondary-color);
+            font-weight: 600;
+            padding: 5px 0;
+            transition: color 0.3s ease;
+        }
+
+        nav a:hover {
+            color: var(--primary-color);
+        }
+
+        .controls-bar {
+            background-color: var(--white-color);
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .control-group label {
+            font-size: 0.9em;
+            color: var(--text-secondary-color);
+            font-weight: 600;
+        }
+
+        .control-group select,
+        .control-group input[type="date"],
+        .control-group button {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 1em;
+            color: var(--text-color);
+            background-color: var(--white-color);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .control-group select:focus,
+        .control-group input[type="date"]:focus,
+        .control-group button:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            outline: none;
+        }
+
+        .control-group button {
+            cursor: pointer;
+            background-color: var(--primary-color);
+            color: var(--white-color);
+            border-color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .control-group button:hover {
+            background-color: var(--active-color);
+            border-color: var(--active-color);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .metric-card {
+            background-color: var(--card-background);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .metric-card h3 {
+            margin: 0;
+            font-size: 1em;
+            color: var(--text-secondary-color);
+            font-weight: 600;
+        }
+
+        .metric-card .metric-value {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+
+        .metric-card .metric-trend {
+            font-size: 0.9em;
+            color: var(--success-color);
+            font-weight: 600;
+        }
+
+        .metric-card .metric-trend.negative {
+            color: var(--danger-color);
+        }
+
+        .chart-card,
+        .table-card {
+            background-color: var(--card-background);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .chart-card h3,
+        .table-card h3 {
+            margin: 0;
+            font-size: 1.2em;
+            color: var(--text-color);
+            font-weight: 600;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 350px; /* Fixed height for charts */
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .floating-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .floating-controls .control-group {
+            flex-direction: row;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .floating-controls label {
+            white-space: nowrap;
+        }
+
+        .floating-controls select,
+        .floating-controls input[type="color"] {
+            padding: 6px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            background-color: var(--light-color);
+            font-weight: 600;
+            color: var(--text-secondary-color);
+            cursor: pointer;
+        }
+
+        .data-table tbody tr:nth-child(even) {
+            background-color: var(--light-color);
+        }
+
+        .data-table tbody tr:hover {
+            background-color: var(--hover-color);
+        }
+
+        .loading-indicator {
+            text-align: center;
+            padding: 20px;
+            font-size: 1.2em;
+            color: var(--text-secondary-color);
+        }
+
+        .export-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 10px 15px;
+            background-color: var(--success-color);
+            color: var(--white-color);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+
+        .export-button:hover {
+            background-color: #218838;
+        }
+
+        .export-button .icon {
+            /* Placeholder for icon */
+            width: 16px;
+            height: 16px;
+            background-color: var(--white-color);
+            -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="black"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>') no-repeat center;
+            mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="black"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>') no-repeat center;
+        }
+
+
+        @media (min-width: 768px) {
+            .dashboard-container {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .metrics-grid {
+                 grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            }
+
+            .chart-card:first-of-type {
+                grid-column: span 2;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .dashboard-container {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+
+             .metrics-grid {
+                 grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+
+            .chart-card:first-of-type {
+                grid-column: span 3;
+            }
+
+            .chart-card,
+            .table-card {
+                 grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-container">
+
+        <header style="grid-column: 1 / -1;">
+            <h1>Traffic Dashboard</h1>
+            <nav>
+                <ul>
+                    <li><a href="#">Overview</a></li>
+                    <li><a href="#">Sources</a></li>
+                    <li><a href="#">Behavior</a></li>
+                    <li><a href="#">Audience</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <div class="controls-bar" style="grid-column: 1 / -1;">
+            <div class="control-group">
+                <label for="dateRange">Date Range:</label>
+                <select id="dateRange">
+                    <option value="today">Today</option>
+                    <option value="last7days">Last 7 Days</option>
+                    <option value="last30days" selected>Last 30 Days</option>
+                    <option value="custom">Custom</option>
+                </select>
+            </div>
+            <div class="control-group" id="customDateRange" style="display: none;">
+                 <label for="startDate">From:</label>
+                 <input type="date" id="startDate">
+                 <label for="endDate">To:</label>
+                 <input type="date" id="endDate">
+            </div>
+             <div class="control-group">
+                 <label for="filterDevice">Device:</label>
+                 <select id="filterDevice">
+                     <option value="">All</option>
+                     <option value="desktop">Desktop</option>
+                     <option value="mobile">Mobile</option>
+                     <option value="tablet">Tablet</option>
+                 </select>
+             </div>
+             <div class="control-group">
+                 <label for="filterCountry">Country:</label>
+                 <select id="filterCountry">
+                     <option value="">All</option>
+                     <option value="usa">USA</option>
+                     <option value="canada">Canada</option>
+                     <option value="uk">UK</option>
+                 </select>
+             </div>
+             <div class="control-group">
+                <button id="applyFilters">Apply Filters</button>
+             </div>
+             <div class="control-group" style="margin-left: auto;">
+                 <button class="export-button">
+                     <span class="icon"></span>
+                     Export Data
+                 </button>
+             </div>
+        </div>
+
+        <div class="metrics-grid" style="grid-column: 1 / -1;">
+            <div class="metric-card">
+                <h3>Total Visitors</h3>
+                <div class="metric-value">15,450</div>
+                <div class="metric-trend">+12% vs last period</div>
+            </div>
+            <div class="metric-card">
+                <h3>Page Views</h3>
+                <div class="metric-value">45,123</div>
+                <div class="metric-trend">+8% vs last period</div>
+            </div>
+            <div class="metric-card">
+                <h3>Bounce Rate</h3>
+                <div class="metric-value">32.5%</div>
+                <div class="metric-trend negative">-5% vs last period</div>
+            </div>
+            <div class="metric-card">
+                <h3>Avg. Session Duration</h3>
+                <div class="metric-value">03:45</div>
+                <div class="metric-trend">+10% vs last period</div>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <h3>Visitors Over Time</h3>
+             <div class="chart-container" id="visitorsChartContainer">
+                <canvas id="visitorsChart"></canvas>
+                 <div class="floating-controls" id="visitorsChartControls">
+                    <div class="control-group">
+                        <label>Line Color</label>
+                        <input type="color" id="visitorsLineColor" value="#007bff">
+                    </div>
+                    <div class="control-group">
+                        <label>Chart Type</label>
+                        <select id="visitorsChartType">
+                            <option value="line">Line</option>
+                            <option value="bar">Bar</option>
+                        </select>
+                    </div>
+                     <div class="control-group">
+                         <label>Font Size</label>
+                         <input type="number" id="visitorsFontSize" value="12" min="8" max="20">
+                     </div>
+                </div>
+             </div>
+        </div>
+
+        <div class="chart-card">
+            <h3>Traffic Sources</h3>
+             <div class="chart-container" id="sourcesChartContainer">
+                <canvas id="sourcesChart"></canvas>
+                 <div class="floating-controls" id="sourcesChartControls">
+                    <div class="control-group">
+                        <label>Chart Type</label>
+                        <select id="sourcesChartType">
+                            <option value="pie">Pie</option>
+                            <option value="doughnut">Doughnut</option>
+                            <option value="bar">Bar</option>
+                        </select>
+                    </div>
+                     <div class="control-group">
+                         <label>Font Size</label>
+                         <input type="number" id="sourcesFontSize" value="12" min="8" max="20">
+                     </div>
+                </div>
+             </div>
+        </div>
+
+         <div class="chart-card">
+            <h3>Top Pages</h3>
+             <div class="chart-container" id="pagesChartContainer">
+                <canvas id="pagesChart"></canvas>
+                 <div class="floating-controls" id="pagesChartControls">
+                    <div class="control-group">
+                        <label>Bar Color</label>
+                        <input type="color" id="pagesBarColor" value="#28a745">
+                    </div>
+                    <div class="control-group">
+                        <label>Chart Type</label>
+                        <select id="pagesChartType">
+                            <option value="bar">Bar</option>
+                            <option value="horizontalBar">Horizontal Bar</option>
+                        </select>
+                    </div>
+                     <div class="control-group">
+                         <label>Font Size</label>
+                         <input type="number" id="pagesFontSize" value="12" min="8" max="20">
+                     </div>
+                </div>
+             </div>
+        </div>
+
+        <div class="table-card" style="grid-column: 1 / -1;">
+            <h3>Detailed Page Views</h3>
+            <div class="loading-indicator" id="pageTableLoading">Loading data...</div>
+            <table class="data-table" id="pageTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Page Path</th>
+                        <th>Page Views</th>
+                        <th>Unique Page Views</th>
+                        <th>Avg. Time on Page</th>
+                        <th>Bounce Rate</th>
+                        <th>Exit Rate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data rows will be inserted here by JS -->
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        // --- Data Simulation ---
+        const simulateTrafficData = (days = 30) => {
+            const labels = [];
+            const visitors = [];
+            const pageViews = [];
+            const now = new Date();
+            for (let i = days - 1; i >= 0; i--) {
+                const date = new Date(now);
+                date.setDate(now.getDate() - i);
+                labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+                visitors.push(Math.floor(Math.random() * 500) + 100);
+                pageViews.push(Math.floor(Math.random() * 1500) + 300);
+            }
+            return { labels, visitors, pageViews };
+        };
+
+        const simulateSourceData = () => {
+            return {
+                labels: ['Direct', 'Referral', 'Organic Search', 'Social'],
+                data: [Math.random() * 3000 + 1000, Math.random() * 1000 + 500, Math.random() * 4000 + 1500, Math.random() * 2000 + 800],
+                colors: ['#007bff', '#ffc107', '#28a745', '#17a2b8']
+            };
+        };
+
+         const simulateTopPagesData = () => {
+            return {
+                labels: ['/', '/products', '/about', '/contact', '/blog/post-1'],
+                data: [Math.random() * 5000 + 1000, Math.random() * 3000 + 500, Math.random() * 1500 + 300, Math.random() * 800 + 200, Math.random() * 1200 + 400],
+            };
+        };
+
+        const simulatePageTableData = (count = 10) => {
+            const data = [];
+            const pages = ['/', '/products', '/about', '/contact', '/blog/post-1', '/services', '/pricing', '/faq', '/terms', '/privacy'];
+            for (let i = 0; i < count; i++) {
+                const views = Math.floor(Math.random() * 5000) + 100;
+                const uniqueViews = Math.floor(views * (0.6 + Math.random() * 0.3));
+                const avgTime = `00:${Math.floor(Math.random() * 5) + 1}:${Math.floor(Math.random() * 59)}`;
+                const bounceRate = (Math.random() * 40 + 20).toFixed(1) + '%';
+                const exitRate = (Math.random() * 30 + 15).toFixed(1) + '%';
+                data.push({
+                    pagePath: pages[i] || `/page-${i+1}`,
+                    pageViews: views,
+                    uniquePageViews: uniqueViews,
+                    avgTimeOnPage: avgTime,
+                    bounceRate: bounceRate,
+                    exitRate: exitRate
+                });
+            }
+             // Sort by page views descending
+            data.sort((a, b) => b.pageViews - a.pageViews);
+            return data;
+        };
+
+
+        // --- Chart Rendering and Controls ---
+
+        let visitorsChart, sourcesChart, pagesChart;
+
+        const renderVisitorsChart = (data) => {
+            const ctx = document.getElementById('visitorsChart').getContext('2d');
+            if (visitorsChart) visitorsChart.destroy();
+            visitorsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            label: 'Visitors',
+                            data: data.visitors,
+                            borderColor: "var('--primary-color')",
+                            backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            pointBackgroundColor: "var('--primary-color')"
+                        },
+                         {
+                            label: 'Page Views',
+                            data: data.pageViews,
+                            borderColor: "var('--success-color')",
+                            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            borderWidth: 2,
+                             pointRadius: 3,
+                             pointBackgroundColor: "var('--success-color')"
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                     onClick: (e) => toggleControls('visitorsChartControls'),
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                font: { size: 12, family: 'Inter' }
+                            }
+                        },
+                         tooltip: {
+                            backgroundColor: "var('--chart-tooltip-bg')",
+                            titleColor: "var('--chart-tooltip-text')",
+                            bodyColor: "var('--chart-tooltip-text')",
+                            borderColor: "var('--border-color')",
+                            borderWidth: 1,
+                            cornerRadius: 4,
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { font: { size: 12, family: 'Inter' } },
+                             grid: { color: "var('--border-color')" }
+                        },
+                        x: {
+                            ticks: { font: { size: 12, family: 'Inter' } },
+                             grid: { color: "var('--border-color')" }
+                        }
+                    }
+                }
+            });
+             setupChartControls('visitorsChart', visitorsChart, 'visitorsChartControls');
+        };
+
+        const renderSourcesChart = (data) => {
+            const ctx = document.getElementById('sourcesChart').getContext('2d');
+            if (sourcesChart) sourcesChart.destroy();
+            sourcesChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        data: data.data,
+                        backgroundColor: data.colors,
+                        borderColor: "var('--white-color')",
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                     onClick: (e) => toggleControls('sourcesChartControls'),
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                             labels: {
+                                font: { size: 12, family: 'Inter' }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: "var('--chart-tooltip-bg')",
+                            titleColor: "var('--chart-tooltip-text')",
+                            bodyColor: "var('--chart-tooltip-text')",
+                            borderColor: "var('--border-color')",
+                            borderWidth: 1,
+                            cornerRadius: 4,
+                        }
+                    }
+                }
+            });
+             setupChartControls('sourcesChart', sourcesChart, 'sourcesChartControls');
+        };
+
+         const renderPagesChart = (data) => {
+            const ctx = document.getElementById('pagesChart').getContext('2d');
+            if (pagesChart) pagesChart.destroy();
+            pagesChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Page Views',
+                        data: data.data,
+                        backgroundColor: "var('--success-color')",
+                        borderColor: "var('--success-color')",
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                     onClick: (e) => toggleControls('pagesChartControls'),
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: "var('--chart-tooltip-bg')",
+                            titleColor: "var('--chart-tooltip-text')",
+                            bodyColor: "var('--chart-tooltip-text')",
+                            borderColor: "var('--border-color')",
+                            borderWidth: 1,
+                            cornerRadius: 4,
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { font: { size: 12, family: 'Inter' } },
+                             grid: { color: "var('--border-color')" }
+                        },
+                        x: {
+                            ticks: { font: { size: 12, family: 'Inter' } },
+                             grid: { color: "var('--border-color')" }
+                        }
+                    }
+                }
+            });
+             setupChartControls('pagesChart', pagesChart, 'pagesChartControls');
+        };
+
+        const renderPageTable = (data) => {
+            const tableBody = document.querySelector('#pageTable tbody');
+            const loadingIndicator = document.getElementById('pageTableLoading');
+            const table = document.getElementById('pageTable');
+
+            loadingIndicator.style.display = 'none';
+            table.style.display = 'table';
+            tableBody.innerHTML = ''; // Clear existing rows
+
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${row.pagePath}</td>
+                    <td>${row.pageViews.toLocaleString()}</td>
+                    <td>${row.uniquePageViews.toLocaleString()}</td>
+                    <td>${row.avgTimeOnPage}</td>
+                    <td>${row.bounceRate}</td>
+                    <td>${row.exitRate}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        };
+
+         const toggleControls = (controlsId) => {
+             const controls = document.getElementById(controlsId);
+             // Hide all other controls first
+             document.querySelectorAll('.floating-controls').forEach(ctrl => {
+                 if (ctrl.id !== controlsId) {
+                     ctrl.classList.remove('active');
+                 }
+             });
+             controls.classList.toggle('active');
+         };
+
+         const setupChartControls = (chartId, chartInstance, controlsId) => {
+             const controls = document.getElementById(controlsId);
+             const chartContainer = document.getElementById(`${chartId}Container`);
+
+             // Close controls when clicking outside the chart or controls
+             document.addEventListener('click', (e) => {
+                 if (!e.target.closest(`#${controlsId}`) && !e.target.closest(`#${chartId}Container`)) {
+                     controls.classList.remove('active');
+                 }
+             });
+
+             // Add event listeners for controls
+             controls.querySelectorAll('input, select').forEach(element => {
+                 element.addEventListener('change', () => updateChartFromControls(chartInstance, controlsId));
+             });
+         };
+
+         const updateChartFromControls = (chartInstance, controlsId) => {
+             const controls = document.getElementById(controlsId);
+
+             // Handle chart type change
+             const chartTypeSelect = controls.querySelector('select[id$="ChartType"]');
+             if (chartTypeSelect) {
+                 chartInstance.config.type = chartTypeSelect.value;
+             }
+
+             // Handle color changes (assuming one dataset for simplicity)
+             const lineColorInput = controls.querySelector('input[id$="LineColor"]');
+             if (lineColorInput && chartInstance.data.datasets.length > 0) {
+                 chartInstance.data.datasets[0].borderColor = lineColorInput.value;
+                 chartInstance.data.datasets[0].backgroundColor = chartInstance.config.type === 'line' ? lineColorInput.value + '1A' : lineColorInput.value; // Add transparency for line fill
+             }
+
+             const barColorInput = controls.querySelector('input[id$="BarColor"]');
+             if (barColorInput && chartInstance.data.datasets.length > 0) {
+                 chartInstance.data.datasets[0].backgroundColor = barColorInput.value;
+                 chartInstance.data.datasets[0].borderColor = barColorInput.value;
+             }
+
+             // Handle font size change
+             const fontSizeInput = controls.querySelector('input[id$="FontSize"]');
+             if (fontSizeInput) {
+                 const newFontSize = parseInt(fontSizeInput.value);
+                 if (!isNaN(newFontSize)) {
+                     const updateFont = (obj) => obj?.font && (obj.font.size = newFontSize);
+                     updateFont(chartInstance.options.plugins.legend?.labels);
+                     updateFont(chartInstance.options.scales?.y?.ticks);
+                     updateFont(chartInstance.options.scales?.x?.ticks);
+                     updateFont(chartInstance.options.plugins.tooltip?.titleFont);
+                     updateFont(chartInstance.options.plugins.tooltip?.bodyFont);
+                 }
+             }
+
+             chartInstance.update();
+         };
+
+
+        // --- Initial Load & Event Listeners ---
+
+        const loadDashboardData = (dateRange, device, country) => {
+            // Simulate data loading delay
+            document.getElementById('pageTableLoading').style.display = 'block';
+            document.getElementById('pageTable').style.display = 'none';
+
+            setTimeout(() => {
+                const trafficData = simulateTrafficData(dateRange === 'last7days' ? 7 : dateRange === 'today' ? 1 : 30);
+                renderVisitorsChart(trafficData);
+
+                const sourceData = simulateSourceData();
+                renderSourcesChart(sourceData);
+
+                const topPagesData = simulateTopPagesData();
+                renderPagesChart(topPagesData);
+
+                const pageTableData = simulatePageTableData();
+                renderPageTable(pageTableData);
+
+                // Update metrics (simple simulation)
+                document.querySelector('.metric-card:nth-child(1) .metric-value').textContent = (Math.random() * 20000 + 5000).toLocaleString();
+                document.querySelector('.metric-card:nth-child(2) .metric-value').textContent = (Math.random() * 60000 + 10000).toLocaleString();
+                 document.querySelector('.metric-card:nth-child(3) .metric-value').textContent = (Math.random() * 20 + 25).toFixed(1) + '%';
+                 document.querySelector('.metric-card:nth-child(4) .metric-value').textContent = `0${Math.floor(Math.random() * 5)}:${Math.floor(Math.random() * 59)}`;
+
+
+            }, 1000); // Simulate 1 second loading
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initial data load (default to last 30 days)
+            loadDashboardData('last30days', '', '');
+
+            // Date range selection logic
+            const dateRangeSelect = document.getElementById('dateRange');
+            const customDateRangeDiv = document.getElementById('customDateRange');
+            dateRangeSelect.addEventListener('change', (event) => {
+                if (event.target.value === 'custom') {
+                    customDateRangeDiv.style.display = 'flex';
+                } else {
+                    customDateRangeDiv.style.display = 'none';
+                }
+            });
+
+            // Apply Filters button
+            document.getElementById('applyFilters').addEventListener('click', () => {
+                const selectedDateRange = dateRangeSelect.value;
+                const selectedDevice = document.getElementById('filterDevice').value;
+                const selectedCountry = document.getElementById('filterCountry').value;
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+
+                // In a real application, you would fetch data based on these filters
+                console.log('Applying Filters:', { selectedDateRange, selectedDevice, selectedCountry, startDate, endDate });
+
+                // Simulate data reload with new filters
+                loadDashboardData(selectedDateRange, selectedDevice, selectedCountry);
+            });
+
+             // Export button (placeholder)
+             document.querySelector('.export-button').addEventListener('click', () => {
+                 alert('Export functionality not implemented.');
+             });
+
+             // Basic table sorting (example for Page Views column)
+             document.querySelector('#pageTable th:nth-child(2)').addEventListener('click', () => {
+                 const table = document.getElementById('pageTable');
+                 const tbody = table.querySelector('tbody');
+                 const rows = Array.from(tbody.querySelectorAll('tr'));
+
+                 const isAscending = table.getAttribute('data-sort-order') !== 'asc';
+                 table.setAttribute('data-sort-order', isAscending ? 'asc' : 'desc');
+
+                 rows.sort((rowA, rowB) => {
+                     const valueA = parseInt(rowA.cells[1].textContent.replace(/,/g, ''));
+                     const valueB = parseInt(rowB.cells[1].textContent.replace(/,/g, ''));
+                     return isAscending ? valueA - valueB : valueB - valueA;
+                 });
+
+                 // Re-append sorted rows
+                 rows.forEach(row => tbody.appendChild(row));
+             });
+
+        });
+
+         // Close controls when clicking outside any chart container or controls
+         document.addEventListener('click', (e) => {
+            if (!e.target.closest('.chart-container') && !e.target.closest('.floating-controls')) {
+                document.querySelectorAll('.floating-controls').forEach(ctrl => {
+                    ctrl.classList.remove('active');
+                });
+            }
+         });
+
+    </script>
+
+</body>
+</html>

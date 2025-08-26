@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Data Dashboard</title>
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4cc9f0;
+            --text-color: #333333;
+            --light-text: #6c757d;
+            --background-color: #f8f9fa;
+            --card-background: #ffffff;
+            --border-color: #e9ecef;
+            --success-color: #4CAF50;
+            --warning-color: #ff9800;
+            --danger-color: #f44336;
+            --chart-colors: #4361ee, #4cc9f0, #3f37c9, #f72585, #7209b7, #560bad, #480ca8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            background-color: var(--card-background);
+            border-right: 1px solid var(--border-color);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            margin-bottom: 30px;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .filter-section {
+            margin-bottom: 25px;
+        }
+
+        .filter-section h3 {
+            font-size: 1rem;
+            margin-bottom: 15px;
+            color: var(--text-color);
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            color: var(--light-text);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .checkbox-group {
+            margin-top: 8px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            margin-right: 8px;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--light-text);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--background-color);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        /* Main Content Styles */
+        .main-content {
+            padding: 20px;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .dashboard-header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .date-display {
+            font-size: 0.9rem;
+            color: var(--light-text);
+        }
+
+        .kpi-cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .kpi-card {
+            background-color: var(--card-background);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .kpi-card h3 {
+            font-size: 0.9rem;
+            color: var(--light-text);
+            margin-bottom: 10px;
+        }
+
+        .kpi-value {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .kpi-trend {
+            display: flex;
+            align-items: center;
+            font-size: 0.8rem;
+        }
+
+        .kpi-trend.positive {
+            color: var(--success-color);
+        }
+
+        .kpi-trend.negative {
+            color: var(--danger-color);
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .chart-card {
+            background-color: var(--card-background);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            position: relative;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .chart-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--background-color);
+            font-weight: 600;
+            color: var(--light-text);
+        }
+
+        tr:hover {
+            background-color: var(--background-color);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 15px;
+            gap: 5px;
+        }
+
+        .page-item {
+            display: inline-block;
+        }
+
+        .page-link {
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-color);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .page-link.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .floating-controls {
+            position: absolute;
+            top: 50px;
+            right: 20px;
+            background: var(--card-background);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            width: 200px;
+        }
+
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .control-group {
+            margin-bottom: 12px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.8rem;
+            color: var(--light-text);
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 1200px) {
+            .kpi-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar with Filters -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Sales Dashboard</h2>
+            </div>
+            
+            <div class="filter-section">
+                <h3>Date Range</h3>
+                <div class="form-group">
+                    <label for="start-date">Start Date</label>
+                    <input type="date" id="start-date" class="form-control" value="2023-01-01">
+                </div>
+                <div class="form-group">
+                    <label for="end-date">End Date</label>
+                    <input type="date" id="end-date" class="form-control" value="2023-12-31">
+                </div>
+            </div>
+            
+            <div class="filter-section">
+                <h3>Product Category</h3>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="category-electronics" checked>
+                        <label for="category-electronics">Electronics</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="category-clothing" checked>
+                        <label for="category-clothing">Clothing</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="category-furniture" checked>
+                        <label for="category-furniture">Furniture</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="category-accessories" checked>
+                        <label for="category-accessories">Accessories</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filter-section">
+                <h3>Region</h3>
+                <div class="form-group">
+                    <select id="region-select" class="form-control">
+                        <option value="all">All Regions</option>
+                        <option value="north">North</option>
+                        <option value="south">South</option>
+                        <option value="east">East</option>
+                        <option value="west">West</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="filter-section">
+                <h3>Sales Channel</h3>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="channel-online" checked>
+                        <label for="channel-online">Online</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="channel-retail" checked>
+                        <label for="channel-retail">Retail Stores</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="channel-distributor" checked>
+                        <label for="channel-distributor">Distributors</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filter-buttons">
+                <button id="apply-filters" class="btn btn-primary">Apply Filters</button>
+                <button id="reset-filters" class="btn btn-outline">Reset</button>
+            </div>
+        </aside>
+        
+        <!-- Main Dashboard Content -->
+        <main class="main-content">
+            <div class="dashboard-header">
+                <h1>Sales Performance Overview</h1>
+                <div class="date-display" id="current-date">December 31, 2023</div>
+            </div>
+            
+            <!-- KPI Cards -->
+            <div class="kpi-cards">
+                <div class="kpi-card">
+                    <h3>Total Revenue</h3>
+                    <div class="kpi-value">$1,458,200</div>
+                    <div class="kpi-trend positive">
+                        ↑ 12.5% vs Previous Period
+                    </div>
+                </div>
+                
+                <div class="kpi-card">
+                    <h3>Units Sold</h3>
+                    <div class="kpi-value">24,583</div>
+                    <div class="kpi-trend positive">
+                        ↑ 8.3% vs Previous Period
+                    </div>
+                </div>
+                
+                <div class="kpi-card">
+                    <h3>Average Order Value</h3>
+                    <div class="kpi-value">$245</div>
+                    <div class="kpi-trend positive">
+                        ↑ 3.7% vs Previous Period
+                    </div>
+                </div>
+                
+                <div class="kpi-card">
+                    <h3>Conversion Rate</h3>
+                    <div class="kpi-value">3.8%</div>
+                    <div class="kpi-trend negative">
+                        ↓ 1.2% vs Previous Period
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Charts Grid -->
+            <div class="chart-grid">
+                <!-- Monthly Sales Trend Chart -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Monthly Sales Trend</h3>
+                        <div class="chart-actions">
+                            <button class="btn btn-outline" id="toggle-monthly-controls">Customize</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="monthlySalesChart"></canvas>
+                        <div class="floating-controls" id="monthly-sales-controls">
+                            <div class="control-group">
+                                <label>Chart Type</label>
+                                <select id="monthly-chart-type" class="form-control">
+                                    <option value="line">Line</option>
+                                    <option value="bar">Bar</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>Line Color</label>
+                                <input type="color" id="monthly-line-color" class="form-control" value="#4361ee">
+                            </div>
+                            <div class="control-group">
+                                <label>Show Data Points</label>
+                                <input type="checkbox" id="monthly-show-points" checked>
+                            </div>
+                        </div>
+                        <div class="loading-overlay" id="monthly-loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sales by Category Chart -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Sales by Category</h3>
+                        <div class="chart-actions">
+                            <button class="btn btn-outline" id="toggle-category-controls">Customize</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="categoryChart"></canvas>
+                        <div class="floating-controls" id="category-controls">
+                            <div class="control-group">
+                                <label>Chart Type</label>
+                                <select id="category-chart-type" class="form-control">
+                                    <option value="pie">Pie</option>
+                                    <option value="doughnut">Doughnut</option>
+                                    <option value="bar">Bar</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>Show Legend</label>
+                                <input type="checkbox" id="category-show-legend" checked>
+                            </div>
+                        </div>
+                        <div class="loading-overlay" id="category-loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Regional Sales Map -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Regional Performance</h3>
+                        <div class="chart-actions">
+                            <button class="btn btn-outline" id="toggle-region-controls">Customize</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="regionChart"></canvas>
+                        <div class="floating-controls" id="region-controls">
+                            <div class="control-group">
+                                <label>Chart Type</label>
+                                <select id="region-chart-type" class="form-control">
+                                    <option value="bar">Bar</option>
+                                    <option value="polarArea">Polar Area</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>Sort By</label>
+                                <select id="region-sort" class="form-control">
+                                    <option value="value">Value</option>
+                                    <option value="alphabetical">Alphabetical</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="loading-overlay" id="region-loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sales Channel Comparison -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Sales Channel Comparison</h3>
+                        <div class="chart-actions">
+                            <button class="btn btn-outline" id="toggle-channel-controls">Customize</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="channelChart"></canvas>
+                        <div class="floating-controls" id="channel-controls">
+                            <div class="control-group">
+                                <label>Chart Type</label>
+                                <select id="channel-chart-type" class="form-control">
+                                    <option value="bar">Bar</option>
+                                    <option value="line">Line</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>Stack Data</label>
+                                <input type="checkbox" id="channel-stack-data">
+                            </div>
+                        </div>
+                        <div class="loading-overlay" id="channel-loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sales Data Table -->
+                <div class="chart-card full-width">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Detailed Sales Data</h3>
+                        <div class="chart-actions">
+                            <button class="btn btn-outline" id="export-data">Export CSV</button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Product</th>
+                                    <th>Category</th>
+                                    <th>Region</th>
+                                    <th>Channel</th>
+                                    <th>Units</th>
+                                    <th>Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sales-table-body">
+                                <!-- Table rows will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="table-pagination">
+                        <div class="page-item">
+                            <a class="page-link active" data-page="1">1</a>
+                        </div>
+                        <div class="page-item">
+                            <a class="page-link" data-page="2">2</a>
+                        </div>
+                        <div class="page-item">
+                            <a class="page-link" data-page="3">3</a>
+                        </div>
+                        <div class="page-item">
+                            <a class="page-link" data-page="next">Next &raquo;</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        // Set current date in the header
+        document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+
+        // Sample data - in a real application, this would come from an API
+        const salesData = {
+            monthlySales: [
+                { month: 'Jan', revenue: 98500, units: 1850 },
+                { month: 'Feb', revenue: 105200, units: 1920 },
+                { month: 'Mar', revenue: 112800, units: 2050 },
+                { month: 'Apr', revenue: 120500, units: 2180 },
+                { month: 'May', revenue: 135600, units: 2340 },
+                { month: 'Jun', revenue: 142300, units: 2420 },
+                { month: 'Jul', revenue: 149800, units: 2510 },
+                { month: 'Aug', revenue: 158200, units: 2630 },
+                { month: 'Sep', revenue: 145600, units: 2480 },
+                { month: 'Oct', revenue: 136900, units: 2350 },
+                { month: 'Nov', revenue: 128400, units: 2240 },
+                { month: 'Dec', revenue: 124400, units: 2180 }
+            ],
+            categorySales: [
+                { category: 'Electronics', revenue: 520400, percentage: 35.7 },
+                { category: 'Clothing', revenue: 380300, percentage: 26.1 },
+                { category: 'Furniture', revenue: 296500, percentage: 20.3 },
+                { category: 'Accessories', revenue: 261000, percentage: 17.9 }
+            ],
+            regionalSales: [
+                { region: 'North', revenue: 385700, growth: 15.2 },
+                { region: 'South', revenue: 312400, growth: 8.7 },
+                { region: 'East', revenue: 428600, growth: 12.4 },
+                { region: 'West', revenue: 331500, growth: 10.1 }
+            ],
+            channelSales: [
+                { channel: 'Online', q1: 142500, q2: 168300, q3: 183400, q4: 154800 },
+                { channel: 'Retail Stores', q1: 98600, q2: 112400, q3: 124700, q4: 108500 },
+                { channel: 'Distributors', q1: 75600, q2: 87900, q3: 95300, q4: 86200 }
+            ],
+            detailedSales: [
+                { date: '2023-12-15', product: 'Laptop Pro', category: 'Electronics', region: 'North', channel: 'Online', units: 42, revenue: 58800 },
+                { date: '2023-12-14', product: 'Wireless Earbuds', category: 'Electronics', region: 'South', channel: 'Retail Stores', units: 85, revenue: 12750 },
+                { date: '2023-12-13', product: 'Winter Jacket', category: 'Clothing', region: 'East', channel: 'Online', units: 63, revenue: 9450 },
+                { date: '2023-12-12', product: 'Office Chair', category: 'Furniture', region: 'West', channel: 'Distributors', units: 28, revenue: 8400 },
+                { date: '2023-12-11', product: 'Smart Watch', category: 'Accessories', region: 'North', channel: 'Online', units: 54, revenue: 16200 },
+                { date: '2023-12-10', product: 'Bluetooth Speaker', category: 'Electronics', region: 'East', channel: 'Retail Stores', units: 37, revenue: 7400 },
+                { date: '2023-12-09', product: 'Dining Table', category: 'Furniture', region: 'South', channel: 'Distributors', units: 12, revenue: 14400 },
+                { date: '2023-12-08', product: 'Designer Bag', category: 'Accessories', region: 'West', channel: 'Retail Stores', units: 23, revenue: 18400 },
+                { date: '2023-12-07', product: 'Desktop Computer', category: 'Electronics', region: 'North', channel: 'Online', units: 19, revenue: 23750 },
+                { date: '2023-12-06', product: 'Summer Dress', category: 'Clothing', region: 'East', channel: 'Online', units: 47, revenue: 5640 }
+            ]
+        };
+
+        // Initialize charts
+        let monthlySalesChart, categoryChart, regionChart, channelChart;
+
+        function initCharts() {
+            // Monthly Sales Trend Chart
+            const monthlySalesCtx = document.getElementById('monthlySalesChart').getContext('2d');
+            monthlySalesChart = new Chart(monthlySalesCtx, {
+                type: 'line',
+                data: {
+                    labels: salesData.monthlySales.map(item => item.month),
+                    datasets: [{
+                        label: 'Revenue ($)',
+                        data: salesData.monthlySales.map(item => item.revenue),
+                        backgroundColor: 'rgba(67, 97, 238, 0.2)',
+                        borderColor: '#4361ee',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        pointBackgroundColor: '#4361ee',
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            titleColor: '#333',
+                            bodyColor: '#666',
+                            borderColor: '#ddd',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    return `Revenue: $${value.toLocaleString()}`;
+                                }
+                            }
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + (value / 1000) + 'k';
+                                }
+                            },
+                            grid: {
+                                drawBorder: false,
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    onClick: function() {
+                        document.getElementById('monthly-sales-controls').classList.toggle('active');
+                    }
+                }
+            });
+
+            // Category Sales Chart
+            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+            categoryChart = new Chart(categoryCtx, {
+                type: 'pie',
+                data: {
+                    labels: salesData.categorySales.map(item => item.category),
+                    datasets: [{
+                        data: salesData.categorySales.map(item => item.revenue),
+                        backgroundColor: [
+                            '#4361ee',
+                            '#4cc9f0',
+                            '#3f37c9',
+                            '#f72585'
+                        ],
+                        borderWidth: 1,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    const percentage = salesData.categorySales[context.dataIndex].percentage;
+                                    return `$${value.toLocaleString()} (${percentage}%)`;
+                                }
+                            }
+                        },
+                        legend: {
+                            position: 'right'
+                        }
+                    },
+                    onClick: function() {
+                        document.getElementById('category-controls').classList.toggle('active');
+                    }
+                }
+            });
+
+            // Regional Sales Chart
+            const regionCtx = document.getElementById('regionChart').getContext('2d');
+            regionChart = new Chart(regionCtx, {
+                type: 'bar',
+                data: {
+                    labels: salesData.regionalSales.map(item => item.region),
+                    datasets: [{
+                        label: 'Revenue',
+                        data: salesData.regionalSales.map(item => item.revenue),
+                        backgroundColor: [
+                            'rgba(67, 97, 238, 0.7)',
+                            'rgba(76, 201, 240, 0.7)',
+                            'rgba(63, 55, 201, 0.7)',
+                            'rgba(247, 37, 133, 0.7)'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    const growth = salesData.regionalSales[context.dataIndex].growth;
+                                    return [
+                                        `Revenue: $${value.toLocaleString()}`,
+                                        `Growth: ${growth}%`
+                                    ];
+                                }
+                            }
+                        },
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + (value / 1000) + 'k';
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    onClick: function() {
+                        document.getElementById('region-controls').classList.toggle('active');
+                    }
+                }
+            });
+
+            // Sales Channel Chart
+            const channelCtx = document.getElementById('channelChart').getContext('2d');
+            channelChart = new Chart(channelCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+                    datasets: salesData.channelSales.map((item, index) => {
+                        const colors = ['#4361ee', '#4cc9f0', '#3f37c9'];
+                        return {
+                            label: item.channel,
+                            data: [item.q1, item.q2, item.q3, item.q4],
+                            backgroundColor: colors[index],
+                            borderWidth: 0
+                        };
+                    })
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + (value / 1000) + 'k';
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    onClick: function() {
+                        document.getElementById('channel-controls').classList.toggle('active');
+                    }
+                }
+            });
+        }
+
+        // Populate sales data table
+        function populateTable() {
+            const tableBody = document.getElementById('sales-table-body');
+            tableBody.innerHTML = '';
+            
+            salesData.detailedSales.forEach(sale => {
+                const row = document.createElement('tr');
+                
+                // Format date
+                const date = new Date(sale.date);
+                const formattedDate = date.toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric' 
+                });
+                
+                // Create table cells
+                row.innerHTML = `
+                    <td>${formattedDate}</td>
+                    <td>${sale.product}</td>
+                    <td>${sale.category}</td>
+                    <td>${sale.region}</td>
+                    <td>${sale.channel}</td>
+                    <td>${sale.units}</td>
+                    <td>$${sale.revenue.toLocaleString()}</td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Function to simulate loading data
+        function simulateLoading(chartId) {
+            const loadingOverlay = document.getElementById(`${chartId}-loading`);
+            loadingOverlay.classList.add('active');
+            
+            setTimeout(() => {
+                loadingOverlay.classList.remove('active');
+            }, 1000);
+        }
+
+        // Initialize all charts and data once the DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize charts with loading simulation
+            simulateLoading('monthly');
+            simulateLoading('category');
+            simulateLoading('region');
+            simulateLoading('channel');
+            
+            setTimeout(() => {
+                initCharts();
+                populateTable();
+                setupEventListeners();
+            }, 1000);
+        });
+
+        // Setup event listeners for chart customization controls
+        function setupEventListeners() {
+            // Monthly Sales Chart controls
+            document.getElementById('toggle-monthly-controls').addEventListener('click', () => {
+                document.getElementById('monthly-sales-controls').classList.toggle('active');
+            });
+            
+            document.getElementById('monthly-chart-type').addEventListener('change', (e) => {
+                monthlySalesChart.config.type = e.target.value;
+                monthlySalesChart.update();
+            });
+            
+            document.getElementById('monthly-line-color').addEventListener('change', (e) => {
+                monthlySalesChart.data.datasets[0].borderColor = e.target.value;
+                monthlySalesChart.data.datasets[0].backgroundColor = `${e.target.value}33`;
+                monthlySalesChart.data.datasets[0].pointBackgroundColor = e.target.value;
+                monthlySalesChart.update();
+            });
+            
+            document.getElementById('monthly-show-points').addEventListener('change', (e) => {
+                monthlySalesChart.data.datasets[0].pointRadius = e.target.checked ? 4 : 0;
+                monthlySalesChart.update();
+            });
+            
+            // Category Chart controls
+            document.getElementById('toggle-category-controls').addEventListener('click', () => {
+                document.getElementById('category-controls').classList.toggle('active');
+            });
+            
+            document.getElementById('category-chart-type').addEventListener('change', (e) => {
+                categoryChart.config.type = e.target.value;
+                categoryChart.update();
+            });
+            
+            document.getElementById('category-show-legend').addEventListener('change', (e) => {
+                categoryChart.options.plugins.legend.display = e.target.checked;
+                categoryChart.update();
+            });
+            
+            // Region Chart controls
+            document.getElementById('toggle-region-controls').addEventListener('click', () => {
+                document.getElementById('region-controls').classList.toggle('active');
+            });
+            
+            document.getElementById('region-chart-type').addEventListener('change', (e) => {
+                regionChart.config.type = e.target.value;
+                regionChart.update();
+            });
+            
+            document.getElementById('region-sort').addEventListener('change', (e) => {
+                const sortBy = e.target.value;
+                const regions = [...salesData.regionalSales];
+                
+                if (sortBy === 'value') {
+                    regions.sort((a, b) => b.revenue - a.revenue);
+                } else {
+                    regions.sort((a, b) => a.region.localeCompare(b.region));
+                }
+                
+                regionChart.data.labels = regions.map(item => item.region);
+                regionChart.data.datasets[0].data = regions.map(item => item.revenue);
+                regionChart.update();
+            });
+            
+            // Channel Chart controls
+            document.getElementById('toggle-channel-controls').addEventListener('click', () => {
+                document.getElementById('channel-controls').classList.toggle('active');
+            });
+            
+            document.getElementById('channel-chart-type').addEventListener('change', (e) => {
+                channelChart.config.type = e.target.value;
+                channelChart.update();
+            });
+            
+            document.getElementById('channel-stack-data').addEventListener('change', (e) => {
+                channelChart.options.scales.x.stacked = e.target.checked;
+                channelChart.options.scales.y.stacked = e.target.checked;
+                channelChart.update();
+            });
+            
+            // Apply filters button
+            document.getElementById('apply-filters').addEventListener('click', () => {
+                simulateLoading('monthly');
+                simulateLoading('category');
+                simulateLoading('region');
+                simulateLoading('channel');
+                
+                // In a real application, this would fetch filtered data from the server
+                setTimeout(() => {
+                    // For demo purposes, we're just refreshing the current charts
+                    initCharts();
+                    populateTable();
+                }, 1000);
+            });
+            
+            // Reset filters button
+            document.getElementById('reset-filters').addEventListener('click', () => {
+                // Reset all filter inputs
+                document.getElementById('start-date').value = '2023-01-01';
+                document.getElementById('end-date').value = '2023-12-31';
+                document.getElementById('region-select').value = 'all';
+                
+                const checkboxes = document.querySelectorAll('.checkbox-item input[type="checkbox"]');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = true;
+                });
+                
+                // Apply the reset filters
+                document.getElementById('apply-filters').click();
+            });
+            
+            // Export data button
+            document.getElementById('export-data').addEventListener('click', () => {
+                // In a real application, this would generate a CSV file
+                alert('Data export functionality would be implemented here.');
+            });
+            
+            // Table pagination
+            document.querySelectorAll('.page-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    document.querySelectorAll('.page-link').forEach(l => l.classList.remove('active'));
+                    e.target.classList.add('active');
+                    
+                    // In a real application, this would fetch the selected page of data
+                    populateTable();
+                });
+            });
+            
+            // Close floating controls when clicking outside
+            document.addEventListener('click', (e) => {
+                const floatingControls = document.querySelectorAll('.floating-controls');
+                floatingControls.forEach(control => {
+                    if (!control.contains(e.target) && 
+                        !e.target.closest('button[id^="toggle-"]') && 
+                        !e.target.closest('canvas')) {
+                        control.classList.remove('active');
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>

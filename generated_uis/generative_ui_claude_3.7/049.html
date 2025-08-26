@@ -1,0 +1,2486 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Data Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #4895ef;
+            --secondary: #3f37c9;
+            --accent: #f72585;
+            --success: #4cc9f0;
+            --warning: #f8961e;
+            --danger: #f94144;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --gray-light: #dee2e6;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --radius: 8px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f5f7fa;
+            color: var(--dark);
+            line-height: 1.6;
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+            width: 100%;
+            position: relative;
+        }
+
+        .sidebar {
+            background-color: white;
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            z-index: 10;
+            transition: transform 0.3s ease;
+            height: 100vh;
+            overflow-y: auto;
+            position: sticky;
+            top: 0;
+            left: 0;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.5rem;
+            margin-left: 0.5rem;
+            color: var(--primary);
+        }
+
+        .filter-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-section h2 {
+            font-size: 1rem;
+            margin-bottom: 0.75rem;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .filter-control {
+            margin-bottom: 1rem;
+        }
+
+        .filter-control label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .filter-control select,
+        .filter-control input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--gray-light);
+            border-radius: var(--radius);
+            font-family: inherit;
+            transition: var(--transition);
+            outline: none;
+        }
+
+        .filter-control select:focus,
+        .filter-control input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+        }
+
+        .filter-control select:hover,
+        .filter-control input:hover {
+            border-color: var(--primary-light);
+        }
+
+        .date-range {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 0.25rem 0;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            margin-right: 0.5rem;
+            width: auto;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+
+        .checkbox-item label {
+            cursor: pointer;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.5s, height 0.5s;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-light);
+            transform: translateY(-2px);
+        }
+
+        .btn:active::after {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.3);
+        }
+
+        .btn-reset {
+            background-color: transparent;
+            color: var(--gray);
+            border: 1px solid var(--gray-light);
+            margin-top: 0.5rem;
+        }
+
+        .btn-reset:hover {
+            background-color: var(--gray-light);
+            color: var(--dark);
+            transform: translateY(-2px);
+        }
+
+        .main-content {
+            padding: 2rem;
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            width: 100%;
+        }
+
+        .dashboard-title h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+
+        .dashboard-title p {
+            color: var(--gray);
+        }
+
+        .dashboard-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .dashboard-actions button {
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .dashboard-actions .btn-export {
+            background-color: var(--secondary);
+        }
+
+        .dashboard-actions .btn-export:hover {
+            background-color: #332db1;
+        }
+
+        .kpi-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            width: 100%;
+        }
+
+        .kpi-card {
+            background-color: white;
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background-color: var(--primary);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .kpi-card:hover::before {
+            opacity: 1;
+        }
+
+        .kpi-title {
+            font-size: 0.875rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .kpi-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .kpi-change {
+            display: flex;
+            align-items: center;
+            font-size: 0.875rem;
+        }
+
+        .kpi-change.positive {
+            color: var(--success);
+        }
+
+        .kpi-change.negative {
+            color: var(--danger);
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .chart-container {
+            background-color: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            position: relative;
+            transition: var(--transition);
+            width: 100%;
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        .chart-container:hover {
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            width: 100%;
+        }
+
+        .chart-title {
+            font-weight: 500;
+        }
+
+        .chart-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chart-action {
+            background: transparent;
+            border: none;
+            color: var(--gray);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+        }
+
+        .chart-action:hover {
+            background-color: var(--gray-light);
+            color: var(--dark);
+        }
+
+        .chart-canvas {
+            height: 300px;
+            position: relative;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .data-table-container {
+            background-color: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            overflow-x: auto;
+            transition: var(--transition);
+            width: 100%;
+        }
+
+        .data-table-container:hover {
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-light);
+            white-space: nowrap;
+        }
+
+        .data-table th {
+            font-weight: 500;
+            color: var(--gray);
+            background-color: #f8f9fa;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .data-table tbody tr {
+            transition: background-color 0.2s;
+        }
+
+        .data-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .data-table-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            width: 100%;
+        }
+
+        .pagination {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .pagination-btn {
+            background-color: transparent;
+            border: 1px solid var(--gray-light);
+            border-radius: var(--radius);
+            padding: 0.5rem 0.75rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .pagination-btn:hover {
+            background-color: var(--gray-light);
+        }
+
+        .pagination-btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+        }
+
+        .pagination-btn.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .floating-controls {
+            position: absolute;
+            top: 50px;
+            right: 20px;
+            background: white;
+            padding: 1rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            z-index: 100;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: var(--transition);
+            pointer-events: none;
+            width: 220px;
+        }
+
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .control-group {
+            margin-bottom: 1rem;
+        }
+
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .control-group select,
+        .control-group input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--gray-light);
+            border-radius: var(--radius);
+            font-family: inherit;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .control-group select:focus,
+        .control-group input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+        }
+
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--gray-light);
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: var(--primary);
+        }
+
+        input:focus+.slider {
+            box-shadow: 0 0 1px var(--primary);
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(20px);
+        }
+
+        .toggle-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Dark Mode */
+        .dark-mode {
+            --primary: #6d9fff;
+            --primary-light: #8cb3ff;
+            --secondary: #7e79ea;
+            --accent: #ff6eb1;
+            --success: #6ce5ff;
+            --warning: #ffb163;
+            --danger: #ff7a7c;
+            --light: #292d31;
+            --dark: #f8f9fa;
+            --gray: #9da5ad;
+            --gray-light: #3d4349;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            background-color: #1a1d21;
+            color: var(--dark);
+        }
+
+        .dark-mode .sidebar,
+        .dark-mode .kpi-card,
+        .dark-mode .chart-container,
+        .dark-mode .data-table-container,
+        .dark-mode .floating-controls {
+            background-color: #292d31;
+            box-shadow: var(--shadow);
+        }
+
+        .dark-mode .data-table th {
+            background-color: #1a1d21;
+        }
+
+        .dark-mode .data-table tbody tr:hover {
+            background-color: #1a1d21;
+        }
+
+        .dark-mode .chart-action:hover {
+            background-color: var(--gray-light);
+        }
+
+        .dark-mode-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .dark-mode .dark-mode-toggle {
+            background-color: #292d31;
+        }
+
+        .dark-mode-toggle span {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .dark-mode .dark-mode-toggle span {
+            color: var(--dark);
+        }
+
+        .keyboard-shortcut {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: 8px;
+            opacity: 0.7;
+            font-size: 0.75rem;
+        }
+
+        .key {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 4px;
+            background-color: var(--gray-light);
+            border-radius: 3px;
+            color: var(--dark);
+        }
+
+        .dark-mode .key {
+            background-color: #3d4349;
+            color: var(--light);
+        }
+
+        /* Accessibility */
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            margin: -1px;
+            padding: 0;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
+
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            padding: 8px 16px;
+            background-color: var(--primary);
+            color: white;
+            z-index: 1001;
+            transition: top 0.3s;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 1024px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                width: 280px;
+                transform: translateX(-100%);
+                z-index: 1010;
+                overflow-y: auto;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .kpi-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .mobile-menu-toggle {
+                display: flex;
+                position: relative;
+                top: 0;
+                left: 0;
+                z-index: 100;
+                margin-bottom: 1rem;
+            }
+
+            .dark-mode .mobile-menu-toggle {
+                background-color: #292d31;
+                color: var(--dark);
+            }
+
+            .main-content {
+                padding: 1.5rem;
+                width: 100%;
+            }
+        }
+
+        @media (min-width: 1025px) {
+            .mobile-menu-toggle {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .kpi-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .dashboard-actions {
+                width: 100%;
+            }
+
+            .dashboard-actions button {
+                flex: 1;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .slide-up {
+            animation: slideUp 0.5s ease-out;
+        }
+
+        /* Loading indicator */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            transition: opacity 0.3s;
+        }
+
+        .dark-mode .loading-overlay {
+            background-color: rgba(26, 29, 33, 0.8);
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(67, 97, 238, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Fix for canvas rendering in charts */
+        canvas {
+            width: 100% !important;
+            max-width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <div class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="dashboard">
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <span class="material-symbols-rounded" style="font-size: 24px; color: var(--primary);">insights</span>
+                <h1>Sales Analytics</h1>
+            </div>
+
+            <div class="filter-section">
+                <h2>Time Period</h2>
+                <div class="filter-control">
+                    <label for="period-select">Select Period</label>
+                    <select id="period-select" aria-label="Time period">
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly" selected>Monthly</option>
+                        <option value="quarterly">Quarterly</option>
+                        <option value="yearly">Yearly</option>
+                    </select>
+                </div>
+                <div class="filter-control">
+                    <label>Custom Date Range</label>
+                    <div class="date-range">
+                        <input type="date" id="date-from" value="2023-01-01" aria-label="Start date">
+                        <input type="date" id="date-to" value="2023-12-31" aria-label="End date">
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <h2>Product Categories</h2>
+                <div class="filter-control">
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="cat-electronics" checked>
+                            <label for="cat-electronics">Electronics</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="cat-clothing" checked>
+                            <label for="cat-clothing">Clothing</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="cat-furniture" checked>
+                            <label for="cat-furniture">Furniture</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="cat-food" checked>
+                            <label for="cat-food">Food & Beverages</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="cat-other" checked>
+                            <label for="cat-other">Other</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <h2>Regions</h2>
+                <div class="filter-control">
+                    <select id="region-select" multiple size="5" aria-label="Regions">
+                        <option value="north" selected>North Region</option>
+                        <option value="south" selected>South Region</option>
+                        <option value="east" selected>East Region</option>
+                        <option value="west" selected>West Region</option>
+                        <option value="central" selected>Central Region</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <h2>Sales Channels</h2>
+                <div class="filter-control">
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="channel-online" checked>
+                            <label for="channel-online">Online</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="channel-retail" checked>
+                            <label for="channel-retail">Retail Stores</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="channel-distributor" checked>
+                            <label for="channel-distributor">Distributors</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button id="apply-filters" class="btn" aria-label="Apply filters">
+                Apply Filters
+                <span class="keyboard-shortcut"><span class="key">Alt</span><span class="key">A</span></span>
+            </button>
+            <button id="reset-filters" class="btn btn-reset" aria-label="Reset filters">
+                Reset Filters
+                <span class="keyboard-shortcut"><span class="key">Alt</span><span class="key">R</span></span>
+            </button>
+        </div>
+
+        <div class="main-content" id="main-content">
+            <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Toggle menu">
+                <span class="material-symbols-rounded">menu</span>
+            </button>
+
+            <div class="dashboard-header fade-in">
+                <div class="dashboard-title">
+                    <h1>Sales Performance Dashboard</h1>
+                    <p>Overview of your company's sales metrics and trends</p>
+                </div>
+                <div class="dashboard-actions">
+                    <button class="btn btn-export" id="export-data" aria-label="Export data">
+                        <span class="material-symbols-rounded">download</span>
+                        Export Data
+                        <span class="keyboard-shortcut"><span class="key">Alt</span><span class="key">E</span></span>
+                    </button>
+                    <button class="btn" id="refresh-data" aria-label="Refresh data">
+                        <span class="material-symbols-rounded">refresh</span>
+                        Refresh
+                        <span class="keyboard-shortcut"><span class="key">F5</span></span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="kpi-cards slide-up">
+                <div class="kpi-card">
+                    <div class="kpi-title">Total Sales</div>
+                    <div class="kpi-value">$1,234,567</div>
+                    <div class="kpi-change positive">
+                        <span class="material-symbols-rounded">trending_up</span>
+                        12.5% vs. Previous Period
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Orders</div>
+                    <div class="kpi-value">8,642</div>
+                    <div class="kpi-change positive">
+                        <span class="material-symbols-rounded">trending_up</span>
+                        8.3% vs. Previous Period
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Average Order Value</div>
+                    <div class="kpi-value">$142.85</div>
+                    <div class="kpi-change positive">
+                        <span class="material-symbols-rounded">trending_up</span>
+                        3.7% vs. Previous Period
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Conversion Rate</div>
+                    <div class="kpi-value">4.8%</div>
+                    <div class="kpi-change negative">
+                        <span class="material-symbols-rounded">trending_down</span>
+                        0.5% vs. Previous Period
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-grid slide-up" style="animation-delay: 0.1s;">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div class="chart-title">Monthly Sales Trend</div>
+                        <div class="chart-actions">
+                            <button class="chart-action" id="sales-trend-settings"
+                                aria-label="Sales trend chart settings">
+                                <span class="material-symbols-rounded">settings</span>
+                            </button>
+                            <button class="chart-action" id="sales-trend-download"
+                                aria-label="Download sales trend chart">
+                                <span class="material-symbols-rounded">download</span>
+                            </button>
+                            <button class="chart-action" id="sales-trend-fullscreen"
+                                aria-label="View sales trend chart in fullscreen">
+                                <span class="material-symbols-rounded">fullscreen</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-canvas">
+                        <canvas id="salesTrendChart"></canvas>
+                        <div class="floating-controls" id="salesTrendControls">
+                            <div class="control-group">
+                                <label for="salesTrendType">Chart Type</label>
+                                <select id="salesTrendType">
+                                    <option value="line">Line Chart</option>
+                                    <option value="bar">Bar Chart</option>
+                                    <option value="area">Area Chart</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label for="salesTrendColor">Line Color</label>
+                                <input type="color" id="salesTrendColor" value="#4361ee">
+                            </div>
+                            <div class="control-group toggle-group">
+                                <label for="salesTrendPoints">Show Data Points</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="salesTrendPoints" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="control-group toggle-group">
+                                <label for="salesTrendAnimation">Enable Animation</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="salesTrendAnimation" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="control-group">
+                                <label for="salesTrendCurve">Line Curve</label>
+                                <select id="salesTrendCurve">
+                                    <option value="0">Linear</option>
+                                    <option value="0.15">Slight</option>
+                                    <option value="0.3" selected>Moderate</option>
+                                    <option value="0.5">Smooth</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div class="chart-title">Sales by Category</div>
+                        <div class="chart-actions">
+                            <button class="chart-action" id="category-settings" aria-label="Category chart settings">
+                                <span class="material-symbols-rounded">settings</span>
+                            </button>
+                            <button class="chart-action" id="category-download" aria-label="Download category chart">
+                                <span class="material-symbols-rounded">download</span>
+                            </button>
+                            <button class="chart-action" id="category-fullscreen"
+                                aria-label="View category chart in fullscreen">
+                                <span class="material-symbols-rounded">fullscreen</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-canvas">
+                        <canvas id="categoryChart"></canvas>
+                        <div class="floating-controls" id="categoryControls">
+                            <div class="control-group">
+                                <label for="categoryChartType">Chart Type</label>
+                                <select id="categoryChartType">
+                                    <option value="doughnut" selected>Doughnut</option>
+                                    <option value="pie">Pie</option>
+                                    <option value="polarArea">Polar Area</option>
+                                </select>
+                            </div>
+                            <div class="control-group toggle-group">
+                                <label for="categoryLegend">Show Legend</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="categoryLegend" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="control-group toggle-group">
+                                <label for="categoryLabels">Show Labels</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="categoryLabels" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="control-group">
+                                <label for="categoryColorScheme">Color Scheme</label>
+                                <select id="categoryColorScheme">
+                                    <option value="default" selected>Default</option>
+                                    <option value="pastel">Pastel</option>
+                                    <option value="bright">Bright</option>
+                                    <option value="cool">Cool</option>
+                                    <option value="warm">Warm</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div class="chart-title">Sales by Region</div>
+                        <div class="chart-actions">
+                            <button class="chart-action" id="region-settings" aria-label="Region chart settings">
+                                <span class="material-symbols-rounded">settings</span>
+                            </button>
+                            <button class="chart-action" id="region-download" aria-label="Download region chart">
+                                <span class="material-symbols-rounded">download</span>
+                            </button>
+                            <button class="chart-action" id="region-fullscreen"
+                                aria-label="View region chart in fullscreen">
+                                <span class="material-symbols-rounded">fullscreen</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-canvas">
+                        <canvas id="regionChart"></canvas>
+                        <div class="floating-controls" id="regionControls">
+                            <div class="control-group">
+                                <label for="regionChartType">Chart Type</label>
+                                <select id="regionChartType">
+                                    <option value="bar" selected>Bar Chart</option>
+                                    <option value="horizontalBar">Horizontal Bar</option>
+                                    <option value="radar">Radar Chart</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label for="regionSort">Sort By</label>
+                                <select id="regionSort">
+                                    <option value="value" selected>Value (Descending)</option>
+                                    <option value="alphabetical">Alphabetical</option>
+                                </select>
+                            </div>
+                            <div class="control-group toggle-group">
+                                <label for="regionShowValues">Show Values</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="regionShowValues" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="control-group">
+                                <label for="regionBarThickness">Bar Thickness</label>
+                                <input type="range" id="regionBarThickness" min="0.5" max="1" step="0.1" value="0.8">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div class="chart-title">Sales by Channel</div>
+                        <div class="chart-actions">
+                            <button class="chart-action" id="channel-settings" aria-label="Channel chart settings">
+                                <span class="material-symbols-rounded">settings</span>
+                            </button>
+                            <button class="chart-action" id="channel-download" aria-label="Download channel chart">
+                                <span class="material-symbols-rounded">download</span>
+                            </button>
+                            <button class="chart-action" id="channel-fullscreen"
+                                aria-label="View channel chart in fullscreen">
+                                <span class="material-symbols-rounded">fullscreen</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-canvas">
+                        <canvas id="channelChart"></canvas>
+                        <div class="floating-controls" id="channelControls">
+                            <div class="control-group">
+                                <label for="channelChartType">Chart Type</label>
+                                <select id="channelChartType">
+                                    <option value="pie" selected>Pie Chart</option>
+                                    <option value="doughnut">Doughnut</option>
+                                    <option value="bar">Bar Chart</option>
+                                </select>
+                            </div>
+                            <div class="control-group toggle-group">
+                                <label for="channelPercentage">Show Percentage</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="channelPercentage" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="control-group toggle-group">
+                                <label for="channelLegend">Show Legend</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="channelLegend" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="control-group">
+                                <label for="channelInnerRadius">Inner Radius (Doughnut)</label>
+                                <input type="range" id="channelInnerRadius" min="0" max="0.9" step="0.1" value="0.5">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="data-table-container slide-up" style="animation-delay: 0.2s;">
+                <div class="chart-header">
+                    <div class="chart-title">Detailed Sales Data</div>
+                    <div class="chart-actions">
+                        <button class="chart-action" id="table-download" aria-label="Download table data">
+                            <span class="material-symbols-rounded">download</span>
+                        </button>
+                        <button class="chart-action" id="table-filter" aria-label="Filter table data">
+                            <span class="material-symbols-rounded">filter_list</span>
+                        </button>
+                        <button class="chart-action" id="table-fullscreen" aria-label="View table in fullscreen">
+                            <span class="material-symbols-rounded">fullscreen</span>
+                        </button>
+                    </div>
+                </div>
+                <div style="max-height: 400px; overflow-y: auto;">
+                    <table class="data-table" aria-label="Sales data table">
+                        <thead>
+                            <tr>
+                                <th role="columnheader" aria-sort="none" tabindex="0">Date</th>
+                                <th role="columnheader" aria-sort="none" tabindex="0">Product</th>
+                                <th role="columnheader" aria-sort="none" tabindex="0">Category</th>
+                                <th role="columnheader" aria-sort="none" tabindex="0">Region</th>
+                                <th role="columnheader" aria-sort="none" tabindex="0">Channel</th>
+                                <th role="columnheader" aria-sort="none" tabindex="0">Quantity</th>
+                                <th role="columnheader" aria-sort="none" tabindex="0">Sales Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2023-12-10</td>
+                                <td>Smartphone X</td>
+                                <td>Electronics</td>
+                                <td>North</td>
+                                <td>Online</td>
+                                <td>24</td>
+                                <td>$19,176.00</td>
+                            </tr>
+                            <tr>
+                                <td>2023-12-09</td>
+                                <td>Designer Jeans</td>
+                                <td>Clothing</td>
+                                <td>South</td>
+                                <td>Retail</td>
+                                <td>56</td>
+                                <td>$4,480.00</td>
+                            </tr>
+                            <tr>
+                                <td>2023-12-08</td>
+                                <td>Office Desk</td>
+                                <td>Furniture</td>
+                                <td>East</td>
+                                <td>Online</td>
+                                <td>12</td>
+                                <td>$8,388.00</td>
+                            </tr>
+                            <tr>
+                                <td>2023-12-07</td>
+                                <td>Premium Coffee</td>
+                                <td>Food & Beverages</td>
+                                <td>West</td>
+                                <td>Distributor</td>
+                                <td>150</td>
+                                <td>$2,250.00</td>
+                            </tr>
+                            <tr>
+                                <td>2023-12-06</td>
+                                <td>Wireless Earbuds</td>
+                                <td>Electronics</td>
+                                <td>Central</td>
+                                <td>Retail</td>
+                                <td>85</td>
+                                <td>$12,750.00</td>
+                            </tr>
+                            <tr>
+                                <td>2023-12-05</td>
+                                <td>Winter Jacket</td>
+                                <td>Clothing</td>
+                                <td>North</td>
+                                <td>Online</td>
+                                <td>32</td>
+                                <td>$6,080.00</td>
+                            </tr>
+                            <tr>
+                                <td>2023-12-04</td>
+                                <td>Dining Table</td>
+                                <td>Furniture</td>
+                                <td>South</td>
+                                <td>Retail</td>
+                                <td>8</td>
+                                <td>$7,992.00</td>
+                            </tr>
+                            <tr>
+                                <td>2023-12-03</td>
+                                <td>Smart Watch</td>
+                                <td>Electronics</td>
+                                <td>East</td>
+                                <td>Online</td>
+                                <td>42</td>
+                                <td>$14,700.00</td>
+                            </tr>
+                            <tr>
+                                <td>2023-12-02</td>
+                                <td>Organic Tea</td>
+                                <td>Food & Beverages</td>
+                                <td>West</td>
+                                <td>Distributor</td>
+                                <td>200</td>
+                                <td>$1,800.00</td>
+                            </tr>
+                            <tr>
+                                <td>2023-12-01</td>
+                                <td>Office Chair</td>
+                                <td>Furniture</td>
+                                <td>Central</td>
+                                <td>Online</td>
+                                <td>18</td>
+                                <td>$5,400.00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="data-table-footer">
+                    <div>Showing 1-10 of 1,234 entries</div>
+                    <div class="pagination" role="navigation" aria-label="Pagination">
+                        <button class="pagination-btn" disabled aria-label="Previous page">Previous</button>
+                        <button class="pagination-btn active" aria-current="page">1</button>
+                        <button class="pagination-btn">2</button>
+                        <button class="pagination-btn">3</button>
+                        <button class="pagination-btn" aria-label="Next page">Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dark-mode-toggle" id="dark-mode-toggle">
+        <span class="material-symbols-rounded" id="theme-icon">dark_mode</span>
+        <span id="theme-text">Dark Mode</span>
+    </div>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        // Chart.js configuration
+        Chart.defaults.font.family = "'Roboto', sans-serif";
+        Chart.defaults.color = "#6c757d";
+        Chart.defaults.responsive = true;
+        Chart.defaults.maintainAspectRatio = false;
+
+        // Original Sample Data - We keep this as a reference for resets
+        const originalData = {
+            months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            salesData: [65000, 59000, 80000, 81000, 56000, 85000, 90000, 78000, 92000, 88000, 95000, 120000],
+
+            categories: ['Electronics', 'Clothing', 'Furniture', 'Food & Beverages', 'Other'],
+            categorySales: [450000, 320000, 280000, 150000, 34567],
+
+            regions: ['North', 'South', 'East', 'West', 'Central'],
+            regionSales: [320000, 280000, 350000, 190000, 94567],
+
+            channels: ['Online', 'Retail Stores', 'Distributors'],
+            channelSales: [650000, 420000, 164567],
+
+            tableData: [
+                {
+                    date: '2023-12-10',
+                    product: 'Smartphone X',
+                    category: 'Electronics',
+                    region: 'North',
+                    channel: 'Online',
+                    quantity: 24,
+                    amount: 19176.00
+                },
+                {
+                    date: '2023-12-09',
+                    product: 'Designer Jeans',
+                    category: 'Clothing',
+                    region: 'South',
+                    channel: 'Retail',
+                    quantity: 56,
+                    amount: 4480.00
+                },
+                {
+                    date: '2023-12-08',
+                    product: 'Office Desk',
+                    category: 'Furniture',
+                    region: 'East',
+                    channel: 'Online',
+                    quantity: 12,
+                    amount: 8388.00
+                },
+                {
+                    date: '2023-12-07',
+                    product: 'Premium Coffee',
+                    category: 'Food & Beverages',
+                    region: 'West',
+                    channel: 'Distributor',
+                    quantity: 150,
+                    amount: 2250.00
+                },
+                {
+                    date: '2023-12-06',
+                    product: 'Wireless Earbuds',
+                    category: 'Electronics',
+                    region: 'Central',
+                    channel: 'Retail',
+                    quantity: 85,
+                    amount: 12750.00
+                },
+                {
+                    date: '2023-12-05',
+                    product: 'Winter Jacket',
+                    category: 'Clothing',
+                    region: 'North',
+                    channel: 'Online',
+                    quantity: 32,
+                    amount: 6080.00
+                },
+                {
+                    date: '2023-12-04',
+                    product: 'Dining Table',
+                    category: 'Furniture',
+                    region: 'South',
+                    channel: 'Retail',
+                    quantity: 8,
+                    amount: 7992.00
+                },
+                {
+                    date: '2023-12-03',
+                    product: 'Smart Watch',
+                    category: 'Electronics',
+                    region: 'East',
+                    channel: 'Online',
+                    quantity: 42,
+                    amount: 14700.00
+                },
+                {
+                    date: '2023-12-02',
+                    product: 'Organic Tea',
+                    category: 'Food & Beverages',
+                    region: 'West',
+                    channel: 'Distributor',
+                    quantity: 200,
+                    amount: 1800.00
+                },
+                {
+                    date: '2023-12-01',
+                    product: 'Office Chair',
+                    category: 'Furniture',
+                    region: 'Central',
+                    channel: 'Online',
+                    quantity: 18,
+                    amount: 5400.00
+                }
+            ]
+        };
+
+        // Working copy of data - this will be filtered
+        let months = [...originalData.months];
+        let salesData = [...originalData.salesData];
+
+        let categories = [...originalData.categories];
+        let categorySales = [...originalData.categorySales];
+        const categoryColors = {
+            default: ['#4361ee', '#3f37c9', '#4cc9f0', '#f72585', '#f8961e'],
+            pastel: ['#a0c4ff', '#bdb2ff', '#ffc6ff', '#ffafcc', '#caffbf'],
+            bright: ['#ff595e', '#ffca3a', '#8ac926', '#1982c4', '#6a4c93'],
+            cool: ['#184e77', '#1a759f', '#34a0a4', '#76c893', '#b5e48c'],
+            warm: ['#d00000', '#e85d04', '#faa307', '#ffba08', '#f48c06']
+        };
+
+        let regions = [...originalData.regions];
+        let regionSales = [...originalData.regionSales];
+        const regionColors = ['#4361ee', '#4895ef', '#4cc9f0', '#3f37c9', '#f72585'];
+
+        let channels = [...originalData.channels];
+        let channelSales = [...originalData.channelSales];
+        const channelColors = ['#4361ee', '#3f37c9', '#f72585'];
+
+        // Working copy of table data
+        let tableData = [...originalData.tableData];
+
+        // Chart instances
+        let salesTrendChart, categoryChart, regionChart, channelChart;
+
+        // Current filter state
+        const filterState = {
+            period: 'monthly',
+            dateFrom: '2023-01-01',
+            dateTo: '2023-12-31',
+            categories: {
+                'Electronics': true,
+                'Clothing': true,
+                'Furniture': true,
+                'Food & Beverages': true,
+                'Other': true
+            },
+            regions: {
+                'North': true,
+                'South': true,
+                'East': true,
+                'West': true,
+                'Central': true
+            },
+            channels: {
+                'Online': true,
+                'Retail': true,
+                'Distributor': true
+            }
+        };
+
+        // Initialize Charts
+        function initCharts() {
+            // Sales Trend Chart
+            const salesTrendCtx = document.getElementById('salesTrendChart').getContext('2d');
+            salesTrendChart = new Chart(salesTrendCtx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Monthly Sales',
+                        data: salesData,
+                        backgroundColor: 'rgba(67, 97, 238, 0.2)',
+                        borderColor: '#4361ee',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#4361ee',
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    return `Sales: $${context.raw.toLocaleString()}`;
+                                }
+                            }
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function (value) {
+                                    return '$' + value / 1000 + 'k';
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Sales Amount ($)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Month'
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeOutQuart'
+                    }
+                }
+            });
+
+            // Category Chart
+            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+            categoryChart = new Chart(categoryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: categories,
+                    datasets: [{
+                        data: categorySales,
+                        backgroundColor: categoryColors.default,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const value = context.raw;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `$${value.toLocaleString()} (${percentage}%)`;
+                                }
+                            }
+                        },
+                        legend: {
+                            position: 'right'
+                        }
+                    },
+                    animation: {
+                        animateRotate: true,
+                        animateScale: true,
+                        duration: 1000,
+                        easing: 'easeOutQuart'
+                    },
+                    cutout: '60%'
+                }
+            });
+
+            // Region Chart
+            const regionCtx = document.getElementById('regionChart').getContext('2d');
+            regionChart = new Chart(regionCtx, {
+                type: 'bar',
+                data: {
+                    labels: regions,
+                    datasets: [{
+                        label: 'Sales by Region',
+                        data: regionSales,
+                        backgroundColor: regionColors,
+                        borderWidth: 1,
+                        barPercentage: 0.8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    return `Sales: $${context.raw.toLocaleString()}`;
+                                }
+                            }
+                        },
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function (value) {
+                                    return '$' + value / 1000 + 'k';
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Sales Amount ($)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Region'
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeOutQuart'
+                    }
+                }
+            });
+
+            // Channel Chart
+            const channelCtx = document.getElementById('channelChart').getContext('2d');
+            channelChart = new Chart(channelCtx, {
+                type: 'pie',
+                data: {
+                    labels: channels,
+                    datasets: [{
+                        data: channelSales,
+                        backgroundColor: channelColors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const value = context.raw;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `$${value.toLocaleString()} (${percentage}%)`;
+                                }
+                            }
+                        },
+                        legend: {
+                            position: 'right'
+                        }
+                    },
+                    animation: {
+                        animateRotate: true,
+                        animateScale: true,
+                        duration: 1000,
+                        easing: 'easeOutQuart'
+                    }
+                }
+            });
+        }
+
+        // Setup Filter Functionality
+        function setupFilters() {
+            const applyFiltersBtn = document.getElementById('apply-filters');
+            const resetFiltersBtn = document.getElementById('reset-filters');
+            const exportDataBtn = document.getElementById('export-data');
+            const refreshDataBtn = document.getElementById('refresh-data');
+            const tableDownloadBtn = document.getElementById('table-download');
+            const tableFilterBtn = document.getElementById('table-filter');
+            const tableFullscreenBtn = document.getElementById('table-fullscreen');
+
+            // Period select
+            const periodSelect = document.getElementById('period-select');
+            periodSelect.addEventListener('change', () => {
+                filterState.period = periodSelect.value;
+            });
+
+            // Date range
+            const dateFrom = document.getElementById('date-from');
+            const dateTo = document.getElementById('date-to');
+            dateFrom.addEventListener('change', () => {
+                filterState.dateFrom = dateFrom.value;
+            });
+            dateTo.addEventListener('change', () => {
+                filterState.dateTo = dateTo.value;
+            });
+
+            // Category checkboxes
+            const categoryCheckboxes = document.querySelectorAll('[id^="cat-"]');
+            categoryCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    const category = checkbox.id.replace('cat-', '');
+                    switch (category) {
+                        case 'electronics':
+                            filterState.categories['Electronics'] = checkbox.checked;
+                            break;
+                        case 'clothing':
+                            filterState.categories['Clothing'] = checkbox.checked;
+                            break;
+                        case 'furniture':
+                            filterState.categories['Furniture'] = checkbox.checked;
+                            break;
+                        case 'food':
+                            filterState.categories['Food & Beverages'] = checkbox.checked;
+                            break;
+                        case 'other':
+                            filterState.categories['Other'] = checkbox.checked;
+                            break;
+                    }
+                });
+            });
+
+            // Region select
+            const regionSelect = document.getElementById('region-select');
+            Array.from(regionSelect.options).forEach(option => {
+                option.addEventListener('change', () => {
+                    filterState.regions[option.textContent.replace(' Region', '')] = option.selected;
+                });
+            });
+
+            // Channel checkboxes
+            const channelCheckboxes = document.querySelectorAll('[id^="channel-"]');
+            channelCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    const channel = checkbox.id.replace('channel-', '');
+                    switch (channel) {
+                        case 'online':
+                            filterState.channels['Online'] = checkbox.checked;
+                            break;
+                        case 'retail':
+                            filterState.channels['Retail'] = checkbox.checked;
+                            break;
+                        case 'distributor':
+                            filterState.channels['Distributor'] = checkbox.checked;
+                            break;
+                    }
+                });
+            });
+
+            // Apply filters
+            applyFiltersBtn.addEventListener('click', () => {
+                showLoading();
+
+                // Apply filters to data
+                setTimeout(() => {
+                    applyFilters();
+                    updateCharts();
+                    updateDataTable();
+                    updateKPICards();
+                    hideLoading();
+                    showNotification('Filters applied successfully!');
+                }, 800);
+            });
+
+            // Reset filters
+            resetFiltersBtn.addEventListener('click', () => {
+                // Reset all filters to default values
+                periodSelect.value = 'monthly';
+                dateFrom.value = '2023-01-01';
+                dateTo.value = '2023-12-31';
+
+                // Reset categories
+                categoryCheckboxes.forEach(checkbox => {
+                    checkbox.checked = true;
+                });
+
+                // Reset regions
+                Array.from(regionSelect.options).forEach(option => {
+                    option.selected = true;
+                });
+
+                // Reset channels
+                channelCheckboxes.forEach(checkbox => {
+                    checkbox.checked = true;
+                });
+
+                // Reset filter state
+                for (let cat in filterState.categories) {
+                    filterState.categories[cat] = true;
+                }
+
+                for (let reg in filterState.regions) {
+                    filterState.regions[reg] = true;
+                }
+
+                for (let chan in filterState.channels) {
+                    filterState.channels[chan] = true;
+                }
+
+                filterState.period = 'monthly';
+                filterState.dateFrom = '2023-01-01';
+                filterState.dateTo = '2023-12-31';
+
+                showLoading();
+
+                // Reset data to original
+                setTimeout(() => {
+                    resetData();
+                    updateCharts();
+                    updateDataTable();
+                    updateKPICards();
+                    hideLoading();
+                    showNotification('Filters reset to default values');
+                }, 500);
+            });
+
+            // Export data
+            exportDataBtn.addEventListener('click', () => {
+                showLoading();
+
+                // Simulate export process
+                setTimeout(() => {
+                    hideLoading();
+
+                    // Create CSV content
+                    let csvContent = "data:text/csv;charset=utf-8,";
+                    csvContent += "Date,Product,Category,Region,Channel,Quantity,Sales Amount\n";
+
+                    // Add filtered table data
+                    tableData.forEach(row => {
+                        csvContent += `"${row.date}","${row.product}","${row.category}","${row.region}","${row.channel}",${row.quantity},$${row.amount.toFixed(2)}\n`;
+                    });
+
+                    // Create download link
+                    const encodedUri = encodeURI(csvContent);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", encodedUri);
+                    link.setAttribute("download", "sales_data.csv");
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                    showNotification('Data exported successfully!');
+                }, 1000);
+            });
+
+            // Refresh data
+            refreshDataBtn.addEventListener('click', () => {
+                showLoading();
+
+                // Simulate data refresh
+                setTimeout(() => {
+                    randomizeData();
+                    updateCharts();
+                    updateDataTable();
+                    updateKPICards();
+                    hideLoading();
+                    showNotification('Data refreshed successfully!');
+                }, 1000);
+            });
+
+            // Table download
+            tableDownloadBtn.addEventListener('click', () => {
+                // Create CSV content
+                let csvContent = "data:text/csv;charset=utf-8,";
+                csvContent += "Date,Product,Category,Region,Channel,Quantity,Sales Amount\n";
+
+                // Add filtered table data
+                tableData.forEach(row => {
+                    csvContent += `"${row.date}","${row.product}","${row.category}","${row.region}","${row.channel}",${row.quantity},$${row.amount.toFixed(2)}\n`;
+                });
+
+                // Create download link
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", "sales_data.csv");
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+
+            // Table filter button
+            tableFilterBtn.addEventListener('click', () => {
+                // Toggle sidebar on mobile
+                const sidebar = document.getElementById('sidebar');
+                sidebar.classList.toggle('active');
+            });
+
+            // Table fullscreen
+            tableFullscreenBtn.addEventListener('click', () => {
+                const tableContainer = tableFullscreenBtn.closest('.data-table-container');
+                toggleFullscreen(tableContainer);
+            });
+        }
+
+        // Apply filters to data
+        function applyFilters() {
+            // Filter table data
+            tableData = originalData.tableData.filter(row => {
+                // Date range filter
+                const rowDate = new Date(row.date);
+                const fromDate = new Date(filterState.dateFrom);
+                const toDate = new Date(filterState.dateTo);
+                if (rowDate < fromDate || rowDate > toDate) {
+                    return false;
+                }
+
+                // Category filter
+                if (!filterState.categories[row.category]) {
+                    return false;
+                }
+
+                // Region filter
+                if (!filterState.regions[row.region]) {
+                    return false;
+                }
+
+                // Channel filter
+                if (!filterState.channels[row.channel]) {
+                    return false;
+                }
+
+                return true;
+            });
+
+            // Generate aggregated data for charts
+            updateAggregatedData();
+        }
+
+        // Reset data to original values
+        function resetData() {
+            months = [...originalData.months];
+            salesData = [...originalData.salesData];
+            categories = [...originalData.categories];
+            categorySales = [...originalData.categorySales];
+            regions = [...originalData.regions];
+            regionSales = [...originalData.regionSales];
+            channels = [...originalData.channels];
+            channelSales = [...originalData.channelSales];
+            tableData = [...originalData.tableData];
+        }
+
+        // Update aggregated data based on filtered table data
+        function updateAggregatedData() {
+            // Calculate sales by category
+            const categoryMap = {};
+            categories.forEach(cat => {
+                categoryMap[cat] = 0;
+            });
+
+            tableData.forEach(row => {
+                categoryMap[row.category] = (categoryMap[row.category] || 0) + row.amount;
+            });
+
+            categorySales = categories.map(cat => categoryMap[cat]);
+
+            // Calculate sales by region
+            const regionMap = {};
+            regions.forEach(reg => {
+                regionMap[reg] = 0;
+            });
+
+            tableData.forEach(row => {
+                regionMap[row.region] = (regionMap[row.region] || 0) + row.amount;
+            });
+
+            regionSales = regions.map(reg => regionMap[reg]);
+
+            // Calculate sales by channel
+            const channelMap = {};
+            channels.forEach(chan => {
+                channelMap[chan] = 0;
+            });
+
+            tableData.forEach(row => {
+                // Map "Retail" to "Retail Stores" for consistency
+                const channelName = row.channel === 'Retail' ? 'Retail Stores' : row.channel;
+                channelMap[channelName] = (channelMap[channelName] || 0) + row.amount;
+            });
+
+            channelSales = channels.map(chan => channelMap[chan] || 0);
+
+            // Calculate sales trend data by month
+            // In a real implementation, this would use actual date data
+            // Here we're just randomizing for demonstration
+            const periodFactor = {
+                'daily': 0.5,
+                'weekly': 0.7,
+                'monthly': 1,
+                'quarterly': 1.5,
+                'yearly': 2
+            };
+
+            const factor = periodFactor[filterState.period] || 1;
+
+            salesData = originalData.salesData.map(value => {
+                // Apply some variation based on filters
+                const enabledCategories = Object.values(filterState.categories).filter(v => v).length;
+                const categoryRatio = enabledCategories / Object.keys(filterState.categories).length;
+
+                const enabledRegions = Object.values(filterState.regions).filter(v => v).length;
+                const regionRatio = enabledRegions / Object.keys(filterState.regions).length;
+
+                const enabledChannels = Object.values(filterState.channels).filter(v => v).length;
+                const channelRatio = enabledChannels / Object.keys(filterState.channels).length;
+
+                const overallRatio = (categoryRatio + regionRatio + channelRatio) / 3;
+
+                return Math.round(value * overallRatio * factor);
+            });
+        }
+
+        // Randomize data for the "Refresh Data" button
+        function randomizeData() {
+            const randomFactor = () => Math.random() * 0.4 + 0.8; // 0.8 to 1.2
+
+            // Randomize sales trend data
+            salesData = originalData.salesData.map(value =>
+                Math.round(value * randomFactor())
+            );
+
+            // Randomize category data
+            categorySales = originalData.categorySales.map(value =>
+                Math.round(value * randomFactor())
+            );
+
+            // Randomize region data
+            regionSales = originalData.regionSales.map(value =>
+                Math.round(value * randomFactor())
+            );
+
+            // Randomize channel data
+            channelSales = originalData.channelSales.map(value =>
+                Math.round(value * randomFactor())
+            );
+
+            // Randomize table data
+            tableData = originalData.tableData.map(row => {
+                return {
+                    ...row,
+                    quantity: Math.round(row.quantity * randomFactor()),
+                    amount: parseFloat((row.amount * randomFactor()).toFixed(2))
+                };
+            });
+        }
+
+        // Update charts with current data
+        function updateCharts() {
+            // Update Sales Trend Chart
+            salesTrendChart.data.datasets[0].data = salesData;
+
+            // Update label based on period
+            const periodLabels = {
+                'daily': 'Daily Sales',
+                'weekly': 'Weekly Sales',
+                'monthly': 'Monthly Sales',
+                'quarterly': 'Quarterly Sales',
+                'yearly': 'Yearly Sales'
+            };
+
+            salesTrendChart.data.datasets[0].label = periodLabels[filterState.period] || 'Monthly Sales';
+            salesTrendChart.update();
+
+            // Update Category Chart
+            categoryChart.data.labels = categories.filter((cat, i) => categorySales[i] > 0);
+            categoryChart.data.datasets[0].data = categorySales.filter(value => value > 0);
+            categoryChart.update();
+
+            // Update Region Chart
+            regionChart.data.labels = regions.filter((reg, i) => regionSales[i] > 0);
+            regionChart.data.datasets[0].data = regionSales.filter(value => value > 0);
+            regionChart.update();
+
+            // Update Channel Chart
+            channelChart.data.labels = channels.filter((chan, i) => channelSales[i] > 0);
+            channelChart.data.datasets[0].data = channelSales.filter(value => value > 0);
+            channelChart.update();
+        }
+
+        // Update the data table with filtered data
+        function updateDataTable() {
+            const tableBody = document.querySelector('.data-table tbody');
+            tableBody.innerHTML = '';
+
+            const maxRows = 10; // Show at most 10 rows
+            const shownRows = tableData.slice(0, maxRows);
+
+            shownRows.forEach(row => {
+                const tr = document.createElement('tr');
+
+                tr.innerHTML = `
+                    <td>${row.date}</td>
+                    <td>${row.product}</td>
+                    <td>${row.category}</td>
+                    <td>${row.region}</td>
+                    <td>${row.channel}</td>
+                    <td>${row.quantity}</td>
+                    <td>$${row.amount.toFixed(2)}</td>
+                `;
+
+                tableBody.appendChild(tr);
+            });
+
+            // Update pagination text
+            const paginationText = document.querySelector('.data-table-footer > div');
+            paginationText.textContent = `Showing 1-${shownRows.length} of ${tableData.length} entries`;
+        }
+
+        // Update KPI Cards
+        function updateKPICards() {
+            const kpiValues = document.querySelectorAll('.kpi-value');
+            const kpiChanges = document.querySelectorAll('.kpi-change');
+
+            // Calculate total sales
+            const totalSales = tableData.reduce((sum, row) => sum + row.amount, 0);
+            kpiValues[0].textContent = '$' + totalSales.toLocaleString(undefined, { maximumFractionDigits: 0 });
+
+            // Calculate total orders
+            const totalOrders = tableData.length;
+            kpiValues[1].textContent = totalOrders.toLocaleString();
+
+            // Calculate average order value
+            const avgOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0;
+            kpiValues[2].textContent = '$' + avgOrderValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            // Conversion rate (random for demo)
+            const conversionRate = 4.8 * (Math.random() * 0.2 + 0.9);
+            kpiValues[3].textContent = conversionRate.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
+
+            // Update change percentages with random values
+            kpiChanges.forEach(change => {
+                const changeValue = ((Math.random() * 15) - 5).toFixed(1);
+                const isPositive = parseFloat(changeValue) >= 0;
+
+                change.textContent = '';
+                const icon = document.createElement('span');
+                icon.className = 'material-symbols-rounded';
+                icon.textContent = isPositive ? 'trending_up' : 'trending_down';
+                change.appendChild(icon);
+
+                change.appendChild(document.createTextNode(
+                    `${isPositive ? '+' : ''}${changeValue}% vs. Previous Period`
+                ));
+
+                change.className = `kpi-change ${isPositive ? 'positive' : 'negative'}`;
+            });
+        }
+
+        // Show loading overlay
+        function showLoading() {
+            const loadingOverlay = document.querySelector('.loading-overlay');
+            loadingOverlay.classList.remove('hidden');
+        }
+
+        // Hide loading overlay
+        function hideLoading() {
+            const loadingOverlay = document.querySelector('.loading-overlay');
+            loadingOverlay.classList.add('hidden');
+        }
+
+        // Show notification
+        function showNotification(message) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = 'notification fade-in';
+            notification.style.position = 'fixed';
+            notification.style.bottom = '20px';
+            notification.style.left = '50%';
+            notification.style.transform = 'translateX(-50%)';
+            notification.style.padding = '12px 24px';
+            notification.style.background = 'var(--primary)';
+            notification.style.color = 'white';
+            notification.style.borderRadius = 'var(--radius)';
+            notification.style.boxShadow = 'var(--shadow)';
+            notification.style.zIndex = '2000';
+            notification.textContent = message;
+
+            // Add to body
+            document.body.appendChild(notification);
+
+            // Remove after timeout
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        // Setup chart controls
+        function setupChartControls() {
+            // Sales Trend Chart controls
+            document.getElementById('sales-trend-settings').addEventListener('click', () => {
+                document.getElementById('salesTrendControls').classList.toggle('active');
+            });
+
+            // Category Chart controls
+            document.getElementById('category-settings').addEventListener('click', () => {
+                document.getElementById('categoryControls').classList.toggle('active');
+            });
+
+            // Region Chart controls
+            document.getElementById('region-settings').addEventListener('click', () => {
+                document.getElementById('regionControls').classList.toggle('active');
+            });
+
+            // Channel Chart controls
+            document.getElementById('channel-settings').addEventListener('click', () => {
+                document.getElementById('channelControls').classList.toggle('active');
+            });
+        }
+
+        // Setup table sorting
+        function setupTableSorting() {
+            const tableHeaders = document.querySelectorAll('.data-table th');
+
+            tableHeaders.forEach(header => {
+                header.addEventListener('click', () => {
+                    // Toggle sort direction
+                    const currentSort = header.getAttribute('aria-sort');
+                    const newSort = currentSort === 'ascending' ? 'descending' : 'ascending';
+
+                    // Reset all headers
+                    tableHeaders.forEach(h => h.setAttribute('aria-sort', 'none'));
+
+                    // Set new sort on current header
+                    header.setAttribute('aria-sort', newSort);
+
+                    // Add visual indicator
+                    header.innerHTML = header.textContent + (newSort === 'ascending' ? ' ↑' : ' ↓');
+
+                    // In a real implementation, this would sort the actual data
+                    showNotification(`Sorting by ${header.textContent} (${newSort})`);
+                });
+            });
+        }
+
+        // Setup pagination
+        function setupPagination() {
+            const paginationButtons = document.querySelectorAll('.pagination-btn');
+
+            paginationButtons.forEach(button => {
+                if (button.textContent !== 'Previous' && button.textContent !== 'Next') {
+                    button.addEventListener('click', () => {
+                        // Remove active class from all buttons
+                        paginationButtons.forEach(btn => btn.classList.remove('active'));
+
+                        // Add active class to clicked button
+                        button.classList.add('active');
+
+                        // Update aria-current
+                        paginationButtons.forEach(btn => btn.removeAttribute('aria-current'));
+                        button.setAttribute('aria-current', 'page');
+
+                        // In a real implementation, this would load the corresponding page of data
+                        showNotification(`Navigated to page ${button.textContent}`);
+                    });
+                }
+            });
+
+            // Previous/Next buttons
+            const prevButton = document.querySelector('.pagination-btn:first-child');
+            const nextButton = document.querySelector('.pagination-btn:last-child');
+
+            prevButton.addEventListener('click', () => {
+                const currentPage = document.querySelector('.pagination-btn[aria-current="page"]');
+                const prevPage = currentPage.previousElementSibling;
+
+                if (prevPage && prevPage.textContent !== 'Previous') {
+                    prevPage.click();
+                }
+            });
+
+            nextButton.addEventListener('click', () => {
+                const currentPage = document.querySelector('.pagination-btn[aria-current="page"]');
+                const nextPage = currentPage.nextElementSibling;
+
+                if (nextPage && nextPage.textContent !== 'Next') {
+                    nextPage.click();
+                }
+            });
+        }
+
+        // Setup mobile menu toggle
+        function setupMobileMenu() {
+            const menuToggle = document.getElementById('mobile-menu-toggle');
+            const sidebar = document.getElementById('sidebar');
+
+            menuToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('active');
+            });
+
+            // Close sidebar when clicking outside
+            document.addEventListener('click', (e) => {
+                if (sidebar.classList.contains('active') &&
+                    !sidebar.contains(e.target) &&
+                    !menuToggle.contains(e.target)) {
+                    sidebar.classList.remove('active');
+                }
+            });
+        }
+
+        // Setup dark mode toggle
+        function setupDarkMode() {
+            const darkModeToggle = document.getElementById('dark-mode-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const themeText = document.getElementById('theme-text');
+
+            // Check for saved theme preference
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                themeIcon.textContent = 'light_mode';
+                themeText.textContent = 'Light Mode';
+            }
+
+            darkModeToggle.addEventListener('click', () => {
+                document.body.classList.toggle('dark-mode');
+
+                const isDarkMode = document.body.classList.contains('dark-mode');
+                themeIcon.textContent = isDarkMode ? 'light_mode' : 'dark_mode';
+                themeText.textContent = isDarkMode ? 'Light Mode' : 'Dark Mode';
+
+                // Save theme preference
+                localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+
+                // Update charts for theme
+                Chart.defaults.color = isDarkMode ? '#9da5ad' : '#6c757d';
+                salesTrendChart.update();
+                categoryChart.update();
+                regionChart.update();
+                channelChart.update();
+            });
+        }
+
+        // Setup keyboard shortcuts
+        function setupKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                // Alt + A: Apply filters
+                if (e.altKey && e.key === 'a') {
+                    e.preventDefault();
+                    document.getElementById('apply-filters').click();
+                }
+
+                // Alt + R: Reset filters
+                if (e.altKey && e.key === 'r') {
+                    e.preventDefault();
+                    document.getElementById('reset-filters').click();
+                }
+
+                // Alt + E: Export data
+                if (e.altKey && e.key === 'e') {
+                    e.preventDefault();
+                    document.getElementById('export-data').click();
+                }
+
+                // F5: Refresh data (prevent default browser refresh)
+                if (e.key === 'F5') {
+                    e.preventDefault();
+                    document.getElementById('refresh-data').click();
+                }
+            });
+        }
+
+        // Toggle fullscreen for chart containers
+        function toggleFullscreen(element) {
+            if (!document.fullscreenElement) {
+                element.requestFullscreen().catch(err => {
+                    showNotification(`Error attempting to enable fullscreen mode: ${err.message} (${err.name})`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // Initialize everything when the DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            // Show loading overlay
+            showLoading();
+
+            // Initialize with a delay to show loading animation
+            setTimeout(() => {
+                initCharts();
+                setupChartControls();
+                setupFilters();
+                setupTableSorting();
+                setupPagination();
+                setupMobileMenu();
+                setupDarkMode();
+                setupKeyboardShortcuts();
+
+                // Hide loading overlay
+                hideLoading();
+            }, 1500);
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            // Resize charts to fit their containers
+            if (salesTrendChart) salesTrendChart.resize();
+            if (categoryChart) categoryChart.resize();
+            if (regionChart) regionChart.resize();
+            if (channelChart) channelChart.resize();
+        });
+    </script>
+</body>
+
+</html>

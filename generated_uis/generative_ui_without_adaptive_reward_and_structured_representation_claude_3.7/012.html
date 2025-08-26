@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Podcast Creation Guide</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --primary-dark: #0056b3;
+            --secondary-color: #6c757d;
+            --background-color: #f8f9fa;
+            --card-background: #ffffff;
+            --text-color: #343a40;
+            --border-color: #dee2e6;
+            --success-color: #28a745;
+            --spacing-unit: 16px;
+            --border-radius: 8px;
+            --box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); /* Slightly more prominent shadow */
+            --transition-duration: 0.4s;
+            --transition-timing-function: ease-in-out;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: var(--spacing-unit);
+            box-sizing: border-box;
+        }
+
+        .container {
+            background-color: var(--card-background);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: calc(var(--spacing-unit) * 2);
+            max-width: 960px;
+            width: 100%;
+            display: flex; /* Use flex for main layout */
+            flex-direction: column;
+            gap: calc(var(--spacing-unit) * 2);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: var(--spacing-unit);
+        }
+
+        header h1 {
+            color: var(--primary-color);
+            margin: 0;
+            font-size: 2em;
+            font-weight: 700;
+        }
+
+        .progress-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            position: relative;
+            padding: 0 var(--spacing-unit); /* Add padding for line start/end */
+        }
+
+        .progress-line {
+            position: absolute;
+            top: 50%;
+            left: var(--spacing-unit);
+            right: var(--spacing-unit);
+            height: 4px;
+            background-color: var(--border-color);
+            transform: translateY(-50%);
+            z-index: 0;
+            border-radius: 2px;
+        }
+
+        .progress-line-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 0%; /* Controlled by JS */
+            transition: width var(--transition-duration) var(--transition-timing-function);
+            border-radius: 2px;
+        }
+
+        .step-indicator {
+            position: relative;
+            z-index: 1;
+            width: 40px; /* Slightly larger indicators */
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--border-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+            border: 3px solid var(--border-color); /* Thicker border */
+            flex-shrink: 0; /* Prevent shrinking */
+            outline: none; /* Remove default outline */
+        }
+
+        .step-indicator:focus-visible {
+            outline: 3px dashed var(--primary-dark);
+            outline-offset: 4px;
+        }
+
+        .step-indicator.active {
+            background-color: var(--primary-color);
+            color: var(--card-background);
+            border-color: var(--primary-color);
+            transform: scale(1.1); /* Slightly enlarge active step */
+        }
+
+        .step-indicator.completed {
+            background-color: var(--success-color);
+            color: var(--card-background);
+            border-color: var(--success-color);
+        }
+
+        .step-indicator:hover:not(.active):not(.completed) {
+             background-color: #e9ecef;
+             border-color: #ced4da;
+        }
+
+        .content-wrapper {
+            position: relative;
+            min-height: 400px; /* Container for absolute positioned steps */
+            overflow: hidden; /* Hide overflowing absolute content */
+        }
+
+        .step-content {
+            min-height: 300px; /* Ensure some height */
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity var(--transition-duration) var(--transition-timing-function),
+                        transform var(--transition-duration) var(--transition-timing-function);
+            position: absolute; /* Use absolute positioning for transitions */
+            top: 0;
+            left: 0;
+            width: 100%;
+            visibility: hidden; /* Hide from screen readers and interaction */
+            box-sizing: border-box;
+            padding: 0 calc(var(--spacing-unit) * 2); /* Match container padding */
+        }
+
+        .step-content.active {
+            position: static; /* Active content takes up space */
+            opacity: 1;
+            transform: translateY(0);
+            visibility: visible; /* Make visible and interactive */
+        }
+
+        .step-content h2 {
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: var(--spacing-unit);
+            font-size: 1.8em; /* Slightly larger heading */
+            font-weight: 600;
+        }
+
+         .step-content h3 {
+            color: var(--text-color);
+            margin-top: calc(var(--spacing-unit) * 1.5);
+            margin-bottom: calc(var(--spacing-unit) / 2);
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        .step-content p {
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .form-group {
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: calc(var(--spacing-unit) / 4);
+            font-weight: 600;
+            color: var(--text-color);
+            font-size: 0.9em;
+        }
+
+        .form-group input[type="text"],
+        .form-group textarea {
+            width: 100%;
+            padding: calc(var(--spacing-unit) / 2);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            box-sizing: border-box; /* Include padding in width */
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+         .form-group input[type="text"]:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .tips details {
+            background-color: #e9ecef;
+            border-radius: var(--border-radius);
+            padding: var(--spacing-unit);
+            margin-top: var(--spacing-unit);
+            cursor: pointer;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
+            outline: none;
+        }
+
+         .tips details:focus-visible {
+             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+         }
+
+
+        .tips details:hover {
+            background-color: #dee2e6;
+        }
+
+        .tips summary {
+            font-weight: 600;
+            outline: none;
+            display: flex;
+            align-items: center;
+        }
+
+         .tips summary::before {
+            content: '+'; /* Simple indicator */
+            margin-right: var(--spacing-unit);
+            font-size: 1.2em;
+            font-weight: bold;
+            transition: transform 0.2s ease;
+         }
+
+        .tips details[open] summary::before {
+            content: '-';
+            transform: rotate(180deg); /* Optional rotation */
+        }
+
+
+        .tips details p {
+            margin-top: calc(var(--spacing-unit) / 2);
+            margin-bottom: 0;
+            padding-top: calc(var(--spacing-unit) / 2);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .checklist {
+            list-style: none;
+            padding: 0;
+            margin-top: var(--spacing-unit);
+        }
+
+        .checklist li {
+            background-color: #f1f3f5;
+            border-radius: var(--border-radius);
+            padding: var(--spacing-unit);
+            margin-bottom: calc(var(--spacing-unit) / 2);
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
+            outline: none;
+        }
+
+        .checklist li:focus-visible {
+             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+         .checklist li:hover:not(.completed) {
+            background-color: #e9ecef;
+         }
+
+        .checklist li input[type="checkbox"] {
+            margin-right: var(--spacing-unit);
+            cursor: pointer;
+            width: 20px;
+            height: 20px;
+             flex-shrink: 0;
+        }
+
+        .checklist li label {
+            flex-grow: 1;
+            cursor: pointer;
+        }
+
+        .checklist li.completed {
+            background-color: #d4edda;
+            text-decoration: line-through;
+            color: var(--success-color);
+        }
+
+        .image-placeholder {
+            width: 100%;
+            height: 250px; /* Slightly larger placeholder */
+            background-color: #e9ecef;
+            border-radius: var(--border-radius);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--secondary-color);
+            font-style: italic;
+            margin-top: var(--spacing-unit);
+            overflow: hidden; /* Ensure content stays within bounds */
+        }
+
+        .image-placeholder img {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+
+
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: calc(var(--spacing-unit) * 2);
+        }
+
+        button {
+            padding: calc(var(--spacing-unit) / 2) var(--spacing-unit);
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.2s ease, opacity 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+            min-width: 120px; /* Wider buttons */
+            text-align: center;
+            font-weight: 600;
+            outline: none;
+        }
+
+         button:focus-visible {
+             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+         }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button.primary {
+            background-color: var(--primary-color);
+            color: var(--card-background);
+        }
+
+        button.primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        button.secondary {
+            background-color: var(--secondary-color);
+            color: var(--card-background);
+        }
+
+        button.secondary:hover {
+            background-color: #5a6268;
+        }
+
+        button:disabled {
+            opacity: 0.6; /* Increased opacity for disabled */
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+         /* Responsive adjustments */
+        @media (min-width: 768px) {
+            .container {
+                padding: calc(var(--spacing-unit) * 3);
+            }
+
+            .progress-bar {
+                margin-bottom: calc(var(--spacing-unit) * 3);
+                padding: 0 calc(var(--spacing-unit) * 1.5); /* Adjust padding */
+            }
+
+             .progress-line {
+                 left: calc(var(--spacing-unit) * 1.5);
+                 right: calc(var(--spacing-unit) * 1.5);
+             }
+
+            .step-content {
+                padding: 0 calc(var(--spacing-unit) * 3); /* Match container padding */
+            }
+
+             .content-wrapper {
+                min-height: 500px; /* Increase height for desktop */
+            }
+
+            .step-content h2 {
+                font-size: 2em;
+            }
+
+             .step-content h3 {
+                font-size: 1.4em;
+            }
+
+            .navigation-buttons button {
+                padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Podcast Creation Guide</h1>
+            <p>Follow these steps to create your own podcast.</p>
+        </header>
+
+        <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="4">
+            <div class="progress-line">
+                <div class="progress-line-fill" id="progress-line-fill"></div>
+            </div>
+            <div class="step-indicator" data-step="1" tabindex="0" role="button" aria-label="Go to step 1: Planning Your Podcast">1</div>
+            <div class="step-indicator" data-step="2" tabindex="0" role="button" aria-label="Go to step 2: Recording Your Audio">2</div>
+            <div class="step-indicator" data-step="3" tabindex="0" role="button" aria-label="Go to step 3: Editing Your Episode">3</div>
+            <div class="step-indicator" data-step="4" tabindex="0" role="button" aria-label="Go to step 4: Publishing and Distribution">4</div>
+            <div class="step-indicator" data-step="5" tabindex="0" role="button" aria-label="Go to step 5: Review and Launch!">5</div>
+        </div>
+
+        <div class="content-wrapper">
+            <div class="step-content" data-step="1" role="region" aria-labelledby="step1-heading" aria-hidden="true">
+                <h2 id="step1-heading">Step 1: Planning Your Podcast</h2>
+                <p>Laying the groundwork is crucial for a successful podcast. Define your niche, audience, and format.</p>
+
+                <div class="form-group">
+                    <label for="podcast-topic">Podcast Topic/Niche:</label>
+                    <input type="text" id="podcast-topic" placeholder="e.g., Technology, True Crime, Cooking">
+                </div>
+
+                 <div class="form-group">
+                    <label for="podcast-name">Podcast Name Idea:</label>
+                    <input type="text" id="podcast-name" placeholder="e.g., The Daily Byte, Murder Most Foul, The Flavor Lab">
+                </div>
+
+                <div class="form-group">
+                    <label for="target-audience">Target Audience:</label>
+                    <textarea id="target-audience" placeholder="Describe who you want to reach"></textarea>
+                </div>
+
+                <div class="tips">
+                    <details>
+                        <summary>Tips for Planning</summary>
+                        <p>Research existing podcasts in your niche. Brainstorm unique angles. Consider your show format (interviews, solo, narrative). Plan your first few episodes.</p>
+                    </details>
+                </div>
+            </div>
+
+            <div class="step-content" data-step="2" role="region" aria-labelledby="step2-heading" aria-hidden="true">
+                <h2 id="step2-heading">Step 2: Recording Your Audio</h2>
+                <p>Good audio quality is key. Learn about microphones, recording environments, and techniques.</p>
+
+                <div class="image-placeholder">
+                     <img src="https://placehold.co/600x250?text=Recording+Setup" alt="Placeholder image of a recording setup">
+                </div>
+
+                <div class="tips">
+                    <details>
+                        <summary>Tips for Recording</summary>
+                        <p>Use a quiet space. Speak clearly and at a consistent volume. Do a soundcheck before you start. Consider investing in a good microphone.</p>
+                    </details>
+                     <details>
+                        <summary>Equipment Recommendations</summary>
+                        <p>Microphones (Dynamic vs Condenser), Headphones, Pop filters, Audio interfaces.</p>
+                    </details>
+                </div>
+            </div>
+
+            <div class="step-content" data-step="3" role="region" aria-labelledby="step3-heading" aria-hidden="true">
+                <h2 id="step3-heading">Step 3: Editing Your Episode</h2>
+                <p>Clean up your audio, add intro/outro music, and ensure a smooth flow.</p>
+
+                <div class="tips">
+                    <details>
+                        <summary>Tips for Editing</summary>
+                        <p>Remove filler words and mistakes. Adjust audio levels for consistency. Add music and sound effects appropriately. Export in a high-quality format (like MP3 or WAV).</p>
+                    </details>
+                    <details>
+                        <summary>Editing Software Options</summary>
+                        <p>Audacity (Free), Adobe Audition (Paid), Logic Pro (Mac, Paid), GarageBand (Mac/iOS, Free).</p>
+                    </details>
+                </div>
+
+                <h3 id="editing-checklist-heading">Editing Checklist:</h3>
+                <ul class="checklist" id="editing-checklist" role="list" aria-labelledby="editing-checklist-heading">
+                    <li data-checklist-item="remove-mistakes" tabindex="0" role="listitem">
+                        <input type="checkbox" id="check-mistakes">
+                        <label for="check-mistakes">Remove errors and unwanted noise</label>
+                    </li>
+                     <li data-checklist-item="adjust-levels" tabindex="0" role="listitem">
+                        <input type="checkbox" id="check-levels">
+                        <label for="check-levels">Adjust audio levels for consistency (Normalization/Compression)</label>
+                    </li>
+                     <li data-checklist-item="add-music" tabindex="0" role="listitem">
+                        <input type="checkbox" id="check-music">
+                        <label for="check-music">Add intro/outro music and sound effects</label>
+                    </li>
+                     <li data-checklist-item="export-format" tabindex="0" role="listitem">
+                        <input type="checkbox" id="check-export">
+                        <label for="check-export">Export in the correct format (MP3, 128kbps+ recommended)</label>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="step-content" data-step="4" role="region" aria-labelledby="step4-heading" aria-hidden="true">
+                <h2 id="step4-heading">Step 4: Publishing and Distribution</h2>
+                <p>Get your podcast out to the world! Choose a hosting platform and submit to directories.</p>
+
+                 <div class="form-group">
+                    <label for="hosting-platform">Chosen Hosting Platform:</label>
+                    <input type="text" id="hosting-platform" placeholder="e.g., Buzzsprout, Anchor, Libsyn">
+                </div>
+
+                <div class="tips">
+                    <details>
+                        <summary>Tips for Publishing</summary>
+                        <p>Choose a reliable hosting platform. Write compelling show notes and titles. Submit your RSS feed to major directories (Apple Podcasts, Spotify, Google Podcasts).</p>
+                    </details>
+                    <details>
+                        <summary>Popular Podcast Directories</summary>
+                        <p>Apple Podcasts, Spotify, Google Podcasts, Stitcher, TuneIn, Deezer.</p>
+                    </details>
+                </div>
+            </div>
+
+            <div class="step-content" data-step="5" role="region" aria-labelledby="step5-heading" aria-hidden="true">
+                <h2 id="step5-heading">Step 5: Review and Launch!</h2>
+                <p>You're ready to launch your podcast! Here's a summary of your journey.</p>
+
+                <h3 id="summary-heading">Your Podcast Plan Summary:</h3>
+                <p><strong>Topic:</strong> <span id="summary-topic">Not specified</span></p>
+                <p><strong>Name Idea:</strong> <span id="summary-name">Not specified</span></p>
+                <p><strong>Target Audience:</strong> <span id="summary-audience">Not specified</span></p>
+                 <p><strong>Hosting Platform:</strong> <span id="summary-hosting">Not specified</span></p>
+
+                <h3 id="summary-checklist-heading">Editing Tasks Completed:</h3>
+                 <ul class="checklist" id="summary-checklist" role="list" aria-labelledby="summary-checklist-heading">
+                     <!-- Checklist items will be populated here by JS -->
+                 </ul>
+
+                 <p>Congratulations on completing the guide! You're now equipped to launch your podcast.</p>
+
+            </div>
+        </div>
+
+
+        <div class="navigation-buttons">
+            <button class="secondary" id="prev-button" disabled aria-label="Go to previous step">Previous Step</button>
+            <button class="primary" id="next-button" aria-label="Go to next step">Next Step</button>
+             <button class="primary hidden" id="complete-button" aria-label="Complete the guide">Complete Guide</button>
+        </div>
+    </div>
+
+    <script>
+        const steps = document.querySelectorAll('.step-content');
+        const stepIndicators = document.querySelectorAll('.step-indicator');
+        const progressBar = document.querySelector('.progress-bar');
+        const progressBarFill = document.getElementById('progress-line-fill');
+        const prevButton = document.getElementById('prev-button');
+        const nextButton = document.getElementById('next-button');
+        const completeButton = document.getElementById('complete-button');
+        const editingChecklist = document.getElementById('editing-checklist');
+        const summaryChecklist = document.getElementById('summary-checklist');
+
+        let currentStep = 1;
+        const totalSteps = steps.length;
+        const localStorageKey = 'podcastGuideState';
+
+        // Simple state to store form data and checklist status
+        let podcastState = {
+            plan: {
+                topic: '',
+                name: '',
+                audience: ''
+            },
+            editing: {
+                'remove-mistakes': false,
+                'adjust-levels': false,
+                'add-music': false,
+                'export-format': false
+            },
+            publishing: {
+                hosting: ''
+            }
+        };
+
+        // Load state from local storage on page load
+        function loadState() {
+            const savedState = localStorage.getItem(localStorageKey);
+            if (savedState) {
+                try {
+                    const parsedState = JSON.parse(savedState);
+                    // Merge loaded state with default state to handle new fields
+                    podcastState = { ...podcastState, ...parsedState };
+                    // Ensure editing checklist keys are present if state was old
+                     if (!podcastState.editing) podcastState.editing = {};
+                     for(const key in { 'remove-mistakes': false, 'adjust-levels': false, 'add-music': false, 'export-format': false }) {
+                         if (podcastState.editing[key] === undefined) {
+                             podcastState.editing[key] = false;
+                         }
+                     }
+
+                } catch (e) {
+                    console.error("Failed to load state from local storage:", e);
+                    // Optionally clear corrupted storage
+                    // localStorage.removeItem(localStorageKey);
+                }
+            }
+        }
+
+        // Save state to local storage
+        function saveState() {
+            localStorage.setItem(localStorageKey, JSON.stringify(podcastState));
+        }
+
+        function updateUI() {
+            // Update Step Indicators
+            stepIndicators.forEach(indicator => {
+                const step = parseInt(indicator.dataset.step);
+                indicator.classList.remove('active', 'completed');
+                 indicator.removeAttribute('aria-current'); // Remove aria-current from all
+
+                if (step === currentStep) {
+                    indicator.classList.add('active');
+                    indicator.setAttribute('aria-current', 'step'); // Set aria-current for active
+                } else if (step < currentStep) {
+                    indicator.classList.add('completed');
+                }
+            });
+
+            // Update Progress Bar
+            const progress = (currentStep - 1) / (totalSteps - 1) * 100;
+            progressBarFill.style.width = `${progress}%`;
+            progressBar.setAttribute('aria-valuenow', currentStep - 1); // Update ARIA progress
+
+            // Update Step Content Visibility and Accessibility
+            steps.forEach(stepContent => {
+                const step = parseInt(stepContent.dataset.step);
+                const isActive = step === currentStep;
+
+                // Manage visibility and accessibility
+                stepContent.setAttribute('aria-hidden', !isActive);
+
+                if (isActive) {
+                    // Set to visible and static immediately to allow transition in
+                    stepContent.style.visibility = 'visible';
+                    stepContent.style.position = 'static';
+                    stepContent.classList.add('active');
+                     // Focus the heading or first interactive element
+                     const heading = stepContent.querySelector('h2');
+                     if (heading) {
+                         heading.setAttribute('tabindex', '-1'); // Make heading focusable
+                         heading.focus();
+                     } else {
+                         stepContent.focus(); // Fallback focus
+                     }
+                } else {
+                    // Start transition out
+                    stepContent.classList.remove('active');
+                    // After transition, set to hidden and absolute
+                    stepContent.style.position = 'absolute'; // Set back to absolute for layout
+                    // Use a timeout matching the transition duration to hide completely
+                    setTimeout(() => {
+                         if (!stepContent.classList.contains('active')) { // Ensure it didn't become active again
+                            stepContent.style.visibility = 'hidden';
+                         }
+                    }, parseFloat(getComputedStyle(stepContent).transitionDuration) * 1000);
+                }
+            });
+
+
+            // Update Buttons
+            prevButton.disabled = currentStep === 1;
+            nextButton.classList.toggle('hidden', currentStep === totalSteps);
+            completeButton.classList.toggle('hidden', currentStep !== totalSteps);
+
+            // Update Summary Step Content
+            if (currentStep === totalSteps) {
+                document.getElementById('summary-topic').textContent = podcastState.plan.topic || 'Not specified';
+                document.getElementById('summary-name').textContent = podcastState.plan.name || 'Not specified';
+                document.getElementById('summary-audience').textContent = podcastState.plan.audience || 'Not specified';
+                 document.getElementById('summary-hosting').textContent = podcastState.publishing.hosting || 'Not specified';
+
+                // Populate summary checklist
+                summaryChecklist.innerHTML = ''; // Clear previous items
+                const editingTasks = editingChecklist.querySelectorAll('li');
+                editingTasks.forEach(item => {
+                    const key = item.dataset.checklistitem;
+                    const isCompleted = podcastState.editing[key];
+                    const labelText = item.querySelector('label').textContent;
+                    const listItem = document.createElement('li');
+                    listItem.textContent = labelText;
+                    if (isCompleted) {
+                         listItem.classList.add('completed');
+                    }
+                    // Remove tabindex and role for summary list items as they are not interactive
+                    listItem.removeAttribute('tabindex');
+                    listItem.removeAttribute('role');
+                    summaryChecklist.appendChild(listItem);
+                });
+            }
+        }
+
+        function goToStep(step) {
+            if (step >= 1 && step <= totalSteps && step !== currentStep) {
+                // Save data from current step before moving
+                saveStepData(currentStep);
+
+                currentStep = step;
+                updateUI();
+                // Load data for the new step after UI updates
+                loadStepData(currentStep);
+                saveState(); // Save state after changing step and loading data
+            } else if (step === currentStep) {
+                 // If trying to go to the current step, just load data and update UI
+                 updateUI(); // Ensure UI is correct (e.g., initial load)
+                 loadStepData(currentStep);
+            }
+        }
+
+        // Function to save data from the current step
+        function saveStepData(step) {
+            const currentStepElement = document.querySelector(`.step-content[data-step="${step}"]`);
+            if (!currentStepElement) return;
+
+            if (step === 1) {
+                podcastState.plan.topic = currentStepElement.querySelector('#podcast-topic').value;
+                podcastState.plan.name = currentStepElement.querySelector('#podcast-name').value;
+                podcastState.plan.audience = currentStepElement.querySelector('#target-audience').value;
+            } else if (step === 4) {
+                 podcastState.publishing.hosting = currentStepElement.querySelector('#hosting-platform').value;
+            }
+            // Step 3 checklist state is updated directly by the change listener
+        }
+
+        // Function to load data when returning to a step
+        function loadStepData(step) {
+             const currentStepElement = document.querySelector(`.step-content[data-step="${step}"]`);
+            if (!currentStepElement) return;
+
+            if (step === 1) {
+                currentStepElement.querySelector('#podcast-topic').value = podcastState.plan.topic;
+                currentStepElement.querySelector('#podcast-name').value = podcastState.plan.name;
+                currentStepElement.querySelector('#target-audience').value = podcastState.plan.audience;
+            } else if (step === 3) {
+                // Load checklist state
+                for (const key in podcastState.editing) {
+                    const checkbox = currentStepElement.querySelector(`#editing-checklist input[data-checklist-item="${key}"]`);
+                     const listItem = currentStepElement.querySelector(`#editing-checklist li[data-checklist-item="${key}"]`);
+                    if (checkbox && listItem) {
+                        checkbox.checked = podcastState.editing[key];
+                        listItem.classList.toggle('completed', podcastState.editing[key]);
+                    }
+                }
+            } else if (step === 4) {
+                 currentStepElement.querySelector('#hosting-platform').value = podcastState.publishing.hosting;
+            }
+        }
+
+        // Event Listeners for Navigation Buttons
+        nextButton.addEventListener('click', () => {
+            goToStep(currentStep + 1);
+        });
+
+        prevButton.addEventListener('click', () => {
+            goToStep(currentStep - 1);
+        });
+
+        completeButton.addEventListener('click', () => {
+            // Save final state
+            saveStepData(currentStep);
+            saveState();
+            alert('Congratulations! You have completed the Podcast Creation Guide.');
+            // Optionally reset state or navigate elsewhere
+            // localStorage.removeItem(localStorageKey);
+            // goToStep(1); // Example: reset to step 1
+        });
+
+        // Event Listeners for Step Indicators (Jump to step)
+        stepIndicators.forEach(indicator => {
+            indicator.addEventListener('click', () => {
+                const step = parseInt(indicator.dataset.step);
+                goToStep(step);
+            });
+             // Add keyboard support for step indicators
+            indicator.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault(); // Prevent default spacebar action (scrolling)
+                    const step = parseInt(indicator.dataset.step);
+                    goToStep(step);
+                }
+            });
+        });
+
+        // Event Listener for Editing Checklist (using event delegation)
+        editingChecklist.addEventListener('change', (event) => {
+            if (event.target.type === 'checkbox') {
+                const listItem = event.target.closest('li');
+                const key = listItem.dataset.checklistitem;
+                podcastState.editing[key] = event.target.checked;
+                listItem.classList.toggle('completed', event.target.checked);
+                saveState(); // Save state on checklist change
+            }
+        });
+
+        // Event Listener for Checklist Li clicks (toggle checkbox)
+        editingChecklist.addEventListener('click', (event) => {
+             const listItem = event.target.closest('li');
+             if (listItem && event.target.type !== 'checkbox') {
+                 const checkbox = listItem.querySelector('input[type="checkbox"]');
+                 if (checkbox) {
+                     checkbox.checked = !checkbox.checked;
+                     checkbox.dispatchEvent(new Event('change')); // Trigger change event
+                 }
+             }
+        });
+
+         // Add keyboard support for checklist items
+        editingChecklist.addEventListener('keydown', (event) => {
+            const listItem = event.target.closest('li');
+            if (listItem && (event.key === 'Enter' || event.key === ' ')) {
+                 event.preventDefault();
+                 const checkbox = listItem.querySelector('input[type="checkbox"]');
+                 if (checkbox) {
+                     checkbox.checked = !checkbox.checked;
+                     checkbox.dispatchEvent(new Event('change')); // Trigger change event
+                 }
+            }
+        });
+
+
+        // Event Listeners for Form Inputs (save state on change/blur)
+        document.querySelectorAll('.form-group input, .form-group textarea').forEach(input => {
+            input.addEventListener('blur', () => {
+                saveStepData(currentStep); // Save data when input loses focus
+                saveState(); // Save state
+            });
+             input.addEventListener('change', () => {
+                saveStepData(currentStep); // Save data when input value changes (for some input types)
+                saveState(); // Save state
+            });
+        });
+
+
+        // Initial setup
+        loadState(); // Load state first
+        goToStep(currentStep); // Go to the loaded step or step 1
+    </script>
+</body>
+</html>

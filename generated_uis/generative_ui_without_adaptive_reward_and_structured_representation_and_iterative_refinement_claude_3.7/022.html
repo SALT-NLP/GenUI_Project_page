@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketing Analytics & Campaign Platform</title>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --background-color: #f8f9fa;
+            --surface-color: #ffffff;
+            --text-color: #212529;
+            --text-light-color: #6c757d;
+            --border-color: #dee2e6;
+            --card-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            --border-radius: 0.375rem;
+            --spacing-unit: 1rem;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: calc(var(--spacing-unit) * 2);
+        }
+
+        header {
+            background-color: var(--surface-color);
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--card-shadow);
+            margin-bottom: calc(var(--spacing-unit) * 2);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            color: var(--primary-color);
+        }
+
+        .dashboard-metrics,
+        .analytics-section,
+        .segmentation-tool,
+        .campaign-management {
+            background-color: var(--surface-color);
+            padding: calc(var(--spacing-unit) * 1.5);
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            color: var(--text-color);
+            margin-top: 0;
+            margin-bottom: calc(var(--spacing-unit) * 1.5);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: var(--spacing-unit);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-unit);
+        }
+
+        .metric-card {
+            background-color: var(--background-color);
+            padding: var(--spacing-unit);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .metric-card h3 {
+            margin: 0 0 calc(var(--spacing-unit) * 0.5) 0;
+            font-size: 1rem;
+            color: var(--text-light-color);
+        }
+
+        .metric-card .value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: calc(var(--spacing-unit) * 0.5);
+        }
+
+        .metric-card .trend {
+            font-size: 0.9rem;
+            color: var(--success-color); /* Default positive trend */
+        }
+
+        .metric-card .trend.negative {
+            color: var(--danger-color);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px; /* Fixed height for charts */
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            cursor: pointer; /* Indicate interactivity */
+        }
+
+        .floating-controls {
+            position: absolute;
+            top: var(--spacing-unit);
+            right: var(--spacing-unit);
+            background: rgba(255, 255, 255, 0.95);
+            padding: var(--spacing-unit);
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 10;
+            min-width: 200px;
+        }
+
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .control-group {
+            margin-bottom: var(--spacing-unit);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .control-group label {
+            font-size: 0.9rem;
+            color: var(--text-light-color);
+            margin-bottom: calc(var(--spacing-unit) * 0.25);
+        }
+
+        .control-group input[type="color"],
+        .control-group input[type="number"],
+        .control-group select {
+            padding: calc(var(--spacing-unit) * 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            width: 100%;
+            box-sizing: border-box; /* Include padding and border in element's total width and height */
+        }
+
+        .segmentation-filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-unit);
+            margin-bottom: calc(var(--spacing-unit) * 1.5);
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: calc(var(--spacing-unit) * 0.5);
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        .filter-group select,
+        .filter-group input[type="text"],
+        .filter-group input[type="number"],
+        .filter-group input[type="date"] {
+            width: 100%;
+            padding: calc(var(--spacing-unit) * 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: calc(var(--spacing-unit) * 0.75) calc(var(--spacing-unit) * 1.5);
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+        }
+
+        button.primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        button.secondary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        button.ghost {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .campaign-list {
+            margin-top: calc(var(--spacing-unit) * 1.5);
+        }
+
+        .campaign-item {
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-unit);
+            margin-bottom: var(--spacing-unit);
+            background-color: var(--background-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .campaign-item h4 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: var(--primary-color);
+        }
+
+        .campaign-item .status {
+            font-size: 0.9rem;
+            color: var(--text-light-color);
+        }
+
+        .campaign-actions button {
+            margin-left: var(--spacing-unit);
+            padding: calc(var(--spacing-unit) * 0.5) var(--spacing-unit);
+            font-size: 0.9rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: var(--spacing-unit);
+        }
+
+        th, td {
+            padding: var(--spacing-unit);
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--background-color);
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        tbody tr:hover {
+            background-color: #e9ecef;
+        }
+
+        /* Accessibility */
+        [aria-hidden="true"] {
+            display: none;
+        }
+
+        :focus-visible {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Marketing Performance Dashboard</h1>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="dashboard-metrics">
+            <h2>Key Metrics Overview</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <h3>Customer Acquisition Cost (CAC)</h3>
+                    <div class="value">$55.20</div>
+                    <div class="trend negative">▲ 5% vs Last Month</div>
+                    <!-- Placeholder for sparkline chart -->
+                    <canvas width="150" height="40" aria-label="CAC trend sparkline"></canvas>
+                </div>
+                <div class="metric-card">
+                    <h3>Customer Lifetime Value (LTV)</h3>
+                    <div class="value">$310.50</div>
+                    <div class="trend">▼ 2% vs Last Month</div>
+                     <!-- Placeholder for sparkline chart -->
+                    <canvas width="150" height="40" aria-label="LTV trend sparkline"></canvas>
+                </div>
+                <div class="metric-card">
+                    <h3>Conversion Rate</h3>
+                    <div class="value">3.8%</div>
+                    <div class="trend negative">▼ 0.5% vs Last Month</div>
+                     <!-- Placeholder for sparkline chart -->
+                    <canvas width="150" height="40" aria-label="Conversion rate trend sparkline"></canvas>
+                </div>
+                 <div class="metric-card">
+                    <h3>Retention Rate (3-Month)</h3>
+                    <div class="value">65%</div>
+                    <div class="trend">▲ 1% vs Last Month</div>
+                     <!-- Placeholder for sparkline chart -->
+                    <canvas width="150" height="40" aria-label="Retention rate trend sparkline"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section class="analytics-section">
+            <h2>Performance Analytics & Reporting</h2>
+
+            <!-- LTV/CAC Trend Chart -->
+            <h3>LTV & CAC Trends Over Time</h3>
+            <div class="chart-container" id="ltvCacChartContainer">
+                <canvas id="ltvCacChart" aria-label="LTV and CAC trend over time chart"></canvas>
+                 <div class="floating-controls" id="ltvCacControls">
+                    <div class="control-group">
+                        <label for="ltvCacChartType">Chart Type</label>
+                        <select id="ltvCacChartType">
+                            <option value="line">Line</option>
+                            <option value="bar">Bar</option>
+                        </select>
+                    </div>
+                     <div class="control-group">
+                        <label for="ltvColor">LTV Color</label>
+                        <input type="color" id="ltvColor" value="#28a745">
+                    </div>
+                     <div class="control-group">
+                        <label for="cacColor">CAC Color</label>
+                        <input type="color" id="cacColor" value="#dc3545">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Regional Performance Chart -->
+             <h3>Regional Performance (CAC vs LTV)</h3>
+            <div class="chart-container" id="regionalChartContainer">
+                 <canvas id="regionalChart" aria-label="Regional performance chart showing CAC and LTV by region"></canvas>
+                 <div class="floating-controls" id="regionalControls">
+                    <div class="control-group">
+                        <label for="regionalChartType">Chart Type</label>
+                        <select id="regionalChartType">
+                            <option value="bar">Bar</option>
+                            <option value="line">Line</option>
+                        </select>
+                    </div>
+                     <div class="control-group">
+                        <label for="regionalLtvColor">LTV Color</label>
+                        <input type="color" id="regionalLtvColor" value="#28a745">
+                    </div>
+                     <div class="control-group">
+                        <label for="regionalCacColor">CAC Color</label>
+                        <input type="color" id="regionalCacColor" value="#dc3545">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Placeholder for other reports like Cohort Analysis, Funnel -->
+            <h3>Other Reports (Placeholder)</h3>
+            <p>Cohort Analysis, Funnel Visualization, etc. will be available here.</p>
+
+        </section>
+
+        <section class="segmentation-tool">
+            <h2>Customer Segmentation Tool</h2>
+            <p>Define criteria to create targeted customer segments.</p>
+            <div class="segmentation-filters">
+                <div class="filter-group">
+                    <label for="segment-region">Region</label>
+                    <select id="segment-region">
+                        <option value="">Select Region</option>
+                        <option value="north">North</option>
+                        <option value="south">South</option>
+                        <option value="east">East</option>
+                        <option value="west">West</option>
+                    </select>
+                </div>
+                 <div class="filter-group">
+                    <label for="segment-age">Age Range</label>
+                    <input type="text" id="segment-age" placeholder="e.g., 25-34">
+                </div>
+                 <div class="filter-group">
+                    <label for="segment-ltv-min">Min LTV</label>
+                    <input type="number" id="segment-ltv-min" placeholder="$0">
+                </div>
+                 <div class="filter-group">
+                    <label for="segment-ltv-max">Max LTV</label>
+                    <input type="number" id="segment-ltv-max" placeholder="$500+">
+                </div>
+                 <div class="filter-group">
+                    <label for="segment-frequency">Purchase Frequency</label>
+                    <select id="segment-frequency">
+                        <option value="">Select Frequency</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="bi-weekly">Bi-Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
+                 <div class="filter-group">
+                    <label for="segment-signup-date">Signup After</label>
+                    <input type="date" id="segment-signup-date">
+                </div>
+            </div>
+            <button class="primary">Apply Filters</button>
+            <button class="ghost">Reset Filters</button>
+
+            <h3 style="margin-top: calc(var(--spacing-unit) * 2);">Segment Preview (Placeholder)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Customer ID</th>
+                        <th>Region</th>
+                        <th>Age</th>
+                        <th>LTV</th>
+                        <th>Frequency</th>
+                        <th>Signup Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>CUST101</td>
+                        <td>North</td>
+                        <td>30</td>
+                        <td>$450.20</td>
+                        <td>Weekly</td>
+                        <td>2023-01-15</td>
+                    </tr>
+                     <tr>
+                        <td>CUST102</td>
+                        <td>South</td>
+                        <td>45</td>
+                        <td>$210.50</td>
+                        <td>Monthly</td>
+                        <td>2023-03-20</td>
+                    </tr>
+                    <!-- More rows would be added dynamically -->
+                </tbody>
+            </table>
+        </section>
+
+        <section class="campaign-management">
+            <h2>Campaign Management</h2>
+            <button class="primary">Create New Campaign</button>
+
+            <div class="campaign-list">
+                <div class="campaign-item">
+                    <div>
+                        <h4>Regional Acquisition - North</h4>
+                        <div class="status">Status: Active</div>
+                    </div>
+                    <div class="campaign-actions">
+                        <button class="secondary">View Details</button>
+                        <button class="ghost">Edit</button>
+                    </div>
+                </div>
+                 <div class="campaign-item">
+                    <div>
+                        <h4>High LTV Retention - East</h4>
+                        <div class="status">Status: Paused</div>
+                    </div>
+                    <div class="campaign-actions">
+                        <button class="secondary">View Details</button>
+                        <button class="ghost">Edit</button>
+                    </div>
+                </div>
+                <!-- More campaign items -->
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // Basic Chart.js setup and floating controls logic
+        document.addEventListener('DOMContentLoaded', () => {
+            // Chart Data (Placeholder)
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const ltvData = [280, 285, 290, 295, 300, 305, 310, 315, 312, 308, 310, 310.5];
+            const cacData = [60, 58, 57, 56, 55, 54, 53, 52, 53, 54, 55, 55.2];
+            const regions = ['North', 'South', 'East', 'West'];
+            const regionalLtv = [350, 280, 310, 300];
+            const regionalCac = [50, 65, 55, 58];
+
+
+            // --- LTV/CAC Chart ---
+            const ltvCacCtx = document.getElementById('ltvCacChart').getContext('2d');
+            const ltvCacChart = new Chart(ltvCacCtx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [
+                        {
+                            label: 'LTV',
+                            data: ltvData,
+                            borderColor: "var('--success-color')", // Use CSS variable
+                            backgroundColor: "rgba(40, 167, 69, 0.1)",
+                            fill: true,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'CAC',
+                            data: cacData,
+                            borderColor: "var('--danger-color')", // Use CSS variable
+                            backgroundColor: "rgba(220, 53, 69, 0.1)",
+                             fill: true,
+                            tension: 0.1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: false, // Title handled by H3
+                        },
+                         tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                         }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: {
+                                display: true,
+                                text: 'Value ($)'
+                            }
+                        },
+                        x: {
+                             title: {
+                                display: true,
+                                text: 'Month'
+                            }
+                        }
+                    },
+                     onClick: (e) => showControls(e, 'ltvCacControls'),
+                }
+            });
+
+             // --- Regional Performance Chart ---
+            const regionalCtx = document.getElementById('regionalChart').getContext('2d');
+            const regionalChart = new Chart(regionalCtx, {
+                type: 'bar',
+                data: {
+                    labels: regions,
+                    datasets: [
+                        {
+                            label: 'LTV',
+                            data: regionalLtv,
+                            backgroundColor: "var('--success-color')", // Use CSS variable
+                        },
+                        {
+                            label: 'CAC',
+                            data: regionalCac,
+                            backgroundColor: "var('--danger-color')", // Use CSS variable
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: false, // Title handled by H3
+                        },
+                         tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                         }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Value ($)'
+                            }
+                        },
+                         x: {
+                             title: {
+                                display: true,
+                                text: 'Region'
+                            }
+                        }
+                    },
+                    onClick: (e) => showControls(e, 'regionalControls'),
+                }
+            });
+
+
+            // --- Floating Controls Logic ---
+            const controls = document.querySelectorAll('.floating-controls');
+
+            function showControls(event, controlsId) {
+                const targetControls = document.getElementById(controlsId);
+                 // Close other controls
+                controls.forEach(ctrl => {
+                    if (ctrl.id !== controlsId) {
+                         ctrl.classList.remove('active');
+                    }
+                });
+                targetControls.classList.toggle('active');
+            }
+
+             // Close panel when clicking outside any controls or chart
+            document.addEventListener('click', (e) => {
+                let clickedOutside = true;
+                 controls.forEach(ctrl => {
+                    if (e.target.closest('.floating-controls') === ctrl || e.target.closest('.chart-container')?.contains(ctrl.previousElementSibling)) {
+                        clickedOutside = false;
+                    }
+                 });
+
+                 if (clickedOutside) {
+                     controls.forEach(ctrl => ctrl.classList.remove('active'));
+                 }
+            });
+
+
+            // --- Control Event Handlers ---
+
+            // LTV/CAC Chart Controls
+            document.getElementById('ltvCacChartType').addEventListener('change', (e) => {
+                ltvCacChart.config.type = e.target.value;
+                ltvCacChart.update();
+            });
+             document.getElementById('ltvColor').addEventListener('input', (e) => {
+                ltvCacChart.data.datasets[0].borderColor = e.target.value;
+                 ltvCacChart.data.datasets[0].backgroundColor = e.target.value + '1A'; // Add transparency
+                ltvCacChart.update();
+            });
+             document.getElementById('cacColor').addEventListener('input', (e) => {
+                ltvCacChart.data.datasets[1].borderColor = e.target.value;
+                 ltvCacChart.data.datasets[1].backgroundColor = e.target.value + '1A'; // Add transparency
+                ltvCacChart.update();
+            });
+
+
+             // Regional Chart Controls
+            document.getElementById('regionalChartType').addEventListener('change', (e) => {
+                regionalChart.config.type = e.target.value;
+                regionalChart.update();
+            });
+             document.getElementById('regionalLtvColor').addEventListener('input', (e) => {
+                regionalChart.data.datasets[0].backgroundColor = e.target.value;
+                regionalChart.update();
+            });
+             document.getElementById('regionalCacColor').addEventListener('input', (e) => {
+                regionalChart.data.datasets[1].backgroundColor = e.target.value;
+                regionalChart.update();
+            });
+
+            // --- Sparkline Placeholders (Basic) ---
+            document.querySelectorAll('.metric-card canvas').forEach((canvas, index) => {
+                const ctx = canvas.getContext('2d');
+                let data = [];
+                let color = var('--primary-color'); // Default color
+
+                if (index === 0) { // CAC
+                    data = [62, 60, 58, 57, 56, 55, 54, 53, 54, 55, 55.2];
+                    color = var('--danger-color');
+                } else if (index === 1) { // LTV
+                    data = [270, 280, 290, 300, 305, 310, 315, 312, 308, 310, 310.5];
+                    color = var('--success-color');
+                } else if (index === 2) { // Conversion
+                     data = [4.0, 3.9, 3.8, 3.7, 3.6, 3.7, 3.8, 3.9, 3.85, 3.8, 3.8];
+                     color = var('--danger-color');
+                } else if (index === 3) { // Retention
+                     data = [60, 61, 62, 63, 64, 65, 66, 65, 64, 64.5, 65];
+                     color = var('--success-color');
+                }
+
+
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.map((_, i) => ''), // No labels for sparkline
+                        datasets: [{
+                            data: data,
+                            borderColor: color,
+                            borderWidth: 1,
+                            fill: false,
+                            tension: 0.4,
+                            pointRadius: 0, // No points
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { enabled: false }, // No tooltips for sparkline
+                        },
+                        scales: {
+                            x: { display: false },
+                            y: { display: false },
+                        },
+                        layout: {
+                             padding: {
+                                top: 5, bottom: 5, left: 5, right: 5
+                             }
+                        }
+                    }
+                });
+            });
+
+            // --- Basic Form Validation Placeholder ---
+            const segmentationForm = document.querySelector('.segmentation-tool');
+            segmentationForm.querySelector('button.primary').addEventListener('click', (e) => {
+                 // Prevent actual form submission if this were a form
+                e.preventDefault();
+                console.log('Applying segmentation filters (placeholder)');
+                // Add validation logic here (e.g., check age format, LTV range)
+                // Add visual feedback (e.g., red borders, error messages)
+            });
+
+             // --- Campaign Management Placeholder ---
+             const createCampaignButton = document.querySelector('.campaign-management button.primary');
+             createCampaignButton.addEventListener('click', () => {
+                 console.log('Opening Create Campaign Modal (placeholder)');
+                 // Implement modal logic here
+             });
+
+             document.querySelectorAll('.campaign-actions button').forEach(button => {
+                 button.addEventListener('click', (e) => {
+                     const action = e.target.textContent.trim();
+                     const campaignName = e.target.closest('.campaign-item').querySelector('h4').textContent.trim();
+                     console.log(`${action} campaign: ${campaignName} (placeholder)`);
+                     // Implement view/edit logic here (e.g., open modal, navigate)
+                 });
+             });
+        });
+    </script>
+</body>
+</html>

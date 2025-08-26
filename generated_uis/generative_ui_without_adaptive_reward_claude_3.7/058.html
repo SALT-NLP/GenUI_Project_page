@@ -1,0 +1,2661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Longitudinal Study Analysis Tool</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --text: #333333;
+            --border: #ddd;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text);
+            background-color: #f5f7fa;
+            line-height: 1.6;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            grid-template-rows: 60px 1fr;
+            grid-template-areas:
+                "header header"
+                "sidebar main";
+            height: 100vh;
+        }
+
+        header {
+            grid-area: header;
+            background-color: var(--primary);
+            color: white;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 5px var(--shadow);
+            z-index: 10;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .sidebar {
+            grid-area: sidebar;
+            background-color: white;
+            border-right: 1px solid var(--border);
+            padding: 20px 0;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background-color 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background-color: var(--light);
+        }
+
+        .nav-item.active {
+            background-color: rgba(52, 152, 219, 0.1);
+            border-left: 3px solid var(--secondary);
+            font-weight: 600;
+        }
+
+        .nav-item i {
+            font-size: 18px;
+            color: var(--secondary);
+        }
+
+        main {
+            grid-area: main;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .workflow-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+        }
+
+        .workflow-step {
+            padding: 10px 20px;
+            background-color: white;
+            border-radius: 20px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 1px 3px var(--shadow);
+        }
+
+        .workflow-step:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px var(--shadow);
+        }
+
+        .workflow-step.active {
+            background-color: var(--secondary);
+            color: white;
+        }
+
+        .workflow-step.active i {
+            color: white;
+        }
+
+        .workflow-step i {
+            color: var(--secondary);
+        }
+
+        .workflow-step .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: var(--light);
+            color: var(--secondary);
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .workflow-step.active .step-number {
+            background-color: white;
+            color: var(--secondary);
+        }
+
+        .workflow-step.completed .step-number {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .panel {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px var(--shadow);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: var(--secondary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+
+        .btn-warning {
+            background-color: var(--warning);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background-color: #e67e22;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--border);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--light);
+        }
+
+        .file-upload {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.2s;
+            margin-bottom: 20px;
+        }
+
+        .file-upload:hover {
+            border-color: var(--secondary);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: var(--secondary);
+            margin-bottom: 10px;
+        }
+
+        .file-list {
+            margin-top: 20px;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .file-icon {
+            color: var(--secondary);
+            font-size: 20px;
+        }
+
+        .file-name {
+            font-weight: 500;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .file-action {
+            cursor: pointer;
+            color: var(--text);
+        }
+
+        .file-action:hover {
+            color: var(--secondary);
+        }
+
+        .data-preview {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background-color: var(--light);
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background-color: rgba(236, 240, 241, 0.5);
+        }
+
+        .variable-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .variable-card {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            transition: all 0.2s;
+        }
+
+        .variable-card:hover {
+            box-shadow: 0 4px 8px var(--shadow);
+            transform: translateY(-2px);
+        }
+
+        .variable-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .variable-name {
+            font-weight: 600;
+        }
+
+        .variable-type {
+            font-size: 0.8rem;
+            color: var(--secondary);
+            background-color: rgba(52, 152, 219, 0.1);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .variable-stats {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .variable-role {
+            margin-top: 10px;
+        }
+
+        .select-role {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+
+        .analysis-config {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .config-section {
+            margin-bottom: 20px;
+        }
+
+        .config-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .results-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .chart-container {
+            height: 400px;
+            position: relative;
+        }
+
+        .floating-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px var(--shadow);
+            padding: 10px;
+            z-index: 10;
+            display: none;
+        }
+
+        .chart-container:hover .floating-controls {
+            display: block;
+        }
+
+        .control-group {
+            margin-bottom: 10px;
+        }
+
+        .control-label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .report-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .report-option {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .report-option:hover {
+            border-color: var(--secondary);
+            box-shadow: 0 4px 8px var(--shadow);
+        }
+
+        .report-option.selected {
+            border-color: var(--secondary);
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+
+        .report-icon {
+            font-size: 24px;
+            color: var(--secondary);
+            margin-bottom: 10px;
+        }
+
+        .report-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .report-desc {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .tab-container {
+            margin-bottom: 20px;
+        }
+
+        .tab-nav {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 15px;
+        }
+
+        .tab-item {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab-item:hover {
+            background-color: var(--light);
+        }
+
+        .tab-item.active {
+            border-bottom: 2px solid var(--secondary);
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .stats-table th, .stats-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stats-table th {
+            background-color: var(--light);
+            font-weight: 600;
+        }
+
+        .stats-highlight {
+            background-color: rgba(46, 204, 113, 0.1);
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .filter-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            background-color: var(--light);
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .filter-label {
+            font-weight: 500;
+        }
+
+        .filter-value {
+            padding: 2px 8px;
+            background-color: white;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .filter-remove {
+            cursor: pointer;
+            color: #666;
+        }
+
+        .filter-remove:hover {
+            color: var(--accent);
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-areas:
+                    "header"
+                    "main";
+            }
+
+            .sidebar {
+                display: none;
+                position: fixed;
+                top: 60px;
+                left: 0;
+                height: calc(100vh - 60px);
+                z-index: 100;
+                width: 280px;
+            }
+
+            .sidebar.active {
+                display: block;
+            }
+
+            .menu-toggle {
+                display: block;
+                cursor: pointer;
+            }
+
+            .analysis-config,
+            .results-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Font Awesome style equivalents */
+        .icon {
+            font-style: normal;
+            font-weight: normal;
+            display: inline-block;
+            text-align: center;
+            width: 1.25em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <span class="icon">📊</span>
+                <span>Longitudinal Study Analysis Tool</span>
+            </div>
+            <div class="user-menu">
+                <button class="btn btn-outline">Help</button>
+            </div>
+        </header>
+
+        <aside class="sidebar">
+            <nav>
+                <div class="nav-item active">
+                    <i class="icon">📁</i>
+                    <span>Data Management</span>
+                </div>
+                <div class="nav-item">
+                    <i class="icon">🔍</i>
+                    <span>Variable Definition</span>
+                </div>
+                <div class="nav-item">
+                    <i class="icon">⚙️</i>
+                    <span>Analysis Configuration</span>
+                </div>
+                <div class="nav-item">
+                    <i class="icon">📈</i>
+                    <span>Results Visualization</span>
+                </div>
+                <div class="nav-item">
+                    <i class="icon">📄</i>
+                    <span>Report Generation</span>
+                </div>
+                <div class="nav-item">
+                    <i class="icon">📚</i>
+                    <span>Documentation</span>
+                </div>
+                <div class="nav-item">
+                    <i class="icon">⚙️</i>
+                    <span>Settings</span>
+                </div>
+            </nav>
+        </aside>
+
+        <main>
+            <div class="workflow-container">
+                <div class="workflow-step active">
+                    <span class="step-number">1</span>
+                    <span>Data Upload</span>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">2</span>
+                    <span>Variable Definition</span>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">3</span>
+                    <span>Analysis Configuration</span>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">4</span>
+                    <span>Results Visualization</span>
+                </div>
+                <div class="workflow-step">
+                    <span class="step-number">5</span>
+                    <span>Report Generation</span>
+                </div>
+            </div>
+
+            <!-- Data Upload Section -->
+            <section id="data-upload" class="active-section">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Data Upload</h2>
+                        <div>
+                            <button class="btn btn-outline">
+                                <i class="icon">❓</i>
+                                <span>Help</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="file-upload" id="dropzone">
+                        <div class="upload-icon">
+                            <i class="icon">📤</i>
+                        </div>
+                        <h3>Drag and drop your data files here</h3>
+                        <p>or</p>
+                        <button class="btn btn-primary">
+                            <i class="icon">📂</i>
+                            <span>Browse Files</span>
+                        </button>
+                        <p class="upload-hint">Supported formats: CSV, XLSX, SPSS (.sav)</p>
+                    </div>
+
+                    <div class="file-list">
+                        <h3>Uploaded Files</h3>
+                        <div class="file-item">
+                            <div class="file-info">
+                                <i class="file-icon icon">📊</i>
+                                <div>
+                                    <div class="file-name">Student_Data_Wave1.csv</div>
+                                    <div class="file-meta">12.4 MB - 1,245 records</div>
+                                </div>
+                            </div>
+                            <div class="file-actions">
+                                <span class="file-action">
+                                    <i class="icon">👁️</i>
+                                </span>
+                                <span class="file-action">
+                                    <i class="icon">🗑️</i>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <div class="file-info">
+                                <i class="file-icon icon">📊</i>
+                                <div>
+                                    <div class="file-name">Student_Data_Wave2.csv</div>
+                                    <div class="file-meta">11.8 MB - 1,198 records</div>
+                                </div>
+                            </div>
+                            <div class="file-actions">
+                                <span class="file-action">
+                                    <i class="icon">👁️</i>
+                                </span>
+                                <span class="file-action">
+                                    <i class="icon">🗑️</i>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <div class="file-info">
+                                <i class="file-icon icon">📊</i>
+                                <div>
+                                    <div class="file-name">Student_Data_Wave3.csv</div>
+                                    <div class="file-meta">11.5 MB - 1,150 records</div>
+                                </div>
+                            </div>
+                            <div class="file-actions">
+                                <span class="file-action">
+                                    <i class="icon">👁️</i>
+                                </span>
+                                <span class="file-action">
+                                    <i class="icon">🗑️</i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Data Preview</h2>
+                        <div>
+                            <button class="btn btn-outline">
+                                <i class="icon">🔍</i>
+                                <span>Filter</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="data-preview">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>student_id</th>
+                                    <th>wave</th>
+                                    <th>intervention_group</th>
+                                    <th>gpa</th>
+                                    <th>credits_completed</th>
+                                    <th>study_hours_week</th>
+                                    <th>belonging_score</th>
+                                    <th>self_efficacy</th>
+                                    <th>stress_level</th>
+                                    <th>campus_involvement</th>
+                                    <th>work_hours_week</th>
+                                    <th>family_obligations</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1001</td>
+                                    <td>1</td>
+                                    <td>Mentoring</td>
+                                    <td>3.2</td>
+                                    <td>15</td>
+                                    <td>12</td>
+                                    <td>3.5</td>
+                                    <td>3.8</td>
+                                    <td>4.2</td>
+                                    <td>2</td>
+                                    <td>15</td>
+                                    <td>3.1</td>
+                                </tr>
+                                <tr>
+                                    <td>1002</td>
+                                    <td>1</td>
+                                    <td>Financial Aid</td>
+                                    <td>3.5</td>
+                                    <td>16</td>
+                                    <td>14</td>
+                                    <td>3.7</td>
+                                    <td>4.0</td>
+                                    <td>3.8</td>
+                                    <td>3</td>
+                                    <td>8</td>
+                                    <td>2.8</td>
+                                </tr>
+                                <tr>
+                                    <td>1003</td>
+                                    <td>1</td>
+                                    <td>Control</td>
+                                    <td>3.1</td>
+                                    <td>14</td>
+                                    <td>10</td>
+                                    <td>3.2</td>
+                                    <td>3.5</td>
+                                    <td>4.5</td>
+                                    <td>1</td>
+                                    <td>20</td>
+                                    <td>3.5</td>
+                                </tr>
+                                <tr>
+                                    <td>1004</td>
+                                    <td>1</td>
+                                    <td>Skill Workshop</td>
+                                    <td>3.3</td>
+                                    <td>15</td>
+                                    <td>13</td>
+                                    <td>3.6</td>
+                                    <td>3.9</td>
+                                    <td>4.0</td>
+                                    <td>2</td>
+                                    <td>12</td>
+                                    <td>3.0</td>
+                                </tr>
+                                <tr>
+                                    <td>1005</td>
+                                    <td>1</td>
+                                    <td>Mentoring</td>
+                                    <td>3.4</td>
+                                    <td>16</td>
+                                    <td>15</td>
+                                    <td>3.8</td>
+                                    <td>4.1</td>
+                                    <td>3.7</td>
+                                    <td>3</td>
+                                    <td>10</td>
+                                    <td>2.7</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="panel-actions" style="margin-top: 20px; text-align: right;">
+                        <button class="btn btn-success">
+                            <span>Continue to Variable Definition</span>
+                            <i class="icon">→</i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Variable Definition Section -->
+            <section id="variable-definition" style="display: none;">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Variable Definition</h2>
+                        <div>
+                            <button class="btn btn-outline">
+                                <i class="icon">🔄</i>
+                                <span>Auto-Detect</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <p>Assign roles to your variables to configure your longitudinal analysis. Variables can be assigned as dependent (outcome), independent (predictor), confounder, grouping, or time variables.</p>
+
+                    <div class="variable-container">
+                        <div class="variable-card">
+                            <div class="variable-header">
+                                <span class="variable-name">gpa</span>
+                                <span class="variable-type">Numeric</span>
+                            </div>
+                            <div class="variable-stats">
+                                <div>Range: 1.5 - 4.0</div>
+                                <div>Mean: 3.2</div>
+                                <div>SD: 0.5</div>
+                            </div>
+                            <div class="variable-role">
+                                <select class="select-role">
+                                    <option>Select role...</option>
+                                    <option selected>Dependent (Outcome)</option>
+                                    <option>Independent (Predictor)</option>
+                                    <option>Confounder</option>
+                                    <option>Grouping</option>
+                                    <option>Time</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="variable-card">
+                            <div class="variable-header">
+                                <span class="variable-name">credits_completed</span>
+                                <span class="variable-type">Numeric</span>
+                            </div>
+                            <div class="variable-stats">
+                                <div>Range: 0 - 120</div>
+                                <div>Mean: 45.3</div>
+                                <div>SD: 22.8</div>
+                            </div>
+                            <div class="variable-role">
+                                <select class="select-role">
+                                    <option>Select role...</option>
+                                    <option selected>Dependent (Outcome)</option>
+                                    <option>Independent (Predictor)</option>
+                                    <option>Confounder</option>
+                                    <option>Grouping</option>
+                                    <option>Time</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="variable-card">
+                            <div class="variable-header">
+                                <span class="variable-name">study_hours_week</span>
+                                <span class="variable-type">Numeric</span>
+                            </div>
+                            <div class="variable-stats">
+                                <div>Range: 0 - 40</div>
+                                <div>Mean: 12.5</div>
+                                <div>SD: 6.2</div>
+                            </div>
+                            <div class="variable-role">
+                                <select class="select-role">
+                                    <option>Select role...</option>
+                                    <option>Dependent (Outcome)</option>
+                                    <option selected>Independent (Predictor)</option>
+                                    <option>Confounder</option>
+                                    <option>Grouping</option>
+                                    <option>Time</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="variable-card">
+                            <div class="variable-header">
+                                <span class="variable-name">belonging_score</span>
+                                <span class="variable-type">Numeric</span>
+                            </div>
+                            <div class="variable-stats">
+                                <div>Range: 1.0 - 5.0</div>
+                                <div>Mean: 3.4</div>
+                                <div>SD: 0.8</div>
+                            </div>
+                            <div class="variable-role">
+                                <select class="select-role">
+                                    <option>Select role...</option>
+                                    <option selected>Dependent (Outcome)</option>
+                                    <option>Independent (Predictor)</option>
+                                    <option>Confounder</option>
+                                    <option>Grouping</option>
+                                    <option>Time</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="variable-card">
+                            <div class="variable-header">
+                                <span class="variable-name">self_efficacy</span>
+                                <span class="variable-type">Numeric</span>
+                            </div>
+                            <div class="variable-stats">
+                                <div>Range: 1.0 - 5.0</div>
+                                <div>Mean: 3.7</div>
+                                <div>SD: 0.7</div>
+                            </div>
+                            <div class="variable-role">
+                                <select class="select-role">
+                                    <option>Select role...</option>
+                                    <option selected>Dependent (Outcome)</option>
+                                    <option>Independent (Predictor)</option>
+                                    <option>Confounder</option>
+                                    <option>Grouping</option>
+                                    <option>Time</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="variable-card">
+                            <div class="variable-header">
+                                <span class="variable-name">stress_level</span>
+                                <span class="variable-type">Numeric</span>
+                            </div>
+                            <div class="variable-stats">
+                                <div>Range: 1.0 - 5.0</div>
+                                <div>Mean: 4.1</div>
+                                <div>SD: 0.9</div>
+                            </div>
+                            <div class="variable-role">
+                                <select class="select-role">
+                                    <option>Select role...</option>
+                                    <option selected>Dependent (Outcome)</option>
+                                    <option>Independent (Predictor)</option>
+                                    <option>Confounder</option>
+                                    <option>Grouping</option>
+                                    <option>Time</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="variable-card">
+                            <div class="variable-header">
+                                <span class="variable-name">campus_involvement</span>
+                                <span class="variable-type">Numeric</span>
+                            </div>
+                            <div class="variable-stats">
+                                <div>Range: 0 - 5</div>
+                                <div>Mean: 1.8</div>
+                                <div>SD: 1.2</div>
+                            </div>
+                            <div class="variable-role">
+                                <select class="select-role">
+                                    <option>Select role...</option>
+                                    <option selected>Dependent (Outcome)</option>
+                                    <option>Independent (Predictor)</option>
+                                    <option>Confounder</option>
+                                    <option>Grouping</option>
+                                    <option>Time</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="variable-card">
+                            <div class="variable-header">
+                                <span class="variable-name">work_hours_week</span>
+                                <span class="variable-type">Numeric</span>
+                            </div>
+                            <div class="variable-stats">
+                                <div>Range: 0 - 40</div>
+                                <div>Mean: 15.3</div>
+                                <div>SD: 8.7</div>
+                            </div>
+                            <div class="variable-role">
+                                <select class="select-role">
+                                    <option>Select role...</option>
+                                    <option>Dependent (Outcome)</option>
+                                    <option>Independent (Predictor)</option>
+                                    <option selected>Confounder</option>
+                                    <option>Grouping</option>
+                                    <option>Time</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="variable-card">
+                            <div class="variable-header">
+                                <span class="variable-name">family_obligations</span>
+                                <span class="variable-type">Numeric</span>
+                            </div>
+                            <div class="variable-stats">
+                                <div>Range: 1.0 - 5.0</div>
+                                <div>Mean: 3.2</div>
+                                <div>SD: 1.1</div>
+                            </div>
+                            <div class="variable-role">
+                                <select class="select-role">
+                                    <option>Select role...</option>
+                                    <option>Dependent (Outcome)</option>
+                                    <option>Independent (Predictor)</option>
+                                    <option selected>Confounder</option>
+                                    <option>Grouping</option>
+                                    <option>Time</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="variable-card">
+                            <div class="variable-header">
+                                <span class="variable-name">intervention_group</span>
+                                <span class="variable-type">Categorical</span>
+                            </div>
+                            <div class="variable-stats">
+                                <div>Categories: 4</div>
+                                <div>Mode: Mentoring</div>
+                            </div>
+                            <div class="variable-role">
+                                <select class="select-role">
+                                    <option>Select role...</option>
+                                    <option>Dependent (Outcome)</option>
+                                    <option selected>Independent (Predictor)</option>
+                                    <option>Confounder</option>
+                                    <option>Grouping</option>
+                                    <option>Time</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="variable-card">
+                            <div class="variable-header">
+                                <span class="variable-name">student_id</span>
+                                <span class="variable-type">ID</span>
+                            </div>
+                            <div class="variable-stats">
+                                <div>Unique Values: 1,245</div>
+                            </div>
+                            <div class="variable-role">
+                                <select class="select-role">
+                                    <option>Select role...</option>
+                                    <option>Dependent (Outcome)</option>
+                                    <option>Independent (Predictor)</option>
+                                    <option>Confounder</option>
+                                    <option selected>ID</option>
+                                    <option>Time</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="variable-card">
+                            <div class="variable-header">
+                                <span class="variable-name">wave</span>
+                                <span class="variable-type">Categorical</span>
+                            </div>
+                            <div class="variable-stats">
+                                <div>Categories: 3</div>
+                                <div>Values: 1, 2, 3</div>
+                            </div>
+                            <div class="variable-role">
+                                <select class="select-role">
+                                    <option>Select role...</option>
+                                    <option>Dependent (Outcome)</option>
+                                    <option>Independent (Predictor)</option>
+                                    <option>Confounder</option>
+                                    <option>Grouping</option>
+                                    <option selected>Time</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel-actions" style="margin-top: 20px; text-align: right;">
+                        <button class="btn btn-outline">
+                            <i class="icon">←</i>
+                            <span>Back to Data Upload</span>
+                        </button>
+                        <button class="btn btn-success">
+                            <span>Continue to Analysis Configuration</span>
+                            <i class="icon">→</i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Analysis Configuration Section -->
+            <section id="analysis-config" style="display: none;">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Analysis Configuration</h2>
+                        <div>
+                            <button class="btn btn-outline">
+                                <i class="icon">📋</i>
+                                <span>Load Template</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="analysis-config">
+                        <div class="config-section">
+                            <h3 class="config-title">Model Selection</h3>
+                            <div class="form-group">
+                                <label class="form-label">Analysis Type</label>
+                                <select class="form-select" id="analysis-type">
+                                    <option>Select analysis type...</option>
+                                    <option selected>Longitudinal Mixed Effects Model</option>
+                                    <option>Repeated Measures ANOVA</option>
+                                    <option>Growth Curve Analysis</option>
+                                    <option>Difference-in-Differences</option>
+                                    <option>Propensity Score Matching</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Outcome Variables</label>
+                                <div class="checkbox-group">
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="outcome-gpa" checked>
+                                        <label for="outcome-gpa">GPA</label>
+                                    </div>
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="outcome-credits" checked>
+                                        <label for="outcome-credits">Credits Completed</label>
+                                    </div>
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="outcome-belonging" checked>
+                                        <label for="outcome-belonging">Belonging Score</label>
+                                    </div>
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="outcome-efficacy" checked>
+                                        <label for="outcome-efficacy">Self-Efficacy</label>
+                                    </div>
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="outcome-stress">
+                                        <label for="outcome-stress">Stress Level</label>
+                                    </div>
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="outcome-involvement">
+                                        <label for="outcome-involvement">Campus Involvement</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Predictor Variables</label>
+                                <div class="checkbox-group">
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="pred-intervention" checked>
+                                        <label for="pred-intervention">Intervention Group</label>
+                                    </div>
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="pred-study" checked>
+                                        <label for="pred-study">Study Hours</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Confounding Variables</label>
+                                <div class="checkbox-group">
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="conf-work" checked>
+                                        <label for="conf-work">Work Hours</label>
+                                    </div>
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="conf-family" checked>
+                                        <label for="conf-family">Family Obligations</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="config-section">
+                            <h3 class="config-title">Subgroup Analysis</h3>
+                            <div class="form-group">
+                                <label class="form-label">Define Subgroups</label>
+                                <select class="form-select" id="subgroup-method">
+                                    <option>Select method...</option>
+                                    <option selected>Predefined Categories</option>
+                                    <option>Custom Rules</option>
+                                    <option>Clustering</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="checkbox-group">
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="subgroup-work" checked>
+                                        <label for="subgroup-work">Working Students (15+ hrs/week)</label>
+                                    </div>
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="subgroup-family" checked>
+                                        <label for="subgroup-family">High Family Obligations (4+)</label>
+                                    </div>
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="subgroup-low-gpa" checked>
+                                        <label for="subgroup-low-gpa">Low Initial GPA (< 3.0)</label>
+                                    </div>
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="subgroup-high-gpa">
+                                        <label for="subgroup-high-gpa">High Initial GPA (≥ 3.5)</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h3 class="config-title">Advanced Options</h3>
+                            <div class="form-group">
+                                <label class="form-label">Significance Level</label>
+                                <select class="form-select" id="significance">
+                                    <option>Select level...</option>
+                                    <option>0.01</option>
+                                    <option selected>0.05</option>
+                                    <option>0.10</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Multiple Comparison Correction</label>
+                                <select class="form-select" id="correction">
+                                    <option>Select method...</option>
+                                    <option>None</option>
+                                    <option selected>Bonferroni</option>
+                                    <option>Holm-Bonferroni</option>
+                                    <option>Benjamini-Hochberg</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Missing Data Handling</label>
+                                <select class="form-select" id="missing-data">
+                                    <option>Select method...</option>
+                                    <option>Listwise Deletion</option>
+                                    <option selected>Multiple Imputation</option>
+                                    <option>Maximum Likelihood</option>
+                                    <option>Last Observation Carried Forward</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel-actions" style="margin-top: 20px; text-align: right;">
+                        <button class="btn btn-outline">
+                            <i class="icon">←</i>
+                            <span>Back to Variable Definition</span>
+                        </button>
+                        <button class="btn btn-primary">
+                            <i class="icon">⚙️</i>
+                            <span>Run Analysis</span>
+                        </button>
+                        <button class="btn btn-success">
+                            <span>View Results</span>
+                            <i class="icon">→</i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results Visualization Section -->
+            <section id="results" style="display: none;">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Results & Visualization</h2>
+                        <div>
+                            <button class="btn btn-outline">
+                                <i class="icon">💾</i>
+                                <span>Save Results</span>
+                            </button>
+                            <button class="btn btn-outline">
+                                <i class="icon">📤</i>
+                                <span>Export</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="filter-bar">
+                        <div class="filter-item">
+                            <span class="filter-label">Outcome:</span>
+                            <span class="filter-value">GPA</span>
+                            <span class="filter-remove">×</span>
+                        </div>
+                        <div class="filter-item">
+                            <span class="filter-label">Intervention:</span>
+                            <span class="filter-value">All</span>
+                            <span class="filter-remove">×</span>
+                        </div>
+                        <div class="filter-item">
+                            <span class="filter-label">Subgroup:</span>
+                            <span class="filter-value">All</span>
+                            <span class="filter-remove">×</span>
+                        </div>
+                        <button class="btn btn-outline" style="margin-left: auto;">
+                            <i class="icon">➕</i>
+                            <span>Add Filter</span>
+                        </button>
+                    </div>
+
+                    <div class="tab-container">
+                        <div class="tab-nav">
+                            <div class="tab-item active">Summary</div>
+                            <div class="tab-item">Statistical Tables</div>
+                            <div class="tab-item">Visualizations</div>
+                            <div class="tab-item">Subgroup Analysis</div>
+                        </div>
+
+                        <div class="tab-content active">
+                            <h3>Analysis Summary</h3>
+                            <p>This analysis examined the impact of different intervention strategies on academic and psychological outcomes for first-generation college students over three time points. The results indicate statistically significant improvements in GPA, self-efficacy, and belonging scores for students in the mentoring and skill workshop groups compared to the control group.</p>
+
+                            <div class="results-container">
+                                <div class="chart-container">
+                                    <canvas id="summaryChart1"></canvas>
+                                    <div class="floating-controls" id="summaryChartControls1">
+                                        <div class="control-group">
+                                            <label class="control-label">Chart Type</label>
+                                            <select id="summaryChartType1">
+                                                <option value="line" selected>Line</option>
+                                                <option value="bar">Bar</option>
+                                            </select>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Group By</label>
+                                            <select id="summaryChartGroup1">
+                                                <option value="intervention" selected>Intervention</option>
+                                                <option value="subgroup">Subgroup</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h4>Key Findings</h4>
+                                    <ul>
+                                        <li>Mentoring intervention showed the strongest effect on GPA improvement (+0.35 points, p<0.01)</li>
+                                        <li>Financial aid intervention had the largest impact on reducing work hours (-5.2 hours/week, p<0.01)</li>
+                                        <li>Skill workshops significantly improved self-efficacy scores (+0.62 points, p<0.01)</li>
+                                        <li>Students with high family obligations benefited most from financial aid interventions</li>
+                                        <li>Working students showed greatest GPA improvements with mentoring + skill workshops</li>
+                                    </ul>
+
+                                    <h4>Statistical Significance</h4>
+                                    <p>The longitudinal mixed effects model indicates that intervention effects were statistically significant across all three waves of data collection, with increasing effect sizes over time (p<0.01).</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-content">
+                            <h3>Statistical Results</h3>
+
+                            <table class="stats-table">
+                                <thead>
+                                    <tr>
+                                        <th>Outcome</th>
+                                        <th>Intervention</th>
+                                        <th>Effect Size</th>
+                                        <th>SE</th>
+                                        <th>p-value</th>
+                                        <th>95% CI</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="stats-highlight">
+                                        <td>GPA</td>
+                                        <td>Mentoring</td>
+                                        <td>0.35</td>
+                                        <td>0.08</td>
+                                        <td>0.001</td>
+                                        <td>[0.19, 0.51]</td>
+                                    </tr>
+                                    <tr>
+                                        <td>GPA</td>
+                                        <td>Financial Aid</td>
+                                        <td>0.21</td>
+                                        <td>0.09</td>
+                                        <td>0.019</td>
+                                        <td>[0.04, 0.38]</td>
+                                    </tr>
+                                    <tr>
+                                        <td>GPA</td>
+                                        <td>Skill Workshop</td>
+                                        <td>0.28</td>
+                                        <td>0.08</td>
+                                        <td>0.005</td>
+                                        <td>[0.12, 0.44]</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Self-Efficacy</td>
+                                        <td>Mentoring</td>
+                                        <td>0.58</td>
+                                        <td>0.12</td>
+                                        <td>0.001</td>
+                                        <td>[0.34, 0.82]</td>
+                                    </tr>
+                                    <tr class="stats-highlight">
+                                        <td>Self-Efficacy</td>
+                                        <td>Skill Workshop</td>
+                                        <td>0.62</td>
+                                        <td>0.11</td>
+                                        <td>0.001</td>
+                                        <td>[0.40, 0.84]</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Self-Efficacy</td>
+                                        <td>Financial Aid</td>
+                                        <td>0.25</td>
+                                        <td>0.12</td>
+                                        <td>0.037</td>
+                                        <td>[0.01, 0.49]</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Belonging Score</td>
+                                        <td>Mentoring</td>
+                                        <td>0.48</td>
+                                        <td>0.10</td>
+                                        <td>0.001</td>
+                                        <td>[0.28, 0.68]</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Belonging Score</td>
+                                        <td>Skill Workshop</td>
+                                        <td>0.42</td>
+                                        <td>0.11</td>
+                                        <td>0.001</td>
+                                        <td>[0.20, 0.64]</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Belonging Score</td>
+                                        <td>Financial Aid</td>
+                                        <td>0.18</td>
+                                        <td>0.11</td>
+                                        <td>0.102</td>
+                                        <td>[-0.04, 0.40]</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <h3 style="margin-top: 20px;">Time Effects</h3>
+                            <table class="stats-table">
+                                <thead>
+                                    <tr>
+                                        <th>Outcome</th>
+                                        <th>Wave</th>
+                                        <th>Intervention</th>
+                                        <th>Effect Size</th>
+                                        <th>SE</th>
+                                        <th>p-value</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>GPA</td>
+                                        <td>1</td>
+                                        <td>Mentoring</td>
+                                        <td>0.15</td>
+                                        <td>0.09</td>
+                                        <td>0.095</td>
+                                    </tr>
+                                    <tr>
+                                        <td>GPA</td>
+                                        <td>2</td>
+                                        <td>Mentoring</td>
+                                        <td>0.29</td>
+                                        <td>0.09</td>
+                                        <td>0.002</td>
+                                    </tr>
+                                    <tr class="stats-highlight">
+                                        <td>GPA</td>
+                                        <td>3</td>
+                                        <td>Mentoring</td>
+                                        <td>0.35</td>
+                                        <td>0.08</td>
+                                        <td>0.001</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Self-Efficacy</td>
+                                        <td>1</td>
+                                        <td>Skill Workshop</td>
+                                        <td>0.32</td>
+                                        <td>0.12</td>
+                                        <td>0.008</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Self-Efficacy</td>
+                                        <td>2</td>
+                                        <td>Skill Workshop</td>
+                                        <td>0.51</td>
+                                        <td>0.11</td>
+                                        <td>0.001</td>
+                                    </tr>
+                                    <tr class="stats-highlight">
+                                        <td>Self-Efficacy</td>
+                                        <td>3</td>
+                                        <td>Skill Workshop</td>
+                                        <td>0.62</td>
+                                        <td>0.11</td>
+                                        <td>0.001</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="tab-content">
+                            <h3>Data Visualizations</h3>
+
+                            <div class="results-container">
+                                <div class="chart-container">
+                                    <canvas id="lineChart"></canvas>
+                                    <div class="floating-controls" id="lineChartControls">
+                                        <div class="control-group">
+                                            <label class="control-label">Outcome</label>
+                                            <select id="lineChartOutcome">
+                                                <option value="gpa" selected>GPA</option>
+                                                <option value="self_efficacy">Self-Efficacy</option>
+                                                <option value="belonging">Belonging Score</option>
+                                                <option value="stress">Stress Level</option>
+                                            </select>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Group By</label>
+                                            <select id="lineChartGroup">
+                                                <option value="intervention" selected>Intervention</option>
+                                                <option value="subgroup">Subgroup</option>
+                                            </select>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Show Error Bars</label>
+                                            <input type="checkbox" id="lineChartErrors" checked>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="chart-container">
+                                    <canvas id="barChart"></canvas>
+                                    <div class="floating-controls" id="barChartControls">
+                                        <div class="control-group">
+                                            <label class="control-label">Outcome</label>
+                                            <select id="barChartOutcome">
+                                                <option value="gpa">GPA</option>
+                                                <option value="self_efficacy" selected>Self-Efficacy</option>
+                                                <option value="belonging">Belonging Score</option>
+                                                <option value="stress">Stress Level</option>
+                                            </select>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Wave</label>
+                                            <select id="barChartWave">
+                                                <option value="1">Wave 1</option>
+                                                <option value="2">Wave 2</option>
+                                                <option value="3" selected>Wave 3</option>
+                                                <option value="all">All Waves</option>
+                                            </select>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Show Significance</label>
+                                            <input type="checkbox" id="barChartSig" checked>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="results-container" style="margin-top: 20px;">
+                                <div class="chart-container">
+                                    <canvas id="scatterChart"></canvas>
+                                    <div class="floating-controls" id="scatterChartControls">
+                                        <div class="control-group">
+                                            <label class="control-label">X Variable</label>
+                                            <select id="scatterX">
+                                                <option value="study_hours" selected>Study Hours</option>
+                                                <option value="work_hours">Work Hours</option>
+                                                <option value="family_obligations">Family Obligations</option>
+                                            </select>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Y Variable</label>
+                                            <select id="scatterY">
+                                                <option value="gpa" selected>GPA</option>
+                                                <option value="self_efficacy">Self-Efficacy</option>
+                                                <option value="belonging">Belonging Score</option>
+                                            </select>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Color By</label>
+                                            <select id="scatterColor">
+                                                <option value="intervention" selected>Intervention</option>
+                                                <option value="wave">Wave</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="chart-container">
+                                    <canvas id="boxplotChart"></canvas>
+                                    <div class="floating-controls" id="boxplotChartControls">
+                                        <div class="control-group">
+                                            <label class="control-label">Outcome</label>
+                                            <select id="boxplotOutcome">
+                                                <option value="gpa">GPA</option>
+                                                <option value="belonging" selected>Belonging Score</option>
+                                                <option value="self_efficacy">Self-Efficacy</option>
+                                                <option value="stress">Stress Level</option>
+                                            </select>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Group By</label>
+                                            <select id="boxplotGroup">
+                                                <option value="intervention" selected>Intervention</option>
+                                                <option value="wave">Wave</option>
+                                                <option value="subgroup">Subgroup</option>
+                                            </select>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Show Outliers</label>
+                                            <input type="checkbox" id="boxplotOutliers" checked>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-content">
+                            <h3>Subgroup Analysis</h3>
+                            <p>The analysis below shows how different interventions performed for specific student subgroups. This can help target interventions more effectively based on student characteristics.</p>
+
+                            <div class="results-container">
+                                <div class="chart-container">
+                                    <canvas id="subgroupChart"></canvas>
+                                    <div class="floating-controls" id="subgroupChartControls">
+                                        <div class="control-group">
+                                            <label class="control-label">Outcome</label>
+                                            <select id="subgroupOutcome">
+                                                <option value="gpa" selected>GPA</option>
+                                                <option value="self_efficacy">Self-Efficacy</option>
+                                                <option value="belonging">Belonging Score</option>
+                                            </select>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Subgroups</label>
+                                            <select id="subgroupSelect">
+                                                <option value="working" selected>Working Students</option>
+                                                <option value="family">High Family Obligations</option>
+                                                <option value="low_gpa">Low Initial GPA</option>
+                                            </select>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Show Controls</label>
+                                            <input type="checkbox" id="subgroupControls" checked>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h4>Subgroup Effect Sizes</h4>
+                                    <table class="stats-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Subgroup</th>
+                                                <th>Intervention</th>
+                                                <th>GPA Effect</th>
+                                                <th>p-value</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr class="stats-highlight">
+                                                <td>Working Students</td>
+                                                <td>Financial Aid</td>
+                                                <td>0.42</td>
+                                                <td>0.001</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Working Students</td>
+                                                <td>Mentoring</td>
+                                                <td>0.28</td>
+                                                <td>0.015</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Working Students</td>
+                                                <td>Skill Workshop</td>
+                                                <td>0.22</td>
+                                                <td>0.042</td>
+                                            </tr>
+                                            <tr class="stats-highlight">
+                                                <td>High Family Obligations</td>
+                                                <td>Financial Aid</td>
+                                                <td>0.38</td>
+                                                <td>0.003</td>
+                                            </tr>
+                                            <tr>
+                                                <td>High Family Obligations</td>
+                                                <td>Mentoring</td>
+                                                <td>0.31</td>
+                                                <td>0.008</td>
+                                            </tr>
+                                            <tr>
+                                                <td>High Family Obligations</td>
+                                                <td>Skill Workshop</td>
+                                                <td>0.18</td>
+                                                <td>0.092</td>
+                                            </tr>
+                                            <tr class="stats-highlight">
+                                                <td>Low Initial GPA</td>
+                                                <td>Mentoring</td>
+                                                <td>0.45</td>
+                                                <td>0.001</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Low Initial GPA</td>
+                                                <td>Skill Workshop</td>
+                                                <td>0.39</td>
+                                                <td>0.002</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Low Initial GPA</td>
+                                                <td>Financial Aid</td>
+                                                <td>0.28</td>
+                                                <td>0.018</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <h4 style="margin-top: 20px;">Key Insights for Subgroups</h4>
+                                    <ul>
+                                        <li>Financial aid interventions were most effective for working students, reducing their work hours and improving academic outcomes</li>
+                                        <li>Students with high family obligations benefited most from financial support and mentoring</li>
+                                        <li>Students with low initial GPA showed the greatest improvement with mentoring programs</li>
+                                        <li>Skill workshops were particularly effective for students with low self-efficacy at baseline</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel-actions" style="margin-top: 20px; text-align: right;">
+                        <button class="btn btn-outline">
+                            <i class="icon">←</i>
+                            <span>Back to Analysis</span>
+                        </button>
+                        <button class="btn btn-success">
+                            <span>Generate Report</span>
+                            <i class="icon">→</i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Report Generation Section -->
+            <section id="report" style="display: none;">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Report Generation</h2>
+                        <div>
+                            <button class="btn btn-outline">
+                                <i class="icon">💾</i>
+                                <span>Save Template</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <h3>Report Type</h3>
+                    <p>Select the type of report you want to generate based on your target audience.</p>
+
+                    <div class="report-options">
+                        <div class="report-option selected">
+                            <div class="report-icon">📑</div>
+                            <div class="report-title">Academic Publication</div>
+                            <div class="report-desc">Detailed statistical analysis with comprehensive methodology and results sections suitable for journal publication.</div>
+                        </div>
+
+                        <div class="report-option">
+                            <div class="report-icon">📊</div>
+                            <div class="report-title">Administrator Brief</div>
+                            <div class="report-desc">Executive summary with key findings, visualizations, and actionable recommendations for university administrators.</div>
+                        </div>
+
+                        <div class="report-option">
+                            <div class="report-icon">🎓</div>
+                            <div class="report-title">Student Services Report</div>
+                            <div class="report-desc">Focused on practical implications for student support services with targeted intervention recommendations.</div>
+                        </div>
+
+                        <div class="report-option">
+                            <div class="report-icon">📈</div>
+                            <div class="report-title">Data Dashboard</div>
+                            <div class="report-desc">Interactive data visualization dashboard with filtering capabilities for ongoing monitoring.</div>
+                        </div>
+                    </div>
+
+                    <h3 style="margin-top: 20px;">Content Sections</h3>
+                    <p>Select which sections to include in your report.</p>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; margin-top: 15px;">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="section-exec" checked>
+                            <label for="section-exec">Executive Summary</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="section-intro" checked>
+                            <label for="section-intro">Introduction</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="section-methods" checked>
+                            <label for="section-methods">Methodology</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="section-results" checked>
+                            <label for="section-results">Results</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="section-discussion" checked>
+                            <label for="section-discussion">Discussion</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="section-recommendations" checked>
+                            <label for="section-recommendations">Recommendations</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="section-appendix">
+                            <label for="section-appendix">Statistical Appendix</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="section-references">
+                            <label for="section-references">References</label>
+                        </div>
+                    </div>
+
+                    <h3 style="margin-top: 20px;">Visualizations</h3>
+                    <p>Select which visualizations to include in your report.</p>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; margin-top: 15px;">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="viz-trend" checked>
+                            <label for="viz-trend">Trend Lines by Intervention</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="viz-bar" checked>
+                            <label for="viz-bar">Bar Charts of Effect Sizes</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="viz-scatter">
+                            <label for="viz-scatter">Scatter Plots</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="viz-box" checked>
+                            <label for="viz-box">Box Plots</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="viz-heat">
+                            <label for="viz-heat">Heatmaps</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="viz-forest">
+                            <label for="viz-forest">Forest Plots</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="viz-tables" checked>
+                            <label for="viz-tables">Statistical Tables</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="viz-subgroup" checked>
+                            <label for="viz-subgroup">Subgroup Analysis Charts</label>
+                        </div>
+                    </div>
+
+                    <h3 style="margin-top: 20px;">Output Format</h3>
+                    <div style="display: flex; gap: 15px; margin-top: 15px;">
+                        <div class="checkbox-item">
+                            <input type="radio" id="format-pdf" name="format" checked>
+                            <label for="format-pdf">PDF Document</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="radio" id="format-word" name="format">
+                            <label for="format-word">Word Document</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="radio" id="format-html" name="format">
+                            <label for="format-html">HTML Report</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="radio" id="format-pptx" name="format">
+                            <label for="format-pptx">PowerPoint Presentation</label>
+                        </div>
+                    </div>
+
+                    <div class="panel-actions" style="margin-top: 20px; text-align: right;">
+                        <button class="btn btn-outline">
+                            <i class="icon">←</i>
+                            <span>Back to Results</span>
+                        </button>
+                        <button class="btn btn-primary">
+                            <i class="icon">👁️</i>
+                            <span>Preview Report</span>
+                        </button>
+                        <button class="btn btn-success">
+                            <i class="icon">📥</i>
+                            <span>Download Report</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        // Navigation functionality
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                // In a real app, would switch content sections here
+            });
+        });
+
+        // Workflow steps functionality
+        document.querySelectorAll('.workflow-step').forEach((step, index) => {
+            step.addEventListener('click', function() {
+                const sections = ['data-upload', 'variable-definition', 'analysis-config', 'results', 'report'];
+                document.querySelectorAll('.workflow-step').forEach((s, i) => {
+                    if (i <= index) {
+                        s.classList.add('active');
+                    } else {
+                        s.classList.remove('active');
+                    }
+                });
+                
+                // Hide all sections
+                sections.forEach(s => {
+                    document.getElementById(s).style.display = 'none';
+                });
+                
+                // Show selected section
+                document.getElementById(sections[index]).style.display = 'block';
+            });
+        });
+
+        // Tab functionality
+        document.querySelectorAll('.tab-item').forEach((tab, index) => {
+            tab.addEventListener('click', function() {
+                const parent = this.closest('.tab-container');
+                parent.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                
+                parent.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                parent.querySelectorAll('.tab-content')[index].classList.add('active');
+            });
+        });
+
+        // Continue buttons functionality
+        document.querySelectorAll('.btn-success').forEach(btn => {
+            if (btn.textContent.includes('Continue') || btn.textContent.includes('View Results') || btn.textContent.includes('Generate Report')) {
+                btn.addEventListener('click', function() {
+                    const currentSection = this.closest('section');
+                    const currentId = currentSection.id;
+                    let nextId;
+                    
+                    if (currentId === 'data-upload') nextId = 'variable-definition';
+                    else if (currentId === 'variable-definition') nextId = 'analysis-config';
+                    else if (currentId === 'analysis-config') nextId = 'results';
+                    else if (currentId === 'results') nextId = 'report';
+                    
+                    if (nextId) {
+                        currentSection.style.display = 'none';
+                        document.getElementById(nextId).style.display = 'block';
+                        
+                        // Update workflow steps
+                        const steps = document.querySelectorAll('.workflow-step');
+                        const nextIndex = ['data-upload', 'variable-definition', 'analysis-config', 'results', 'report'].indexOf(nextId);
+                        steps.forEach((step, i) => {
+                            if (i <= nextIndex) {
+                                step.classList.add('active');
+                            } else {
+                                step.classList.remove('active');
+                            }
+                        });
+                    }
+                });
+            }
+        });
+
+        // Back buttons functionality
+        document.querySelectorAll('.btn-outline').forEach(btn => {
+            if (btn.textContent.includes('Back')) {
+                btn.addEventListener('click', function() {
+                    const currentSection = this.closest('section');
+                    const currentId = currentSection.id;
+                    let prevId;
+                    
+                    if (currentId === 'variable-definition') prevId = 'data-upload';
+                    else if (currentId === 'analysis-config') prevId = 'variable-definition';
+                    else if (currentId === 'results') prevId = 'analysis-config';
+                    else if (currentId === 'report') prevId = 'results';
+                    
+                    if (prevId) {
+                        currentSection.style.display = 'none';
+                        document.getElementById(prevId).style.display = 'block';
+                        
+                        // Update workflow steps
+                        const steps = document.querySelectorAll('.workflow-step');
+                        const prevIndex = ['data-upload', 'variable-definition', 'analysis-config', 'results', 'report'].indexOf(prevId);
+                        steps.forEach((step, i) => {
+                            if (i <= prevIndex) {
+                                step.classList.add('active');
+                            } else {
+                                step.classList.remove('active');
+                            }
+                        });
+                    }
+                });
+            }
+        });
+
+        // Report option selection
+        document.querySelectorAll('.report-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.report-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+
+        // Initialize charts if the results section is visible
+        if (document.getElementById('results').style.display !== 'none') {
+            initializeCharts();
+        }
+
+        function initializeCharts() {
+            // Sample data for charts
+            const waves = ['Wave 1', 'Wave 2', 'Wave 3'];
+            const interventions = ['Mentoring', 'Financial Aid', 'Skill Workshop', 'Control'];
+            
+            // GPA data by intervention and wave
+            const gpaData = {
+                Mentoring: [3.2, 3.4, 3.6],
+                'Financial Aid': [3.2, 3.3, 3.4],
+                'Skill Workshop': [3.1, 3.3, 3.5],
+                Control: [3.1, 3.2, 3.2]
+            };
+            
+            // Self-efficacy data by intervention and wave
+            const efficacyData = {
+                Mentoring: [3.5, 3.9, 4.1],
+                'Financial Aid': [3.4, 3.6, 3.7],
+                'Skill Workshop': [3.5, 4.0, 4.2],
+                Control: [3.4, 3.5, 3.6]
+            };
+            
+            // Belonging data by intervention and wave
+            const belongingData = {
+                Mentoring: [3.3, 3.7, 3.9],
+                'Financial Aid': [3.2, 3.4, 3.5],
+                'Skill Workshop': [3.3, 3.6, 3.8],
+                Control: [3.2, 3.3, 3.4]
+            };
+
+            // Summary chart
+            const summaryCtx = document.getElementById('summaryChart1').getContext('2d');
+            const summaryChart = new Chart(summaryCtx, {
+                type: 'line',
+                data: {
+                    labels: waves,
+                    datasets: [
+                        {
+                            label: 'Mentoring',
+                            data: gpaData.Mentoring,
+                            borderColor: '#3498db',
+                            backgroundColor: 'rgba(52, 152, 219, 0.1)'
+                        },
+                        {
+                            label: 'Financial Aid',
+                            data: gpaData['Financial Aid'],
+                            borderColor: '#2ecc71',
+                            backgroundColor: 'rgba(46, 204, 113, 0.1)'
+                        },
+                        {
+                            label: 'Skill Workshop',
+                            data: gpaData['Skill Workshop'],
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'rgba(231, 76, 60, 0.1)'
+                        },
+                        {
+                            label: 'Control',
+                            data: gpaData.Control,
+                            borderColor: '#95a5a6',
+                            backgroundColor: 'rgba(149, 165, 166, 0.1)'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'GPA Trends by Intervention Group',
+                            font: {
+                                size: 16
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 2.8,
+                            max: 4.2,
+                            title: {
+                                display: true,
+                                text: 'GPA'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Time Point'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Line chart
+            const lineCtx = document.getElementById('lineChart').getContext('2d');
+            const lineChart = new Chart(lineCtx, {
+                type: 'line',
+                data: {
+                    labels: waves,
+                    datasets: [
+                        {
+                            label: 'Mentoring',
+                            data: gpaData.Mentoring,
+                            borderColor: '#3498db',
+                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Financial Aid',
+                            data: gpaData['Financial Aid'],
+                            borderColor: '#2ecc71',
+                            backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Skill Workshop',
+                            data: gpaData['Skill Workshop'],
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Control',
+                            data: gpaData.Control,
+                            borderColor: '#95a5a6',
+                            backgroundColor: 'rgba(149, 165, 166, 0.1)',
+                            tension: 0.1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'GPA Trends by Intervention Group',
+                            font: {
+                                size: 16
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 2.8,
+                            max: 4.2,
+                            title: {
+                                display: true,
+                                text: 'GPA'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Time Point'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Bar chart
+            const barCtx = document.getElementById('barChart').getContext('2d');
+            const barChart = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: interventions,
+                    datasets: [{
+                        label: 'Self-Efficacy (Wave 3)',
+                        data: [efficacyData.Mentoring[2], efficacyData['Financial Aid'][2], efficacyData['Skill Workshop'][2], efficacyData.Control[2]],
+                        backgroundColor: [
+                            'rgba(52, 152, 219, 0.7)',
+                            'rgba(46, 204, 113, 0.7)',
+                            'rgba(231, 76, 60, 0.7)',
+                            'rgba(149, 165, 166, 0.7)'
+                        ],
+                        borderColor: [
+                            '#3498db',
+                            '#2ecc71',
+                            '#e74c3c',
+                            '#95a5a6'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Self-Efficacy by Intervention Group (Wave 3)',
+                            font: {
+                                size: 16
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 3.0,
+                            max: 4.5,
+                            title: {
+                                display: true,
+                                text: 'Self-Efficacy Score'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Scatter chart
+            const scatterCtx = document.getElementById('scatterChart').getContext('2d');
+            const scatterChart = new Chart(scatterCtx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Mentoring',
+                            data: [
+                                {x: 10, y: 3.2}, {x: 12, y: 3.4}, {x: 15, y: 3.6},
+                                {x: 8, y: 3.0}, {x: 14, y: 3.5}, {x: 18, y: 3.8}
+                            ],
+                            backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                            borderColor: '#3498db'
+                        },
+                        {
+                            label: 'Financial Aid',
+                            data: [
+                                {x: 12, y: 3.2}, {x: 14, y: 3.3}, {x: 16, y: 3.4},
+                                {x: 10, y: 3.1}, {x: 15, y: 3.4}, {x: 18, y: 3.6}
+                            ],
+                            backgroundColor: 'rgba(46, 204, 113, 0.7)',
+                            borderColor: '#2ecc71'
+                        },
+                        {
+                            label: 'Skill Workshop',
+                            data: [
+                                {x: 11, y: 3.1}, {x: 13, y: 3.3}, {x: 15, y: 3.5},
+                                {x: 9, y: 3.0}, {x: 16, y: 3.6}, {x: 19, y: 3.7}
+                            ],
+                            backgroundColor: 'rgba(231, 76, 60, 0.7)',
+                            borderColor: '#e74c3c'
+                        },
+                        {
+                            label: 'Control',
+                            data: [
+                                {x: 10, y: 3.1}, {x: 12, y: 3.2}, {x: 14, y: 3.2},
+                                {x: 8, y: 2.9}, {x: 15, y: 3.3}, {x: 17, y: 3.4}
+                            ],
+                            backgroundColor: 'rgba(149, 165, 166, 0.7)',
+                            borderColor: '#95a5a6'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Relationship Between Study Hours and GPA',
+                            font: {
+                                size: 16
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 2.8,
+                            max: 4.0,
+                            title: {
+                                display: true,
+                                text: 'GPA'
+                            }
+                        },
+                        x: {
+                            min: 6,
+                            max: 20,
+                            title: {
+                                display: true,
+                                text: 'Study Hours per Week'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Boxplot chart (simulated with bar chart)
+            const boxplotCtx = document.getElementById('boxplotChart').getContext('2d');
+            const boxplotData = {
+                Mentoring: {min: 2.8, q1: 3.5, median: 3.8, q3: 4.1, max: 4.4},
+                'Financial Aid': {min: 2.7, q1: 3.2, median: 3.5, q3: 3.8, max: 4.2},
+                'Skill Workshop': {min: 2.9, q1: 3.4, median: 3.7, q3: 4.0, max: 4.3},
+                Control: {min: 2.6, q1: 3.0, median: 3.3, q3: 3.6, max: 4.0}
+            };
+            
+            const boxplotChart = new Chart(boxplotCtx, {
+                type: 'bar',
+                data: {
+                    labels: interventions,
+                    datasets: [
+                        {
+                            label: 'Min to Q1',
+                            data: interventions.map(i => boxplotData[i].q1 - boxplotData[i].min),
+                            backgroundColor: 'rgba(189, 195, 199, 0.7)',
+                            stack: 'Stack 0'
+                        },
+                        {
+                            label: 'Q1 to Median',
+                            data: interventions.map(i => boxplotData[i].median - boxplotData[i].q1),
+                            backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                            stack: 'Stack 0'
+                        },
+                        {
+                            label: 'Median to Q3',
+                            data: interventions.map(i => boxplotData[i].q3 - boxplotData[i].median),
+                            backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                            stack: 'Stack 0'
+                        },
+                        {
+                            label: 'Q3 to Max',
+                            data: interventions.map(i => boxplotData[i].max - boxplotData[i].q3),
+                            backgroundColor: 'rgba(189, 195, 199, 0.7)',
+                            stack: 'Stack 0'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Distribution of Belonging Scores by Intervention',
+                            font: {
+                                size: 16
+                            }
+                        },
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const intervention = context.label;
+                                    const data = boxplotData[intervention];
+                                    return [
+                                        `Min: ${data.min}`,
+                                        `Q1: ${data.q1}`,
+                                        `Median: ${data.median}`,
+                                        `Q3: ${data.q3}`,
+                                        `Max: ${data.max}`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            stacked: true,
+                            min: 0,
+                            max: 4.5,
+                            title: {
+                                display: true,
+                                text: 'Belonging Score'
+                            }
+                        },
+                        x: {
+                            stacked: true
+                        }
+                    }
+                }
+            });
+
+            // Subgroup chart
+            const subgroupCtx = document.getElementById('subgroupChart').getContext('2d');
+            const subgroupChart = new Chart(subgroupCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Mentoring', 'Financial Aid', 'Skill Workshop', 'Control'],
+                    datasets: [
+                        {
+                            label: 'Working Students',
+                            data: [0.28, 0.42, 0.22, 0],
+                            backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                            borderColor: '#3498db',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'All Students',
+                            data: [0.35, 0.21, 0.28, 0],
+                            backgroundColor: 'rgba(149, 165, 166, 0.7)',
+                            borderColor: '#95a5a6',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'GPA Effect Size for Working Students vs. All Students',
+                            font: {
+                                size: 16
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 0.5,
+                            title: {
+                                display: true,
+                                text: 'Effect Size (Cohen\'s d)'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Chart control event listeners
+            document.getElementById('lineChartOutcome').addEventListener('change', function() {
+                const outcome = this.value;
+                let data;
+                let title;
+                
+                if (outcome === 'gpa') {
+                    data = gpaData;
+                    title = 'GPA Trends by Intervention Group';
+                } else if (outcome === 'self_efficacy') {
+                    data = efficacyData;
+                    title = 'Self-Efficacy Trends by Intervention Group';
+                } else if (outcome === 'belonging') {
+                    data = belongingData;
+                    title = 'Belonging Score Trends by Intervention Group';
+                }
+                
+                lineChart.data.datasets.forEach((dataset, i) => {
+                    const intervention = dataset.label;
+                    dataset.data = data[intervention];
+                });
+                
+                lineChart.options.plugins.title.text = title;
+                lineChart.update();
+            });
+
+            document.getElementById('barChartOutcome').addEventListener('change', function() {
+                const outcome = this.value;
+                let data;
+                let title;
+                
+                if (outcome === 'gpa') {
+                    data = gpaData;
+                    title = 'GPA by Intervention Group (Wave 3)';
+                } else if (outcome === 'self_efficacy') {
+                    data = efficacyData;
+                    title = 'Self-Efficacy by Intervention Group (Wave 3)';
+                } else if (outcome === 'belonging') {
+                    data = belongingData;
+                    title = 'Belonging Score by Intervention Group (Wave 3)';
+                }
+                
+                barChart.data.datasets[0].data = [
+                    data.Mentoring[2], 
+                    data['Financial Aid'][2], 
+                    data['Skill Workshop'][2], 
+                    data.Control[2]
+                ];
+                
+                barChart.options.plugins.title.text = title;
+                barChart.update();
+            });
+
+            document.getElementById('barChartWave').addEventListener('change', function() {
+                const wave = parseInt(this.value) - 1; // Convert to 0-based index
+                const outcome = document.getElementById('barChartOutcome').value;
+                let data;
+                
+                if (outcome === 'gpa') {
+                    data = gpaData;
+                } else if (outcome === 'self_efficacy') {
+                    data = efficacyData;
+                } else if (outcome === 'belonging') {
+                    data = belongingData;
+                }
+                
+                if (this.value === 'all') {
+                    // Show average across all waves
+                    barChart.data.datasets[0].data = interventions.map(intervention => {
+                        const values = data[intervention];
+                        return values.reduce((sum, val) => sum + val, 0) / values.length;
+                    });
+                    barChart.options.plugins.title.text = barChart.options.plugins.title.text.replace(/\(Wave \d\)/, '(All Waves)');
+                } else {
+                    barChart.data.datasets[0].data = [
+                        data.Mentoring[wave], 
+                        data['Financial Aid'][wave], 
+                        data['Skill Workshop'][wave], 
+                        data.Control[wave]
+                    ];
+                    barChart.options.plugins.title.text = barChart.options.plugins.title.text.replace(/\(Wave \d\)|\(All Waves\)/, `(Wave ${parseInt(this.value)})`);
+                }
+                
+                barChart.update();
+            });
+
+            // Summary chart controls
+            document.getElementById('summaryChartType1').addEventListener('change', function() {
+                summaryChart.config.type = this.value;
+                summaryChart.update();
+            });
+        }
+    </script>
+</body>
+</html>

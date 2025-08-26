@@ -1,0 +1,2046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Segmentation Wizard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --primary-color-dark: #0056b3;
+            --secondary-color: #6c757d;
+            --background-color: #f8f9fa;
+            --surface-color: #ffffff;
+            --text-color: #343a40;
+            --text-light-color: #6c757d;
+            --border-color: #dee2e6;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --spacing-unit: 8px;
+            --border-radius: 8px;
+            --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.04); /* More subtle shadow */
+            --shadow-medium: 0 3px 6px rgba(0, 0, 0, 0.08); /* More subtle shadow */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            font-size: 16px; /* Base font size */
+        }
+
+        header {
+            background-color: var(--surface-color);
+            box-shadow: var(--shadow-subtle);
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 3);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            color: var(--primary-color-dark);
+            font-weight: 700;
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+            padding: calc(var(--spacing-unit) * 3);
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            gap: calc(var(--spacing-unit) * 4);
+        }
+
+        .sidebar {
+            width: 250px;
+            flex-shrink: 0;
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-medium);
+            padding: calc(var(--spacing-unit) * 3);
+            height: fit-content;
+        }
+
+        .sidebar h2 {
+            margin-top: 0;
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            font-size: 1.2em;
+            color: var(--text-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: var(--spacing-unit);
+            font-weight: 600;
+        }
+
+        .step-navigation {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: calc(var(--spacing-unit) * 2.5); /* Increased spacing */
+            cursor: pointer;
+            color: var(--text-light-color);
+            transition: color 0.2s ease, font-weight 0.2s ease;
+            font-size: 1em;
+            padding: var(--spacing-unit); /* Add padding for larger click area */
+            margin-left: calc(var(--spacing-unit) * -1); /* Offset padding */
+            border-radius: var(--border-radius);
+        }
+
+        .step-item:hover:not(.active) {
+            color: var(--primary-color);
+            background-color: #e9ecef;
+        }
+         .step-item:focus {
+             outline: 2px solid var(--primary-color);
+             outline-offset: 2px;
+         }
+
+
+        .step-item .icon {
+            margin-right: var(--spacing-unit) * 1.5; /* Increased spacing */
+            font-size: 1.4em; /* Larger icons */
+            transition: transform 0.2s ease;
+        }
+
+        .step-item.active {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+         .step-item.active .icon {
+             transform: scale(1.1);
+         }
+
+        .step-item.completed {
+             color: var(--success-color);
+             font-weight: 500;
+        }
+        .step-item.completed .icon {
+            color: var(--success-color);
+             font-variation-settings: 'FILL' 1;
+        }
+
+
+        .main-content {
+            flex-grow: 1;
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-medium);
+            padding: calc(var(--spacing-unit) * 4);
+        }
+
+        .step-content {
+            display: none;
+        }
+
+        .step-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .step-title {
+            font-size: 1.8em;
+            margin-top: 0;
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            color: var(--primary-color-dark);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: var(--spacing-unit);
+            font-weight: 700;
+        }
+
+        .step-description {
+            margin-bottom: calc(var(--spacing-unit) * 4);
+            color: var(--text-light-color);
+            font-size: 1em;
+        }
+
+        .button-group {
+            margin-top: calc(var(--spacing-unit) * 4);
+            display: flex;
+            gap: calc(var(--spacing-unit) * 2);
+            justify-content: flex-end;
+        }
+
+        button {
+            padding: var(--spacing-unit) * 1.5 calc(var(--spacing-unit) * 3);
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: background-color 0.2s ease, opacity 0.2s ease, transform 0.1s ease;
+            min-width: 100px; /* Ensure minimum button size */
+        }
+
+        button:hover {
+             transform: translateY(-1px);
+        }
+         button:active {
+             transform: translateY(0);
+         }
+         button:focus {
+             outline: 2px solid var(--primary-color);
+             outline-offset: 2px;
+         }
+
+        button.primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        button.primary:hover {
+            background-color: var(--primary-color-dark);
+        }
+
+        button.secondary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        button.secondary:hover {
+            background-color: #5a6268;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none; /* Disable hover effect when disabled */
+        }
+
+        /* Step 1: Data Upload */
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--border-radius);
+            padding: calc(var(--spacing-unit) * 4);
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s ease, background-color 0.2s ease;
+            background-color: #f1f3f5; /* Light background */
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background-color: #e9ecef;
+        }
+
+        .upload-area.dragover {
+            border-color: var(--success-color);
+            background-color: #d4edda;
+        }
+
+        .upload-area input[type="file"] {
+            display: none;
+        }
+
+        .upload-area .icon {
+            font-size: 3em;
+            color: var(--text-light-color);
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .upload-area p {
+            margin: 0;
+            color: var(--text-light-color);
+            font-size: 1em;
+        }
+
+        .file-info {
+            margin-top: calc(var(--spacing-unit) * 2);
+            font-style: italic;
+            color: var(--text-color);
+            font-size: 0.9em;
+        }
+
+        /* Step 2: Data Preview */
+        .data-table-container {
+            max-height: 500px; /* Limit height for scroll */
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin-bottom: calc(var(--spacing-unit) * 2);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th, .data-table td {
+            padding: var(--spacing-unit) * 1.5;
+            border-bottom: 1px solid var(--border-color);
+            text-align: left;
+            font-size: 0.9em;
+        }
+
+        .data-table th {
+            background-color: var(--background-color);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .data-table tbody tr:hover {
+            background-color: #f1f3f5;
+        }
+
+        .table-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-unit) * 2;
+            gap: var(--spacing-unit) * 2;
+        }
+
+        .table-controls input[type="text"] {
+            padding: var(--spacing-unit);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            flex-grow: 1;
+            max-width: 300px;
+        }
+
+        /* Step 3: Variable Selection */
+        .variable-selection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: var(--spacing-unit) * 2;
+        }
+
+        .variable-item {
+            background-color: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-unit) * 2;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .variable-item:hover {
+            background-color: #e9ecef;
+            border-color: var(--primary-color);
+        }
+         .variable-item:focus-within { /* Style when checkbox inside is focused */
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+            border-color: var(--primary-color);
+         }
+
+
+        .variable-item input[type="checkbox"] {
+            margin-right: var(--spacing-unit);
+            accent-color: var(--primary-color); /* Style checkbox */
+            width: 1.2em;
+            height: 1.2em;
+        }
+         .variable-item label {
+             flex-grow: 1;
+             cursor: pointer;
+             font-size: 1em;
+         }
+
+        /* Step 4: Clustering */
+        .clustering-options {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-unit) * 3;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-unit);
+        }
+
+        .form-group label {
+            font-weight: 500;
+            color: var(--text-color);
+            font-size: 1em;
+        }
+
+        .form-group select,
+        .form-group input[type="number"] {
+            padding: var(--spacing-unit) * 1.5;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            width: 100%;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease;
+        }
+         .form-group select:focus,
+         .form-group input[type="number"]:focus {
+             outline: none;
+             border-color: var(--primary-color);
+             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+         }
+
+
+        /* Step 5 & 6: Charts */
+        .chart-container {
+            margin-bottom: calc(var(--spacing-unit) * 4);
+            position: relative;
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-subtle); /* Subtle shadow for charts */
+            padding: calc(var(--spacing-unit) * 3);
+            cursor: pointer; /* Indicate interactivity */
+        }
+
+        .chart-container h3 {
+            margin-top: 0;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            color: var(--text-color);
+            font-weight: 600;
+            font-size: 1.3em;
+        }
+         .chart-container p {
+             margin-bottom: calc(var(--spacing-unit) * 3);
+             color: var(--text-light-color);
+             font-size: 0.9em;
+         }
+
+
+        .chart-canvas {
+            height: 400px; /* Default height */
+            width: 100%;
+        }
+         .segment-visualization .chart-canvas {
+             height: 500px; /* Larger for scatter plot */
+        }
+
+
+        .floating-controls {
+            position: absolute;
+            top: var(--spacing-unit) * 3;
+            right: var(--spacing-unit) * 3;
+            background: rgba(255, 255, 255, 0.95);
+            padding: var(--spacing-unit) * 2;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-medium);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 5;
+            min-width: 180px; /* Minimum width for controls */
+        }
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+        .control-group {
+            margin: var(--spacing-unit) 0;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-unit);
+        }
+        .control-group label {
+            font-family: 'Inter', sans-serif;
+            color: var(--text-light-color);
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+        .control-group input,
+        .control-group select {
+            padding: var(--spacing-unit);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            width: 100%;
+            font-size: 0.9em;
+            box-sizing: border-box;
+        }
+
+        /* Step 7: Interpret & Strategize */
+        .segment-summary {
+            margin-bottom: calc(var(--spacing-unit) * 4);
+        }
+
+        .segment-card {
+            background-color: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: calc(var(--spacing-unit) * 3);
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .segment-card h4 {
+            margin-top: 0;
+            margin-bottom: var(--spacing-unit) * 2;
+            color: var(--primary-color-dark);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-unit);
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .segment-card h4 .color-swatch {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .segment-card p {
+            margin-bottom: var(--spacing-unit);
+            color: var(--text-color); /* Use text-color for readability */
+            font-size: 0.95em;
+        }
+         .segment-card p strong {
+             color: var(--text-color);
+         }
+
+
+        .segment-card label {
+             font-weight: 500;
+             color: var(--text-color);
+             display: block; /* Make label a block element */
+             margin-bottom: var(--spacing-unit);
+             font-size: 1em;
+        }
+
+        .segment-card textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: var(--spacing-unit) * 1.5;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            resize: vertical;
+            box-sizing: border-box;
+             transition: border-color 0.2s ease;
+        }
+         .segment-card textarea:focus {
+             outline: none;
+             border-color: var(--primary-color);
+             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+         }
+
+
+        /* Step 8: Export Results */
+        .export-options {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-unit) * 2;
+        }
+
+        .export-options button {
+            width: fit-content;
+            display: inline-flex; /* Align icon and text */
+            align-items: center;
+            gap: var(--spacing-unit);
+        }
+         .export-options button .icon {
+             font-size: 1.2em;
+         }
+
+
+        /* Utility Classes */
+        .material-symbols-rounded {
+            font-variation-settings:
+                'FILL' 0,
+                'wght' 400,
+                'GRAD' 0,
+                'opsz' 24;
+            vertical-align: middle;
+        }
+        .material-symbols-rounded.filled {
+             font-variation-settings:
+                'FILL' 1,
+                'wght' 400,
+                'GRAD' 0,
+                'opsz' 24;
+        }
+
+        .text-center { text-align: center; }
+        .mt-4 { margin-top: calc(var(--spacing-unit) * 4); }
+        .mb-4 { margin-bottom: calc(var(--spacing-unit) * 4); }
+        .mb-2 { margin-bottom: calc(var(--spacing-unit) * 2); }
+        .p-4 { padding: calc(var(--spacing-unit) * 4); }
+        .border-bottom { border-bottom: 1px solid var(--border-color); }
+        .pb-2 { padding-bottom: calc(var(--spacing-unit) * 2); }
+        .text-danger { color: var(--danger-color); font-size: 0.9em; margin-top: var(--spacing-unit); }
+
+
+        /* Loading Spinner */
+        .loading-spinner {
+            display: none; /* Hidden by default */
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-spinner.active {
+            display: block;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 992px) { /* Adjusted breakpoint for tablet */
+             .container {
+                 flex-direction: column;
+                 padding: calc(var(--spacing-unit) * 2);
+                 gap: calc(var(--spacing-unit) * 2);
+             }
+
+             .sidebar {
+                 width: 100%;
+                 padding: calc(var(--spacing-unit) * 2);
+                 box-shadow: var(--shadow-subtle); /* Less shadow on smaller screens */
+             }
+
+             .main-content {
+                 padding: calc(var(--spacing-unit) * 3);
+                 box-shadow: var(--shadow-subtle); /* Less shadow on smaller screens */
+             }
+
+             .step-title {
+                 font-size: 1.5em;
+             }
+
+             .button-group {
+                 flex-direction: column;
+                 align-items: stretch;
+             }
+
+             button {
+                 width: 100%;
+                 text-align: center;
+             }
+
+             .floating-controls {
+                 position: static; /* Stack controls below chart */
+                 margin-top: calc(var(--spacing-unit) * 2);
+                 opacity: 1;
+                 transform: translateY(0);
+                 pointer-events: all;
+                 box-shadow: none; /* No shadow when stacked */
+                 background: none; /* No background when stacked */
+                 padding: 0;
+                 min-width: auto;
+             }
+             .chart-container {
+                 cursor: default; /* No click to toggle controls on mobile */
+             }
+        }
+        @media (max-width: 768px) {
+             .table-controls {
+                 flex-direction: column;
+                 align-items: stretch;
+             }
+             .table-controls input[type="text"] {
+                 max-width: 100%;
+             }
+        }
+
+
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Customer Segmentation Wizard</h1>
+        <!-- Progress Indicator could go here -->
+    </header>
+
+    <div class="container">
+        <aside class="sidebar">
+            <h2>Workflow Steps</h2>
+            <ul class="step-navigation" role="tablist">
+                <li class="step-item active" data-step="1" role="tab" aria-controls="step-content-1" aria-selected="true" tabindex="0">
+                    <span class="material-symbols-rounded icon">upload_file</span>
+                    Upload Data
+                </li>
+                <li class="step-item" data-step="2" role="tab" aria-controls="step-content-2" aria-selected="false" tabindex="-1">
+                     <span class="material-symbols-rounded icon">preview</span>
+                    Preview & Prepare
+                </li>
+                <li class="step-item" data-step="3" role="tab" aria-controls="step-content-3" aria-selected="false" tabindex="-1">
+                    <span class="material-symbols-rounded icon">checklist</span>
+                    Select Variables
+                </li>
+                <li class="step-item" data-step="4" role="tab" aria-controls="step-content-4" aria-selected="false" tabindex="-1">
+                    <span class="material-symbols-rounded icon">settings</span>
+                    Clustering
+                </li>
+                <li class="step-item" data-step="5" role="tab" aria-controls="step-content-5" aria-selected="false" tabindex="-1">
+                    <span class="material-symbols-rounded icon">analytics</span>
+                    Optimal Segments
+                </li>
+                <li class="step-item" data-step="6" role="tab" aria-controls="step-content-6" aria-selected="false" tabindex="-1">
+                    <span class="material-symbols-rounded icon">scatter_plot</span>
+                    Visualize Segments
+                </li>
+                <li class="step-item" data-step="7" role="tab" aria-controls="step-content-7" aria-selected="false" tabindex="-1">
+                    <span class="material-symbols-rounded icon">rate_review</span>
+                    Interpret & Strategize
+                </li>
+                <li class="step-item" data-step="8" role="tab" aria-controls="step-content-8" aria-selected="false" tabindex="-1">
+                    <span class="material-symbols-rounded icon">download</span>
+                    Export Results
+                </li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <!-- Step 1: Upload Data -->
+            <section class="step-content active" data-step="1" id="step-content-1" role="tabpanel" aria-labelledby="step-item-1">
+                <h2 class="step-title">Step 1: Upload Your Data</h2>
+                <p class="step-description">Upload your customer purchase data. Supported formats: CSV.</p>
+
+                <div id="uploadArea" class="upload-area" role="button" tabindex="0" aria-label="Upload CSV file">
+                    <span class="material-symbols-rounded icon">cloud_upload</span>
+                    <p>Drag and drop your file here, or click to select.</p>
+                    <input type="file" id="fileInput" accept=".csv" aria-describedby="uploadError">
+                </div>
+                <div id="fileInfo" class="file-info" aria-live="polite"></div>
+                <div id="uploadError" class="text-danger" role="alert"></div>
+
+                <div class="button-group">
+                    <button id="nextButton1" class="primary" disabled aria-label="Go to next step: Preview & Prepare">Next</button>
+                </div>
+            </section>
+
+            <!-- Step 2: Data Preview & Prepare -->
+            <section class="step-content" data-step="2" id="step-content-2" role="tabpanel" aria-labelledby="step-item-2" hidden>
+                <h2 class="step-title">Step 2: Preview & Prepare Data</h2>
+                <p class="step-description">Review the first few rows of your data. Ensure columns are correctly identified.</p>
+
+                <div class="table-controls">
+                     <input type="text" id="filterInput" placeholder="Filter table..." aria-label="Filter data table">
+                     <!-- Pagination/Sorting controls would go here -->
+                </div>
+                <div class="data-table-container" role="region" aria-label="Data Preview Table" tabindex="0">
+                    <table id="dataTable" class="data-table">
+                        <thead>
+                            <tr>
+                                <!-- Table headers will be populated by JS -->
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Table rows will be populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="dataPreviewError" class="text-danger" role="alert"></div>
+                 <div class="loading-spinner" id="previewLoading" role="status" aria-label="Loading data preview"></div>
+
+
+                <div class="button-group">
+                    <button id="prevButton2" class="secondary" aria-label="Go to previous step: Upload Data">Previous</button>
+                    <button id="nextButton2" class="primary" aria-label="Go to next step: Select Variables">Next</button>
+                </div>
+            </section>
+
+            <!-- Step 3: Variable Selection -->
+            <section class="step-content" data-step="3" id="step-content-3" role="tabpanel" aria-labelledby="step-item-3" hidden>
+                <h2 class="step-title">Step 3: Select Variables for Segmentation</h2>
+                <p class="step-description">Choose the columns that you want to use for clustering (e.g., RFM metrics, demographics).</p>
+
+                <div id="variableSelectionGrid" class="variable-selection-grid" role="group" aria-label="Select variables for segmentation">
+                    <!-- Variable checkboxes will be populated by JS -->
+                </div>
+                 <div id="variableSelectionError" class="text-danger" role="alert"></div>
+
+                <div class="button-group">
+                    <button id="prevButton3" class="secondary" aria-label="Go to previous step: Preview & Prepare">Previous</button>
+                    <button id="nextButton3" class="primary" disabled aria-label="Go to next step: Clustering">Next</button>
+                </div>
+            </section>
+
+            <!-- Step 4: Clustering -->
+            <section class="step-content" data-step="4" id="step-content-4" role="tabpanel" aria-labelledby="step-item-4" hidden>
+                <h2 class="step-title">Step 4: Choose Clustering Algorithm & Parameters</h2>
+                <p class="step-description">Select a clustering algorithm and configure its parameters.</p>
+
+                <div class="clustering-options">
+                    <div class="form-group">
+                        <label for="algorithmSelect">Clustering Algorithm:</label>
+                        <select id="algorithmSelect" aria-label="Select clustering algorithm">
+                            <option value="kmeans">K-Means</option>
+                            <!-- <option value="hierarchical">Hierarchical Clustering (Placeholder)</option> -->
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="kmeansOptions">
+                        <label for="numClustersInput">Initial Number of Clusters (K):</label>
+                        <input type="number" id="numClustersInput" value="5" min="2" max="20" aria-label="Initial number of clusters for K-Means">
+                    </div>
+
+                    <!-- Placeholder for other algorithm options -->
+                </div>
+                 <div id="clusteringError" class="text-danger" role="alert"></div>
+                 <div class="loading-spinner" id="clusteringLoading" role="status" aria-label="Running clustering algorithm"></div>
+
+
+                <div class="button-group">
+                    <button id="prevButton4" class="secondary" aria-label="Go to previous step: Select Variables">Previous</button>
+                    <button id="nextButton4" class="primary" aria-label="Run Clustering and go to next step">Run Clustering</button>
+                </div>
+            </section>
+
+            <!-- Step 5: Optimal Segments -->
+            <section class="step-content" data-step="5" id="step-content-5" role="tabpanel" aria-labelledby="step-item-5" hidden>
+                <h2 class="step-title">Step 5: Determine Optimal Number of Segments</h2>
+                <p class="step-description">Use the Elbow Method and Silhouette Score to help choose the best number of clusters (K).</p>
+
+                <div class="chart-container" id="elbowChartContainer">
+                    <h3>Elbow Method</h3>
+                    <p>Look for the "elbow" point where the rate of decrease sharply changes.</p>
+                    <canvas id="elbowChart" class="chart-canvas" role="img" aria-label="Elbow method chart showing WCSS vs number of clusters"></canvas>
+                     <div class="floating-controls" id="elbowControls" aria-label="Elbow chart controls">
+                         <div class="control-group">
+                            <label for="elbowLineColor">Line Color</label>
+                            <input type="color" id="elbowLineColor" value="#007bff" aria-label="Elbow chart line color">
+                        </div>
+                     </div>
+                </div>
+
+                <div class="chart-container" id="silhouetteChartContainer">
+                    <h3>Silhouette Score</h3>
+                    <p>Higher scores indicate better-defined clusters. Look for the peak.</p>
+                    <canvas id="silhouetteChart" class="chart-canvas" role="img" aria-label="Silhouette score chart showing average silhouette score vs number of clusters"></canvas>
+                     <div class="floating-controls" id="silhouetteControls" aria-label="Silhouette chart controls">
+                         <div class="control-group">
+                            <label for="silhouetteLineColor">Line Color</label>
+                            <input type="color" id="silhouetteLineColor" value="#28a745" aria-label="Silhouette chart line color">
+                        </div>
+                     </div>
+                </div>
+                 <div class="loading-spinner" id="optimalLoading" role="status" aria-label="Calculating optimal number of segments"></div>
+                 <div id="optimalError" class="text-danger" role="alert"></div>
+
+
+                <div class="button-group">
+                    <button id="prevButton5" class="secondary" aria-label="Go to previous step: Clustering">Previous</button>
+                    <button id="nextButton5" class="primary" aria-label="Go to next step: Visualize Segments">Next</button>
+                </div>
+            </section>
+
+            <!-- Step 6: Visualize Segments -->
+            <section class="step-content segment-visualization" data-step="6" id="step-content-6" role="tabpanel" aria-labelledby="step-item-6" hidden>
+                <h2 class="step-title">Step 6: Visualize Customer Segments</h2>
+                <p class="step-description">Explore the resulting segments based on two selected variables.</p>
+
+                <div class="form-group">
+                    <label for="scatterXSelect">X-axis Variable:</label>
+                    <select id="scatterXSelect" aria-label="Select variable for X-axis">
+                         <!-- Options populated by JS -->
+                    </select>
+                </div>
+                 <div class="form-group mb-4">
+                    <label for="scatterYSelect">Y-axis Variable:</label>
+                    <select id="scatterYSelect" aria-label="Select variable for Y-axis">
+                         <!-- Options populated by JS -->
+                    </select>
+                </div>
+
+                <div class="chart-container" id="segmentChartContainer">
+                    <h3>Segment Scatter Plot</h3>
+                    <canvas id="segmentChart" class="chart-canvas" role="img" aria-label="Scatter plot visualizing customer segments"></canvas>
+                     <div class="floating-controls" id="segmentControls" aria-label="Segment scatter plot controls">
+                         <div class="control-group">
+                            <label for="segmentPointSize">Point Size</label>
+                            <input type="number" id="segmentPointSize" value="5" min="1" max="10" aria-label="Segment scatter plot point size">
+                        </div>
+                         <div class="control-group">
+                            <label for="segmentOpacity">Opacity</label>
+                            <input type="range" id="segmentOpacity" value="0.8" min="0.1" max="1" step="0.1" aria-label="Segment scatter plot point opacity">
+                        </div>
+                     </div>
+                </div>
+                 <div id="visualizationError" class="text-danger" role="alert"></div>
+
+
+                <div class="button-group">
+                    <button id="prevButton6" class="secondary" aria-label="Go to previous step: Optimal Segments">Previous</button>
+                    <button id="nextButton6" class="primary" aria-label="Go to next step: Interpret & Strategize">Next</button>
+                </div>
+            </section>
+
+            <!-- Step 7: Interpret & Strategize -->
+            <section class="step-content" data-step="7" id="step-content-7" role="tabpanel" aria-labelledby="step-item-7" hidden>
+                <h2 class="step-title">Step 7: Interpret Segments & Plan Strategy</h2>
+                <p class="step-description">Review segment characteristics and define marketing strategies for each.</p>
+
+                <div id="segmentSummaryArea" class="segment-summary" role="region" aria-label="Segment Summary and Strategy Input">
+                    <!-- Segment summary cards will be populated by JS -->
+                     <!-- Example cards (removed from final render by JS) -->
+                </div>
+                <div id="interpretationError" class="text-danger" role="alert"></div>
+
+
+                <div class="button-group">
+                    <button id="prevButton7" class="secondary" aria-label="Go to previous step: Visualize Segments">Previous</button>
+                    <button id="nextButton7" class="primary" aria-label="Go to next step: Export Results">Next</button>
+                </div>
+            </section>
+
+            <!-- Step 8: Export Results -->
+            <section class="step-content" data-step="8" id="step-content-8" role="tabpanel" aria-labelledby="step-item-8" hidden>
+                <h2 class="step-title">Step 8: Export Results</h2>
+                <p class="step-description">Download your segmented data, segment summaries, and strategies.</p>
+
+                <div class="export-options">
+                    <button id="exportDataButton" class="primary" aria-label="Export segmented data as CSV"><span class="material-symbols-rounded icon">download</span> Export Segmented Data (CSV)</button>
+                    <button id="exportSummaryButton" class="primary" aria-label="Export segment summary as JSON"><span class="material-symbols-rounded icon">download</span> Export Segment Summary (JSON)</button>
+                    <!-- Add other export options as needed -->
+                </div>
+                 <div id="exportError" class="text-danger" role="alert"></div>
+
+
+                <div class="button-group">
+                    <button id="prevButton8" class="secondary" aria-label="Go to previous step: Interpret & Strategize">Previous</button>
+                    <!-- No next button on the last step -->
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+        import { parse, unparse } from "https://esm.sh/papaparse";
+        // Placeholder for a clustering library or server call
+        // import { KMeans } from "https://esm.sh/ml-kmeans"; // Example client-side library
+
+        let currentStep = 1;
+        const totalSteps = 8;
+        const stepItems = document.querySelectorAll('.step-item');
+        const stepContents = document.querySelectorAll('.step-content');
+        const mainContentArea = document.querySelector('.main-content');
+
+        let rawData = []; // Store parsed data
+        let selectedVariables = []; // Store names of selected variables
+        let clusteringResults = null; // Store results (labels, centroids, etc.)
+        let segmentStrategies = {}; // Store user-defined strategies
+
+        // Chart instances
+        let elbowChartInstance = null;
+        let silhouetteChartInstance = null;
+        let segmentChartInstance = null;
+
+        // Segment colors for visualization
+        const segmentColors = [
+            '#ff6384', '#36a2eb', '#cc65fe', '#ff9f40', '#4bc0c0', '#ffcd56',
+            '#c9cbcf', '#77dd77', '#aec6cf', '#f49ac2', '#a9a9a9', '#d3d3d3'
+        ];
+
+        // --- Navigation Logic ---
+        function showStep(step) {
+            if (step < 1 || step > totalSteps) return;
+
+            // Validate current step before moving forward
+            if (step > currentStep && !validateStep(currentStep)) {
+                 // Error message is shown by validateStep
+                 return;
+            }
+
+            // Mark current step as completed if moving forward
+            if (step > currentStep) {
+                 const currentStepItem = document.querySelector(`.step-item[data-step="${currentStep}"]`);
+                 currentStepItem.classList.add('completed');
+                 // Icon fill is handled by CSS based on .completed class
+            } else { // Moving backward, remove completed status from future steps
+                 for (let i = step + 1; i <= totalSteps; i++) {
+                     const futureStepItem = document.querySelector(`.step-item[data-step="${i}"]`);
+                     futureStepItem.classList.remove('completed');
+                     // Icon fill is handled by CSS
+                 }
+                 // Clear clustering results if going back before step 4
+                 if (step < 4) {
+                     clusteringResults = null;
+                     segmentStrategies = {}; // Clear strategies if clustering is reset
+                 }
+                 // Clear selected variables if going back before step 3
+                 if (step < 3) {
+                      selectedVariables = [];
+                 }
+                  // Clear raw data if going back before step 1 (shouldn't happen via UI but good practice)
+                 if (step < 1) {
+                      rawData = [];
+                  }
+            }
+
+            // Update active classes for sidebar navigation and ARIA attributes
+            stepItems.forEach(item => {
+                const itemStep = parseInt(item.dataset.step);
+                item.classList.remove('active');
+                item.setAttribute('aria-selected', 'false');
+                item.setAttribute('tabindex', '-1'); // Make non-active steps not focusable by default
+
+                if (itemStep === step) {
+                    item.classList.add('active');
+                    item.setAttribute('aria-selected', 'true');
+                    item.setAttribute('tabindex', '0'); // Make active step focusable
+                }
+            });
+
+            // Update active classes for step content and ARIA attributes
+            stepContents.forEach(content => {
+                const contentStep = parseInt(content.dataset.step);
+                content.classList.remove('active');
+                content.setAttribute('hidden', 'true'); // Hide non-active content from screen readers
+
+                if (contentStep === step) {
+                    content.classList.add('active');
+                    content.removeAttribute('hidden'); // Show active content
+                }
+            });
+
+            currentStep = step;
+            updateButtonStates();
+            // Perform step-specific setup
+            setupStep(currentStep);
+
+             // Close any open floating chart controls
+             document.querySelectorAll('.floating-controls').forEach(ctrl => ctrl.classList.remove('active'));
+        }
+
+        function updateButtonStates() {
+            // Hide all buttons initially in the current step's button group
+            const currentStepSection = document.querySelector(`.step-content[data-step="${currentStep}"]`);
+            if (!currentStepSection) return; // Exit if section not found
+
+            const buttonGroup = currentStepSection.querySelector('.button-group');
+            if (!buttonGroup) return;
+
+            buttonGroup.querySelectorAll('button').forEach(btn => btn.style.display = 'none');
+
+            const prevButton = currentStepSection.querySelector(`#prevButton${currentStep}`);
+            const nextButton = currentStepSection.querySelector(`#nextButton${currentStep}`);
+
+            if (prevButton) {
+                prevButton.style.display = 'inline-block';
+                prevButton.onclick = () => showStep(currentStep - 1);
+            }
+            if (nextButton) {
+                nextButton.style.display = 'inline-block';
+                // Default next handler, overridden in setupStep if needed (e.g., runClustering)
+                nextButton.onclick = () => showStep(currentStep + 1);
+            }
+
+            // Specific button state logic per step
+            if (currentStep === 1) {
+                const fileInput = document.getElementById('fileInput');
+                document.getElementById('nextButton1').disabled = !fileInput.files || fileInput.files.length === 0 || rawData.length === 0;
+            } else if (currentStep === 2) {
+                 document.getElementById('nextButton2').disabled = rawData.length === 0;
+            } else if (currentStep === 3) {
+                 document.getElementById('nextButton3').disabled = selectedVariables.length === 0;
+            } else if (currentStep === 4) {
+                 // Run Clustering button is enabled if variables are selected
+                 document.getElementById('nextButton4').disabled = selectedVariables.length === 0 || rawData.length === 0;
+                 document.getElementById('nextButton4').textContent = 'Run Clustering';
+                 document.getElementById('nextButton4').onclick = runClustering; // Assign clustering function
+            } else if (currentStep === 5) {
+                 // Next button enabled only if clustering results are available
+                 document.getElementById('nextButton5').disabled = !clusteringResults;
+            } else if (currentStep === 6) {
+                 // Next button enabled only if clustering results are available AND enough variables selected for plot
+                 document.getElementById('nextButton6').disabled = !clusteringResults || selectedVariables.length < 2;
+            } else if (currentStep === 7) {
+                 // Next button enabled only if clustering results are available
+                 document.getElementById('nextButton7').disabled = !clusteringResults;
+            } else if (currentStep === 8) {
+                 // Export buttons enabled only if clustering results are available
+                 document.getElementById('exportDataButton').disabled = !clusteringResults;
+                 document.getElementById('exportSummaryButton').disabled = !clusteringResults;
+                 // No next button on step 8
+            }
+        }
+
+        function validateStep(step) {
+            let isValid = true;
+            // Map step number to error div ID
+            const errorDivIdMap = {
+                1: 'uploadError',
+                2: 'dataPreviewError',
+                3: 'variableSelectionError',
+                4: 'clusteringError',
+                5: 'optimalError',
+                6: 'visualizationError',
+                7: 'interpretationError',
+                8: 'exportError'
+            };
+            const errorDiv = document.getElementById(errorDivIdMap[step]);
+            if (errorDiv) errorDiv.textContent = ''; // Clear previous errors
+
+            if (step === 1) {
+                if (rawData.length === 0) {
+                    isValid = false;
+                     if (errorDiv) errorDiv.textContent = 'Please upload a valid CSV file to proceed.';
+                }
+            } else if (step === 3) {
+                 if (selectedVariables.length === 0) {
+                     isValid = false;
+                     if (errorDiv) errorDiv.textContent = 'Please select at least one variable for segmentation.';
+                 }
+            } else if (step === 4) {
+                 if (selectedVariables.length === 0) {
+                      isValid = false;
+                      if (errorDiv) errorDiv.textContent = 'No variables selected. Please go back to Step 3.';
+                 }
+                 if (rawData.length === 0) {
+                      isValid = false;
+                      if (errorDiv) errorDiv.textContent = 'No data available. Please go back to Step 1.';
+                 }
+                 const numClusters = parseInt(document.getElementById('numClustersInput').value);
+                 if (isNaN(numClusters) || numClusters < 2 || numClusters > rawData.length) {
+                      isValid = false;
+                      if (errorDiv) errorDiv.textContent = `Number of clusters must be a number between 2 and ${rawData.length}.`;
+                 }
+                 // Basic validation for numeric data in selected columns
+                 const hasNonNumeric = rawData.some(row =>
+                    selectedVariables.some(variable => {
+                        const value = row[variable];
+                        return value === null || value === undefined || typeof value !== 'number' || isNaN(value);
+                    })
+                 );
+                 if (hasNonNumeric) {
+                     isValid = false;
+                     if (errorDiv) errorDiv.textContent = 'Selected variables must contain only numeric data for clustering.';
+                 }
+
+
+            } else if (step === 5) {
+                 if (!clusteringResults) {
+                      isValid = false;
+                      if (errorDiv) errorDiv.textContent = 'Clustering has not been run yet. Please go back to Step 4.';
+                 }
+            } else if (step === 6) {
+                 if (!clusteringResults) {
+                      isValid = false;
+                      if (errorDiv) errorDiv.textContent = 'Clustering results not available. Please go back to Step 4.';
+                 }
+                 const scatterX = document.getElementById('scatterXSelect').value;
+                 const scatterY = document.getElementById('scatterYSelect').value;
+                 if (!scatterX || !scatterY || scatterX === scatterY) {
+                     isValid = false;
+                     if (errorDiv) errorDiv.textContent = 'Please select two different variables for the scatter plot.';
+                 }
+                 if (selectedVariables.length < 2) {
+                      isValid = false;
+                      if (errorDiv) errorDiv.textContent = 'Please select at least two variables in Step 3 to visualize.';
+                 }
+            } else if (step === 7) {
+                 if (!clusteringResults) {
+                      isValid = false;
+                      if (errorDiv) errorDiv.textContent = 'Clustering results not available. Please go back to Step 4.';
+                 }
+            } else if (step === 8) {
+                 if (!clusteringResults) {
+                      isValid = false;
+                      if (errorDiv) errorDiv.textContent = 'No results to export. Please complete the previous steps.';
+                 }
+            }
+
+            return isValid;
+        }
+
+
+        // --- Step Setup Logic ---
+        function setupStep(step) {
+            // Clear any previous errors and loading states
+             document.querySelectorAll('.text-danger').forEach(el => el.textContent = '');
+             document.querySelectorAll('.loading-spinner').forEach(el => el.classList.remove('active'));
+
+            // Destroy previous chart instances to prevent memory leaks
+            if (elbowChartInstance) { elbowChartInstance.destroy(); elbowChartInstance = null; }
+            if (silhouetteChartInstance) { silhouetteChartInstance.destroy(); silhouetteChartInstance = null; }
+            if (segmentChartInstance) { segmentChartInstance.destroy(); segmentChartInstance = null; }
+
+
+            if (step === 1) {
+                // File upload setup already handled by event listeners below
+            } else if (step === 2) {
+                 if (rawData.length > 0) {
+                     renderDataTable(rawData.slice(0, 100)); // Show first 100 rows for preview
+                 } else {
+                     document.getElementById('dataPreviewError').textContent = 'No data available. Please upload a file in Step 1.';
+                 }
+            } else if (step === 3) {
+                 if (rawData.length > 0) {
+                     renderVariableSelection(Object.keys(rawData[0]));
+                 } else {
+                     document.getElementById('variableSelectionError').textContent = 'No data available. Please upload a file in Step 1.';
+                 }
+            } else if (step === 4) {
+                 // Ensure variables are selected before proceeding to run clustering
+                 if (selectedVariables.length === 0) {
+                     document.getElementById('clusteringError').textContent = 'No variables selected for clustering. Please go back to Step 3.';
+                 } else if (rawData.length === 0) {
+                      document.getElementById('clusteringError').textContent = 'No data available. Please go back to Step 1.';
+                 } else {
+                      // Check for non-numeric data in selected columns before enabling run
+                      const hasNonNumeric = rawData.some(row =>
+                         selectedVariables.some(variable => {
+                             const value = row[variable];
+                             return value === null || value === undefined || typeof value !== 'number' || isNaN(value);
+                         })
+                      );
+                      if (hasNonNumeric) {
+                           document.getElementById('clusteringError').textContent = 'Selected variables must contain only numeric data for clustering.';
+                      }
+                 }
+            } else if (step === 5) {
+                 if (!clusteringResults) {
+                     document.getElementById('optimalError').textContent = 'Clustering results not found. Please run clustering in Step 4.';
+                 } else {
+                      // Render charts using clusteringResults data
+                      renderElbowChart(clusteringResults.elbowData);
+                      renderSilhouetteChart(clusteringResults.silhouetteData);
+                 }
+            } else if (step === 6) {
+                 if (!clusteringResults) {
+                     document.getElementById('visualizationError').textContent = 'Clustering results not found. Please run clustering in Step 4.';
+                 } else if (selectedVariables.length < 2) {
+                      document.getElementById('visualizationError').textContent = 'Please select at least two variables in Step 3 to visualize.';
+                 } else {
+                     populateScatterPlotSelects();
+                     // Initial render with first two selected variables
+                     const xVar = document.getElementById('scatterXSelect').value;
+                     const yVar = document.getElementById('scatterYSelect').value;
+                     if (xVar && yVar && xVar !== yVar) {
+                          renderSegmentScatterPlot(xVar, yVar);
+                          // Add event listeners for select changes
+                          document.getElementById('scatterXSelect').onchange = () => {
+                               const newXVar = document.getElementById('scatterXSelect').value;
+                               const currentYVar = document.getElementById('scatterYSelect').value;
+                               if (newXVar !== currentYVar) {
+                                    renderSegmentScatterPlot(newXVar, currentYVar);
+                                    document.getElementById('visualizationError').textContent = ''; // Clear error if valid
+                               } else {
+                                    document.getElementById('visualizationError').textContent = 'X and Y variables cannot be the same.';
+                               }
+                          };
+                          document.getElementById('scatterYSelect').onchange = () => {
+                               const currentXVar = document.getElementById('scatterXSelect').value;
+                               const newYVar = document.getElementById('scatterYSelect').value;
+                               if (currentXVar !== newYVar) {
+                                    renderSegmentScatterPlot(currentXVar, newYVar);
+                                    document.getElementById('visualizationError').textContent = ''; // Clear error if valid
+                               } else {
+                                    document.getElementById('visualizationError').textContent = 'X and Y variables cannot be the same.';
+                               }
+                          };
+                     } else {
+                         document.getElementById('visualizationError').textContent = 'Please select two distinct variables for visualization.';
+                     }
+                 }
+            } else if (step === 7) {
+                 if (!clusteringResults) {
+                     document.getElementById('interpretationError').textContent = 'Clustering results not found. Please run clustering in Step 4.';
+                 } else {
+                     renderSegmentSummary();
+                 }
+            } else if (step === 8) {
+                 if (!clusteringResults) {
+                      document.getElementById('exportError').textContent = 'No results to export. Please complete the previous steps.';
+                 } else {
+                     setupExportButtons();
+                 }
+            }
+            updateButtonStates(); // Ensure button states are correct after setup
+        }
+
+        // --- Step 1: Data Upload ---
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const uploadError = document.getElementById('uploadError');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('keydown', (e) => { // Add keyboard support
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                fileInput.click();
+            }
+        });
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            uploadError.textContent = ''; // Clear previous errors
+            fileInfo.textContent = `Selected file: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
+            rawData = []; // Clear previous data
+
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                uploadError.textContent = 'Invalid file type. Please upload a CSV file.';
+                document.getElementById('nextButton1').disabled = true;
+                fileInfo.textContent = '';
+                return;
+            }
+
+            // Use Papaparse to parse the CSV
+            parse(file, {
+                header: true, // Treat first row as headers
+                dynamicTyping: true, // Attempt to convert strings to numbers/booleans
+                skipEmptyLines: true,
+                complete: function(results) {
+                    if (results.errors.length > 0) {
+                        console.error("Parsing errors:", results.errors);
+                        uploadError.textContent = 'Error parsing CSV file. Please check the file format or console for details.';
+                        document.getElementById('nextButton1').disabled = true;
+                        rawData = [];
+                    } else if (!results.data || results.data.length === 0) {
+                         uploadError.textContent = 'CSV file is empty or contains no data rows.';
+                         document.getElementById('nextButton1').disabled = true;
+                         rawData = [];
+                    } else if (results.data.length > 50000) { // Add limit check
+                         uploadError.textContent = `File contains ${results.data.length} rows. This wizard is optimized for datasets up to 50,000 rows. Processing may be slow or unstable.`;
+                         // Still allow processing, but warn the user
+                         rawData = results.data;
+                         document.getElementById('nextButton1').disabled = false;
+                    }
+                    else {
+                        rawData = results.data;
+                        console.log(`Parsed data: ${rawData.length} rows, ${Object.keys(rawData[0]).length} columns.`);
+                        document.getElementById('nextButton1').disabled = false;
+                    }
+                    updateButtonStates(); // Update button state after parsing
+                }
+            });
+        }
+
+        // --- Step 2: Data Preview ---
+        function renderDataTable(data) {
+            const dataTable = document.getElementById('dataTable');
+            const thead = dataTable.querySelector('thead tr');
+            const tbody = dataTable.querySelector('tbody');
+
+            thead.innerHTML = ''; // Clear existing headers
+            tbody.innerHTML = ''; // Clear existing rows
+
+            if (data.length === 0 && rawData.length > 0) {
+                 tbody.innerHTML = '<tr><td colspan="100%" style="text-align: center;">No rows match the filter.</td></tr>';
+                 return;
+            }
+             if (rawData.length === 0) {
+                 tbody.innerHTML = '<tr><td colspan="100%" style="text-align: center;">No data available. Please upload a file in Step 1.</td></tr>';
+                 return;
+             }
+
+
+            // Create headers
+            const headers = Object.keys(rawData[0]); // Use rawData headers to ensure all columns are listed
+            headers.forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header;
+                thead.appendChild(th);
+            });
+
+            // Create rows from the provided 'data' subset
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                headers.forEach(header => { // Use rawData headers to ensure correct column order
+                    const td = document.createElement('td');
+                    // Handle potential missing keys in subset data if filtering/sorting was applied
+                    td.textContent = row.hasOwnProperty(header) ? row[header] : '';
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+
+            // Filtering logic
+            const filterInput = document.getElementById('filterInput');
+            filterInput.oninput = (e) => {
+                 const filterText = e.target.value.toLowerCase();
+                 // Filter the actual raw data, then render the preview subset
+                 const filteredData = rawData.filter(row =>
+                      Object.values(row).some(value =>
+                           String(value).toLowerCase().includes(filterText)
+                      )
+                 );
+                 renderDataTable(filteredData.slice(0, 100)); // Render first 100 filtered rows
+            };
+        }
+
+        // --- Step 3: Variable Selection ---
+        function renderVariableSelection(columns) {
+            const grid = document.getElementById('variableSelectionGrid');
+            grid.innerHTML = ''; // Clear existing items
+            // selectedVariables is NOT reset here, it should persist if user goes back/forth
+
+            if (columns.length === 0) {
+                 grid.innerHTML = '<p>No columns found in data.</p>';
+                 return;
+            }
+
+            columns.forEach(col => {
+                const item = document.createElement('div');
+                item.classList.add('variable-item');
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `var-${col.replace(/\s+/g, '-')}`; // Sanitize ID
+                checkbox.value = col;
+                checkbox.checked = selectedVariables.includes(col); // Set checked state based on current selection
+                checkbox.setAttribute('aria-label', `Select variable ${col} for segmentation`);
+
+                checkbox.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        if (!selectedVariables.includes(col)) { // Prevent duplicates
+                             selectedVariables.push(col);
+                        }
+                    } else {
+                        selectedVariables = selectedVariables.filter(v => v !== col);
+                    }
+                    document.getElementById('nextButton3').disabled = selectedVariables.length === 0;
+                    console.log("Selected variables:", selectedVariables);
+                });
+
+                const label = document.createElement('label');
+                label.setAttribute('for', `var-${col.replace(/\s+/g, '-')}`); // Link label to checkbox
+                label.textContent = col;
+
+                item.appendChild(checkbox);
+                item.appendChild(label);
+                grid.appendChild(item);
+            });
+             document.getElementById('nextButton3').disabled = selectedVariables.length === 0; // Ensure button state is correct on render
+        }
+
+         // --- Step 4: Clustering ---
+         function runClustering() {
+             const algorithm = document.getElementById('algorithmSelect').value;
+             const numClusters = parseInt(document.getElementById('numClustersInput').value);
+             const clusteringError = document.getElementById('clusteringError');
+             clusteringError.textContent = ''; // Clear error
+
+             // Re-validate before running
+             if (!validateStep(4)) {
+                 return; // Validation message is already set by validateStep
+             }
+
+             console.log(`Running ${algorithm} clustering with K=${numClusters} on variables: ${selectedVariables.join(', ')}`);
+
+             // Show loading spinner
+             const loadingSpinner = document.getElementById('clusteringLoading');
+             loadingSpinner.classList.add('active');
+             document.getElementById('nextButton4').disabled = true; // Disable button while running
+             document.getElementById('nextButton4').textContent = 'Running...';
+
+
+             // --- Placeholder for actual clustering logic ---
+             // This is where you would call a library (like ml-kmeans) or send data to a server.
+             // For demonstration, we'll simulate a delay and generate dummy results.
+
+             // Prepare data for clustering (extract selected variable values)
+             // Filter out rows where selected variables have non-numeric/null values
+             const cleanDataForClustering = rawData.filter(row =>
+                  selectedVariables.every(variable => {
+                      const value = row[variable];
+                      return value !== null && value !== undefined && typeof value === 'number' && !isNaN(value);
+                  })
+             );
+
+             if (cleanDataForClustering.length === 0) {
+                 loadingSpinner.classList.remove('active');
+                 document.getElementById('nextButton4').disabled = false;
+                 document.getElementById('nextButton4').textContent = 'Run Clustering';
+                 clusteringError.textContent = 'No valid numeric data found in selected variables after cleaning.';
+                 return;
+             }
+
+             console.log(`Using ${cleanDataForClustering.length} rows with valid numeric data for clustering.`);
+
+
+             setTimeout(() => {
+                 // Simulate clustering results
+                 // In a real app, this would be the output of your clustering algorithm
+                 const numCleanRows = cleanDataForClustering.length;
+                 clusteringResults = {
+                     algorithm: algorithm,
+                     k: numClusters,
+                     // Dummy segment labels mapped back to original rawData indices
+                     segmentLabels: rawData.map(row => {
+                         // Find the row in cleanDataForClustering to get its dummy label
+                         // This is a simplified mapping; a real implementation would need a robust way
+                         // to handle rows excluded from clustering (e.g., assign to a "noise" segment or nearest centroid)
+                         const cleanIndex = cleanDataForClustering.findIndex(cleanRow => cleanRow === row);
+                         if (cleanIndex !== -1) {
+                              return cleanIndex % numClusters; // Assign a dummy label
+                         }
+                         return -1; // Mark rows not used in clustering
+                     }),
+                     centroids: Array.from({ length: numClusters }, (_, i) => {
+                         const centroid = {};
+                         selectedVariables.forEach(v => centroid[v] = Math.random() * 100); // Dummy centroids
+                         return centroid;
+                     }),
+                     segmentProfiles: Array.from({ length: numClusters }, (_, i) => { // Dummy profiles
+                         const segmentData = rawData.filter((_, index) => clusteringResults.segmentLabels[index] === i);
+                         const size = segmentData.length;
+                         const averageValues = selectedVariables.reduce((acc, v) => {
+                             // Calculate dummy averages based on the segment data
+                             const values = segmentData.map(row => row[v]).filter(val => typeof val === 'number' && !isNaN(val));
+                             acc[v] = values.length > 0 ? values.reduce((sum, val) => sum + val, 0) / values.length : 0;
+                             return acc;
+                         }, {});
+                         return { segment: i, size: size, averageValues: averageValues };
+                     }),
+                     // Dummy data for charts (would be generated by running clustering for k=2 to e.g., 10)
+                     elbowData: Array.from({ length: 9 }, (_, i) => ({ k: i + 2, wcss: Math.random() * 100 + (10 - i) * (numCleanRows / 100) })), // Scale WCSS by data size
+                     silhouetteData: Array.from({ length: 9 }, (_, i) => ({ k: i + 2, score: Math.random() * 0.3 + (i < 4 ? i * 0.08 : (9 - i) * 0.04) + 0.1 })), // Keep score positive, max ~0.5
+                 };
+
+                 console.log("Clustering simulation complete. Results:", clusteringResults);
+
+                 loadingSpinner.classList.remove('active');
+                 document.getElementById('nextButton4').disabled = false; // Re-enable button
+                 document.getElementById('nextButton4').textContent = 'Run Clustering'; // Reset button text
+                 showStep(5); // Automatically move to the next step to show results
+             }, 2000); // Simulate a 2-second processing time
+         }
+
+
+        // --- Step 5: Optimal Segments Charts ---
+        function renderElbowChart(data) {
+            const ctx = document.getElementById('elbowChart').getContext('2d');
+            if (elbowChartInstance) elbowChartInstance.destroy(); // Destroy previous chart instance
+
+            const labels = data.map(d => d.k);
+            const wcssData = data.map(d => d.wcss);
+
+            elbowChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Within-Cluster Sum of Squares (WCSS)',
+                        data: wcssData,
+                        borderColor: document.getElementById('elbowLineColor').value, // Use color input
+                        backgroundColor: document.getElementById('elbowLineColor').value + '33', // Add transparency
+                        tension: 0.3, /* Added tension */
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                     onClick: (e) => toggleChartControls('elbowControls'),
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: false }, // Title is in the h3
+                        tooltip: {
+                            callbacks: {
+                                title: (context) => `K = ${context[0].label}`,
+                                label: (context) => `WCSS: ${context.raw.toFixed(2)}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Number of Clusters (K)',
+                                font: { weight: 'bold' }
+                            },
+                            ticks: {
+                                autoSkip: false,
+                                maxRotation: 0,
+                                font: { size: 12 }
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Within-Cluster Sum of Squares (WCSS)',
+                                font: { weight: 'bold' }
+                            },
+                            ticks: { font: { size: 12 } }
+                        }
+                    }
+                }
+            });
+
+             // Attach control listeners
+             document.getElementById('elbowLineColor').onchange = (e) => {
+                 const newColor = e.target.value;
+                 elbowChartInstance.data.datasets[0].borderColor = newColor;
+                 elbowChartInstance.data.datasets[0].backgroundColor = newColor + '33'; // Update background color opacity
+                 elbowChartInstance.update();
+             };
+        }
+
+        function renderSilhouetteChart(data) {
+            const ctx = document.getElementById('silhouetteChart').getContext('2d');
+            if (silhouetteChartInstance) silhouetteChartInstance.destroy(); // Destroy previous chart instance
+
+            const labels = data.map(d => d.k);
+            const scoreData = data.map(d => d.score);
+
+            silhouetteChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Average Silhouette Score',
+                        data: scoreData,
+                        borderColor: document.getElementById('silhouetteLineColor').value, // Use color input
+                        backgroundColor: document.getElementById('silhouetteLineColor').value + '33', // Add transparency
+                        tension: 0.3, /* Added tension */
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onClick: (e) => toggleChartControls('silhouetteControls'),
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: false },
+                         tooltip: {
+                            callbacks: {
+                                title: (context) => `K = ${context[0].label}`,
+                                label: (context) => `Score: ${context.raw.toFixed(3)}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Number of Clusters (K)',
+                                font: { weight: 'bold' }
+                            },
+                             ticks: {
+                                autoSkip: false,
+                                maxRotation: 0,
+                                font: { size: 12 }
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Average Silhouette Score',
+                                font: { weight: 'bold' }
+                            },
+                             min: -0.5, // Adjusted range based on typical scores
+                             max: 1,
+                             ticks: { font: { size: 12 } }
+                        }
+                    }
+                }
+            });
+
+             // Attach control listeners
+             document.getElementById('silhouetteLineColor').onchange = (e) => {
+                 const newColor = e.target.value;
+                 silhouetteChartInstance.data.datasets[0].borderColor = newColor;
+                 silhouetteChartInstance.data.datasets[0].backgroundColor = newColor + '33'; // Update background color opacity
+                 silhouetteChartInstance.update();
+             };
+        }
+
+        function toggleChartControls(controlId) {
+            // Only toggle controls on larger screens
+             if (window.matchMedia('(min-width: 993px)').matches) {
+                 const controls = document.getElementById(controlId);
+                 // Close other controls
+                 document.querySelectorAll('.floating-controls').forEach(ctrl => {
+                     if (ctrl.id !== controlId) {
+                         ctrl.classList.remove('active');
+                     }
+                 });
+                 controls.classList.toggle('active');
+             }
+        }
+
+        // Close controls when clicking outside on larger screens
+        document.addEventListener('click', (e) => {
+             if (window.matchMedia('(min-width: 993px)').matches) {
+                 if (!e.target.closest('.floating-controls') && !e.target.closest('.chart-canvas')) {
+                     document.querySelectorAll('.floating-controls').forEach(ctrl => ctrl.classList.remove('active'));
+                 }
+             }
+        });
+
+
+        // --- Step 6: Visualize Segments ---
+        function populateScatterPlotSelects() {
+             const xSelect = document.getElementById('scatterXSelect');
+             const ySelect = document.getElementById('scatterYSelect');
+
+             xSelect.innerHTML = '';
+             ySelect.innerHTML = '';
+
+             // Only allow selected variables for visualization
+             const numericVariables = selectedVariables.filter(variable =>
+                  rawData.every(row => {
+                      const value = row[variable];
+                      return value === null || value === undefined || typeof value === 'number'; // Allow null/undefined but prefer numbers
+                  })
+             );
+
+
+             if (numericVariables.length < 2) {
+                 xSelect.innerHTML = '<option value="">-- Not enough numeric variables --</option>';
+                 ySelect.innerHTML = '<option value="">-- Not enough numeric variables --</option>';
+                 xSelect.disabled = true;
+                 ySelect.disabled = true;
+                 document.getElementById('visualizationError').textContent = 'Need at least 2 selected numeric variables for visualization.';
+                 document.getElementById('nextButton6').disabled = true;
+                 return;
+             } else {
+                  xSelect.disabled = false;
+                  ySelect.disabled = false;
+                  document.getElementById('visualizationError').textContent = ''; // Clear error if enough variables
+
+
+                  numericVariables.forEach(variable => {
+                      const optionX = document.createElement('option');
+                      optionX.value = variable;
+                      optionX.textContent = variable;
+                      xSelect.appendChild(optionX);
+
+                      const optionY = document.createElement('option');
+                      optionY.value = variable;
+                      optionY.textContent = variable;
+                      ySelect.appendChild(optionY);
+                  });
+
+                  // Select the first two by default if available
+                  xSelect.value = numericVariables[0];
+                  ySelect.value = numericVariables[1];
+             }
+             updateButtonStates(); // Ensure button state is correct
+        }
+
+        function renderSegmentScatterPlot(xVar, yVar) {
+            const ctx = document.getElementById('segmentChart').getContext('2d');
+            if (segmentChartInstance) segmentChartInstance.destroy(); // Destroy previous chart instance
+
+            if (!clusteringResults || !clusteringResults.segmentLabels || !rawData || selectedVariables.length < 2 || !xVar || !yVar || xVar === yVar) {
+                 console.error("Cannot render scatter plot: Missing data or invalid variable selection.");
+                 document.getElementById('visualizationError').textContent = 'Cannot render scatter plot. Ensure clustering was run and two distinct variables are selected.';
+                 document.getElementById('nextButton6').disabled = true;
+                 return;
+            }
+             document.getElementById('visualizationError').textContent = ''; // Clear error if rendering is possible
+
+
+            // Prepare data for scatter plot
+            // Group data points by segment
+            const datasets = [];
+            const numSegments = clusteringResults.k;
+            const pointSize = parseInt(document.getElementById('segmentPointSize').value);
+            const pointOpacity = parseFloat(document.getElementById('segmentOpacity').value);
+
+
+            for (let i = 0; i < numSegments; i++) {
+                const segmentData = rawData
+                    .map((row, index) => ({
+                         ...row, // Keep original data
+                         segmentLabel: clusteringResults.segmentLabels[index] // Add segment label
+                    }))
+                    .filter(row => row.segmentLabel === i) // Filter for this segment
+                    .map(row => ({
+                        x: row[xVar],
+                        y: row[yVar],
+                        originalData: row // Keep original data for tooltips if needed
+                    }))
+                    .filter(point => typeof point.x === 'number' && !isNaN(point.x) && typeof point.y === 'number' && !isNaN(point.y)); // Filter out non-numeric points
+
+
+                datasets.push({
+                    label: `Segment ${i + 1}`,
+                    data: segmentData,
+                    backgroundColor: segmentColors[i % segmentColors.length] + Math.floor(pointOpacity * 255).toString(16).padStart(2, '0'), // Add transparency via hex
+                    borderColor: segmentColors[i % segmentColors.length],
+                    pointRadius: pointSize,
+                    pointHoverRadius: pointSize + 2,
+                    borderWidth: 1,
+                    showLine: false // It's a scatter plot
+                });
+            }
+
+             if (datasets.every(dataset => dataset.data.length === 0)) {
+                  document.getElementById('visualizationError').textContent = `No valid numeric data found for variables "${xVar}" and "${yVar}" to plot.`;
+                  // Optionally disable next button if no plot is possible
+                  // document.getElementById('nextButton6').disabled = true;
+             }
+
+
+            segmentChartInstance = new Chart(ctx, {
+                type: 'scatter',
+                data: { datasets: datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                     onClick: (e) => toggleChartControls('segmentControls'),
+                    plugins: {
+                        legend: { position: 'top', labels: { font: { size: 12 } } },
+                        title: { display: false },
+                         tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    const point = context.raw;
+                                    let label = `${context.dataset.label}: (${point.x.toFixed(2)}, ${point.y.toFixed(2)})`;
+                                    // Add more details from originalData if desired
+                                    // Example: Try to find a common identifier like 'CustomerID'
+                                     if (point.originalData && point.originalData.hasOwnProperty('CustomerID')) {
+                                         label += `\nCustomer ID: ${point.originalData['CustomerID']}`;
+                                     } else if (point.originalData && Object.keys(point.originalData).length > 0) {
+                                         // If no CustomerID, maybe show first few original data points
+                                          const otherKeys = Object.keys(point.originalData).filter(k => k !== xVar && k !== yVar && k !== 'segmentLabel').slice(0, 3); // Show first 3 other keys
+                                          if (otherKeys.length > 0) {
+                                             label += '\nDetails: ' + otherKeys.map(k => `${k}: ${point.originalData[k]}`).join(', ');
+                                          }
+                                     }
+
+                                    return label;
+                                }
+                            }
+                        },
+                        zoom: { // Placeholder for zoom/pan
+                            zoom: {
+                                wheel: { enabled: true },
+                                pinch: { enabled: true },
+                                mode: 'xy',
+                            },
+                            pan: {
+                                enabled: true,
+                                mode: 'xy',
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: xVar,
+                                font: { weight: 'bold' }
+                            },
+                            type: 'linear', // Scatter plot uses linear scales
+                            position: 'bottom',
+                             ticks: { font: { size: 12 } }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: yVar,
+                                font: { weight: 'bold' }
+                            },
+                             type: 'linear',
+                             ticks: { font: { size: 12 } }
+                        }
+                    }
+                }
+            });
+
+             // Attach control listeners
+             document.getElementById('segmentPointSize').onchange = (e) => {
+                 const newSize = parseInt(e.target.value);
+                 segmentChartInstance.data.datasets.forEach(dataset => {
+                     dataset.pointRadius = newSize;
+                     dataset.pointHoverRadius = newSize + 2;
+                 });
+                 segmentChartInstance.update();
+             };
+             document.getElementById('segmentOpacity').onchange = (e) => {
+                 const newOpacity = parseFloat(e.target.value);
+                  segmentChartInstance.data.datasets.forEach((dataset, i) => {
+                      const baseColor = segmentColors[i % segmentColors.length];
+                       // Update background color with new opacity (using hex transparency)
+                      dataset.backgroundColor = baseColor + Math.floor(newOpacity * 255).toString(16).padStart(2, '0');
+                  });
+                 segmentChartInstance.update();
+             };
+        }
+
+
+        // --- Step 7: Interpret & Strategize ---
+        function renderSegmentSummary() {
+            const summaryArea = document.getElementById('segmentSummaryArea');
+            summaryArea.innerHTML = ''; // Clear existing summaries
+
+            if (!clusteringResults || !clusteringResults.segmentProfiles) {
+                 summaryArea.innerHTML = '<p>No segment summary available. Please run clustering in Step 4.</p>';
+                 return;
+            }
+
+            clusteringResults.segmentProfiles.forEach(profile => {
+                const card = document.createElement('div');
+                card.classList.add('segment-card');
+
+                const title = document.createElement('h4');
+                const colorSwatch = document.createElement('span');
+                colorSwatch.classList.add('color-swatch');
+                colorSwatch.style.backgroundColor = segmentColors[profile.segment % segmentColors.length];
+                title.appendChild(colorSwatch);
+                title.appendChild(document.createTextNode(` Segment ${profile.segment + 1}`));
+                card.appendChild(title);
+
+                const sizePara = document.createElement('p');
+                sizePara.innerHTML = `<strong>Size:</strong> ${profile.size} customers (${rawData.length > 0 ? ((profile.size / rawData.length) * 100).toFixed(1) : 0}%)`;
+                card.appendChild(sizePara);
+
+                const avgValuesPara = document.createElement('p');
+                let avgText = '<strong>Average Values:</strong> ';
+                avgText += Object.entries(profile.averageValues).map(([key, value]) => `${key}: ${typeof value === 'number' ? value.toFixed(2) : value}`).join(', ');
+                avgValuesPara.innerHTML = avgText;
+                card.appendChild(avgValuesPara);
+
+                // Add placeholder for user strategy input
+                const strategyLabel = document.createElement('label');
+                strategyLabel.setAttribute('for', `segment${profile.segment + 1}Strategy`);
+                strategyLabel.textContent = 'Marketing Strategy:';
+                card.appendChild(strategyLabel);
+
+                const strategyTextarea = document.createElement('textarea');
+                strategyTextarea.id = `segment${profile.segment + 1}Strategy`;
+                strategyTextarea.placeholder = 'Enter marketing strategy for this segment...';
+                 // Load previously saved strategy if exists
+                 strategyTextarea.value = segmentStrategies[profile.segment] || '';
+                 // Save strategy on input change
+                 strategyTextarea.addEventListener('input', (e) => {
+                     segmentStrategies[profile.segment] = e.target.value;
+                 });
+                 strategyTextarea.setAttribute('aria-label', `Marketing strategy for Segment ${profile.segment + 1}`);
+                card.appendChild(strategyTextarea);
+
+                summaryArea.appendChild(card);
+            });
+        }
+
+        // --- Step 8: Export Results ---
+        function setupExportButtons() {
+             const exportDataButton = document.getElementById('exportDataButton');
+             const exportSummaryButton = document.getElementById('exportSummaryButton');
+
+             if (!clusteringResults || !rawData || !clusteringResults.segmentLabels) {
+                 exportDataButton.disabled = true;
+                 exportSummaryButton.disabled = true;
+                 document.getElementById('exportError').textContent = 'No results available to export.';
+                 return;
+             }
+             document.getElementById('exportError').textContent = '';
+             exportDataButton.disabled = false;
+             exportSummaryButton.disabled = false;
+
+
+             // Export Segmented Data (CSV)
+             exportDataButton.onclick = () => {
+                 const dataWithSegments = rawData.map((row, index) => ({
+                     ...row,
+                     Segment: clusteringResults.segmentLabels[index] !== -1 ? clusteringResults.segmentLabels[index] + 1 : 'Unclustered' // Add segment label (1-based), handle unclustered
+                 }));
+
+                 const csv = unparse(dataWithSegments); // Use Papaparse to format CSV string
+                 const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                 const link = document.createElement('a');
+                 link.href = URL.createObjectURL(blob);
+                 link.setAttribute('download', 'customer_segmented_data.csv');
+                 document.body.appendChild(link);
+                 link.click();
+                 document.body.removeChild(link);
+             };
+
+             // Export Segment Summary (JSON)
+             exportSummaryButton.onclick = () => {
+                 const summaryData = {
+                     algorithm: clusteringResults.algorithm,
+                     k: clusteringResults.k,
+                     segmentProfiles: clusteringResults.segmentProfiles,
+                     segmentStrategies: segmentStrategies // Include user-defined strategies
+                 };
+
+                 const json = JSON.stringify(summaryData, null, 2);
+                 const blob = new Blob([json], { type: 'application/json;charset=utf-8;' });
+                 const link = document.createElement('a');
+                 link.href = URL.createObjectURL(blob);
+                 link.setAttribute('download', 'customer_segment_summary.json');
+                 document.body.appendChild(link);
+                 link.click();
+                 document.body.removeChild(link);
+             };
+        }
+
+
+        // --- Initial Setup ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add click listeners to sidebar items
+            stepItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const step = parseInt(item.dataset.step);
+                    showStep(step);
+                });
+                 // Add keyboard navigation for sidebar items
+                 item.addEventListener('keydown', (e) => {
+                     if (e.key === 'Enter' || e.key === ' ') {
+                         e.preventDefault();
+                         const step = parseInt(e.target.dataset.step);
+                         showStep(step);
+                     }
+                 });
+            });
+
+            // Initialize the first step view and button states
+            showStep(1);
+        });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Survey Data Dashboard</title>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --white-color: #ffffff;
+
+            --border-color: #dee2e6;
+            --background-color: #f8f9fa;
+            --card-background: #ffffff;
+            --text-color: #212529;
+
+            --spacing-unit: 8px;
+            --border-radius: 4px;
+            --box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            --transition-speed: 0.2s ease-in-out;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .app-header {
+            background-color: var(--white-color);
+            color: var(--dark-color);
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            box-shadow: var(--box-shadow);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .app-header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .app-container {
+            display: flex;
+            flex: 1;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: var(--dark-color);
+            color: var(--light-color);
+            padding: calc(var(--spacing-unit) * 2) 0;
+            flex-shrink: 0;
+            box-shadow: var(--box-shadow);
+        }
+
+        .sidebar nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar nav ul li {
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .sidebar nav ul li a {
+            display: block;
+            color: var(--light-color);
+            text-decoration: none;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            transition: background-color var(--transition-speed), color var(--transition-speed);
+        }
+
+        .sidebar nav ul li a:hover,
+        .sidebar nav ul li a:focus {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--white-color);
+        }
+
+        .sidebar nav ul li a.active {
+            background-color: var(--primary-color);
+            color: var(--white-color);
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: calc(var(--spacing-unit) * 3);
+            overflow-y: auto;
+        }
+
+        .content-section {
+            display: none; /* Sections are hidden by default, shown by JS */
+            background-color: var(--card-background);
+            padding: calc(var(--spacing-unit) * 3);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: calc(var(--spacing-unit) * 3);
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        h2 {
+            color: var(--dark-color);
+            margin-top: 0;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            font-size: 1.75rem;
+        }
+
+        .drag-drop-area {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--border-radius);
+            padding: calc(var(--spacing-unit) * 4);
+            text-align: center;
+            cursor: pointer;
+            transition: background-color var(--transition-speed), border-color var(--transition-speed);
+            margin-bottom: calc(var(--spacing-unit) * 2);
+        }
+
+        .drag-drop-area.dragover {
+            background-color: var(--light-color);
+            border-color: var(--primary-color);
+        }
+
+        .drag-drop-area p {
+            margin: 0 0 var(--spacing-unit);
+            color: var(--secondary-color);
+        }
+
+        .drag-drop-area input[type="file"] {
+            display: none;
+        }
+
+        .button {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: var(--white-color);
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color var(--transition-speed), opacity var(--transition-speed);
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .button:hover,
+        .button:focus {
+            background-color: darken(var(--primary-color), 10%); /* Placeholder, use actual color calculation */
+            background-color: #0056b3; /* Example darker color */
+        }
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .file-preview {
+            margin-top: var(--spacing-unit) * 2;
+            padding: var(--spacing-unit) * 2;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: var(--light-color);
+            display: none; /* Hide until file is selected */
+        }
+
+        .file-preview.active {
+            display: block;
+        }
+
+        .file-preview p {
+            margin: 0 0 var(--spacing-unit);
+            font-weight: bold;
+        }
+
+        .file-preview small {
+            color: var(--secondary-color);
+        }
+
+        /* Placeholder styles for other sections */
+        .data-table-section .table-container {
+            /* Basic table styling */
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: var(--spacing-unit) * 2;
+        }
+
+        .data-table-section th,
+        .data-table-section td {
+            border: 1px solid var(--border-color);
+            padding: var(--spacing-unit) 12px;
+            text-align: left;
+        }
+
+        .data-table-section th {
+            background-color: var(--light-color);
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color var(--transition-speed);
+        }
+
+        .data-table-section th:hover {
+            background-color: #e9ecef; /* Example lighter color */
+        }
+
+        .data-table-section .sort-icon {
+            margin-left: var(--spacing-unit);
+            font-size: 0.8em;
+            vertical-align: middle;
+        }
+
+        .analysis-controls-section .controls-panel {
+            /* Basic panel styling */
+            padding: var(--spacing-unit) * 2;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin-bottom: var(--spacing-unit) * 2;
+        }
+
+        .visualization-section .chart-container {
+            /* Basic chart container styling */
+            height: 400px; /* Example height */
+            width: 100%;
+            margin-top: var(--spacing-unit) * 2;
+            position: relative; /* For floating controls */
+        }
+
+        .summary-statistics-section .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-unit) * 2;
+        }
+
+        .summary-statistics-section .stat-card {
+            background-color: var(--light-color);
+            padding: var(--spacing-unit) * 2;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .summary-statistics-section .stat-card h4 {
+            margin: 0 0 var(--spacing-unit);
+            font-size: 1.2rem;
+            color: var(--primary-color);
+        }
+
+        .summary-statistics-section .stat-card p {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .app-container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                padding: var(--spacing-unit) 0;
+            }
+
+            .sidebar nav ul {
+                display: flex;
+                justify-content: space-around;
+            }
+
+            .sidebar nav ul li {
+                margin-bottom: 0;
+            }
+
+            .sidebar nav ul li a {
+                padding: var(--spacing-unit);
+                text-align: center;
+            }
+
+            .main-content {
+                padding: var(--spacing-unit) * 2;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="app-header">
+        <h1>Customer Survey Dashboard</h1>
+        <!-- Optional: Add logo or user info here -->
+    </header>
+
+    <div class="app-container">
+        <aside class="sidebar">
+            <nav>
+                <ul>
+                    <li><a href="#upload" class="nav-link active">Upload Data</a></li>
+                    <li><a href="#data-table" class="nav-link">Data Table</a></li>
+                    <li><a href="#analysis" class="nav-link">Analysis</a></li>
+                    <li><a href="#visualization" class="nav-link">Visualization</a></li>
+                    <li><a href="#summary" class="nav-link">Summary</a></li>
+                    <!-- Add more navigation links as needed -->
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <section id="upload" class="content-section active">
+                <h2>Upload Customer Survey Data</h2>
+                <div id="dragDropArea" class="drag-drop-area">
+                    <p>Drag & drop your CSV or Excel file here, or</p>
+                    <input type="file" id="fileInput" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel">
+                    <button class="button" id="browseFilesButton">Browse Files</button>
+                </div>
+                <div id="filePreview" class="file-preview">
+                    <p>Selected File: <span id="fileName"></span></p>
+                    <small>Size: <span id="fileSize"></span> bytes</small>
+                    <!-- Add more file info/validation messages here -->
+                </div>
+                <button class="button" id="analyzeDataButton" style="margin-top: var(--spacing-unit) * 2;" disabled>Analyze Data</button>
+            </section>
+
+            <section id="data-table" class="content-section">
+                <h2>Survey Data Table</h2>
+                <div class="table-controls">
+                    <!-- Filter inputs, pagination controls will go here -->
+                    <input type="text" placeholder="Filter data..." style="padding: var(--spacing-unit); margin-bottom: var(--spacing-unit) * 2; border: 1px solid var(--border-color); border-radius: var(--border-radius);">
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Column 1 <span class="sort-icon">↓</span></th>
+                                <th>Column 2 <span class="sort-icon">↑</span></th>
+                                <th>Column 3</th>
+                                <!-- Dynamic headers based on uploaded data -->
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Data 1</td>
+                                <td>Data 2</td>
+                                <td>Data 3</td>
+                                <!-- Dynamic rows based on uploaded data -->
+                            </tr>
+                            <!-- More rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="analysis" class="content-section">
+                <h2>Analysis Controls</h2>
+                <div class="controls-panel">
+                    <!-- Filter, group, aggregate options will go here -->
+                    <p>Analysis controls panel placeholder.</p>
+                    <div style="margin-bottom: var(--spacing-unit) * 2;">
+                        <label for="filterDropdown">Filter by:</label>
+                        <select id="filterDropdown" style="padding: var(--spacing-unit); border: 1px solid var(--border-color); border-radius: var(--border-radius);">
+                            <option value="">Select Field</option>
+                            <!-- Options populated dynamically -->
+                        </select>
+                    </div>
+                    <div>
+                        <label for="groupDropdown">Group by:</label>
+                        <select id="groupDropdown" style="padding: var(--spacing-unit); border: 1px solid var(--border-color); border-radius: var(--border-radius);">
+                            <option value="">Select Field</option>
+                            <!-- Options populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <section id="visualization" class="content-section">
+                <h2>Data Visualization</h2>
+                <div class="visualization-controls">
+                    <!-- Chart type selector, chart options will go here -->
+                    <label for="chartTypeSelector">Chart Type:</label>
+                    <select id="chartTypeSelector" style="padding: var(--spacing-unit); margin-bottom: var(--spacing-unit) * 2; border: 1px solid var(--border-color); border-radius: var(--border-radius);">
+                        <option value="bar">Bar Chart</option>
+                        <option value="pie">Pie Chart</option>
+                        <option value="line">Line Chart</option>
+                        <!-- More chart types -->
+                    </select>
+                </div>
+                <div class="chart-container">
+                    <!-- Chart rendering will happen here -->
+                    <canvas id="myChart"></canvas>
+                </div>
+            </section>
+
+            <section id="summary" class="content-section">
+                <h2>Summary Statistics</h2>
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <h4>Total Responses</h4>
+                        <p>0</p> <!-- Dynamic value -->
+                    </div>
+                    <div class="stat-card">
+                        <h4>Average Score</h4>
+                        <p>N/A</p> <!-- Dynamic value -->
+                    </div>
+                    <div class="stat-card">
+                        <h4>Completion Rate</h4>
+                        <p>N/A</p> <!-- Dynamic value -->
+                    </div>
+                    <!-- More summary stats -->
+                </div>
+            </section>
+
+            <!-- Placeholder for Modals (e.g., Export, Settings, Help) -->
+            <div id="exportModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center;">
+                <div style="background: var(--white-color); padding: calc(var(--spacing-unit) * 3); border-radius: var(--border-radius); box-shadow: var(--box-shadow);">
+                    <h3>Export Options</h3>
+                    <p>Export functionality coming soon.</p>
+                    <button class="button" onclick="document.getElementById('exportModal').style.display='none'">Close</button>
+                </div>
+            </div>
+
+            <!-- Placeholder for Loading Indicator -->
+            <div id="loadingIndicator" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); justify-content: center; align-items: center; font-size: 2rem;">
+                Loading...
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const contentSections = document.querySelectorAll('.content-section');
+            const dragDropArea = document.getElementById('dragDropArea');
+            const fileInput = document.getElementById('fileInput');
+            const browseFilesButton = document.getElementById('browseFilesButton');
+            const filePreview = document.getElementById('filePreview');
+            const fileNameSpan = document.getElementById('fileName');
+            const fileSizeSpan = document.getElementById('fileSize');
+            const analyzeDataButton = document.getElementById('analyzeDataButton');
+
+            // --- Navigation Logic ---
+            function showSection(id) {
+                contentSections.forEach(section => {
+                    section.classList.remove('active');
+                });
+                document.getElementById(id).classList.add('active');
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === `#${id}`) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const sectionId = link.getAttribute('href').substring(1);
+                    showSection(sectionId);
+                });
+            });
+
+            // Show initial section based on hash or default to upload
+            const initialSection = window.location.hash ? window.location.hash.substring(1) : 'upload';
+            if (document.getElementById(initialSection)) {
+                 showSection(initialSection);
+            } else {
+                 showSection('upload'); // Fallback to upload
+            }
+
+
+            // --- File Upload Logic ---
+            browseFilesButton.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', (event) => {
+                handleFiles(event.target.files);
+            });
+
+            dragDropArea.addEventListener('dragover', (event) => {
+                event.preventDefault();
+                dragDropArea.classList.add('dragover');
+            });
+
+            dragDropArea.addEventListener('dragleave', (event) => {
+                event.preventDefault();
+                dragDropArea.classList.remove('dragover');
+            });
+
+            dragDropArea.addEventListener('drop', (event) => {
+                event.preventDefault();
+                dragDropArea.classList.remove('dragover');
+                handleFiles(event.dataTransfer.files);
+            });
+
+            function handleFiles(files) {
+                if (files.length > 0) {
+                    const file = files[0];
+                    // Basic file type validation (can be enhanced)
+                    const allowedTypes = [
+                        'text/csv',
+                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+                        'application/vnd.ms-excel' // .xls
+                    ];
+
+                    if (allowedTypes.includes(file.type)) {
+                        fileNameSpan.textContent = file.name;
+                        fileSizeSpan.textContent = file.size; // Consider formatting size
+                        filePreview.classList.add('active');
+                        analyzeDataButton.disabled = false;
+                        // Store the file object or read its content here
+                        console.log("File selected:", file);
+                        // Example: Read file content (for small files)
+                        // const reader = new FileReader();
+                        // reader.onload = (e) => {
+                        //     console.log("File content (first 100 chars):", e.target.result.substring(0, 100));
+                        // };
+                        // reader.readAsText(file); // or readAsArrayBuffer for binary files
+                    } else {
+                        alert('Invalid file type. Please upload a CSV or Excel file.');
+                        fileInput.value = ''; // Clear the file input
+                        filePreview.classList.remove('active');
+                        analyzeDataButton.disabled = true;
+                    }
+                } else {
+                    filePreview.classList.remove('active');
+                    analyzeDataButton.disabled = true;
+                }
+            }
+
+            // --- Analyze Button Placeholder ---
+            analyzeDataButton.addEventListener('click', () => {
+                if (!analyzeDataButton.disabled) {
+                    console.log("Analyze button clicked. Processing data...");
+                    // Here you would typically read the file content, parse it,
+                    // and then populate the Data Table, Analysis Controls, etc.
+                    // Show loading indicator
+                    document.getElementById('loadingIndicator').style.display = 'flex';
+
+                    // Simulate data processing
+                    setTimeout(() => {
+                        console.log("Data processed. Navigating to Data Table.");
+                        // Hide loading indicator
+                        document.getElementById('loadingIndicator').style.display = 'none';
+                        // Navigate to the data table section
+                        showSection('data-table');
+                        // In a real app, you would populate the table here
+                    }, 2000); // Simulate a 2-second processing time
+                }
+            });
+
+            // --- Placeholder for other section interactions ---
+            // Example: Sorting data table columns (requires data loading first)
+            document.querySelectorAll('#data-table th').forEach(header => {
+                header.addEventListener('click', () => {
+                    // Implement sorting logic here
+                    console.log(`Clicked header: ${header.textContent.trim()} for sorting`);
+                    // Update sort icon (↓ or ↑)
+                });
+            });
+
+            // Example: Chart type selector (requires chart library like Chart.js)
+            const chartTypeSelector = document.getElementById('chartTypeSelector');
+            if (chartTypeSelector) {
+                 chartTypeSelector.addEventListener('change', (event) => {
+                     console.log(`Chart type changed to: ${event.target.value}`);
+                     // Update chart type using a charting library instance
+                 });
+            }
+
+            // Example: Export button (if added to the UI)
+            // const exportButton = document.getElementById('exportButton');
+            // if (exportButton) {
+            //     exportButton.addEventListener('click', () => {
+            //         document.getElementById('exportModal').style.display = 'flex';
+            //     });
+            // }
+
+        });
+    </script>
+</body>
+</html>

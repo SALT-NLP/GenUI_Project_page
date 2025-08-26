@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding React Hooks</title>
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+        :root {
+            --primary-blue: #007acc;
+            --react-blue: #61dafb;
+            --background-light: #f4f4f4;
+            --background-dark: #1e1e1e;
+            --text-dark: #333;
+            --text-light: #d4d4d4;
+            --border-color: #ddd;
+            --button-bg: #eee;
+            --button-hover-bg: #ccc;
+            --button-active-bg: #bbb;
+            --success-green: #4CAF50;
+            --error-red: #f44336;
+            --spacing-unit: 1rem;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-light);
+            color: var(--text-dark);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .container {
+            display: grid;
+            grid-template-areas:
+                "header header"
+                "nav main";
+            grid-template-columns: 250px 1fr;
+            grid-template-rows: auto 1fr;
+            flex-grow: 1;
+        }
+
+        header {
+            grid-area: header;
+            background-color: var(--primary-blue);
+            color: white;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        nav {
+            grid-area: nav;
+            background-color: #fff;
+            border-right: 1px solid var(--border-color);
+            padding: var(--spacing-unit) 0;
+            overflow-y: auto;
+            box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        nav li {
+            margin-bottom: 0.2rem;
+        }
+
+        nav a {
+            display: block;
+            padding: 0.8rem calc(var(--spacing-unit) * 1.5);
+            text-decoration: none;
+            color: var(--text-dark);
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        nav a:hover {
+            background-color: var(--background-light);
+            color: var(--primary-blue);
+        }
+
+        nav a.active {
+            background-color: var(--primary-blue);
+            color: white;
+            font-weight: 600;
+        }
+
+        main {
+            grid-area: main;
+            padding: calc(var(--spacing-unit) * 2);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: calc(var(--spacing-unit) * 2);
+        }
+
+        .content-section {
+            background-color: #fff;
+            padding: calc(var(--spacing-unit) * 1.5);
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .explanation h2 {
+            color: var(--primary-blue);
+            margin-top: 0;
+            margin-bottom: var(--spacing-unit);
+            font-size: 1.5rem;
+        }
+
+        .explanation p {
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .explanation code {
+            background-color: #f0f0f0;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: 'SF Mono', 'Consolas', 'Liberation Mono', 'Menlo', monospace;
+        }
+
+        .code-example {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-unit);
+        }
+
+        .code-example h3 {
+            margin: 0;
+            font-size: 1.3rem;
+            color: var(--text-dark);
+        }
+
+        #editor {
+            min-height: 300px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            overflow: hidden; /* Ensure Monaco respects border-radius */
+        }
+
+        .code-controls {
+            display: flex;
+            gap: var(--spacing-unit);
+        }
+
+        .code-controls button {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.2s ease, opacity 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .code-controls button:hover {
+            opacity: 0.9;
+        }
+
+        .code-controls button:active {
+            opacity: 0.8;
+        }
+
+        #run-button {
+            background-color: var(--success-green);
+            color: white;
+        }
+
+        #reset-button {
+            background-color: var(--button-bg);
+            color: var(--text-dark);
+        }
+
+        .output {
+            background-color: var(--background-dark);
+            color: var(--text-light);
+            padding: var(--spacing-unit);
+            border-radius: 4px;
+            min-height: 100px;
+            overflow-y: auto;
+            font-family: 'SF Mono', 'Consolas', 'Liberation Mono', 'Menlo', monospace;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .output h4 {
+            margin-top: 0;
+            margin-bottom: var(--spacing-unit);
+            color: var(--react-blue);
+            font-size: 1.1rem;
+        }
+
+        footer {
+            grid-area: footer; /* Not explicitly in grid, but can be added below main */
+            text-align: center;
+            padding: var(--spacing-unit);
+            margin-top: auto; /* Push footer to the bottom */
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-areas:
+                    "header"
+                    "nav"
+                    "main";
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto 1fr;
+            }
+
+            nav {
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+                overflow-x: auto;
+                overflow-y: hidden;
+                white-space: nowrap;
+                padding: 0 var(--spacing-unit);
+            }
+
+            nav ul {
+                display: flex;
+                gap: 0.5rem;
+            }
+
+            nav li {
+                margin-bottom: 0;
+                flex-shrink: 0;
+            }
+
+            nav a {
+                padding: 0.6rem var(--spacing-unit);
+            }
+
+            main {
+                padding: var(--spacing-unit);
+            }
+
+            header {
+                padding: var(--spacing-unit);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Understanding React Hooks</h1>
+            <!-- Progress indicator could go here -->
+        </header>
+
+        <nav>
+            <ul>
+                <li><a href="#" data-hook="intro" class="active">Introduction</a></li>
+                <li><a href="#" data-hook="useState">useState</a></li>
+                <li><a href="#" data-hook="useEffect">useEffect</a></li>
+                <li><a href="#" data-hook="useContext">useContext</a></li>
+                <li><a href="#" data-hook="useRef">useRef</a></li>
+                <li><a href="#" data-hook="useReducer">useReducer</a></li>
+                <li><a href="#" data-hook="useCallback">useCallback</a></li>
+                <li><a href="#" data-hook="useMemo">useMemo</a></li>
+                <li><a href="#" data-hook="customHooks">Custom Hooks</a></li>
+            </ul>
+        </nav>
+
+        <main id="main-content">
+            <!-- Content will be loaded here by JavaScript -->
+        </main>
+    </div>
+
+    <footer>
+        &copy; 2023 React Hooks Learning
+    </footer>
+
+    <script type="module">
+        import loader from 'https://esm.sh/@monaco-editor/loader';
+
+        loader.config({
+            paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs' }
+        });
+
+        let editorInstance = null;
+        const mainContent = document.getElementById('main-content');
+        const outputArea = document.createElement('div');
+        outputArea.className = 'output';
+        outputArea.innerHTML = '<h4>Output:</h4><p>Run code to see output.</p>';
+
+        const hookContent = {
+            intro: {
+                title: "Introduction to React Hooks",
+                explanation: `
+                    <p>Hooks are functions that let you “hook into” React state and lifecycle features from function components. They were introduced in React 16.8.</p>
+                    <p>Hooks allow you to use state and other React features without writing a class. This simplifies component logic and makes it easier to share stateful logic between components.</p>
+                    <p>Key benefits include:</p>
+                    <ul>
+                        <li>Reusing stateful logic without changing your component hierarchy.</li>
+                        <li>Writing components with less boilerplate code.</li>
+                        <li>Making complex components easier to understand.</li>
+                    </ul>
+                    <p>Let's explore some of the most common built-in hooks.</p>
+                `,
+                code: `// No code example for introduction yet.
+// Select a hook from the left navigation to see an example.
+console.log("Select a hook to get started!");`
+            },
+            useState: {
+                title: "The useState Hook",
+                explanation: `
+                    <p><code>useState</code> is a Hook that lets you add React state to function components.</p>
+                    <p>It returns a stateful value, and a function to update it.</p>
+                    <p>The syntax is <code>const [state, setState] = useState(initialState);</code></p>
+                    <ul>
+                        <li><code>state</code>: The current state value.</li>
+                        <li><code>setState</code>: A function to update the state. Calling this function will trigger a re-render.</li>
+                        <li><code>initialState</code>: The initial value of the state. This can be a primitive value or an object.</li>
+                    </ul>
+                    <p>You can call <code>useState</code> multiple times in a single component to declare multiple state variables.</p>
+                `,
+                code: `import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
+
+function Counter() {
+  // Declare a state variable 'count' with initial value 0
+  const [count, setCount] = useState(0);
+
+  return (
+    <div>
+      <p>You clicked {count} times</p>
+      <button onClick={() => setCount(count + 1)}>
+        Click me
+      </button>
+    </div>
+  );
+}
+
+// This part is for demonstration purposes in a simple environment.
+// In a real React app, you'd use ReactDOM.render or createRoot.
+// For this example, we'll log the component structure or simulate output.
+console.log("React Component 'Counter' defined. Click the button to increment.");
+// To run this in a browser, you'd need a full React setup.
+// Simulating output:
+// Initial: "You clicked 0 times"
+// After 1 click: "You clicked 1 times"
+// After 2 clicks: "You clicked 2 times"
+`
+            },
+            useEffect: {
+                title: "The useEffect Hook",
+                explanation: `
+                    <p><code>useEffect</code> is a Hook that lets you perform side effects in function components.</p>
+                    <p>Side effects include data fetching, subscriptions, manually changing the DOM, and other operations that don't directly affect the render output.</p>
+                    <p><code>useEffect</code> accepts a function that will be executed after the component renders.</p>
+                    <p>By default, it runs after every render (initial render and updates). You can control when it runs using the dependency array.</p>
+                    <ul>
+                        <li><code>useEffect(() => { /* effect */ });</code>: Runs after every render.</li>
+                        <li><code>useEffect(() => { /* effect */ }, []);</code>: Runs only once after the initial render (like <code>componentDidMount</code>).</li>
+                        <li><code>useEffect(() => { /* effect */ }, [prop1, state2]);</code>: Runs after the initial render and whenever <code>prop1</code> or <code>state2</code> changes.</li>
+                    </ul>
+                    <p>The function passed to <code>useEffect</code> can optionally return a cleanup function, which runs before the component is removed or before the effect re-runs.</p>
+                `,
+                code: `import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
+
+function Timer() {
+  const [seconds, setSeconds] = useState(0);
+
+  useEffect(() => {
+    // This effect runs every second
+    const intervalId = setInterval(() => {
+      setSeconds(prevSeconds => prevSeconds + 1);
+    }, 1000);
+
+    // Cleanup function: clear the interval when the component unmounts
+    // or before the effect re-runs (if dependencies change)
+    return () => clearInterval(intervalId);
+
+  }, []); // Empty dependency array means this effect runs only once on mount
+
+  return (
+    <div>
+      <p>Timer: {seconds} seconds</p>
+    </div>
+  );
+}
+
+// Simulating output for demonstration:
+// After 1 second: "Timer: 1 seconds"
+// After 2 seconds: "Timer: 2 seconds"
+// ... and so on, until component unmounts.
+console.log("React Component 'Timer' defined. It should show a ticking timer.");
+`
+            },
+            useContext: {
+                title: "The useContext Hook",
+                explanation: `
+                    <p><code>useContext</code> is a Hook that lets you read the context and subscribe to changes to that context.</p>
+                    <p>It takes a context object (the value returned from <code>React.createContext</code>) and returns the current context value for that context.</p>
+                    <p>This allows you to access context values without nesting components within a <code>Context.Consumer</code>.</p>
+                    <p><code>const value = useContext(MyContext);</code></p>
+                    <ul>
+                        <li><code>MyContext</code>: The context object created by <code>React.createContext()</code>.</li>
+                        <li><code>value</code>: The current value of the context.</li>
+                    </ul>
+                    <p><code>useContext(MyContext)</code> only lets you <em>read</em> the context value. To update the context, you typically use <code>useState</code> or <code>useReducer</code> in the component providing the context.</p>
+                `,
+                code: `import React, { useContext, createContext, useState } from 'react';
+import ReactDOM from 'react-dom';
+
+// 1. Create a Context
+const ThemeContext = createContext('light');
+
+// 2. Provider component
+function ThemeProvider({ children }) {
+  const [theme, setTheme] = useState('light');
+
+  const toggleTheme = () => {
+    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
+  };
+
+  return (
+    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+}
+
+// 3. Consumer component using useContext
+function ThemedButton() {
+  const { theme, toggleTheme } = useContext(ThemeContext);
+
+  return (
+    <button
+      onClick={toggleTheme}
+      style={{
+        background: theme === 'light' ? '#eee' : '#333',
+        color: theme === 'light' ? '#333' : '#eee',
+        border: '1px solid ' + (theme === 'light' ? '#ccc' : '#666'),
+        padding: '10px',
+        borderRadius: '5px',
+        cursor: 'pointer'
+      }}
+    >
+      Current Theme: {theme}
+    </button>
+  );
+}
+
+// App component using the Provider and Consumer
+function App() {
+  return (
+    <ThemeProvider>
+      <div>
+        <p>Click the button to change theme:</p>
+        <ThemedButton />
+      </div>
+    </ThemeProvider>
+  );
+}
+
+// Simulating output:
+// Initial: A button with text "Current Theme: light" and light styles.
+// After click: A button with text "Current Theme: dark" and dark styles.
+console.log("React Components for Theme Context defined. Click the button to toggle theme.");
+`
+            },
+             useRef: {
+                title: "The useRef Hook",
+                explanation: `
+                    <p><code>useRef</code> is a Hook that lets you persist mutable values between renders without causing re-renders when the value changes.</p>
+                    <p>It returns a mutable ref object whose <code>.current</code> property is initialized to the passed argument (<code>initialValue</code>).</p>
+                    <p><code>const refContainer = useRef(initialValue);</code></p>
+                    <ul>
+                        <li><code>initialValue</code>: The initial value for the <code>.current</code> property.</li>
+                        <li><code>refContainer</code>: An object with a single property <code>.current</code>.</li>
+                    </ul>
+                    <p>Unlike state, updating a ref's <code>.current</code> value does not trigger a re-render. This makes it useful for storing values that need to persist across renders but don't affect the visual output, such as DOM nodes, timer IDs, or previous values of state/props.</p>
+                `,
+                code: `import React, { useRef, useEffect } from 'react';
+import ReactDOM from 'react-dom';
+
+function TextInputWithFocusButton() {
+  // Create a ref
+  const inputEl = useRef(null);
+
+  const onButtonClick = () => {
+    // 'current' points to the mounted text input element
+    inputEl.current.focus();
+  };
+
+  return (
+    <>
+      <input ref={inputEl} type="text" placeholder="Focus me!" />
+      <button onClick={onButtonClick}>Focus the input</button>
+    </>
+  );
+}
+
+// Simulating output:
+// Renders an input field and a button.
+// Clicking the button will programmatically focus the input field.
+console.log("React Component 'TextInputWithFocusButton' defined. Click button to focus input.");
+`
+            },
+            useReducer: {
+                title: "The useReducer Hook",
+                explanation: `
+                    <p><code>useReducer</code> is a Hook that is an alternative to <code>useState</code> for managing more complex state logic, especially when state transitions involve multiple sub-values or when the next state depends on the previous one.</p>
+                    <p>It's often preferred over <code>useState</code> when you have complex state logic that involves multiple sub-values or when the next state depends on the previous one.</p>
+                    <p><code>const [state, dispatch] = useReducer(reducer, initialArg, init);</code></p>
+                    <ul>
+                        <li><code>reducer</code>: A function that takes the current state and an action, and returns the new state. <code>(state, action) => newState</code></li>
+                        <li><code>initialArg</code>: The initial state value.</li>
+                        <li><code>init</code> (optional): A function to lazily create the initial state.</li>
+                        <li><code>state</code>: The current state value.</li>
+                        <li><code>dispatch</code>: A function to dispatch actions to the reducer.</li>
+                    </ul>
+                    <p><code>useReducer</code> is similar to the state management pattern used in Redux, but for local component state.</p>
+                `,
+                code: `import React, { useReducer } from 'react';
+import ReactDOM from 'react-dom';
+
+// Reducer function
+function counterReducer(state, action) {
+  switch (action.type) {
+    case 'increment':
+      return { count: state.count + 1 };
+    case 'decrement':
+      return { count: state.count - 1 };
+    case 'reset':
+      return { count: action.payload }; // payload could be the new initial value
+    default:
+      return state;
+  }
+}
+
+// Component using useReducer
+function CounterWithReducer({ initialCount }) {
+  // Initialize state with useReducer
+  const [state, dispatch] = useReducer(counterReducer, { count: initialCount });
+
+  return (
+    <>
+      Count: {state.count}
+      <button onClick={() => dispatch({ type: 'increment' })}>+</button>
+      <button onClick={() => dispatch({ type: 'decrement' })}>-</button>
+      <button onClick={() => dispatch({ type: 'reset', payload: initialCount })}>
+        Reset
+      </button>
+    </>
+  );
+}
+
+// Simulating output:
+// Renders count with buttons.
+// Buttons dispatch actions to the reducer to update the count.
+console.log("React Component 'CounterWithReducer' defined. Buttons dispatch actions.");
+`
+            },
+             useCallback: {
+                title: "The useCallback Hook",
+                explanation: `
+                    <p><code>useCallback</code> is a Hook that returns a memoized callback function.</p>
+                    <p><code>const memoizedCallback = useCallback(() => { /* function */ }, [dependencies]);</code></p>
+                    <p>It's useful when passing callbacks to optimized child components that rely on reference equality to prevent unnecessary renders (e.g., using <code>React.memo</code>).</p>
+                    <p><code>useCallback</code> will only return a new memoized callback when one of the dependencies has changed.</p>
+                    <p>Without <code>useCallback</code>, a new function is created on every render, even if the function's logic hasn't changed, causing child components that receive the function as a prop to re-render unnecessarily.</p>
+                    <p>Use it when:</p>
+                    <ul>
+                        <li>Passing callbacks to optimized child components (<code>React.memo</code>).</li>
+                        <li>The callback is part of a dependency array for another Hook (like <code>useEffect</code> or <code>useMemo</code>).</li>
+                    </ul>
+                `,
+                code: `import React, { useState, useCallback, memo } from 'react';
+import ReactDOM from 'react-dom';
+
+// A child component that only re-renders if its props change (shallow comparison)
+const Button = memo(({ onClick, children }) => {
+  console.log('Button rendered:', children);
+  return <button onClick={onClick}>{children}</button>;
+});
+
+function ParentComponent() {
+  const [count, setCount] = useState(0);
+  const [otherState, setOtherState] = useState(0);
+
+  // Memoized callback. Only changes if 'count' changes.
+  const handleIncrement = useCallback(() => {
+    setCount(prevCount => prevCount + 1);
+  }, [count]); // Dependency array: re-create callback if count changes
+
+  // This callback changes every render because it has no dependencies
+  // or if 'otherState' was in the dependency array and it changes.
+  const handleOtherClick = () => {
+    setOtherState(prev => prev + 1);
+  };
+
+
+  console.log('ParentComponent rendered');
+
+  return (
+    <>
+      <p>Count: {count}</p>
+      <p>Other State: {otherState}</p>
+      {/* Pass the memoized callback */}
+      <Button onClick={handleIncrement}>Increment Count</Button>
+      {/* Pass a non-memoized callback */}
+      <Button onClick={handleOtherClick}>Increment Other State</Button>
+    </>
+  );
+}
+
+// Simulating output:
+// Observe console logs.
+// Clicking "Increment Count" will re-render ParentComponent AND the "Increment Count" Button (because handleIncrement's dependency 'count' changes).
+// Clicking "Increment Other State" will re-render ParentComponent AND the "Increment Other State" Button (because handleOtherClick is recreated).
+// If handleIncrement's dependency array was empty [], it would only be created once on mount.
+console.log("React Components defined. Check console logs when clicking buttons.");
+`
+            },
+            useMemo: {
+                title: "The useMemo Hook",
+                explanation: `
+                    <p><code>useMemo</code> is a Hook that returns a memoized value.</p>
+                    <p><code>const memoizedValue = useMemo(() => computeExpensiveValue(a, b), [a, b]);</code></p>
+                    <p>It computes a value only when one of its dependencies changes, avoiding expensive calculations on every render.</p>
+                    <p><code>useMemo</code> accepts a function that computes the value and a dependency array.</p>
+                    <p>Use it when:</p>
+                    <ul>
+                        <li>You have an expensive calculation that shouldn't re-run on every render.</li>
+                        <li>You need to memoize an object or array reference to prevent unnecessary re-renders of child components that receive it as a prop.</li>
+                    </ul>
+                    <p>Note: <code>useMemo</code> is an optimization. Don't use it everywhere. Only use it for expensive computations or when you need reference stability for child component optimization.</p>
+                `,
+                code: `import React, { useState, useMemo } from 'react';
+import ReactDOM from 'react-dom';
+
+// Simulate an expensive calculation
+function computeExpensiveValue(num) {
+  console.log('Computing expensive value...');
+  let result = 0;
+  for (let i = 0; i < 100000000; i++) {
+    result += num;
+  }
+  return result;
+}
+
+function MemoExample() {
+  const [count, setCount] = useState(0);
+  const [text, setText] = useState('');
+
+  // This calculation is memoized.
+  // It only runs when 'count' changes.
+  const expensiveValue = useMemo(() => computeExpensiveValue(count), [count]);
+
+  return (
+    <>
+      <div>
+        <p>Count: {count}</p>
+        <button onClick={() => setCount(count + 1)}>Increment Count</button>
+      </div>
+      <div>
+        <p>Text: {text}</p>
+        <input
+          type="text"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Type here"
+        />
+      </div>
+      <p>Expensive Value (computed based on Count): {expensiveValue}</p>
+    </>
+  );
+}
+
+// Simulating output:
+// Observe console logs.
+// Typing in the text input changes 'text' state, causing a re-render, but 'computeExpensiveValue' is NOT called because 'count' hasn't changed.
+// Clicking "Increment Count" changes 'count' state, causing a re-render, AND 'computeExpensiveValue' IS called.
+console.log("React Component 'MemoExample' defined. Type in input and click button, observe console logs.");
+`
+            },
+            customHooks: {
+                title: "Building Custom Hooks",
+                explanation: `
+                    <p>Custom Hooks are JavaScript functions whose names start with "<code>use</code>" and that may call other Hooks.</p>
+                    <p>They allow you to extract stateful logic from a component so it can be reused in other components.</p>
+                    <p>This is a powerful pattern for sharing logic like fetching data, handling form input, managing local storage, etc.</p>
+                    <p>A custom Hook doesn't have to return anything specific; it can return state, functions, or anything else you need.</p>
+                    <p>Example: A custom hook to track window size.</p>
+                `,
+                code: `import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
+
+// Custom Hook to track window size
+function useWindowSize() {
+  const [windowSize, setWindowSize] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  });
+
+  useEffect(() => {
+    function handleResize() {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    }
+
+    window.addEventListener('resize', handleResize);
+
+    // Cleanup: remove the event listener
+    return () => window.removeEventListener('resize', handleResize);
+  }, []); // Empty dependency array means this effect runs only once on mount
+
+  return windowSize;
+}
+
+// Component using the custom hook
+function WindowSizeDisplay() {
+  const size = useWindowSize();
+
+  return (
+    <div>
+      <p>Window Width: {size.width}px</p>
+      <p>Window Height: {size.height}px</p>
+    </div>
+  );
+}
+
+// Simulating output:
+// Displays the current width and height of the browser window.
+// Resizing the window will update the displayed values.
+console.log("React Component 'WindowSizeDisplay' using custom hook 'useWindowSize' defined. Try resizing your browser window.");
+`
+            },
+            // Add content for other hooks here following the same structure
+        };
+
+        let currentHook = 'intro';
+        let editorModel = null;
+
+        async function loadMonacoEditor(code) {
+             if (!editorInstance) {
+                const monaco = await loader.init();
+                editorInstance = monaco.editor.create(document.getElementById('editor'), {
+                    value: code,
+                    language: 'javascript', // Use javascript, as React code needs transpilation
+                    theme: 'vs-dark',
+                    minimap: { enabled: false },
+                    automaticLayout: true,
+                    scrollBeyondLastLine: false,
+                    fontSize: 14,
+                    lineHeight: 24,
+                    fontFamily: 'Fira Code, Consolas, Menlo, monospace',
+                    readOnly: false // Allow editing
+                });
+
+                // Store the model to update value later
+                editorModel = editorInstance.getModel();
+
+                // Add event listeners for buttons
+                document.getElementById('run-button').addEventListener('click', runCode);
+                document.getElementById('reset-button').addEventListener('click', resetCode);
+
+             } else {
+                // Update editor content if instance already exists
+                editorModel.setValue(code);
+                editorInstance.setScrollPosition({ scrollTop: 0, scrollLeft: 0 }); // Reset scroll
+             }
+        }
+
+        function runCode() {
+            const code = editorInstance.getValue();
+            console.log("Attempting to run code...");
+            outputArea.innerHTML = '<h4>Output:</h4>'; // Clear previous output
+            outputArea.style.color = "var('--text-light')"; // Default color
+
+            try {
+                // WARNING: Using eval is generally unsafe in production with untrusted code.
+                // For this specific educational context within a controlled environment,
+                // we simulate execution. A real React runner would require Babel
+                // and ReactDOM, which is complex in a single HTML file artifact.
+
+                // Redirect console logs to the output area
+                const originalConsoleLog = console.log;
+                console.log = (...args) => {
+                    const message = args.map(arg => {
+                        if (typeof arg === 'object' && arg !== null) {
+                            try {
+                                return JSON.stringify(arg, null, 2);
+                            } catch (e) {
+                                return String(arg); // Fallback for circular references etc.
+                            }
+                        }
+                        return String(arg);
+                    }).join(' ');
+                    outputArea.innerHTML += `<p>${message}</p>`;
+                    originalConsoleLog(...args); // Log to browser console as well
+                };
+
+                // Simulate execution - this will only run standard JS and console logs
+                // It will NOT render React components correctly without a proper setup.
+                eval(code); // Execute the code
+
+                // Restore original console.log
+                console.log = originalConsoleLog;
+
+            } catch (error) {
+                console.error("Code execution error:", error);
+                outputArea.style.color = "var('--error-red')";
+                outputArea.innerHTML += `<p style="color: var('--error-red');">Error: ${error.message}</p>`;
+
+                 // Ensure console.log is restored even on error
+                 if (console.log !== originalConsoleLog) {
+                     console.log = originalConsoleLog;
+                 }
+            }
+        }
+
+        function resetCode() {
+            if (editorInstance && hookContent[currentHook]) {
+                editorModel.setValue(hookContent[currentHook].code);
+                outputArea.innerHTML = '<h4>Output:</h4><p>Run code to see output.</p>';
+                outputArea.style.color = "var('--text-light')";
+            }
+        }
+
+        function renderContent(hookKey) {
+            const content = hookContent[hookKey];
+            if (!content) {
+                mainContent.innerHTML = `<div class="content-section explanation"><h2>Content Not Found</h2><p>The requested content for "${hookKey}" could not be loaded.</p></div>`;
+                if (editorInstance) {
+                     editorModel.setValue('// No example code available.');
+                     editorInstance.setScrollPosition({ scrollTop: 0, scrollLeft: 0 });
+                }
+                outputArea.innerHTML = '<h4>Output:</h4><p>No code example to run.</p>';
+                outputArea.style.color = "var('--text-light')";
+                document.querySelector('.code-controls').style.display = 'none';
+
+                return;
+            }
+
+            currentHook = hookKey;
+
+            mainContent.innerHTML = `
+                <div class="content-section explanation">
+                    <h2>${content.title}</h2>
+                    ${content.explanation}
+                </div>
+                <div class="content-section code-example">
+                    <h3>Interactive Example</h3>
+                    <div id="editor"></div>
+                    <div class="code-controls">
+                        <button id="run-button"><span class="material-symbols-rounded">play_arrow</span> Run Code</button>
+                        <button id="reset-button"><span class="material-symbols-rounded">refresh</span> Reset Example</button>
+                    </div>
+                </div>
+            `;
+
+            // Append output area after code-example section
+            mainContent.appendChild(outputArea);
+            outputArea.innerHTML = '<h4>Output:</h4><p>Run code to see output.</p>'; // Reset output content
+            outputArea.style.color = "var('--text-light')";
+            document.querySelector('.code-controls').style.display = 'flex'; // Ensure controls are visible
+
+            // Load or update Monaco Editor
+            loadMonacoEditor(content.code);
+        }
+
+        // Handle navigation clicks
+        document.querySelectorAll('nav a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const hookKey = e.target.dataset.hook;
+
+                // Update active class
+                document.querySelectorAll('nav a').forEach(navLink => navLink.classList.remove('active'));
+                e.target.classList.add('active');
+
+                // Render content
+                renderContent(hookKey);
+            });
+        });
+
+        // Initial load: Render the introduction content
+        renderContent('intro');
+
+    </script>
+</body>
+</html>

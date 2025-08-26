@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Continuous Integration Workflow Setup</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --radius: 8px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --transition: all 0.2s ease-in-out;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.5;
+            color: var(--gray-800);
+            background-color: var(--gray-100);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background-color: #fff;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+        }
+
+        .wizard-header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1.5rem 2rem;
+            position: relative;
+        }
+
+        .wizard-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .wizard-subtitle {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        .progress-container {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            max-width: 700px;
+        }
+
+        .progress-container::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            height: 2px;
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.3);
+            z-index: 1;
+        }
+
+        .progress-bar {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            height: 2px;
+            background-color: white;
+            z-index: 2;
+            transition: width 0.3s ease;
+        }
+
+        .step {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: white;
+            position: relative;
+            z-index: 3;
+            transition: var(--transition);
+        }
+
+        .step.active {
+            background-color: white;
+            color: var(--primary);
+        }
+
+        .step.completed {
+            background-color: white;
+            color: var(--primary);
+        }
+
+        .step-label {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: white;
+            white-space: nowrap;
+        }
+
+        .wizard-content {
+            padding: 2rem;
+        }
+
+        .step-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .step-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .step-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--gray-800);
+        }
+
+        .step-description {
+            color: var(--gray-600);
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .form-help {
+            margin-top: 0.25rem;
+            font-size: 0.875rem;
+            color: var(--gray-500);
+        }
+
+        .form-error {
+            margin-top: 0.25rem;
+            font-size: 0.875rem;
+            color: var(--danger);
+            display: none;
+        }
+
+        .form-control {
+            display: block;
+            width: 100%;
+            padding: 0.625rem 0.75rem;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            color: var(--gray-700);
+            background-color: #fff;
+            background-clip: padding-box;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius);
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-light);
+            outline: 0;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+
+        .form-control.error {
+            border-color: var(--danger);
+        }
+
+        .form-control.error:focus {
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25);
+        }
+
+        .form-select {
+            display: block;
+            width: 100%;
+            padding: 0.625rem 0.75rem;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            color: var(--gray-700);
+            background-color: #fff;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.75rem center;
+            background-repeat: no-repeat;
+            background-size: 1rem;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius);
+            appearance: none;
+            transition: var(--transition);
+        }
+
+        .form-select:focus {
+            border-color: var(--primary-light);
+            outline: 0;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+
+        .form-check {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+
+        .form-check-input {
+            width: 1rem;
+            height: 1rem;
+            margin-top: 0.25rem;
+            margin-right: 0.5rem;
+            border: 1px solid var(--gray-400);
+            border-radius: 0.25rem;
+            transition: var(--transition);
+        }
+
+        .form-check-label {
+            font-size: 0.875rem;
+            color: var(--gray-700);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .help-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background-color: var(--gray-200);
+            color: var(--gray-600);
+            font-size: 0.75rem;
+            margin-left: 0.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .help-icon:hover {
+            background-color: var(--gray-300);
+            color: var(--gray-700);
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--gray-800);
+            color: white;
+            text-align: left;
+            border-radius: var(--radius);
+            padding: 0.75rem;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.75rem;
+            line-height: 1.4;
+            box-shadow: var(--shadow-md);
+        }
+
+        .tooltip .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--gray-800) transparent transparent transparent;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .wizard-footer {
+            display: flex;
+            justify-content: space-between;
+            padding: 1.5rem 2rem;
+            background-color: var(--gray-50);
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.625rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            line-height: 1.5;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: middle;
+            cursor: pointer;
+            user-select: none;
+            border: 1px solid transparent;
+            border-radius: var(--radius);
+            transition: var(--transition);
+        }
+
+        .btn-primary {
+            color: #fff;
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+
+        .btn-outline {
+            color: var(--gray-600);
+            background-color: transparent;
+            border-color: var(--gray-300);
+        }
+
+        .btn-outline:hover {
+            color: var(--gray-700);
+            background-color: var(--gray-100);
+            border-color: var(--gray-400);
+        }
+
+        .btn-success {
+            color: #fff;
+            background-color: var(--success);
+            border-color: var(--success);
+        }
+
+        .btn-success:hover {
+            background-color: #0d9668;
+            border-color: #0d9668;
+        }
+
+        .btn:disabled {
+            opacity: 0.65;
+            pointer-events: none;
+        }
+
+        .btn-icon {
+            margin-right: 0.5rem;
+        }
+
+        .summary-section {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .summary-section:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .summary-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--gray-800);
+        }
+
+        .summary-item {
+            display: flex;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .summary-label {
+            width: 40%;
+            font-weight: 500;
+            color: var(--gray-600);
+        }
+
+        .summary-value {
+            width: 60%;
+            color: var(--gray-800);
+        }
+
+        .success-message {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .success-icon {
+            width: 60px;
+            height: 60px;
+            background-color: var(--success);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            color: white;
+            font-size: 1.75rem;
+        }
+
+        .success-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--gray-800);
+        }
+
+        .success-description {
+            color: var(--gray-600);
+            margin-bottom: 1.5rem;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .expandable-section {
+            margin-top: 1rem;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .expandable-header {
+            padding: 0.75rem 1rem;
+            background-color: var(--gray-50);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .expandable-header:hover {
+            background-color: var(--gray-100);
+        }
+
+        .expandable-title {
+            font-weight: 500;
+            color: var(--gray-700);
+            font-size: 0.875rem;
+        }
+
+        .expandable-icon {
+            transition: transform 0.2s ease;
+        }
+
+        .expandable-content {
+            padding: 1rem;
+            display: none;
+            border-top: 1px solid var(--gray-200);
+            font-size: 0.875rem;
+            color: var(--gray-600);
+        }
+
+        .expandable-section.expanded .expandable-icon {
+            transform: rotate(180deg);
+        }
+
+        .expandable-section.expanded .expandable-content {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .wizard-header {
+                padding: 1.25rem;
+            }
+
+            .progress-container {
+                margin-top: 1.25rem;
+            }
+
+            .wizard-content {
+                padding: 1.25rem;
+            }
+
+            .wizard-footer {
+                padding: 1.25rem;
+            }
+
+            .summary-label {
+                width: 100%;
+                margin-bottom: 0.25rem;
+            }
+
+            .summary-value {
+                width: 100%;
+            }
+
+            .summary-item {
+                flex-direction: column;
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="wizard-header">
+            <h1 class="wizard-title">Continuous Integration Workflow Setup</h1>
+            <p class="wizard-subtitle">Configure your CI workflow in a few simple steps</p>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar"></div>
+                
+                <div class="step active" data-step="1">
+                    1
+                    <span class="step-label">Repository</span>
+                </div>
+                
+                <div class="step" data-step="2">
+                    2
+                    <span class="step-label">Build</span>
+                </div>
+                
+                <div class="step" data-step="3">
+                    3
+                    <span class="step-label">Test</span>
+                </div>
+                
+                <div class="step" data-step="4">
+                    4
+                    <span class="step-label">Deploy</span>
+                </div>
+                
+                <div class="step" data-step="5">
+                    5
+                    <span class="step-label">Notify</span>
+                </div>
+                
+                <div class="step" data-step="6">
+                    6
+                    <span class="step-label">Summary</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="wizard-content">
+            <!-- Step 1: Repository -->
+            <div class="step-content active" data-step="1">
+                <h2 class="step-title">Repository Configuration</h2>
+                <p class="step-description">Select the repository you want to set up CI for and configure basic settings.</p>
+                
+                <div class="form-group">
+                    <label class="form-label" for="repository-type">Repository Provider</label>
+                    <select class="form-select" id="repository-type">
+                        <option value="github">GitHub</option>
+                        <option value="gitlab">GitLab</option>
+                        <option value="bitbucket">Bitbucket</option>
+                        <option value="azure">Azure DevOps</option>
+                    </select>
+                    <div class="form-help">Select where your code is hosted</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="repository-url">Repository URL</label>
+                    <div class="tooltip">
+                        <span class="help-icon">?</span>
+                        <span class="tooltip-text">Enter the full URL of your repository, e.g., https://github.com/username/repo</span>
+                    </div>
+                    <input type="text" class="form-control" id="repository-url" placeholder="https://github.com/username/repository">
+                    <div class="form-error" id="repository-url-error">Please enter a valid repository URL</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="branch">Default Branch</label>
+                    <input type="text" class="form-control" id="branch" value="main">
+                    <div class="form-help">Branch to run CI on by default</div>
+                </div>
+                
+                <div class="form-group">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="pr-builds" checked>
+                        <label class="form-check-label" for="pr-builds">
+                            Run CI on pull requests
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="skip-ci" checked>
+                        <label class="form-check-label" for="skip-ci">
+                            Allow skipping CI with [skip ci] in commit message
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="expandable-section">
+                    <div class="expandable-header">
+                        <span class="expandable-title">Advanced Repository Settings</span>
+                        <span class="expandable-icon">▼</span>
+                    </div>
+                    <div class="expandable-content">
+                        <div class="form-group">
+                            <label class="form-label" for="access-token">Access Token (Optional)</label>
+                            <input type="password" class="form-control" id="access-token" placeholder="ghp_xxxxxxxxxxxx">
+                            <div class="form-help">For private repositories or additional permissions</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="checkout-depth">Git Checkout Depth</label>
+                            <input type="number" class="form-control" id="checkout-depth" value="1" min="1">
+                            <div class="form-help">Number of commits to fetch (1 = shallow clone)</div>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="fetch-tags">
+                            <label class="form-check-label" for="fetch-tags">
+                                Fetch Git tags
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 2: Build -->
+            <div class="step-content" data-step="2">
+                <h2 class="step-title">Build Configuration</h2>
+                <p class="step-description">Configure how your project should be built.</p>
+                
+                <div class="form-group">
+                    <label class="form-label" for="build-environment">Build Environment</label>
+                    <select class="form-select" id="build-environment">
+                        <option value="ubuntu-latest">Ubuntu Latest</option>
+                        <option value="ubuntu-20.04">Ubuntu 20.04</option>
+                        <option value="windows-latest">Windows Latest</option>
+                        <option value="macos-latest">macOS Latest</option>
+                    </select>
+                    <div class="form-help">Operating system to run the build on</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="language">Primary Language</label>
+                    <select class="form-select" id="language">
+                        <option value="javascript">JavaScript/Node.js</option>
+                        <option value="python">Python</option>
+                        <option value="java">Java</option>
+                        <option value="ruby">Ruby</option>
+                        <option value="php">PHP</option>
+                        <option value="dotnet">C#/.NET</option>
+                        <option value="go">Go</option>
+                        <option value="rust">Rust</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="language-version">Language Version</label>
+                    <input type="text" class="form-control" id="language-version" placeholder="e.g., 16.x, 3.9, 11">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="build-command">Build Command</label>
+                    <div class="tooltip">
+                        <span class="help-icon">?</span>
+                        <span class="tooltip-text">Command to build your project. For Node.js this might be 'npm run build', for Java 'mvn package', etc.</span>
+                    </div>
+                    <input type="text" class="form-control" id="build-command" placeholder="e.g., npm run build">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="build-script">Custom Build Script (Optional)</label>
+                    <textarea class="form-control form-textarea" id="build-script" placeholder="#!/bin/bash
+# Your custom build commands here
+echo 'Starting build...'"></textarea>
+                    <div class="form-help">Custom script to run for more complex build processes</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Dependencies Installation</label>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="cache-dependencies" checked>
+                        <label class="form-check-label" for="cache-dependencies">
+                            Cache dependencies to speed up builds
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="expandable-section">
+                    <div class="expandable-header">
+                        <span class="expandable-title">Environment Variables</span>
+                        <span class="expandable-icon">▼</span>
+                    </div>
+                    <div class="expandable-content">
+                        <div class="form-group">
+                            <label class="form-label" for="env-vars">Environment Variables (one per line)</label>
+                            <textarea class="form-control form-textarea" id="env-vars" placeholder="NODE_ENV=production
+DEBUG=false"></textarea>
+                            <div class="form-help">Define environment variables for your build</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 3: Test -->
+            <div class="step-content" data-step="3">
+                <h2 class="step-title">Test Configuration</h2>
+                <p class="step-description">Configure how your tests should run.</p>
+                
+                <div class="form-group">
+                    <label class="form-label" for="test-command">Test Command</label>
+                    <input type="text" class="form-control" id="test-command" placeholder="e.g., npm test">
+                    <div class="form-help">Command to run your tests</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Test Types</label>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="unit-tests" checked>
+                        <label class="form-check-label" for="unit-tests">
+                            Unit Tests
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="integration-tests" checked>
+                        <label class="form-check-label" for="integration-tests">
+                            Integration Tests
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="e2e-tests">
+                        <label class="form-check-label" for="e2e-tests">
+                            End-to-End Tests
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="test-report-format">Test Report Format</label>
+                    <select class="form-select" id="test-report-format">
+                        <option value="junit">JUnit XML</option>
+                        <option value="tap">TAP</option>
+                        <option value="json">JSON</option>
+                        <option value="none">None</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="code-coverage">Code Coverage</label>
+                    <select class="form-select" id="code-coverage">
+                        <option value="none">None</option>
+                        <option value="codecov">Codecov</option>
+                        <option value="coveralls">Coveralls</option>
+                        <option value="custom">Custom</option>
+                    </select>
+                </div>
+                
+                <div class="expandable-section">
+                    <div class="expandable-header">
+                        <span class="expandable-title">Advanced Test Settings</span>
+                        <span class="expandable-icon">▼</span>
+                    </div>
+                    <div class="expandable-content">
+                        <div class="form-group">
+                            <label class="form-label" for="test-timeout">Test Timeout (minutes)</label>
+                            <input type="number" class="form-control" id="test-timeout" value="10" min="1">
+                            <div class="form-help">Maximum time allowed for tests to complete</div>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="fail-fast">
+                            <label class="form-check-label" for="fail-fast">
+                                Fail fast (stop on first test failure)
+                            </label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="parallel-tests">
+                            <label class="form-check-label" for="parallel-tests">
+                                Run tests in parallel
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 4: Deploy -->
+            <div class="step-content" data-step="4">
+                <h2 class="step-title">Deployment Configuration</h2>
+                <p class="step-description">Configure where and how your application should be deployed.</p>
+                
+                <div class="form-group">
+                    <label class="form-label">Enable Deployment</label>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="enable-deployment">
+                        <label class="form-check-label" for="enable-deployment">
+                            Deploy after successful build and tests
+                        </label>
+                    </div>
+                </div>
+                
+                <div id="deployment-options" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label" for="deployment-target">Deployment Target</label>
+                        <select class="form-select" id="deployment-target">
+                            <option value="none">Select a deployment target</option>
+                            <option value="aws">AWS</option>
+                            <option value="azure">Azure</option>
+                            <option value="gcp">Google Cloud</option>
+                            <option value="heroku">Heroku</option>
+                            <option value="netlify">Netlify</option>
+                            <option value="vercel">Vercel</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="deployment-environment">Deployment Environment</label>
+                        <select class="form-select" id="deployment-environment">
+                            <option value="production">Production</option>
+                            <option value="staging">Staging</option>
+                            <option value="development">Development</option>
+                            <option value="testing">Testing</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="deployment-command">Deployment Command</label>
+                        <input type="text" class="form-control" id="deployment-command" placeholder="e.g., aws s3 sync ./build s3://my-bucket">
+                    </div>
+                    
+                    <div class="expandable-section">
+                        <div class="expandable-header">
+                            <span class="expandable-title">Deployment Credentials</span>
+                            <span class="expandable-icon">▼</span>
+                        </div>
+                        <div class="expandable-content">
+                            <div class="form-group">
+                                <label class="form-label" for="deployment-username">Username/Access Key ID</label>
+                                <input type="text" class="form-control" id="deployment-username">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="deployment-password">Password/Secret Key</label>
+                                <input type="password" class="form-control" id="deployment-password">
+                                <div class="form-help">Credentials will be stored securely as encrypted secrets</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="auto-rollback" checked>
+                            <label class="form-check-label" for="auto-rollback">
+                                Automatically rollback on deployment failure
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 5: Notify -->
+            <div class="step-content" data-step="5">
+                <h2 class="step-title">Notification Settings</h2>
+                <p class="step-description">Configure how you want to be notified about build and deployment status.</p>
+                
+                <div class="form-group">
+                    <label class="form-label">Notification Methods</label>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="email-notification" checked>
+                        <label class="form-check-label" for="email-notification">
+                            Email Notifications
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="slack-notification">
+                        <label class="form-check-label" for="slack-notification">
+                            Slack Notifications
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="teams-notification">
+                        <label class="form-check-label" for="teams-notification">
+                            Microsoft Teams Notifications
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="webhook-notification">
+                        <label class="form-check-label" for="webhook-notification">
+                            Webhook Notifications
+                        </label>
+                    </div>
+                </div>
+                
+                <div id="email-settings" class="form-group">
+                    <label class="form-label" for="email-recipients">Email Recipients</label>
+                    <input type="text" class="form-control" id="email-recipients" placeholder="email@example.com, another@example.com">
+                    <div class="form-help">Comma-separated list of email addresses</div>
+                </div>
+                
+                <div id="slack-settings" class="form-group" style="display: none;">
+                    <label class="form-label" for="slack-webhook">Slack Webhook URL</label>
+                    <input type="text" class="form-control" id="slack-webhook" placeholder="https://hooks.slack.com/services/...">
+                </div>
+                
+                <div id="teams-settings" class="form-group" style="display: none;">
+                    <label class="form-label" for="teams-webhook">Microsoft Teams Webhook URL</label>
+                    <input type="text" class="form-control" id="teams-webhook" placeholder="https://outlook.office.com/webhook/...">
+                </div>
+                
+                <div id="webhook-settings" class="form-group" style="display: none;">
+                    <label class="form-label" for="webhook-url">Webhook URL</label>
+                    <input type="text" class="form-control" id="webhook-url" placeholder="https://example.com/webhook">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Notification Triggers</label>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="notify-success" checked>
+                        <label class="form-check-label" for="notify-success">
+                            Successful builds and deployments
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="notify-failure" checked>
+                        <label class="form-check-label" for="notify-failure">
+                            Failed builds and deployments
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="notify-start">
+                        <label class="form-check-label" for="notify-start">
+                            When builds start
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 6: Summary -->
+            <div class="step-content" data-step="6">
+                <h2 class="step-title">Configuration Summary</h2>
+                <p class="step-description">Review your CI workflow configuration before finalizing.</p>
+                
+                <div class="summary-section">
+                    <h3 class="summary-title">Repository</h3>
+                    <div class="summary-item">
+                        <div class="summary-label">Provider</div>
+                        <div class="summary-value" id="summary-repo-provider">GitHub</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">URL</div>
+                        <div class="summary-value" id="summary-repo-url"></div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Branch</div>
+                        <div class="summary-value" id="summary-branch">main</div>
+                    </div>
+                </div>
+                
+                <div class="summary-section">
+                    <h3 class="summary-title">Build</h3>
+                    <div class="summary-item">
+                        <div class="summary-label">Environment</div>
+                        <div class="summary-value" id="summary-build-env">Ubuntu Latest</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Language</div>
+                        <div class="summary-value" id="summary-language">JavaScript/Node.js</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Build Command</div>
+                        <div class="summary-value" id="summary-build-command"></div>
+                    </div>
+                </div>
+                
+                <div class="summary-section">
+                    <h3 class="summary-title">Test</h3>
+                    <div class="summary-item">
+                        <div class="summary-label">Test Command</div>
+                        <div class="summary-value" id="summary-test-command"></div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Test Types</div>
+                        <div class="summary-value" id="summary-test-types">Unit Tests, Integration Tests</div>
+                    </div>
+                </div>
+                
+                <div class="summary-section">
+                    <h3 class="summary-title">Deployment</h3>
+                    <div class="summary-item">
+                        <div class="summary-label">Enabled</div>
+                        <div class="summary-value" id="summary-deploy-enabled">No</div>
+                    </div>
+                    <div id="summary-deployment-details" style="display: none;">
+                        <div class="summary-item">
+                            <div class="summary-label">Target</div>
+                            <div class="summary-value" id="summary-deploy-target"></div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label">Environment</div>
+                            <div class="summary-value" id="summary-deploy-env"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="summary-section">
+                    <h3 class="summary-title">Notifications</h3>
+                    <div class="summary-item">
+                        <div class="summary-label">Methods</div>
+                        <div class="summary-value" id="summary-notification-methods">Email</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Recipients</div>
+                        <div class="summary-value" id="summary-notification-recipients"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Success Message -->
+            <div class="success-message" id="success-message">
+                <div class="success-icon">✓</div>
+                <h2 class="success-title">CI Workflow Created Successfully!</h2>
+                <p class="success-description">Your continuous integration workflow has been set up and is ready to use. Your first build will start automatically on the next code push.</p>
+                <button class="btn btn-primary" id="view-workflow">View Workflow</button>
+            </div>
+        </div>
+        
+        <div class="wizard-footer">
+            <button class="btn btn-outline" id="prev-btn" disabled>
+                <span class="btn-icon">←</span> Previous
+            </button>
+            <button class="btn btn-primary" id="next-btn">
+                Next <span class="btn-icon">→</span>
+            </button>
+            <button class="btn btn-success" id="finish-btn" style="display: none;">
+                Finish Setup
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elements
+            const steps = document.querySelectorAll('.step');
+            const stepContents = document.querySelectorAll('.step-content');
+            const progressBar = document.getElementById('progress-bar');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const finishBtn = document.getElementById('finish-btn');
+            const successMessage = document.getElementById('success-message');
+            
+            // Expandable sections
+            const expandableSections = document.querySelectorAll('.expandable-section');
+            expandableSections.forEach(section => {
+                const header = section.querySelector('.expandable-header');
+                header.addEventListener('click', () => {
+                    section.classList.toggle('expanded');
+                });
+            });
+            
+            // Deployment checkbox
+            const enableDeployment = document.getElementById('enable-deployment');
+            const deploymentOptions = document.getElementById('deployment-options');
+            
+            enableDeployment.addEventListener('change', function() {
+                deploymentOptions.style.display = this.checked ? 'block' : 'none';
+            });
+            
+            // Notification checkboxes
+            const slackNotification = document.getElementById('slack-notification');
+            const teamsNotification = document.getElementById('teams-notification');
+            const webhookNotification = document.getElementById('webhook-notification');
+            const slackSettings = document.getElementById('slack-settings');
+            const teamsSettings = document.getElementById('teams-settings');
+            const webhookSettings = document.getElementById('webhook-settings');
+            
+            slackNotification.addEventListener('change', function() {
+                slackSettings.style.display = this.checked ? 'block' : 'none';
+            });
+            
+            teamsNotification.addEventListener('change', function() {
+                teamsSettings.style.display = this.checked ? 'block' : 'none';
+            });
+            
+            webhookNotification.addEventListener('change', function() {
+                webhookSettings.style.display = this.checked ? 'block' : 'none';
+            });
+            
+            // Current step
+            let currentStep = 1;
+            const totalSteps = steps.length;
+            
+            // Update progress bar
+            function updateProgressBar() {
+                const progress = ((currentStep - 1) / (totalSteps - 1)) * 100;
+                progressBar.style.width = `${progress}%`;
+            }
+            
+            // Update buttons
+            function updateButtons() {
+                prevBtn.disabled = currentStep === 1;
+                
+                if (currentStep === totalSteps) {
+                    nextBtn.style.display = 'none';
+                    finishBtn.style.display = 'inline-flex';
+                } else {
+                    nextBtn.style.display = 'inline-flex';
+                    finishBtn.style.display = 'none';
+                }
+            }
+            
+            // Go to step
+            function goToStep(step) {
+                // Hide all steps
+                stepContents.forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                // Show current step
+                document.querySelector(`.step-content[data-step="${step}"]`).classList.add('active');
+                
+                // Update steps
+                steps.forEach(stepEl => {
+                    const stepNum = parseInt(stepEl.dataset.step);
+                    stepEl.classList.remove('active', 'completed');
+                    
+                    if (stepNum === step) {
+                        stepEl.classList.add('active');
+                    } else if (stepNum < step) {
+                        stepEl.classList.add('completed');
+                    }
+                });
+                
+                // Update current step
+                currentStep = step;
+                
+                // Update progress bar
+                updateProgressBar();
+                
+                // Update buttons
+                updateButtons();
+                
+                // If we're on the summary step, update summary
+                if (currentStep === totalSteps) {
+                    updateSummary();
+                }
+            }
+            
+            // Validate current step
+            function validateCurrentStep() {
+                let valid = true;
+                
+                // Step 1: Repository
+                if (currentStep === 1) {
+                    const repoUrl = document.getElementById('repository-url').value;
+                    const repoUrlError = document.getElementById('repository-url-error');
+                    
+                    if (!repoUrl) {
+                        valid = false;
+                        document.getElementById('repository-url').classList.add('error');
+                        repoUrlError.style.display = 'block';
+                    } else {
+                        document.getElementById('repository-url').classList.remove('error');
+                        repoUrlError.style.display = 'none';
+                    }
+                }
+                
+                // Step 2: Build
+                if (currentStep === 2) {
+                    const buildCommand = document.getElementById('build-command').value;
+                    if (!buildCommand) {
+                        valid = false;
+                        document.getElementById('build-command').classList.add('error');
+                    } else {
+                        document.getElementById('build-command').classList.remove('error');
+                    }
+                }
+                
+                // Step 3: Test
+                if (currentStep === 3) {
+                    const testCommand = document.getElementById('test-command').value;
+                    if (!testCommand) {
+                        valid = false;
+                        document.getElementById('test-command').classList.add('error');
+                    } else {
+                        document.getElementById('test-command').classList.remove('error');
+                    }
+                }
+                
+                // Step 4: Deploy - only validate if deployment is enabled
+                if (currentStep === 4 && document.getElementById('enable-deployment').checked) {
+                    const deployTarget = document.getElementById('deployment-target').value;
+                    if (deployTarget === 'none') {
+                        valid = false;
+                        document.getElementById('deployment-target').classList.add('error');
+                    } else {
+                        document.getElementById('deployment-target').classList.remove('error');
+                    }
+                }
+                
+                // Step 5: Notify - validate email if email notification is enabled
+                if (currentStep === 5 && document.getElementById('email-notification').checked) {
+                    const emailRecipients = document.getElementById('email-recipients').value;
+                    if (!emailRecipients) {
+                        valid = false;
+                        document.getElementById('email-recipients').classList.add('error');
+                    } else {
+                        document.getElementById('email-recipients').classList.remove('error');
+                    }
+                }
+                
+                return valid;
+            }
+            
+            // Update summary
+            function updateSummary() {
+                // Repository
+                document.getElementById('summary-repo-provider').textContent = document.getElementById('repository-type').options[document.getElementById('repository-type').selectedIndex].text;
+                document.getElementById('summary-repo-url').textContent = document.getElementById('repository-url').value || 'Not specified';
+                document.getElementById('summary-branch').textContent = document.getElementById('branch').value || 'main';
+                
+                // Build
+                document.getElementById('summary-build-env').textContent = document.getElementById('build-environment').options[document.getElementById('build-environment').selectedIndex].text;
+                document.getElementById('summary-language').textContent = document.getElementById('language').options[document.getElementById('language').selectedIndex].text;
+                document.getElementById('summary-build-command').textContent = document.getElementById('build-command').value || 'Not specified';
+                
+                // Test
+                document.getElementById('summary-test-command').textContent = document.getElementById('test-command').value || 'Not specified';
+                
+                // Test types
+                let testTypes = [];
+                if (document.getElementById('unit-tests').checked) testTypes.push('Unit Tests');
+                if (document.getElementById('integration-tests').checked) testTypes.push('Integration Tests');
+                if (document.getElementById('e2e-tests').checked) testTypes.push('End-to-End Tests');
+                document.getElementById('summary-test-types').textContent = testTypes.length ? testTypes.join(', ') : 'None';
+                
+                // Deployment
+                const deployEnabled = document.getElementById('enable-deployment').checked;
+                document.getElementById('summary-deploy-enabled').textContent = deployEnabled ? 'Yes' : 'No';
+                
+                if (deployEnabled) {
+                    document.getElementById('summary-deployment-details').style.display = 'block';
+                    document.getElementById('summary-deploy-target').textContent = document.getElementById('deployment-target').options[document.getElementById('deployment-target').selectedIndex].text;
+                    document.getElementById('summary-deploy-env').textContent = document.getElementById('deployment-environment').options[document.getElementById('deployment-environment').selectedIndex].text;
+                } else {
+                    document.getElementById('summary-deployment-details').style.display = 'none';
+                }
+                
+                // Notifications
+                let notificationMethods = [];
+                if (document.getElementById('email-notification').checked) notificationMethods.push('Email');
+                if (document.getElementById('slack-notification').checked) notificationMethods.push('Slack');
+                if (document.getElementById('teams-notification').checked) notificationMethods.push('Microsoft Teams');
+                if (document.getElementById('webhook-notification').checked) notificationMethods.push('Webhook');
+                document.getElementById('summary-notification-methods').textContent = notificationMethods.length ? notificationMethods.join(', ') : 'None';
+                
+                document.getElementById('summary-notification-recipients').textContent = document.getElementById('email-recipients').value || 'Not specified';
+            }
+            
+            // Next button click
+            nextBtn.addEventListener('click', function() {
+                if (validateCurrentStep()) {
+                    goToStep(currentStep + 1);
+                }
+            });
+            
+            // Previous button click
+            prevBtn.addEventListener('click', function() {
+                goToStep(currentStep - 1);
+            });
+            
+            // Finish button click
+            finishBtn.addEventListener('click', function() {
+                // Hide wizard content and footer
+                document.querySelector('.wizard-content').style.display = 'none';
+                document.querySelector('.wizard-footer').style.display = 'none';
+                
+                // Show success message
+                successMessage.style.display = 'block';
+            });
+            
+            // View workflow button click
+            document.getElementById('view-workflow').addEventListener('click', function() {
+                alert('This would navigate to your CI workflow dashboard in a real application.');
+            });
+            
+            // Initialize
+            updateProgressBar();
+            updateButtons();
+        });
+    </script>
+</body>
+</html>

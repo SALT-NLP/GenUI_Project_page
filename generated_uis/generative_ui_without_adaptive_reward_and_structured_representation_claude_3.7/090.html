@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Algorithm Visualizer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --accent-color: #28a745;
+            --background-color: #f8f9fa;
+            --surface-color: #ffffff;
+            --text-color: #212529;
+            --border-color: #dee2e6;
+            --shadow-light: 0 2px 4px rgba(0, 0, 0, 0.08);
+            --shadow-medium: 0 4px 8px rgba(0, 0, 0, 0.1);
+            --spacing-small: 8px;
+            --spacing-medium: 16px;
+            --spacing-large: 24px;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            flex-grow: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--spacing-medium);
+            width: 100%;
+            gap: var(--spacing-large);
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: #ffffff;
+            padding: var(--spacing-medium) var(--spacing-large);
+            box-shadow: var(--shadow-medium);
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        header h1 {
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .sidebar {
+            width: 250px;
+            flex-shrink: 0;
+            background-color: var(--surface-color);
+            border-radius: 8px;
+            box-shadow: var(--shadow-light);
+            padding: var(--spacing-medium) 0;
+            overflow-y: auto;
+            align-self: flex-start;
+            position: sticky;
+            top: var(--spacing-medium);
+            max-height: calc(100vh - var(--spacing-medium) * 2 - 60px); /* Adjust max height */
+        }
+
+        .sidebar h3 {
+            margin: 0 0 var(--spacing-small) var(--spacing-medium);
+            padding: 0;
+            color: var(--primary-color);
+            font-weight: 500;
+            padding-bottom: var(--spacing-small);
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: var(--spacing-medium);
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar li {
+            margin-bottom: 4px;
+        }
+
+        .sidebar button {
+            display: block;
+            width: 100%;
+            padding: var(--spacing-small) var(--spacing-medium);
+            text-align: left;
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease;
+            border-radius: 0;
+        }
+
+        .sidebar button:hover {
+            background-color: #e9ecef;
+        }
+
+        .sidebar button:focus {
+             outline: 2px solid var(--primary-color);
+             outline-offset: -2px;
+        }
+
+        .sidebar button.active {
+            background-color: var(--primary-color);
+            color: #ffffff;
+            font-weight: 500;
+        }
+         .sidebar button.active:hover {
+             background-color: #0056b3;
+         }
+
+
+        .main-content {
+            flex-grow: 1;
+            background-color: var(--surface-color);
+            border-radius: 8px;
+            box-shadow: var(--shadow-light);
+            padding: var(--spacing-large);
+            overflow-y: auto;
+        }
+
+        #intro-section h2, #algorithm-section h2 {
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: var(--spacing-medium);
+            font-weight: 500;
+        }
+
+        #intro-section ul {
+            padding-left: var(--spacing-medium);
+        }
+
+        #intro-section li {
+            margin-bottom: var(--spacing-small);
+        }
+
+
+        .visualization-area {
+            position: relative;
+            margin-top: var(--spacing-large);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: var(--spacing-medium);
+            background-color: var(--background-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #ml-visualization {
+            width: 100%;
+            aspect-ratio: 1 / 0.75; /* Maintain aspect ratio */
+            max-height: 500px; /* Max height on larger screens */
+            background-color: #ffffff;
+            border-radius: 4px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+            cursor: crosshair;
+        }
+
+        .floating-controls {
+            position: absolute;
+            top: var(--spacing-medium);
+            right: var(--spacing-medium);
+            background: rgba(255, 255, 255, 0.95);
+            padding: var(--spacing-medium);
+            border-radius: 8px;
+            box-shadow: var(--shadow-medium);
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-small);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 10;
+            min-width: 200px;
+        }
+         .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+             margin-bottom: var(--spacing-small);
+        }
+         .control-group:last-child {
+             margin-bottom: 0;
+         }
+
+        .control-group label {
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+            font-weight: 500;
+            display: block;
+        }
+
+        .control-group input[type="number"],
+        .control-group input[type="range"],
+        .control-group button {
+            padding: var(--spacing-small);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 1rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+         .control-group input[type="range"] {
+             padding: 0 5px;
+         }
+
+        .control-group button {
+            background-color: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            font-weight: 400;
+        }
+
+        .control-group button:hover {
+            background-color: #0056b3;
+        }
+         .control-group button:active {
+             background-color: #004085;
+         }
+         .control-group button:disabled {
+             background-color: var(--secondary-color);
+             cursor: not-allowed;
+         }
+
+
+         .control-group span {
+             font-size: 0.9rem;
+             color: var(--text-color);
+             align-self: flex-end;
+             margin-top: -20px;
+             margin-right: 5px;
+             position: relative;
+             z-index: 1;
+         }
+
+
+        /* Expandable Section Styles */
+        .expandable-section {
+            margin-top: var(--spacing-medium);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: var(--background-color);
+        }
+
+        .expandable-section:first-of-type {
+             margin-top: var(--spacing-medium);
+        }
+
+        .expand-toggle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: var(--spacing-medium);
+            background-color: var(--surface-color);
+            border: none;
+            text-align: left;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .expand-toggle:hover {
+            background-color: #e9ecef;
+        }
+         .expand-toggle:focus {
+             outline: 2px solid var(--primary-color);
+             outline-offset: -2px;
+         }
+
+        .expand-toggle .toggle-icon {
+            font-size: 1.5rem;
+            transition: transform 0.3s ease;
+            line-height: 1;
+        }
+
+        .expand-toggle[aria-expanded="true"] .toggle-icon {
+            transform: rotate(45deg);
+        }
+
+        .expand-content {
+            padding: 0 var(--spacing-medium);
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+
+        .expand-content[aria-hidden="false"] {
+             max-height: 1000px; /* Sufficiently large value for expansion */
+             padding: var(--spacing-medium);
+        }
+
+
+        footer {
+            margin-top: var(--spacing-large);
+            padding: var(--spacing-medium);
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+            background-color: var(--surface-color);
+            box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
+            flex-shrink: 0;
+        }
+
+        /* Basic Tooltip Style */
+        .tooltip {
+            position: fixed;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 100;
+            white-space: nowrap;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                padding: var(--spacing-small);
+                gap: var(--spacing-medium);
+            }
+            .sidebar {
+                width: 100%;
+                margin-right: 0;
+                margin-bottom: var(--spacing-medium);
+                padding: var(--spacing-small) 0;
+                overflow-x: auto;
+                white-space: nowrap;
+                display: flex;
+                border-radius: 8px;
+                position: static;
+                max-height: none;
+            }
+            .sidebar h3 {
+                 padding: 0 var(--spacing-medium);
+                 margin-bottom: var(--spacing-small);
+                 flex-shrink: 0;
+                 border-bottom: none;
+                 margin-bottom: 0;
+                 padding-right: var(--spacing-small);
+            }
+            .sidebar ul {
+                display: flex;
+                padding: 0 var(--spacing-small);
+                margin: 0;
+            }
+            .sidebar li {
+                flex-shrink: 0;
+                margin-bottom: 0;
+                margin-right: var(--spacing-small);
+            }
+             .sidebar li:last-child {
+                 margin-right: 0;
+             }
+             .sidebar button {
+                 padding: var(--spacing-small) var(--spacing-medium);
+                 border-radius: 4px;
+                 text-align: center;
+                 width: auto;
+                 display: inline-block;
+             }
+            .main-content {
+                padding: var(--spacing-medium);
+            }
+            .visualization-area {
+                margin-top: var(--spacing-medium);
+                padding: var(--spacing-small);
+            }
+            #ml-visualization {
+                 /* Maintain aspect ratio, adjust max height */
+                 max-height: 300px;
+            }
+            .floating-controls {
+                 position: static;
+                 margin-top: var(--spacing-medium);
+                 background: var(--background-color);
+                 box-shadow: none;
+                 opacity: 1;
+                 transform: none;
+                 pointer-events: all;
+                 border: 1px solid var(--border-color);
+                 border-radius: 8px;
+                 padding: var(--spacing-medium);
+            }
+             .control-group span {
+                 margin-top: 0;
+                 align-self: flex-start;
+                 margin-right: 0;
+                 position: static;
+             }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Machine Learning Algorithm Visualizer</h1>
+    </header>
+
+    <div class="container">
+        <nav class="sidebar" role="navigation">
+            <h3>Algorithms</h3>
+            <ul>
+                <li><button data-algorithm="intro" class="active" aria-current="page">Introduction</button></li>
+                <li><button data-algorithm="kmeans">K-Means Clustering</button></li>
+                <li><button data-algorithm="linear-regression">Linear Regression</button></li>
+                <li><button data-algorithm="decision-tree">Decision Tree</button></li>
+                <!-- Add more algorithms here -->
+            </ul>
+        </nav>
+
+        <section class="main-content" role="region">
+            <article id="intro-section">
+                <h2>Welcome!</h2>
+                <p>This tool helps you understand how different machine learning algorithms work through interactive visualizations.</p>
+                <p>Select an algorithm from the sidebar to explore its concepts, see it in action, and experiment with its parameters.</p>
+
+                 <!-- Expandable section for Intro details -->
+                <div class="expandable-section">
+                    <button class="expand-toggle" aria-expanded="false" aria-controls="intro-details">What is Machine Learning? <span class="toggle-icon">+</span></button>
+                    <div id="intro-details" class="expand-content" aria-hidden="true" hidden>
+                        <p>Machine learning is a field of artificial intelligence that focuses on building systems that learn from data. Instead of being explicitly programmed, these systems use algorithms to identify patterns, make predictions, or take decisions based on the data they are trained on.</p>
+                        <p>Common tasks in machine learning include:</p>
+                        <ul>
+                            <li><strong>Classification:</strong> Categorizing data into predefined classes (e.g., spam detection).</li>
+                            <li><strong>Regression:</strong> Predicting a continuous value (e.g., house price prediction).</li>
+                            <li><strong>Clustering:</strong> Grouping similar data points together (e.g., customer segmentation).</li>
+                            <li><strong>Dimensionality Reduction:</strong> Reducing the number of features while preserving important information.</li>
+                        </ul>
+                        <p>Explore the algorithms in the sidebar to see how these tasks are performed!</p>
+                    </div>
+                </div>
+
+            </article>
+
+            <article id="algorithm-section" style="display: none;">
+                <h2 id="algorithm-title"></h2>
+                <p id="algorithm-description"></p>
+
+                 <!-- Expandable section for Algorithm details -->
+                <div class="expandable-section">
+                    <button class="expand-toggle" aria-expanded="false" aria-controls="algorithm-details">Detailed Explanation <span class="toggle-icon">+</span></button>
+                    <div id="algorithm-details" class="expand-content" aria-hidden="true" hidden>
+                        <!-- Content dynamically loaded by JS -->
+                    </div>
+                </div>
+
+
+                <div class="visualization-area">
+                    <canvas id="ml-visualization"></canvas>
+                    <div class="floating-controls" id="viz-controls">
+                        <!-- Controls will be dynamically added here -->
+                    </div>
+                </div>
+            </article>
+        </section>
+    </div>
+
+    <footer>
+        <p>&copy; 2023 ML Algorithm Visualizer. All rights reserved.</p>
+    </footer>
+
+    <div id="tooltip" class="tooltip" aria-hidden="true"></div>
+
+    <script>
+        const sidebarButtons = document.querySelectorAll('.sidebar button');
+        const introSection = document.getElementById('intro-section');
+        const algorithmSection = document.getElementById('algorithm-section');
+        const algorithmTitle = document.getElementById('algorithm-title');
+        const algorithmDescription = document.getElementById('algorithm-description');
+        const visualizationCanvas = document.getElementById('ml-visualization');
+        const vizControls = document.getElementById('viz-controls');
+        const ctx = visualizationCanvas.getContext('2d');
+        const tooltip = document.getElementById('tooltip');
+        const algorithmDetailsContent = document.getElementById('algorithm-details');
+        const introDetailsContent = document.getElementById('intro-details');
+
+        // Data range for internal calculations (e.g., 0-100)
+        const DATA_RANGE_X = 100;
+        const DATA_RANGE_Y = 100;
+
+
+        let currentAlgorithm = null;
+        let visualizationState = {}; // State specific to the current visualization
+        let animationFrameId = null; // For controlling animation loops
+
+        // Helper functions to map data coordinates (0-100) to canvas pixel coordinates
+        const dataXToCanvasX = (dataX) => (dataX / DATA_RANGE_X) * visualizationCanvas.width;
+        // Clamp dataY to data range [0, 100] for mapping to canvas Y and invert
+        const dataYToCanvasY = (dataY) => visualizationCanvas.height - (Math.max(0, Math.min(DATA_RANGE_Y, dataY)) / DATA_RANGE_Y) * visualizationCanvas.height;
+        // Helper functions to map canvas pixel coordinates back to data coordinates (0-100)
+        const canvasXToDataX = (canvasX) => (canvasX / visualizationCanvas.width) * DATA_RANGE_X;
+        const canvasYToDataY = (canvasY) => DATA_RANGE_Y - (canvasY / visualizationCanvas.height) * DATA_RANGE_Y; // Convert inverted canvas Y back
+
+
+        // --- Data and Logic for Algorithms ---
+
+        const algorithms = {
+            'intro': {
+                title: 'Introduction',
+                description: 'Learn the basics of Machine Learning.',
+                render: () => {
+                    const canvasWidth = visualizationCanvas.width;
+                    const canvasHeight = visualizationCanvas.height;
+                    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+                     ctx.fillStyle = "var(--text-color)"; // Use CSS variable with quotes
+                     ctx.font = "20px 'Roboto', sans-serif";
+                     ctx.textAlign = 'center';
+                     ctx.fillText('Select an algorithm from the sidebar to start', canvasWidth / 2, canvasHeight / 2);
+                },
+                setupControls: () => {
+                    vizControls.innerHTML = ''; // Clear controls
+                    vizControls.classList.remove('active');
+                },
+                cleanup: () => {
+                    // No specific cleanup needed
+                },
+                setupDetails: (detailsEl) => {
+                    // Details are static in HTML for intro
+                }
+            },
+            'kmeans': {
+                title: 'K-Means Clustering',
+                description: 'K-Means is an unsupervised learning algorithm used for partitioning n observations into k clusters, where each observation belongs to the cluster with the nearest mean (centroid), serving as a prototype of the cluster.',
+                details: 'K-Means clustering aims to partition n observations into k clusters in which each observation belongs to the cluster with the nearest mean (centroid), serving as a prototype of the cluster. The algorithm proceeds in two steps: 1. Assignment step: Each data point is assigned to the cluster whose centroid is closest. 2. Update step: The centroids are recomputed as the mean of all data points assigned to that cluster. These steps are repeated until the centroids no longer move significantly.',
+                render: (state) => {
+                    const canvasWidth = visualizationCanvas.width;
+                    const canvasHeight = visualizationCanvas.height;
+                    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+                    // Draw data points
+                    state.dataPoints.forEach(point => {
+                        const canvasX = dataXToCanvasX(point.x);
+                        const canvasY = dataYToCanvasY(point.y);
+                        ctx.fillStyle = point.color || '#000';
+                        ctx.beginPath();
+                        ctx.arc(canvasX, canvasY, 4, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+
+                    // Draw centroids
+                    state.centroids.forEach(centroid => {
+                        const canvasX = dataXToCanvasX(centroid.x);
+                        const canvasY = dataYToCanvasY(centroid.y);
+                        ctx.fillStyle = centroid.color || '#f00';
+                        ctx.strokeStyle = "var(--surface-color)"; // Use CSS variable with quotes
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(canvasX, canvasY, 8, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                    });
+                },
+                setupControls: (state) => {
+                    vizControls.innerHTML = `
+                        <div class="control-group">
+                            <label for="kmeans-k">Number of Clusters (K):</label>
+                            <input type="number" id="kmeans-k" value="${state.k}" min="2" max="10" aria-label="Number of clusters">
+                        </div>
+                         <div class="control-group">
+                            <label for="kmeans-points">Number of Data Points:</label>
+                            <input type="number" id="kmeans-points" value="${state.numPoints}" min="50" max="500" aria-label="Number of data points">
+                        </div>
+                        <div class="control-group">
+                            <button id="kmeans-generate" aria-label="Generate new data">Generate New Data</button>
+                        </div>
+                        <div class="control-group">
+                            <button id="kmeans-step" aria-label="Perform one step of K-Means">Step</button>
+                            <button id="kmeans-run" aria-label="Run K-Means until convergence">Run</button>
+                        </div>
+                    `;
+                     vizControls.classList.add('active');
+
+                    document.getElementById('kmeans-k').addEventListener('change', (e) => {
+                        state.k = parseInt(e.target.value);
+                        if (isNaN(state.k) || state.k < 2) state.k = 2;
+                        if (state.k > state.numPoints) state.k = state.numPoints;
+                         e.target.value = state.k;
+                        algorithms['kmeans'].initialize(state);
+                        algorithms['kmeans'].render(state);
+                    });
+
+                    document.getElementById('kmeans-points').addEventListener('change', (e) => {
+                        state.numPoints = parseInt(e.target.value);
+                         if (isNaN(state.numPoints) || state.numPoints < 50) state.numPoints = 50;
+                         e.target.value = state.numPoints;
+                         if (state.k > state.numPoints) {
+                             state.k = state.numPoints;
+                             document.getElementById('kmeans-k').value = state.k;
+                         }
+                        algorithms['kmeans'].initialize(state);
+                        algorithms['kmeans'].render(state);
+                    });
+
+
+                    document.getElementById('kmeans-generate').addEventListener('click', () => {
+                        algorithms['kmeans'].initialize(state);
+                        algorithms['kmeans'].render(state);
+                    });
+
+                    document.getElementById('kmeans-step').addEventListener('click', () => {
+                        algorithms['kmeans'].step(state);
+                        algorithms['kmeans'].render(state);
+                    });
+
+                     document.getElementById('kmeans-run').addEventListener('click', async (event) => {
+                         const runButton = event.target;
+                         runButton.disabled = true;
+                         let changed = true;
+
+                         if (animationFrameId) {
+                             cancelAnimationFrame(animationFrameId);
+                             animationFrameId = null;
+                         }
+
+                         const runStep = () => {
+                              changed = algorithms['kmeans'].step(state);
+                              algorithms['kmeans'].render(state);
+
+                              if (changed) {
+                                  animationFrameId = requestAnimationFrame(runStep);
+                              } else {
+                                  runButton.disabled = false;
+                                  animationFrameId = null;
+                              }
+                         };
+                         animationFrameId = requestAnimationFrame(runStep);
+                     });
+                },
+                initialize: (state) => {
+                    state.dataPoints = [];
+                    state.centroids = [];
+                    state.colors = ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999'];
+
+                    state.k = state.k || 3;
+                    state.numPoints = state.numPoints || 150;
+
+                    // Generate random data points in 0-100 data scale
+                    for (let i = 0; i < state.numPoints; i++) {
+                        state.dataPoints.push({
+                            x: Math.random() * DATA_RANGE_X,
+                            y: Math.random() * DATA_RANGE_Y,
+                            cluster: -1,
+                            color: "var(--text-color)" // Use CSS variable with quotes
+                        });
+                    }
+
+                    // Initialize random centroids in 0-100 data scale
+                    for (let i = 0; i < state.k; i++) {
+                        state.centroids.push({
+                            x: Math.random() * DATA_RANGE_X,
+                            y: Math.random() * DATA_RANGE_Y,
+                            color: state.colors[i % state.colors.length]
+                        });
+                    }
+                     state.iteration = 0;
+                },
+                step: (state) => {
+                    state.iteration++;
+                     let assignmentsChanged = false;
+
+                    // 1. Assign data points to nearest centroid (using data scale distances)
+                    state.dataPoints.forEach(point => {
+                        let minDistance = Infinity;
+                        let closestCentroidIndex = -1;
+
+                        state.centroids.forEach((centroid, index) => {
+                            // Calculate distance in data scale
+                            const distance = Math.sqrt((point.x - centroid.x)**2 + (point.y - centroid.y)**2);
+                            if (distance < minDistance) {
+                                minDistance = distance;
+                                closestCentroidIndex = index;
+                            }
+                        });
+
+                        if (point.cluster !== closestCentroidIndex) {
+                            point.cluster = closestCentroidIndex;
+                            point.color = state.centroids[closestCentroidIndex].color;
+                            assignmentsChanged = true;
+                        }
+                    });
+
+                    // 2. Update centroid positions (calculations in data scale)
+                    const newCentroids = Array(state.k).fill(0).map(() => ({ x: 0, y: 0, count: 0 }));
+
+                    state.dataPoints.forEach(point => {
+                        if (point.cluster !== -1) {
+                            newCentroids[point.cluster].x += point.x;
+                            newCentroids[point.cluster].y += point.y;
+                            newCentroids[point.cluster].count++;
+                        }
+                    });
+
+                    let centroidPositionsChanged = false;
+                    state.centroids.forEach((centroid, index) => {
+                        if (newCentroids[index].count > 0) {
+                             const newX = newCentroids[index].x / newCentroids[index].count;
+                             const newY = newCentroids[index].y / newCentroids[index].count;
+                             // Check if centroid moved significantly (in data scale)
+                             if (Math.abs(centroid.x - newX) > 0.1 || Math.abs(centroid.y - newY) > 0.1) {
+                                 centroidPositionsChanged = true;
+                             }
+                            centroid.x = newX;
+                            centroid.y = newY;
+                        } else {
+                             // If a cluster is empty, re-initialize its centroid randomly (in data scale)
+                             centroid.x = Math.random() * DATA_RANGE_X;
+                             centroid.y = Math.random() * DATA_RANGE_Y;
+                             centroidPositionsChanged = true; // Force another iteration
+                        }
+                    });
+
+                    return assignmentsChanged || centroidPositionsChanged;
+                },
+                cleanup: () => {
+                    visualizationCanvas.onmousemove = null;
+                    visualizationCanvas.onmouseout = null;
+                     if (animationFrameId) {
+                         cancelAnimationFrame(animationFrameId);
+                         animationFrameId = null;
+                     }
+                },
+                 setupDetails: (detailsEl) => {
+                    detailsEl.innerHTML = `<p>${algorithms['kmeans'].details}</p><p>The algorithm iteratively performs two steps:</p><ol><li><strong>Assignment Step:</strong> Each data point is assigned to the cluster whose centroid is closest.</li><li><strong>Update Step:</strong> The centroids are recomputed as the mean of all data points assigned to that cluster.</li></ol><p>The process stops when assignments no longer change or centroids stop moving significantly.</p>`;
+                }
+            },
+             'linear-regression': {
+                title: 'Linear Regression',
+                description: 'Linear Regression is a supervised learning algorithm that finds the linear relationship between a dependent variable and one or more independent variables to predict the dependent variable.',
+                details: 'Linear Regression is a supervised learning algorithm used to predict a continuous target variable based on one or more independent variables. It assumes a linear relationship between the input and output. The goal is to find the best-fitting line (y = mx + b) that minimizes the difference between the predicted values and the actual values. This is typically done using methods like Gradient Descent, which iteratively adjusts the slope (m) and intercept (b) to reduce the Mean Squared Error (MSE).',
+                render: (state) => {
+                    const canvasWidth = visualizationCanvas.width;
+                    const canvasHeight = visualizationCanvas.height;
+                    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+                    // Draw data points
+                    state.dataPoints.forEach(point => {
+                        const canvasX = dataXToCanvasX(point.x);
+                        const canvasY = dataYToCanvasY(point.y);
+                        ctx.fillStyle = "var(--primary-color)"; // Use CSS variable with quotes
+                        ctx.beginPath();
+                        ctx.arc(canvasX, canvasY, 4, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+
+                    // Draw regression line y = mx + b
+                    const m = state.m;
+                    const b = state.b;
+
+                    // Calculate line points in canvas coordinates for the full canvas width
+                    const startX_data = DATA_RANGE_X * 0; // Start at data X=0
+                    const startY_data = m * startX_data + b;
+                    const endX_data = DATA_RANGE_X * 1; // End at data X=100
+                    const endY_data = m * endX_data + b;
+
+                    // Convert data points on the line (at canvas edges) to canvas coordinates
+                    const startX_canvas = dataXToCanvasX(startX_data);
+                    const startY_canvas = dataYToCanvasY(startY_data);
+                    const endX_canvas = dataXToCanvasX(endX_data);
+                    const endY_canvas = dataYToCanvasY(endY_data);
+
+
+                    ctx.strokeStyle = "var(--accent-color)"; // Use CSS variable with quotes
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(startX_canvas, startY_canvas);
+                    ctx.lineTo(endX_canvas, endY_canvas);
+                    ctx.stroke();
+                },
+                 setupControls: (state) => {
+                    vizControls.innerHTML = `
+                         <div class="control-group">
+                            <label for="lr-points">Number of Data Points:</label>
+                            <input type="number" id="lr-points" value="${state.numPoints}" min="10" max="200" aria-label="Number of data points">
+                        </div>
+                        <div class="control-group">
+                            <label for="lr-noise">Noise Level:</label>
+                            <input type="range" id="lr-noise" value="${state.noise}" min="0" max="50" step="1" aria-label="Noise level for data generation">
+                            <span id="lr-noise-value">${state.noise}</span>
+                        </div>
+                        <div class="control-group">
+                            <button id="lr-generate" aria-label="Generate new data">Generate New Data</button>
+                        </div>
+                         <div class="control-group">
+                            <button id="lr-step" aria-label="Perform one step of gradient descent">Step Gradient Descent</button>
+                            <button id="lr-run" aria-label="Run gradient descent until convergence">Run Gradient Descent</button>
+                        </div>
+                         <div class="control-group">
+                            <label>Current m: <span id="lr-m">${state.m.toFixed(3)}</span></label>
+                            <label>Current b: <span id="lr-b">${state.b.toFixed(3)}</span></label>
+                            <label for="lr-learning-rate">Learning Rate:</label>
+                            <input type="number" id="lr-learning-rate" value="${state.learningRate}" step="0.0001" aria-label="Learning rate for gradient descent">
+                         </div>
+                    `;
+                     vizControls.classList.add('active');
+
+                     const noiseInput = document.getElementById('lr-noise');
+                     const noiseValueSpan = document.getElementById('lr-noise-value');
+                     const updateNoiseLabel = () => {
+                         noiseValueSpan.textContent = noiseInput.value;
+                     };
+
+                    document.getElementById('lr-points').addEventListener('change', (e) => {
+                        state.numPoints = parseInt(e.target.value);
+                        if (isNaN(state.numPoints) || state.numPoints < 10) state.numPoints = 10;
+                        e.target.value = state.numPoints;
+                        algorithms['linear-regression'].initialize(state);
+                        algorithms['linear-regression'].render(state);
+                         document.getElementById('lr-m').textContent = state.m.toFixed(3);
+                         document.getElementById('lr-b').textContent = state.b.toFixed(3);
+                    });
+
+                     noiseInput.addEventListener('input', (e) => {
+                         state.noise = parseInt(e.target.value);
+                         updateNoiseLabel();
+                     });
+                     noiseInput.addEventListener('change', () => {
+                          algorithms['linear-regression'].initialize(state);
+                          algorithms['linear-regression'].render(state);
+                           document.getElementById('lr-m').textContent = state.m.toFixed(3);
+                           document.getElementById('lr-b').textContent = state.b.toFixed(3);
+                     });
+                     updateNoiseLabel();
+
+                    document.getElementById('lr-generate').addEventListener('click', () => {
+                        algorithms['linear-regression'].initialize(state);
+                        algorithms['linear-regression'].render(state);
+                         document.getElementById('lr-m').textContent = state.m.toFixed(3);
+                         document.getElementById('lr-b').textContent = state.b.toFixed(3);
+                    });
+
+                    document.getElementById('lr-step').addEventListener('click', () => {
+                        algorithms['linear-regression'].step(state);
+                        algorithms['linear-regression'].render(state);
+                         document.getElementById('lr-m').textContent = state.m.toFixed(3);
+                         document.getElementById('lr-b').textContent = state.b.toFixed(3);
+                    });
+
+                     document.getElementById('lr-run').addEventListener('click', async (event) => {
+                        const runButton = event.target;
+                        runButton.disabled = true;
+                        let previousM = state.m;
+                        let previousB = state.b;
+                        let converged = false;
+                        const convergenceThreshold = 0.0001;
+
+                         if (animationFrameId) {
+                             cancelAnimationFrame(animationFrameId);
+                             animationFrameId = null;
+                         }
+
+                         const runStep = () => {
+                             algorithms['linear-regression'].step(state);
+                             algorithms['linear-regression'].render(state);
+                             document.getElementById('lr-m').textContent = state.m.toFixed(3);
+                             document.getElementById('lr-b').textContent = state.b.toFixed(3);
+
+                             const mChange = Math.abs(state.m - previousM);
+                             const bChange = Math.abs(state.b - previousB);
+
+                             if (mChange < convergenceThreshold && bChange < convergenceThreshold) {
+                                 converged = true;
+                             }
+
+                             previousM = state.m;
+                             previousB = state.b;
+
+                             if (!converged) {
+                                 animationFrameId = requestAnimationFrame(runStep);
+                             } else {
+                                 runButton.disabled = false;
+                                 animationFrameId = null;
+                             }
+                         };
+                         animationFrameId = requestAnimationFrame(runStep);
+                     });
+
+                     document.getElementById('lr-learning-rate').addEventListener('change', (e) => {
+                         state.learningRate = parseFloat(e.target.value);
+                          if (isNaN(state.learningRate) || state.learningRate <= 0) state.learningRate = 0.001;
+                          e.target.value = state.learningRate;
+                     });
+                },
+                initialize: (state) => {
+                    state.dataPoints = [];
+                    state.m = state.m || Math.random() * 2 - 1;
+                    state.b = state.b || Math.random() * 10;
+                    state.learningRate = state.learningRate || 0.0005;
+                    state.numPoints = state.numPoints || 100;
+                    state.noise = state.noise || 20;
+
+                    // Generate data points around a true line (e.g., y = 0.5x + 20) with noise
+                    const trueM = 0.5;
+                    const trueB = 20;
+
+                    for (let i = 0; i < state.numPoints; i++) {
+                        const originalX = Math.random() * DATA_RANGE_X;
+                        const trueY = trueM * originalX + trueB;
+                        const noisyY = trueY + (Math.random() - 0.5) * 2 * state.noise; // Add noise
+
+                         // Store points in original data scale
+                        state.dataPoints.push({
+                             x: originalX,
+                             y: noisyY
+                         });
+                    }
+                },
+                step: (state) => {
+                    // Perform one step of Gradient Descent
+                    // Cost function: Mean Squared Error (MSE) = (1/n) * sum((y_pred - y_actual)^2)
+                    // y_pred = m*x + b
+                    // Derivatives:
+                    // dMSE/dm = (2/n) * sum((y_pred - y_actual) * x)
+                    // dMSE/db = (2/n) * sum(y_pred - y_actual)
+
+                    let sumErrorM = 0;
+                    let sumErrorB = 0;
+                    const n = state.dataPoints.length;
+
+                    state.dataPoints.forEach(point => {
+                        // Use data scale coordinates directly
+                        const originalX = point.x;
+                        const originalY = point.y;
+
+                        const y_pred = state.m * originalX + state.b;
+                        const error = y_pred - originalY;
+
+                        sumErrorM += error * originalX;
+                        sumErrorB += error;
+                    });
+
+                    const dMSE_dm = (2 / n) * sumErrorM;
+                    const dMSE_db = (2 / n) * sumErrorB;
+
+                    // Update m and b using gradient descent
+                    state.m = state.m - state.learningRate * dMSE_dm;
+                    state.b = state.b - state.learningRate * dMSE_db;
+                },
+                 cleanup: () => {
+                    visualizationCanvas.onmousemove = null;
+                    visualizationCanvas.onmouseout = null;
+                     if (animationFrameId) {
+                         cancelAnimationFrame(animationFrameId);
+                         animationFrameId = null;
+                     }
+                },
+                 setupDetails: (detailsEl) => {
+                    detailsEl.innerHTML = `<p>${algorithms['linear-regression'].details}</p><p>The Mean Squared Error (MSE) is calculated as: MSE = (1/n) * Σ(yᵢ - (m*xᵢ + b))², where n is the number of data points, yᵢ is the actual value, and m*xᵢ + b is the predicted value.</p><p>Gradient Descent updates m and b using the partial derivatives of the MSE with respect to m and b:</p><p>m = m - learning_rate * (∂MSE/∂m)</p><p>b = b - learning_rate * (∂MSE/∂db)</p><p>where ∂MSE/∂m = (2/n) * Σ((m*xᵢ + b) - yᵢ) * xᵢ and ∂MSE/∂db = (2/n) * Σ((m*xᵢ + b) - yᵢ).</p>`;
+                }
+            },
+            'decision-tree': {
+                title: 'Decision Tree',
+                description: 'Decision Trees are supervised learning algorithms used for classification and regression. They partition the data into subsets based on the value of an attribute. This process is repeated recursively on each derived subset in a manner called recursive partitioning. The final result is a tree-like structure with decision nodes and leaf nodes.',
+                details: 'Decision Trees make decisions by asking a series of questions about the data attributes. Each internal node represents a test on an attribute, each branch represents an outcome of the test, and each leaf node represents a class label (in classification) or a value (in regression). The process of building a tree involves selecting the best attribute to split the data at each node, typically using measures like Gini impurity or entropy for classification, or variance reduction for regression.',
+                render: (state) => {
+                     const canvasWidth = visualizationCanvas.width;
+                     const canvasHeight = visualizationCanvas.height;
+                     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+                    ctx.fillStyle = "var(--secondary-color)"; // Use CSS variable with quotes
+                    ctx.font = "20px 'Roboto', sans-serif";
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Decision Tree Visualization Placeholder', canvasWidth / 2, canvasHeight / 2);
+                     ctx.font = "14px 'Roboto', sans-serif";
+                     ctx.fillText('(Visualization not yet implemented)', canvasWidth / 2, canvasHeight / 2 + 30);
+                },
+                setupControls: (state) => {
+                    vizControls.innerHTML = `
+                         <div class="control-group">
+                            <label>Controls for Decision Tree (Placeholder)</label>
+                            <button disabled aria-label="Load data (not implemented)">Load Data</button>
+                            <button disabled aria-label="Build tree (not implemented)">Build Tree</button>
+                         </div>
+                    `;
+                     vizControls.classList.add('active');
+                },
+                initialize: (state) => {
+                     // Placeholder state
+                     state.data = [];
+                     state.tree = null;
+                },
+                step: (state) => {
+                    // No step logic for placeholder
+                    console.log('Decision Tree step placeholder');
+                },
+                cleanup: () => {
+                     visualizationCanvas.onmousemove = null;
+                     visualizationCanvas.onmouseout = null;
+                     if (animationFrameId) {
+                         cancelAnimationFrame(animationFrameId);
+                         animationFrameId = null;
+                     }
+                },
+                 setupDetails: (detailsEl) => {
+                    detailsEl.innerHTML = `<p>${algorithms['decision-tree'].details}</p><p>Building a decision tree involves recursively partitioning the data. The stopping criteria might be when all data points in a node belong to the same class, when a maximum depth is reached, or when the number of data points in a node falls below a minimum threshold.</p>`;
+                }
+            }
+            // Add more algorithms here following the same structure
+        };
+
+        // --- Navigation and Content Loading ---
+
+        function cleanupCurrentAlgorithm() {
+             if (currentAlgorithm && algorithms[currentAlgorithm] && algorithms[currentAlgorithm].cleanup) {
+                 algorithms[currentAlgorithm].cleanup(visualizationState[currentAlgorithm]);
+             }
+             // Hide tooltip explicitly
+             tooltip.style.opacity = 0;
+             tooltip.setAttribute('aria-hidden', 'true');
+        }
+
+        function loadAlgorithm(algorithmKey) {
+            cleanupCurrentAlgorithm();
+
+            currentAlgorithm = algorithmKey;
+            const algorithm = algorithms[algorithmKey];
+
+            if (!algorithm) {
+                console.error('Algorithm not found:', algorithmKey);
+                return;
+            }
+
+            // Update active button in sidebar and set aria-current
+            sidebarButtons.forEach(button => {
+                button.classList.remove('active');
+                button.removeAttribute('aria-current');
+                if (button.dataset.algorithm === algorithmKey) {
+                    button.classList.add('active');
+                    button.setAttribute('aria-current', 'page');
+                }
+            });
+
+            // Show/hide sections and setup content
+            if (algorithmKey === 'intro') {
+                introSection.style.display = 'block';
+                algorithmSection.style.display = 'none';
+                 vizControls.classList.remove('active');
+
+                 // Setup details for intro (content is static, just manage visibility)
+                 const introToggle = introSection.querySelector('.expand-toggle');
+                 if (introToggle) {
+                      introToggle.style.display = 'flex';
+                      // Reset expanded state
+                     introToggle.setAttribute('aria-expanded', 'false');
+                     introDetailsContent.setAttribute('aria-hidden', 'true');
+                     introDetailsContent.style.maxHeight = '0';
+                     introDetailsContent.style.padding = '0 var(--spacing-medium)';
+                 }
+
+                 // Render intro visualization (placeholder text) - Ensure canvas size is set before rendering
+                 resizeCanvas(); // Set initial size
+                 algorithms['intro'].render();
+
+            } else {
+                introSection.style.display = 'none';
+                algorithmSection.style.display = 'block';
+
+                // Update algorithm specific content
+                algorithmTitle.textContent = algorithm.title;
+                algorithmDescription.textContent = algorithm.description;
+
+                // Setup details content for algorithm section
+                const algoToggle = algorithmSection.querySelector('.expandable-section .expand-toggle');
+                if (algorithm.setupDetails) {
+                    algorithm.setupDetails(algorithmDetailsContent);
+                    // Show the expandable section toggle
+                     if (algoToggle) {
+                         algoToggle.style.display = 'flex';
+                          // Reset expanded state
+                         algoToggle.setAttribute('aria-expanded', 'false');
+                         algorithmDetailsContent.setAttribute('aria-hidden', 'true');
+                         // Reset max-height and padding for transition
+                         algorithmDetailsContent.style.maxHeight = '0';
+                         algorithmDetailsContent.style.padding = '0 var(--spacing-medium)';
+                     }
+                } else {
+                     // Hide the expandable section toggle if no details
+                     if (algoToggle) {
+                         algoToggle.style.display = 'none';
+                     }
+                }
+
+
+                // Initialize visualization state if needed
+                if (!visualizationState[algorithmKey]) {
+                    visualizationState[algorithmKey] = {};
+                    if (algorithm.initialize) {
+                         algorithm.initialize(visualizationState[algorithmKey]);
+                    }
+                }
+
+                // Setup controls and render visualization - Ensure canvas size is set before rendering
+                resizeCanvas(); // Set initial size
+                algorithm.setupControls(visualizationState[algorithmKey]);
+                algorithm.render(visualizationState[algorithmKey]);
+
+                // Setup mouse events for tooltip if applicable
+                 if (algorithmKey === 'kmeans' || algorithmKey === 'linear-regression') {
+                     visualizationCanvas.onmousemove = (event) => {
+                        const rect = visualizationCanvas.getBoundingClientRect();
+                        const mouseX = event.clientX - rect.left;
+                        const mouseY = event.clientY - rect.top;
+
+                        let hoveredElement = null;
+                        const state = visualizationState[currentAlgorithm];
+
+                        // Check data points
+                        if (state && state.dataPoints) {
+                            for (const point of state.dataPoints) {
+                                // Convert data point coordinates to canvas coordinates for hit testing
+                                const canvasX = dataXToCanvasX(point.x);
+                                const canvasY = dataYToCanvasY(point.y);
+                                const dist = Math.sqrt((mouseX - canvasX)**2 + (mouseY - canvasY)**2);
+                                if (dist < 6) { // Check distance from point center (adjust hit area as needed)
+                                    hoveredElement = point;
+                                    break;
+                                }
+                            }
+                        }
+                        // Could add checks for other elements like centroids if needed
+
+                        if (hoveredElement) {
+                            tooltip.style.left = `${event.clientX + 10}px`;
+                            tooltip.style.top = `${event.clientY + 10}px`;
+                            // Customize tooltip text based on element type or algorithm
+                            if (currentAlgorithm === 'kmeans') {
+                                tooltip.textContent = `(${hoveredElement.x.toFixed(1)}, ${hoveredElement.y.toFixed(1)}), Cluster: ${hoveredElement.cluster !== -1 ? hoveredElement.cluster : 'Unassigned'}`;
+                            } else if (currentAlgorithm === 'linear-regression') {
+                                tooltip.textContent = `(${hoveredElement.x.toFixed(1)}, ${hoveredElement.y.toFixed(1)})`;
+                            } else {
+                                tooltip.textContent = `Data Point`; // Default
+                            }
+                            tooltip.style.opacity = 1;
+                            tooltip.setAttribute('aria-hidden', 'false');
+                        } else {
+                            tooltip.style.opacity = 0;
+                            tooltip.setAttribute('aria-hidden', 'true');
+                        }
+                    };
+                     visualizationCanvas.onmouseout = () => {
+                        tooltip.style.opacity = 0;
+                        tooltip.setAttribute('aria-hidden', 'true');
+                    };
+                 } else {
+                     // Remove mouse listeners if the algorithm doesn't use tooltips
+                     visualizationCanvas.onmousemove = null;
+                     visualizationCanvas.onmouseout = null;
+                 }
+            }
+        }
+
+        // Add event listeners to sidebar buttons
+        sidebarButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                loadAlgorithm(button.dataset.algorithm);
+            });
+        });
+
+         // Add event listener for expandable sections
+        document.addEventListener('click', (event) => {
+            const toggle = event.target.closest('.expand-toggle');
+            if (toggle) {
+                const content = toggle.nextElementSibling; // The .expand-content div
+                if (!content) return;
+
+                const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+
+                if (isExpanded) {
+                    toggle.setAttribute('aria-expanded', 'false');
+                    content.setAttribute('aria-hidden', 'true');
+                     content.style.maxHeight = content.scrollHeight + 'px'; // Set current height before collapsing
+                     requestAnimationFrame(() => { // Use rAF to ensure height is set before transition
+                         content.style.maxHeight = '0';
+                         content.style.padding = '0 var(--spacing-medium)'; // Reset padding
+                     });
+
+                } else {
+                    toggle.setAttribute('aria-expanded', 'true');
+                    content.setAttribute('aria-hidden', 'false');
+                    // Set max-height to the scrollHeight to transition from 0 to content height
+                     content.style.maxHeight = content.scrollHeight + 'px';
+                     content.style.padding = "var(--spacing-medium)"; // Apply padding
+
+                     // After transition, set max-height back to a large value or 'none'
+                     // to allow content to grow if resized. 'none' breaks transition back.
+                     // A large fixed value is often sufficient, or recalculate on resize.
+                     const transitionEndHandler = () => {
+                         if (toggle.getAttribute('aria-expanded') === 'true') {
+                              content.style.maxHeight = '1000px'; // Keep it large after expansion
+                         }
+                         content.removeEventListener('transitionend', transitionEndHandler);
+                     };
+                     content.addEventListener('transitionend', transitionEndHandler);
+                }
+            }
+        });
+
+
+        // Add keyboard navigation for sidebar
+        const sidebarList = document.querySelector('.sidebar ul');
+        let focusedButtonIndex = -1; // Track index of the currently focused sidebar button
+
+        // Initialize focused index based on active button on load
+        const activeBtn = sidebarList.querySelector('button.active');
+        if (activeBtn) {
+            focusedButtonIndex = Array.from(sidebarButtons).indexOf(activeBtn);
+        }
+
+
+        sidebarList.addEventListener('keydown', (event) => {
+            const buttons = Array.from(sidebarList.querySelectorAll('button'));
+            if (buttons.length === 0) return;
+
+            // If no button is focused, focus the active one or the first one
+            if (focusedButtonIndex === -1) {
+                 const currentActive = buttons.find(btn => btn.classList.contains('active'));
+                 focusedButtonIndex = currentActive ? buttons.indexOf(currentActive) : 0;
+                 buttons[focusedButtonIndex].focus();
+                 event.preventDefault(); // Prevent default scroll
+                 return;
+            }
+
+
+            if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
+                event.preventDefault();
+                focusedButtonIndex = (focusedButtonIndex + 1) % buttons.length;
+                buttons[focusedButtonIndex].focus();
+            } else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
+                event.preventDefault();
+                focusedButtonIndex = (focusedButtonIndex - 1 + buttons.length) % buttons.length;
+                buttons[focusedButtonIndex].focus();
+            } else if (event.key === 'Enter' || event.key === ' ') {
+                if (focusedButtonIndex !== -1) {
+                    event.preventDefault();
+                    buttons[focusedButtonIndex].click();
+                }
+            }
+        });
+
+        // Update focusedButtonIndex when a button is clicked or focused by mouse
+        sidebarButtons.forEach((button, index) => {
+            button.addEventListener('click', () => {
+                focusedButtonIndex = index;
+            });
+            button.addEventListener('focus', () => {
+                focusedButtonIndex = index;
+            });
+        });
+
+        // Function to resize canvas based on its parent container
+        function resizeCanvas() {
+             const parent = visualizationCanvas.parentElement;
+             if (!parent) return;
+
+             const rect = parent.getBoundingClientRect();
+             const paddingLeft = parseFloat(getComputedStyle(parent).paddingLeft);
+             const paddingRight = parseFloat(getComputedStyle(parent).paddingRight);
+             const borderLeft = parseFloat(getComputedStyle(parent).borderLeftWidth);
+             const borderRight = parseFloat(getComputedStyle(parent).borderRightWidth);
+
+             const newWidth = rect.width - paddingLeft - paddingRight - borderLeft - borderRight;
+             // Get the height based on the CSS aspect-ratio or max-height
+             const newHeight = visualizationCanvas.clientHeight; // Use clientHeight to get rendered height
+
+             // Update canvas element dimensions. This resets the canvas state.
+             // Only update if dimensions have changed significantly to avoid unnecessary redraws
+             if (Math.abs(visualizationCanvas.width - newWidth) > 1 || Math.abs(visualizationCanvas.height - newHeight) > 1) {
+                 visualizationCanvas.width = newWidth;
+                 visualizationCanvas.height = newHeight;
+
+                 // Re-render the current visualization state after resize
+                 if (currentAlgorithm && algorithms[currentAlgorithm] && algorithms[currentAlgorithm].render) {
+                     algorithms[currentAlgorithm].render(visualizationState[currentAlgorithm]);
+                 }
+             }
+        }
+
+        // Observe the parent element of the canvas for resizing
+        const resizeObserver = new ResizeObserver(entries => {
+            // Check if the observed element is the canvas's parent
+            if (entries.some(entry => entry.target === visualizationCanvas.parentElement)) {
+                 resizeCanvas();
+            }
+        });
+
+        // Start observing the parent element
+        if (visualizationCanvas.parentElement) {
+             resizeObserver.observe(visualizationCanvas.parentElement);
+        }
+
+
+        // Load the intro section by default
+        loadAlgorithm('intro');
+
+
+    </script>
+</body>
+</html>

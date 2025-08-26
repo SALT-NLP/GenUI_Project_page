@@ -1,0 +1,2670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Specialty Tea Shop</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Roboto:wght@300;400;500;700&display=swap">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet/dist/leaflet.css" />
+    <style>
+        :root {
+            /* Base Colors */
+            --color-white: #ffffff;
+            --color-black: #000000;
+            --color-background: #f8f5f0; /* Soft off-white */
+            --color-text: #333333; /* Dark grey for text */
+            --color-light-grey: #f0f0f0; /* Light grey for backgrounds/borders */
+
+            /* Tea Palette */
+            --color-tea-green: #4a7c59; /* Deep green */
+            --color-tea-brown: #8b5a2b; /* Earthy brown */
+            --color-tea-accent: #c28b00; /* Golden accent */
+            --color-tea-light: #e0e0d1; /* Light green/grey */
+
+            /* UI Colors */
+            --color-primary: var(--color-tea-green);
+            --color-secondary: var(--color-tea-brown);
+            --color-accent: var(--color-tea-accent);
+            --color-border: #dddddd; /* Lighter border */
+            --color-shadow: rgba(0, 0, 0, 0.08); /* Subtle shadow */
+            --color-hover: rgba(0, 0, 0, 0.03); /* Very subtle hover */
+            --color-error: #d9534f; /* Red for errors */
+
+            /* Typography */
+            --font-heading: 'Merriweather', serif;
+            --font-body: 'Roboto', sans-serif;
+
+            /* Spacing */
+            --space-xs: 8px;
+            --space-sm: 16px;
+            --space-md: 24px;
+            --space-lg: 48px;
+            --space-xl: 96px;
+
+            /* Border Radius */
+            --border-radius-sm: 4px;
+            --border-radius-md: 8px;
+
+            /* Transitions */
+            --transition-speed: 0.3s;
+            --transition-ease: ease-in-out;
+        }
+
+        body {
+            font-family: var(--font-body);
+            color: var(--color-text);
+            margin: 0;
+            padding: 0;
+            background-color: var(--color-background);
+            line-height: 1.6;
+            overflow-x: hidden; /* Prevent horizontal scroll from animations */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: var(--font-heading);
+            color: var(--color-primary);
+            margin-bottom: var(--space-sm);
+            line-height: 1.2;
+        }
+
+        h1 { font-size: 2.5em; }
+        h2 { font-size: 2em; }
+        h3 { font-size: 1.5em; }
+
+        a {
+            text-decoration: none;
+            color: var(--color-primary);
+            transition: color var(--transition-speed) var(--transition-ease);
+        }
+
+        a:hover {
+            color: var(--color-accent);
+        }
+
+        button, .button {
+            font-family: var(--font-body);
+            font-size: 1em;
+            padding: var(--space-sm) var(--space-md);
+            border: none;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            transition: background-color var(--transition-speed) var(--transition-ease), transform 0.1s ease-in-out, opacity var(--transition-speed);
+            min-width: 100px; /* Ensure minimum click target size */
+            display: inline-flex; /* Use flex for centering text/icons */
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        button:hover:not(:disabled), .button:hover {
+            background-color: var(--color-hover);
+        }
+
+        button:active:not(:disabled), .button:active {
+            transform: scale(0.98);
+        }
+
+        button:disabled, .button.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background-color: var(--color-primary);
+            color: var(--color-white);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background-color: color-mix(in srgb, var(--color-primary) 90%, black); /* Slightly darker green */
+            color: var(--color-white);
+        }
+
+        .btn-secondary {
+            background-color: var(--color-secondary);
+            color: var(--color-white);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background-color: color-mix(in srgb, var(--color-secondary) 90%, black); /* Slightly darker brown */
+            color: var(--color-white);
+        }
+
+         .btn-text {
+            background: none;
+            color: var(--color-primary);
+            padding: var(--space-xs) var(--space-sm);
+            min-width: auto;
+         }
+
+         .btn-text:hover:not(:disabled) {
+            background-color: var(--color-light-grey);
+         }
+
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 var(--space-md);
+        }
+
+        /* Header */
+        .site-header {
+            background-color: var(--color-white);
+            padding: var(--space-sm) 0;
+            box-shadow: 0 2px 4px var(--color-shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .site-logo {
+            font-family: var(--font-heading);
+            font-size: 1.8em;
+            color: var(--color-primary);
+            font-weight: 700;
+        }
+
+        .main-nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            gap: var(--space-md);
+        }
+
+        .main-nav a {
+            color: var(--color-text);
+            font-weight: 500;
+            padding: var(--space-xs) 0;
+            position: relative;
+        }
+
+        .main-nav a::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 0;
+            height: 2px;
+            background-color: var(--color-accent);
+            transition: width var(--transition-speed) var(--transition-ease);
+        }
+
+        .main-nav a:hover::after,
+        .main-nav a.active::after {
+            width: 100%;
+        }
+
+        .header-icons {
+            display: flex;
+            gap: var(--space-md);
+        }
+
+        .icon-button {
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            color: var(--color-text);
+            font-size: 1.4em; /* Slightly larger icon */
+            transition: color var(--transition-speed) var(--transition-ease);
+            display: flex; /* Use flex to align icon and count */
+            align-items: center;
+            position: relative; /* For cart count positioning */
+            min-width: 30px; /* Ensure click target */
+            min-height: 30px;
+        }
+
+        .icon-button:hover {
+            color: var(--color-primary);
+        }
+
+         .icon-button svg {
+             fill: currentColor; /* Use current text color for SVG */
+             width: 1em; /* Scale SVG with font size */
+             height: 1em;
+         }
+
+        .cart-count {
+            background-color: var(--color-accent);
+            color: var(--color-white);
+            font-size: 0.6em; /* Smaller font size */
+            font-weight: bold;
+            border-radius: 50%;
+            padding: 2px 5px; /* Adjust padding */
+            position: absolute; /* Position relative to parent icon-button */
+            top: -5px; /* Adjust position */
+            right: -5px; /* Adjust position */
+            line-height: 1; /* Ensure count is centered */
+            min-width: 18px; /* Minimum size for circle */
+            text-align: center;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            position: relative;
+            height: 70vh; /* Adjust height as needed */
+            background: url('https://placehold.co/1920x800/e0e0d1/333?text=High-Quality+Tea+Image') no-repeat center center/cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: var(--color-white);
+            padding: var(--space-xl) var(--space-md);
+        }
+
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Darker overlay */
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+            animation: fadeInScale 0.8s ease-out forwards; /* Add animation */
+            opacity: 0;
+        }
+
+         @keyframes fadeInScale {
+             from {
+                 opacity: 0;
+                 transform: scale(0.95);
+             }
+             to {
+                 opacity: 1;
+                 transform: scale(1);
+             }
+         }
+
+
+        .hero-content h1 {
+            color: var(--color-white);
+            font-size: 3.5em; /* Larger font size */
+            margin-bottom: var(--space-sm);
+            text-shadow: 1px 1px 4px var(--color-black);
+        }
+
+        .hero-content p {
+            font-size: 1.3em; /* Larger font size */
+            margin-bottom: var(--space-lg); /* More space */
+            text-shadow: 1px 1px 2px var(--color-black);
+        }
+
+        /* Section Styling */
+        .section {
+            padding: var(--space-xl) 0;
+            background-color: var(--color-white);
+            margin-bottom: var(--space-lg);
+            opacity: 0; /* Initial state for fade-in */
+            transform: translateY(20px); /* Initial state for slide-in */
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .section.visible {
+             opacity: 1;
+             transform: translateY(0);
+        }
+
+
+        .section:nth-of-type(even) {
+            background-color: var(--color-background);
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: var(--space-lg);
+            font-size: 2.2em; /* Slightly larger title */
+        }
+
+        /* Featured Products / Product Grid */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Adjust min width */
+            gap: var(--space-md);
+        }
+
+        .product-card {
+            background-color: var(--color-white);
+            border-radius: var(--border-radius-md);
+            box-shadow: 0 4px 8px var(--color-shadow);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform var(--transition-speed) var(--transition-ease), box-shadow var(--transition-speed) var(--transition-ease);
+            cursor: pointer;
+            border: 1px solid transparent; /* Add border for focus state */
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+         .product-card:focus-visible {
+             outline: none;
+             border-color: var(--color-accent);
+             box-shadow: 0 0 0 3px rgba(194, 139, 0, 0.3); /* Focus ring */
+         }
+
+        .product-card img {
+            width: 100%;
+            height: 220px; /* Slightly taller image */
+            object-fit: cover;
+            display: block;
+        }
+
+        .product-info {
+            padding: var(--space-sm) var(--space-md); /* Adjust padding */
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .product-info h3 {
+            margin-top: 0;
+            margin-bottom: var(--space-xs);
+            font-size: 1.3em; /* Slightly larger title */
+            color: var(--color-text);
+        }
+
+        .product-info p {
+            margin-bottom: var(--space-sm);
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        .product-info .price {
+            font-size: 1.2em; /* Larger price */
+            font-weight: bold;
+            color: var(--color-secondary);
+            margin-bottom: var(--space-md); /* More space before button */
+        }
+
+        .product-card .btn-primary {
+            width: 100%;
+            text-align: center;
+            padding: var(--space-sm); /* Adjust button padding */
+        }
+
+        /* Educational Content */
+        .education-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--space-md);
+        }
+
+        .education-card {
+            background-color: var(--color-white);
+            border-radius: var(--border-radius-md);
+            box-shadow: 0 4px 8px var(--color-shadow);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform var(--transition-speed) var(--transition-ease), box-shadow var(--transition-speed) var(--transition-ease);
+            cursor: pointer;
+            border: 1px solid transparent; /* Add border for focus state */
+        }
+
+         .education-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+         .education-card:focus-visible {
+             outline: none;
+             border-color: var(--color-accent);
+             box-shadow: 0 0 0 3px rgba(194, 139, 0, 0.3); /* Focus ring */
+         }
+
+
+        .education-card img {
+            width: 100%;
+            height: 200px; /* Slightly taller image */
+            object-fit: cover;
+            display: block;
+        }
+
+        .education-info {
+            padding: var(--space-sm) var(--space-md); /* Adjust padding */
+            flex-grow: 1;
+        }
+
+        .education-info h3 {
+            margin-top: 0;
+            margin-bottom: var(--space-xs);
+            font-size: 1.4em; /* Slightly larger title */
+            color: var(--color-text);
+        }
+
+        .education-info p {
+            font-size: 1em; /* Adjust font size */
+            color: #666;
+            line-height: 1.5;
+        }
+
+        /* About Us / Store Info Section */
+        .info-section-content {
+            display: flex;
+            gap: var(--space-lg);
+            align-items: center;
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        }
+
+        .info-section-content > div {
+            flex: 1;
+            min-width: 300px; /* Ensure content doesn't get too squished */
+        }
+
+        .info-section-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: var(--border-radius-md);
+            box-shadow: 0 4px 8px var(--color-shadow);
+        }
+
+        #map {
+            height: 400px;
+            width: 100%;
+            border-radius: var(--border-radius-md);
+            box-shadow: 0 4px 8px var(--color-shadow);
+        }
+
+        /* Footer */
+        .site-footer {
+            background-color: var(--color-primary);
+            color: var(--color-white);
+            padding: var(--space-lg) 0 var(--space-sm); /* Adjust padding */
+            text-align: center;
+            margin-top: auto; /* Push footer to the bottom */
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            text-align: left;
+            flex-wrap: wrap;
+            gap: var(--space-md);
+        }
+
+        .footer-section {
+            flex: 1;
+            min-width: 180px; /* Adjust min width */
+            margin-bottom: var(--space-md);
+        }
+
+        .footer-section h4 {
+            color: var(--color-white);
+            margin-bottom: var(--space-sm);
+            font-size: 1.1em;
+        }
+
+        .footer-section ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .footer-section a {
+            color: var(--color-white);
+            display: block;
+            padding: var(--space-xs) 0;
+            font-size: 0.95em;
+            transition: color var(--transition-speed) var(--transition-ease), transform 0.1s ease-in-out;
+        }
+
+        .footer-section a:hover {
+            color: var(--color-accent);
+            transform: translateX(4px); /* Subtle slide effect */
+        }
+
+        .social-icons a {
+            display: inline-block;
+            margin-right: var(--space-sm);
+            font-size: 1.6em; /* Slightly larger icons */
+            color: var(--color-white);
+            transition: color var(--transition-speed) var(--transition-ease), transform 0.1s ease-in-out;
+        }
+
+        .social-icons a:hover {
+            color: var(--color-accent);
+            transform: scale(1.1);
+        }
+
+        .social-icons svg {
+             fill: currentColor;
+             width: 1em;
+             height: 1em;
+        }
+
+
+        .footer-bottom {
+            margin-top: var(--space-md);
+            padding-top: var(--space-md);
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 0.9em;
+            text-align: center;
+        }
+
+        /* Utility Classes */
+        .text-center { text-align: center; }
+        .mt-sm { margin-top: var(--space-sm); }
+        .mt-md { margin-top: var(--space-md); }
+        .mt-lg { margin-top: var(--space-lg); }
+        .mb-md { margin-bottom: var(--space-md); }
+        .mb-lg { margin-bottom: var(--space-lg); }
+
+        /* Accessibility */
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            margin: -1px;
+            padding: 0;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
+
+         *:focus-visible {
+             outline: 2px solid var(--color-accent);
+             outline-offset: 2px;
+         }
+
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: none; /* Hidden by default */
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity var(--transition-speed) var(--transition-ease);
+        }
+
+        .modal-content {
+            background-color: var(--color-white);
+            padding: var(--space-md);
+            border-radius: var(--border-radius-md);
+            box-shadow: 0 8px 16px var(--color-shadow);
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+            transform: translateY(-20px);
+            opacity: 0;
+            transition: transform var(--transition-speed) var(--transition-ease), opacity var(--transition-speed) var(--transition-ease);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .close-button {
+            position: absolute;
+            top: var(--space-sm);
+            right: var(--space-sm);
+            font-size: 1.5em;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #666;
+            padding: var(--space-xs); /* Increase click area */
+            line-height: 1;
+            min-width: auto;
+        }
+
+        /* Form Styling */
+        .contact-form {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: var(--color-white);
+            padding: var(--space-lg); /* More padding */
+            border-radius: var(--border-radius-md);
+            box-shadow: 0 4px 8px var(--color-shadow);
+        }
+
+        .form-group {
+            margin-bottom: var(--space-md);
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: var(--space-xs);
+            font-weight: 500;
+            color: var(--color-text);
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: var(--space-sm);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius-sm);
+            font-family: var(--font-body);
+            font-size: 1em;
+            transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 4px rgba(74, 124, 89, 0.2);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        .form-group .error-message {
+            color: var(--color-error);
+            font-size: 0.9em;
+            margin-top: var(--space-xs);
+            display: none; /* Hidden by default */
+        }
+
+        .form-group.invalid input,
+        .form-group.invalid textarea,
+        .form-group.invalid select {
+            border-color: var(--color-error);
+        }
+
+        .form-group.invalid .error-message {
+            display: block;
+        }
+
+        /* Product Detail Page Specifics */
+        .product-detail-layout {
+            display: flex;
+            gap: var(--space-lg);
+            flex-wrap: wrap;
+        }
+
+        .product-detail-layout > div {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .product-detail-layout img {
+            max-width: 100%;
+            height: auto;
+            border-radius: var(--border-radius-md);
+            box-shadow: 0 4px 8px var(--color-shadow);
+        }
+
+        .thumbnail-gallery {
+            display: flex;
+            gap: var(--space-sm);
+            margin-top: var(--space-sm);
+        }
+
+        .thumbnail-gallery img {
+             width: 80px;
+             height: 80px;
+             object-fit: cover;
+             border-radius: var(--border-radius-sm);
+             border: 1px solid var(--color-border);
+             cursor: pointer;
+             transition: border-color var(--transition-speed), transform 0.1s ease-in-out;
+        }
+
+        .thumbnail-gallery img:hover,
+        .thumbnail-gallery img.active {
+             border-color: var(--color-primary);
+             transform: scale(1.05);
+        }
+
+         .thumbnail-gallery img:focus-visible {
+             outline: none;
+             border-color: var(--color-accent);
+             box-shadow: 0 0 0 3px rgba(194, 139, 0, 0.3); /* Focus ring */
+         }
+
+
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-md);
+        }
+
+        .quantity-control input[type="number"] {
+            width: 60px;
+            text-align: center;
+            padding: var(--space-xs);
+             -moz-appearance: textfield; /* Hide arrows in Firefox */
+        }
+
+         .quantity-control input[type="number"]::-webkit-outer-spin-button,
+         .quantity-control input[type="number"]::-webkit-inner-spin-button {
+             -webkit-appearance: none; /* Hide arrows in Chrome, Safari, Edge */
+             margin: 0;
+         }
+
+
+        .quantity-control button {
+             width: 30px;
+             height: 30px;
+             padding: 0;
+             display: flex;
+             align-items: center;
+             justify-content: center;
+             border: 1px solid var(--color-border);
+             background-color: var(--color-light-grey);
+             min-width: auto;
+        }
+
+         .quantity-control button:hover:not(:disabled) {
+             background-color: var(--color-border);
+         }
+
+        details summary {
+             cursor: pointer;
+             font-weight: bold;
+             padding: var(--space-xs) 0;
+             outline: none; /* Remove default outline */
+             transition: color var(--transition-speed);
+        }
+
+         details summary:hover {
+             color: var(--color-primary);
+         }
+
+          details summary:focus-visible {
+             outline: 2px solid var(--color-accent);
+             outline-offset: 2px;
+         }
+
+
+         details summary::-webkit-details-marker {
+             display: none; /* Hide default marker */
+         }
+
+         details summary::before {
+             content: '+'; /* Custom marker */
+             display: inline-block;
+             margin-right: var(--space-xs);
+             font-weight: normal;
+             transition: transform var(--transition-speed) var(--transition-ease);
+         }
+
+         details[open] summary::before {
+             content: '-';
+             transform: rotate(0deg); /* Reset rotation if any */
+         }
+
+
+        details p {
+             margin-top: var(--space-sm);
+             padding-left: var(--space-md); /* Indent content */
+             border-left: 2px solid var(--color-border); /* Add a visual line */
+        }
+
+         /* Cart Page Specifics */
+         .cart-item {
+             display: flex;
+             align-items: center;
+             gap: var(--space-md);
+             border-bottom: 1px solid var(--color-border);
+             padding: var(--space-md) 0;
+             flex-wrap: wrap; /* Allow wrapping */
+             position: relative; /* For remove button positioning on small screens */
+         }
+
+         .cart-item img {
+             width: 80px;
+             height: 80px;
+             object-fit: cover;
+             border-radius: var(--border-radius-sm);
+             flex-shrink: 0; /* Prevent shrinking */
+         }
+
+         .cart-item-info {
+             flex-grow: 1;
+             min-width: 150px; /* Ensure info area doesn't collapse */
+         }
+
+         .cart-item-info h3 {
+             margin: 0;
+             font-size: 1.1em;
+             color: var(--color-text);
+         }
+
+         .cart-item-info .price {
+             font-size: 1em;
+             color: var(--color-text);
+         }
+
+         .cart-item .quantity-control {
+             margin-bottom: 0; /* Remove bottom margin */
+         }
+
+         .cart-item-total {
+             font-size: 1.1em;
+             font-weight: bold;
+             width: 80px; /* Fixed width for alignment */
+             text-align: right;
+             flex-shrink: 0;
+         }
+
+         .cart-item .icon-button {
+             color: #666;
+             font-size: 1.2em;
+             margin-left: var(--space-sm); /* Add space */
+         }
+
+         .cart-summary {
+             text-align: right;
+             margin-top: var(--space-md);
+             padding-top: var(--space-md);
+             border-top: 1px solid var(--color-border);
+         }
+
+         .cart-summary .subtotal {
+             font-size: 1.3em;
+             font-weight: bold;
+             margin-bottom: var(--space-md);
+             color: var(--color-primary);
+         }
+
+         /* Checkout Page Specifics */
+         .checkout-progress {
+             display: flex;
+             justify-content: center;
+             gap: var(--space-md);
+             margin-bottom: var(--space-lg);
+             font-weight: bold;
+             font-size: 1.1em;
+             flex-wrap: wrap; /* Allow wrapping */
+         }
+
+         .checkout-progress > div {
+             color: #cccccc; /* Default inactive color */
+             position: relative;
+             padding-right: var(--space-md); /* Space for arrow */
+         }
+
+         .checkout-progress > div:last-child {
+             padding-right: 0; /* No space for arrow on last item */
+         }
+
+
+         .checkout-progress > div.active {
+             color: var(--color-primary);
+         }
+
+         .checkout-progress > div:not(:last-child)::after {
+             content: '>';
+             position: absolute;
+             right: calc(var(--space-md) / 2 * -1); /* Position arrow between items */
+             top: 0;
+             color: #cccccc;
+             font-weight: normal;
+         }
+
+         /* Search Results Page Specifics */
+         .search-result-item {
+             border-bottom: 1px solid var(--color-border);
+             padding: var(--space-sm) 0;
+             margin-bottom: var(--space-sm);
+         }
+
+         .search-result-item h3 {
+             margin-bottom: var(--space-xs);
+             font-size: 1.2em;
+         }
+
+         .search-result-item p {
+             font-size: 0.9em;
+             color: #666;
+         }
+
+         #no-results {
+             text-align: center;
+             margin-top: var(--space-md);
+             font-style: italic;
+             color: #666;
+         }
+
+         /* Responsive */
+        @media (max-width: 1024px) {
+             .product-grid {
+                 grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+             }
+             .info-section-content {
+                 gap: var(--space-md);
+             }
+             .info-section-content > div {
+                 min-width: 280px;
+             }
+        }
+
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2em; }
+            h2 { font-size: 1.7em; }
+            h3 { font-size: 1.3em; }
+            .section-title { font-size: 2em; }
+
+
+            .header-content {
+                flex-direction: column;
+                gap: var(--space-sm);
+            }
+
+            .main-nav ul {
+                flex-direction: column;
+                gap: var(--space-xs);
+                text-align: center;
+            }
+
+            .header-icons {
+                width: 100%;
+                justify-content: center;
+                gap: var(--space-lg);
+            }
+
+            .hero-section {
+                height: 60vh; /* Adjust height */
+                padding: var(--space-lg) var(--space-md);
+            }
+
+            .hero-content h1 {
+                font-size: 2.8em;
+            }
+             .hero-content p {
+                 font-size: 1.1em;
+             }
+
+            .section {
+                padding: var(--space-lg) 0;
+            }
+
+            .info-section-content {
+                flex-direction: column;
+                gap: var(--space-md);
+            }
+
+             .footer-content {
+                 flex-direction: column;
+                 align-items: center;
+                 text-align: center;
+             }
+
+             .footer-section {
+                 margin-bottom: var(--space-md);
+                 min-width: 100%; /* Stack sections */
+             }
+
+             .social-icons {
+                 margin-top: var(--space-sm);
+                 text-align: center;
+             }
+
+             .social-icons a {
+                 margin: 0 var(--space-sm); /* Adjust spacing */
+             }
+
+             .cart-item {
+                 flex-direction: column;
+                 align-items: flex-start;
+             }
+
+             .cart-item img {
+                 margin-bottom: var(--space-sm); /* Add space below image */
+             }
+
+
+             .cart-item-info {
+                 min-width: auto;
+                 width: 100%;
+                 margin-bottom: var(--space-sm);
+             }
+
+             .cart-item .quantity-control {
+                 width: 100%;
+                 justify-content: center;
+                 margin-bottom: var(--space-sm);
+             }
+
+             .cart-item-total {
+                 width: 100%;
+                 text-align: center;
+             }
+
+             .cart-item .icon-button {
+                 position: absolute;
+                 top: var(--space-sm);
+                 right: var(--space-sm);
+                 margin-left: 0;
+             }
+
+             .checkout-progress {
+                 gap: var(--space-sm);
+             }
+
+             .checkout-progress > div {
+                 padding-right: var(--space-sm);
+             }
+
+             .checkout-progress > div:not(:last-child)::after {
+                 right: calc(var(--space-sm) / 2 * -1);
+             }
+
+             .checkout-form .text-center {
+                 flex-direction: column;
+                 gap: var(--space-sm);
+             }
+
+             .checkout-form .text-center button {
+                 width: 100%;
+             }
+        }
+
+        @media (max-width: 480px) {
+            h1 { font-size: 1.8em; }
+            h2 { font-size: 1.5em; }
+            h3 { font-size: 1.2em; }
+             .section-title { font-size: 1.8em; }
+
+
+            .hero-content h1 {
+                font-size: 2.2em;
+            }
+
+            .product-grid, .education-grid {
+                grid-template-columns: 1fr;
+            }
+
+             .container {
+                 padding: 0 var(--space-sm); /* Reduce padding */
+             }
+
+             .site-header .container, .site-footer .container {
+                 padding: 0 var(--space-sm);
+             }
+
+             .product-info, .education-info {
+                 padding: var(--space-sm); /* Reduce padding */
+             }
+
+             .contact-form {
+                 padding: var(--space-md); /* Reduce padding */
+             }
+
+             .thumbnail-gallery img {
+                 width: 60px;
+                 height: 60px;
+             }
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <div class="container header-content">
+            <a href="#" class="site-logo" data-page="home">Tea Shop</a>
+            <nav class="main-nav" aria-label="Main Navigation">
+                <ul>
+                    <li><a href="#" class="nav-link active" data-page="home">Home</a></li>
+                    <li><a href="#" class="nav-link" data-page="shop">Shop</a></li>
+                    <li><a href="#" class="nav-link" data-page="learn">Learn About Tea</a></li>
+                    <li><a href="#" class="nav-link" data-page="about">About Us</a></li>
+                    <li><a href="#" class="nav-link" data-page="store">Physical Store</a></li>
+                    <li><a href="#" class="nav-link" data-page="contact">Contact</a></li>
+                </ul>
+            </nav>
+            <div class="header-icons">
+                <button class="icon-button search-button" aria-label="Search">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path fill="currentColor" d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                </button>
+                <button class="icon-button cart-button" aria-label="Shopping Cart" data-page="cart">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path fill="currentColor" d="M17 18c-1.11 0-2 .9-2 2s.89 2 2 2 2-.9 2-2-.89-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.6-.25.91 0 1.1.9 2 2 2h13v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.49c.71 0 1.36-.31 1.82-.85l3.03-4.24c.1-.14.17-.32.17-.53 0-.27-.1-.52-.27-.74L17.43 4H5.18L4.2 2H1zm16 0c-1.11 0-2 .9-2 2s.89 2 2 2 2-.9 2-2-.89-2-2-2z"/></svg>
+                    <span class="cart-count" id="cart-count">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main id="main-content">
+        <!-- Homepage Content -->
+        <section class="hero-section" id="home-hero" aria-label="Welcome to our Tea Shop">
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <h1>Experience the Art of Tea</h1>
+                <p>Discover exquisite single-origin leaves and master the perfect brew.</p>
+                <button class="btn-primary" data-page="shop">Explore Teas</button>
+            </div>
+        </section>
+
+        <section class="section" id="home-featured-products" aria-labelledby="home-featured-products-title">
+            <div class="container">
+                <h2 class="section-title" id="home-featured-products-title">Featured Teas</h2>
+                <div class="product-grid">
+                    <!-- Product Card 1 -->
+                    <div class="product-card" data-page="product-detail-page" data-product-id="1" tabindex="0" role="link" aria-label="View Organic Sencha">
+                        <img src="https://placehold.co/300x220/4a7c59/ffffff?text=Green+Tea" alt="High-quality Organic Sencha Green Tea leaves">
+                        <div class="product-info">
+                            <div>
+                                <h3>Organic Sencha</h3>
+                                <p>A refreshing Japanese green tea.</p>
+                            </div>
+                            <div class="price">$18.00</div>
+                            <button class="btn-primary add-to-cart" data-product-id="1" aria-label="Add Organic Sencha to Cart">Add to Cart</button>
+                        </div>
+                    </div>
+                    <!-- Product Card 2 -->
+                    <div class="product-card" data-page="product-detail-page" data-product-id="2" tabindex="0" role="link" aria-label="View Assam Breakfast">
+                        <img src="https://placehold.co/300x220/8b5a2b/ffffff?text=Black+Tea" alt="High-quality Assam Black Tea leaves">
+                        <div class="product-info">
+                            <div>
+                                <h3>Assam Breakfast</h3>
+                                <p>Bold and malty Indian black tea.</p>
+                            </div>
+                            <div class="price">$15.00</div>
+                            <button class="btn-primary add-to-cart" data-product-id="2" aria-label="Add Assam Breakfast to Cart">Add to Cart</button>
+                        </div>
+                    </div>
+                    <!-- Product Card 3 -->
+                    <div class="product-card" data-page="product-detail-page" data-product-id="3" tabindex="0" role="link" aria-label="View Tie Guan Yin Oolong">
+                        <img src="https://placehold.co/300x220/c28b00/ffffff?text=Oolong+Tea" alt="High-quality Tie Guan Yin Oolong Tea leaves">
+                        <div class="product-info">
+                            <div>
+                                <h3>Tie Guan Yin Oolong</h3>
+                                <p>Floral and smooth Chinese oolong.</p>
+                            </div>
+                            <div class="price">$22.00</div>
+                            <button class="btn-primary add-to-cart" data-product-id="3" aria-label="Add Tie Guan Yin Oolong to Cart">Add to Cart</button>
+                        </div>
+                    </div>
+                    <!-- Product Card 4 -->
+                    <div class="product-card" data-page="product-detail-page" data-product-id="4" tabindex="0" role="link" aria-label="View Chamomile Dream">
+                        <img src="https://placehold.co/300x220/e0e0d1/333?text=Herbal+Tea" alt="High-quality Chamomile Dream Herbal Tea blend">
+                        <div class="product-info">
+                            <div>
+                                <h3>Chamomile Dream</h3>
+                                <p>Soothing herbal infusion.</p>
+                            </div>
+                            <div class="price">$12.00</div>
+                            <button class="btn-primary add-to-cart" data-product-id="4" aria-label="Add Chamomile Dream to Cart">Add to Cart</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="home-learn-about-tea" aria-labelledby="home-learn-about-tea-title">
+            <div class="container">
+                <h2 class="section-title" id="home-learn-about-tea-title">Learn About Tea</h2>
+                <div class="education-grid">
+                    <!-- Education Card 1 -->
+                    <div class="education-card" data-page="learn-article-page" data-article-id="brewing" tabindex="0" role="link" aria-label="Read article Mastering the Perfect Brew">
+                        <img src="https://placehold.co/400x200/4a7c59/ffffff?text=Brewing+Guide" alt="Tea brewing equipment">
+                        <div class="education-info">
+                            <h3>Mastering the Perfect Brew</h3>
+                            <p>Unlock the full flavor potential of your tea with our step-by-step brewing guides...</p>
+                        </div>
+                    </div>
+                    <!-- Education Card 2 -->
+                    <div class="education-card" data-page="learn-article-page" data-article-id="origins" tabindex="0" role="link" aria-label="Read article Journey to Tea Origins">
+                        <img src="https://placehold.co/400x200/8b5a2b/ffffff?text=Tea+Origins" alt="Tea plantation landscape">
+                        <div class="education-info">
+                            <h3>Journey to Tea Origins</h3>
+                            <p>Explore the fascinating history and diverse regions where the world's finest teas are grown...</p>
+                        </div>
+                    </div>
+                    <!-- Education Card 3 -->
+                    <div class="education-card" data-page="learn-article-page" data-article-id="types" tabindex="0" role="link" aria-label="Read article Understanding Tea Types">
+                        <img src="https://placehold.co/400x200/c28b00/ffffff?text=Tea+Types" alt="Different types of tea leaves">
+                        <div class="education-info">
+                            <h3>Understanding Tea Types</h3>
+                            <p>From green to black, oolong to white, learn about the different categories of tea and how they are processed...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center mt-lg">
+                    <button class="btn-secondary" data-page="learn">Explore All Articles</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="home-about-store" aria-labelledby="home-about-store-title">
+            <div class="container info-section-content">
+                <div>
+                    <h2 class="section-title text-center" id="home-about-store-title">Our Story & Store</h2>
+                    <h3>Passion for Quality Tea</h3>
+                    <p>Founded by tea enthusiasts, our shop is dedicated to sourcing and sharing the world's most exceptional teas. We believe that tea is more than just a drink; it's an experience, a moment of calm, and a connection to cultures around the globe.</p>
+                    <p>Visit our physical store to explore our full collection, attend a tasting session, and meet our knowledgeable staff.</p>
+                    <button class="btn-primary" data-page="about">Read Our Full Story</button>
+                    <button class="btn-secondary mt-sm" data-page="store">Visit Our Store</button>
+                </div>
+                <div>
+                    <img src="https://placehold.co/600x400/e0e0d1/333?text=Tea+Shop+Interior" alt="Interior view of the specialty tea shop">
+                </div>
+            </div>
+        </section>
+
+        <!-- Placeholder for other pages (Shop, Product Detail, Cart, Checkout, Learn, About, Store, Contact, Search Results) -->
+        <!-- These sections would be dynamically loaded or shown/hidden in a real application -->
+
+        <section class="section" id="shop-page" style="display: none;" aria-labelledby="shop-page-title">
+            <div class="container">
+                <h2 class="section-title" id="shop-page-title">Shop All Teas</h2>
+                <!-- Filter/Sort Controls Placeholder -->
+                <div style="margin-bottom: var(--space-md); display: flex; gap: var(--space-sm); flex-wrap: wrap;">
+                    <div class="form-group" style="margin-bottom: 0; flex-grow: 1; min-width: 150px;">
+                         <label for="category-filter" class="visually-hidden">Filter by Category</label>
+                         <select id="category-filter" aria-label="Filter by Category">
+                            <option value="">All Categories</option>
+                            <option value="green">Green Tea</option>
+                            <option value="black">Black Tea</option>
+                            <option value="oolong">Oolong Tea</option>
+                            <option value="herbal">Herbal Tea</option>
+                            <option value="white">White Tea</option>
+                            <option value="pu-erh">Pu-erh Tea</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0; flex-grow: 1; min-width: 150px;">
+                        <label for="sort-by" class="visually-hidden">Sort By</label>
+                        <select id="sort-by" aria-label="Sort By">
+                            <option value="price-asc">Price: Low to High</option>
+                            <option value="price-desc">Price: High to Low</option>
+                            <option value="name-asc">Name: A-Z</option>
+                            <option value="name-desc">Name: Z-A</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="product-grid" id="shop-product-grid">
+                    <!-- More product cards would go here -->
+                    <div class="product-card" data-page="product-detail-page" data-product-id="1" tabindex="0" role="link" aria-label="View Organic Sencha">
+                        <img src="https://placehold.co/300x220/4a7c59/ffffff?text=Green+Tea" alt="High-quality Organic Sencha Green Tea leaves">
+                        <div class="product-info">
+                            <div>
+                                <h3>Organic Sencha</h3>
+                                <p>A refreshing Japanese green tea.</p>
+                            </div>
+                            <div class="price">$18.00</div>
+                            <button class="btn-primary add-to-cart" data-product-id="1" aria-label="Add Organic Sencha to Cart">Add to Cart</button>
+                        </div>
+                    </div>
+                    <div class="product-card" data-page="product-detail-page" data-product-id="2" tabindex="0" role="link" aria-label="View Assam Breakfast">
+                        <img src="https://placehold.co/300x220/8b5a2b/ffffff?text=Black+Tea" alt="High-quality Assam Black Tea leaves">
+                        <div class="product-info">
+                            <div>
+                                <h3>Assam Breakfast</h3>
+                                <p>Bold and malty Indian black tea.</p>
+                            </div>
+                            <div class="price">$15.00</div>
+                            <button class="btn-primary add-to-cart" data-product-id="2" aria-label="Add Assam Breakfast to Cart">Add to Cart</button>
+                        </div>
+                    </div>
+                    <div class="product-card" data-page="product-detail-page" data-product-id="3" tabindex="0" role="link" aria-label="View Tie Guan Yin Oolong">
+                        <img src="https://placehold.co/300x220/c28b00/ffffff?text=Oolong+Tea" alt="High-quality Tie Guan Yin Oolong Tea leaves">
+                        <div class="product-info">
+                            <div>
+                                <h3>Tie Guan Yin Oolong</h3>
+                                <p>Floral and smooth Chinese oolong.</p>
+                            </div>
+                            <div class="price">$22.00</div>
+                            <button class="btn-primary add-to-cart" data-product-id="3" aria-label="Add Tie Guan Yin Oolong to Cart">Add to Cart</button>
+                        </div>
+                    </div>
+                     <div class="product-card" data-page="product-detail-page" data-product-id="5" tabindex="0" role="link" aria-label="View Silver Needle White Tea">
+                        <img src="https://placehold.co/300x220/e0e0d1/333?text=White+Tea" alt="High-quality Silver Needle White Tea leaves">
+                        <div class="product-info">
+                            <div>
+                                <h3>Silver Needle White Tea</h3>
+                                <p>Delicate and sweet.</p>
+                            </div>
+                            <div class="price">$28.00</div>
+                            <button class="btn-primary add-to-cart" data-product-id="5" aria-label="Add Silver Needle White Tea to Cart">Add to Cart</button>
+                        </div>
+                    </div>
+                     <div class="product-card" data-page="product-detail-page" data-product-id="6" tabindex="0" role="link" aria-label="View Aged Pu-erh">
+                        <img src="https://placehold.co/300x220/8b5a2b/ffffff?text=Pu-erh+Tea" alt="High-quality Pu-erh Tea cake">
+                        <div class="product-info">
+                            <div>
+                                <h3>Aged Pu-erh</h3>
+                                <p>Rich and earthy.</p>
+                            </div>
+                            <div class="price">$35.00</div>
+                            <button class="btn-primary add-to-cart" data-product-id="6" aria-label="Add Aged Pu-erh to Cart">Add to Cart</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Pagination Placeholder -->
+                <div class="text-center mt-lg">
+                    <button class="btn-secondary" aria-label="Previous page">Previous</button>
+                    <button class="btn-secondary" aria-label="Page 1">1</button>
+                    <button class="btn-secondary" aria-label="Page 2">2</button>
+                    <button class="btn-secondary" aria-label="Next page">Next</button>
+                </div>
+            </div>
+        </section>
+
+         <section class="section" id="product-detail-page" style="display: none;" aria-labelledby="product-title">
+            <div class="container">
+                <div class="product-detail-layout">
+                    <div>
+                         <img src="https://placehold.co/500x500/4a7c59/ffffff?text=Product+Image" alt="Product Image" id="product-main-image">
+                         <div class="thumbnail-gallery" id="product-thumbnails">
+                              <img src="https://placehold.co/80x80/e0e0d1/333?text=Img1" alt="Thumbnail 1" class="active" tabindex="0" role="button" aria-label="View image 1">
+                               <img src="https://placehold.co/80x80/e0e0d1/333?text=Img2" alt="Thumbnail 2" tabindex="0" role="button" aria-label="View image 2">
+                                <img src="https://placehold.co/80x80/e0e0d1/333?text=Img3" alt="Thumbnail 3" tabindex="0" role="button" aria-label="View image 3">
+                         </div>
+                    </div>
+                    <div>
+                        <h2 id="product-title">Product Title</h2>
+                        <div class="price" style="font-size: 1.5em; margin-bottom: var(--space-md);" id="product-price">$XX.XX</div>
+                        <p id="product-brief-description"><strong>Brief Description:</strong> Loading...</p>
+                        <p id="product-detailed-description"><strong>Detailed Description:</strong> Loading...</p>
+
+                        <details style="margin-bottom: var(--space-md);">
+                            <summary aria-expanded="false" aria-controls="product-brewing-guide">Brewing Guide</summary>
+                            <div id="product-brewing-guide" role="region" aria-live="polite">
+                                <p style="margin-top: var(--space-sm);">Loading brewing guide...</p>
+                            </div>
+                        </details>
+
+                        <div class="quantity-control">
+                            <label for="quantity">Quantity:</label>
+                            <button class="quantity-btn" data-action="decrease" aria-label="Decrease quantity">-</button>
+                            <input type="number" id="quantity" value="1" min="1" aria-live="polite">
+                            <button class="quantity-btn" data-action="increase" aria-label="Increase quantity">+</button>
+                        </div>
+
+                        <button class="btn-primary add-to-cart" data-product-id="" aria-label="Add to Cart">Add to Cart</button>
+
+                        <div style="margin-top: var(--space-lg);">
+                            <h3>Related Products</h3>
+                            <div class="product-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-sm);">
+                                <!-- Small Product Card Example -->
+                                <div class="product-card" style="box-shadow: none; border: 1px solid var(--color-border);" data-page="product-detail-page" data-product-id="related-1" tabindex="0" role="link" aria-label="View Related Product">
+                                    <img src="https://placehold.co/150x100/e0e0d1/333?text=Related" alt="Related Product">
+                                    <div class="product-info" style="padding: var(--space-xs);">
+                                        <h3 style="font-size: 1em; margin-bottom: var(--space-xs);">Related Tea</h3>
+                                        <div class="price" style="font-size: 0.9em;">$XX.XX</div>
+                                    </div>
+                                </div>
+                                 <div class="product-card" style="box-shadow: none; border: 1px solid var(--color-border);" data-page="product-detail-page" data-product-id="related-2" tabindex="0" role="link" aria-label="View Related Product">
+                                    <img src="https://placehold.co/150x100/e0e0d1/333?text=Related" alt="Related Product">
+                                    <div class="product-info" style="padding: var(--space-xs);">
+                                        <h3 style="font-size: 1em; margin-bottom: var(--space-xs);">Related Tea</h3>
+                                        <div class="price" style="font-size: 0.9em;">$XX.XX</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+         </section>
+
+        <section class="section" id="cart-page" style="display: none;" aria-labelledby="cart-page-title">
+             <div class="container">
+                 <h2 class="section-title" id="cart-page-title">Shopping Cart</h2>
+                 <div id="cart-items" role="region" aria-live="polite">
+                     <!-- Cart Item Example -->
+                     <div class="cart-item" data-product-id="1">
+                         <img src="https://placehold.co/80x80/4a7c59/ffffff?text=Item" alt="Organic Sencha image">
+                         <div class="cart-item-info">
+                             <h3 style="margin: 0; font-size: 1.1em;">Organic Sencha</h3>
+                             <div class="price" style="font-size: 1em; color: var(--color-text);">$18.00</div>
+                         </div>
+                         <div class="quantity-control">
+                            <button class="quantity-btn" data-action="decrease" aria-label="Decrease quantity">-</button>
+                            <input type="number" value="1" min="1" style="width: 50px;" aria-label="Quantity">
+                            <button class="quantity-btn" data-action="increase" aria-label="Increase quantity">+</button>
+                         </div>
+                         <div class="cart-item-total price" style="font-size: 1.1em;">$18.00</div>
+                         <button class="icon-button remove-from-cart" aria-label="Remove Item" data-product-id="1">
+                             <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm2.46-7.12l1.41-1.41L12 13.17l2.12-2.12 1.41 1.41L13.41 14l2.12 2.12-1.41 1.41L12 14.83l-2.12 2.12-1.41-1.41L10.59 14l-2.13-2.12zM15.5 4l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                         </button>
+                     </div>
+                      <!-- End Cart Item Example -->
+                 </div>
+                 <div class="cart-summary">
+                     <div class="subtotal">
+                         Subtotal: <span id="cart-subtotal">$0.00</span>
+                     </div>
+                     <button class="btn-primary" data-page="checkout">Proceed to Checkout</button>
+                 </div>
+             </div>
+        </section>
+
+        <section class="section" id="checkout-page" style="display: none;" aria-labelledby="checkout-page-title">
+             <div class="container">
+                 <h2 class="section-title" id="checkout-page-title">Checkout</h2>
+                 <div class="checkout-progress" role="tablist" aria-label="Checkout steps">
+                     <div class="active" data-step="shipping" role="tab" aria-selected="true" aria-controls="checkout-step-shipping">Shipping</div>
+                     <div data-step="payment" role="tab" aria-selected="false" aria-controls="checkout-step-payment">Payment</div>
+                     <div data-step="review" role="tab" aria-selected="false" aria-controls="checkout-step-review">Review</div>
+                 </div>
+                 <!-- Checkout Form Placeholder -->
+                 <form class="contact-form" id="checkoutForm" novalidate>
+                     <div id="checkout-step-shipping" role="tabpanel" aria-labelledby="shipping" tabindex="0">
+                         <h3>Shipping Information</h3>
+                          <div class="form-group">
+                             <label for="shipping-name">Full Name</label>
+                             <input type="text" id="shipping-name" required aria-required="true" aria-describedby="shipping-name-error">
+                             <div class="error-message" id="shipping-name-error" aria-live="polite">Please enter your full name.</div>
+                         </div>
+                          <div class="form-group">
+                             <label for="shipping-address">Address</label>
+                             <input type="text" id="shipping-address" required aria-required="true" aria-describedby="shipping-address-error">
+                              <div class="error-message" id="shipping-address-error" aria-live="polite">Please enter your address.</div>
+                         </div>
+                          <div class="form-group">
+                             <label for="shipping-city">City</label>
+                             <input type="text" id="shipping-city" required aria-required="true" aria-describedby="shipping-city-error">
+                              <div class="error-message" id="shipping-city-error" aria-live="polite">Please enter your city.</div>
+                         </div>
+                          <div class="form-group">
+                             <label for="shipping-zip">Zip Code</label>
+                             <input type="text" id="shipping-zip" required aria-required="true" aria-describedby="shipping-zip-error">
+                              <div class="error-message" id="shipping-zip-error" aria-live="polite">Please enter your zip code.</div>
+                         </div>
+                         <div class="text-center">
+                            <button type="button" class="btn-primary" data-action="next-step">Continue to Payment</button>
+                         </div>
+                     </div>
+
+                     <div id="checkout-step-payment" style="display: none;" role="tabpanel" aria-labelledby="payment" tabindex="0">
+                         <h3>Payment Information</h3>
+                          <div class="form-group">
+                             <label for="card-number">Card Number</label>
+                             <input type="text" id="card-number" required aria-required="true" inputmode="numeric" pattern="[0-9\s]{13,19}" autocomplete="cc-number" aria-describedby="card-number-error">
+                             <div class="error-message" id="card-number-error" aria-live="polite">Please enter a valid card number.</div>
+                         </div>
+                          <div class="form-group">
+                             <label for="expiry-date">Expiry Date (MM/YY)</label>
+                             <input type="text" id="expiry-date" required aria-required="true" pattern="(0[1-9]|1[0-2])\/?([0-9]{2})" placeholder="MM/YY" autocomplete="cc-exp" aria-describedby="expiry-date-error">
+                              <div class="error-message" id="expiry-date-error" aria-live="polite">Please enter a valid expiry date (MM/YY).</div>
+                         </div>
+                          <div class="form-group">
+                             <label for="cvv">CVV</label>
+                             <input type="text" id="cvv" required aria-required="true" pattern="[0-9]{3,4}" autocomplete="cc-csc" aria-describedby="cvv-error">
+                              <div class="error-message" id="cvv-error" aria-live="polite">Please enter a valid CVV.</div>
+                         </div>
+                         <div class="text-center" style="display: flex; justify-content: space-between;">
+                            <button type="button" class="btn-secondary" data-action="prev-step">Back to Shipping</button>
+                            <button type="button" class="btn-primary" data-action="next-step">Continue to Review</button>
+                         </div>
+                     </div>
+
+                      <div id="checkout-step-review" style="display: none;" role="tabpanel" aria-labelledby="review" tabindex="0">
+                         <h3>Order Review</h3>
+                         <div id="order-summary" role="region" aria-live="polite">
+                             <!-- Order summary will be populated here -->
+                             <p>Review your items and shipping details before placing your order.</p>
+                         </div>
+                          <div class="text-center" style="display: flex; justify-content: space-between;">
+                            <button type="button" class="btn-secondary" data-action="prev-step">Back to Payment</button>
+                            <button type="submit" class="btn-primary">Place Order</button>
+                         </div>
+                     </div>
+                 </form>
+                  <div id="checkout-status" style="margin-top: var(--space-md); text-align: center; font-weight: bold;" aria-live="polite"></div>
+             </div>
+        </section>
+
+         <section class="section" id="learn-page" style="display: none;" aria-labelledby="learn-page-title">
+            <div class="container">
+                <h2 class="section-title" id="learn-page-title">Learn About Tea</h2>
+                 <div class="education-grid">
+                    <!-- Education Card 1 -->
+                    <div class="education-card" data-page="learn-article-page" data-article-id="brewing" tabindex="0" role="link" aria-label="Read article Mastering the Perfect Brew">
+                        <img src="https://placehold.co/400x200/4a7c59/ffffff?text=Brewing+Guide" alt="Tea brewing equipment">
+                        <div class="education-info">
+                            <h3>Mastering the Perfect Brew</h3>
+                            <p>Unlock the full flavor potential of your tea with our step-by-step brewing guides...</p>
+                        </div>
+                    </div>
+                    <!-- Education Card 2 -->
+                    <div class="education-card" data-page="learn-article-page" data-article-id="origins" tabindex="0" role="link" aria-label="Read article Journey to Tea Origins">
+                        <img src="https://placehold.co/400x200/8b5a2b/ffffff?text=Tea+Origins" alt="Tea plantation landscape">
+                        <div class="education-info">
+                            <h3>Journey to Tea Origins</h3>
+                            <p>Explore the fascinating history and diverse regions where the world's finest teas are grown...</p>
+                        </div>
+                    </div>
+                    <!-- Education Card 3 -->
+                    <div class="education-card" data-page="learn-article-page" data-article-id="types" tabindex="0" role="link" aria-label="Read article Understanding Tea Types">
+                        <img src="https://placehold.co/400x200/c28b00/ffffff?text=Tea+Types" alt="Different types of tea leaves">
+                        <div class="education-info">
+                            <h3>Understanding Tea Types</h3>
+                            <p>From green to black, oolong to white, learn about the different categories of tea and how they are processed...</p>
+                        </div>
+                    </div>
+                     <!-- More education cards -->
+                      <div class="education-card" data-page="learn-article-page" data-article-id="health" tabindex="0" role="link" aria-label="Read article Health Benefits of Tea">
+                        <img src="https://placehold.co/400x200/e0e0d1/333?text=Health+Benefits" alt="Tea cup with healthy ingredients">
+                        <div class="education-info">
+                            <h3>Health Benefits of Tea</h3>
+                            <p>Discover the numerous health advantages associated with regular tea consumption...</p>
+                        </div>
+                    </div>
+                 </div>
+            </div>
+         </section>
+
+         <section class="section" id="learn-article-page" style="display: none;" aria-labelledby="article-title">
+            <div class="container">
+                <h2 class="section-title" id="article-title">Article Title</h2>
+                <img src="https://placehold.co/800x400/e0e0d1/333?text=Article+Image" alt="Article Image" id="article-image" style="max-width: 100%; height: auto; margin-bottom: var(--space-md); border-radius: var(--border-radius-md);">
+                <div id="article-content" role="region" aria-live="polite">
+                    <p>Loading article content...</p>
+                </div>
+            </div>
+         </section>
+
+         <section class="section" id="about-page" style="display: none;" aria-labelledby="about-page-title">
+             <div class="container info-section-content">
+                 <div>
+                     <h2 class="section-title text-center" id="about-page-title">Our Story</h2>
+                     <p>Welcome to [Your Tea Shop Name], a haven for tea lovers seeking exceptional quality and a deeper connection to the world of tea. Our journey began with a simple passion for a perfectly brewed cup and a desire to share that experience with others.</p>
+                     <p>We meticulously source our teas directly from ethical farms and producers around the globe, ensuring that every leaf tells a story of its origin and craftsmanship. From the misty mountains of China to the lush gardens of India, we bring you a curated selection of single-origin teas and unique blends.</p>
+                     <p>More than just a shop, we aim to be a community hub for tea education. Our 'Learn About Tea' section and in-store events are designed to empower you with the knowledge to appreciate the nuances of different teas and brewing methods.</p>
+                     <p>Thank you for joining us on this flavorful adventure. We look forward to sharing a cup with you!</p>
+                 </div>
+                 <div>
+                     <img src="https://placehold.co/600x400/e0e0d1/333?text=Our+Story+Image" alt="Image representing our story or team">
+                 </div>
+             </div>
+         </section>
+
+        <section class="section" id="store-page" style="display: none;" aria-labelledby="store-page-title">
+            <div class="container">
+                <h2 class="section-title" id="store-page-title">Visit Our Physical Store</h2>
+                <div class="info-section-content">
+                    <div>
+                        <h3>Find Us Here</h3>
+                        <p><strong>Address:</strong> 123 Tea Lane, Brewtown, CA 91234</p>
+                        <p><strong>Hours:</strong></p>
+                        <ul>
+                            <li>Monday - Friday: 10:00 AM - 6:00 PM</li>
+                            <li>Saturday: 11:00 AM - 5:00 PM</li>
+                            <li>Sunday: Closed</li>
+                        </ul>
+                        <p><strong>Phone:</strong> (555) 123-4567</p>
+                        <!-- Photos Placeholder -->
+                        <div style="margin-top: var(--space-md); display: flex; gap: var(--space-sm); flex-wrap: wrap;">
+                            <img src="https://placehold.co/150x100/e0e0d1/333?text=Store+Photo+1" alt="Store Photo 1" style="width: 150px; height: 100px; object-fit: cover; border-radius: var(--border-radius-sm); box-shadow: 0 2px 4px var(--color-shadow);">
+                            <img src="https://placehold.co/150x100/e0e0d1/333?text=Store+Photo+2" alt="Store Photo 2" style="width: 150px; height: 100px; object-fit: cover; border-radius: var(--border-radius-sm); box-shadow: 0 2px 4px var(--color-shadow);">
+                             <img src="https://placehold.co/150x100/e0e0d1/333?text=Store+Photo+3" alt="Store Photo 3" style="width: 150px; height: 100px; object-fit: cover; border-radius: var(--border-radius-sm); box-shadow: 0 2px 4px var(--color-shadow);">
+                        </div>
+                    </div>
+                    <div>
+                        <div id="map" role="img" aria-label="Map showing the physical store location"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="contact-page" style="display: none;" aria-labelledby="contact-page-title">
+            <div class="container">
+                <h2 class="section-title" id="contact-page-title">Get in Touch</h2>
+                <form class="contact-form" id="contactForm" novalidate>
+                    <div class="form-group">
+                        <label for="name">Name:</label>
+                        <input type="text" id="name" name="name" required aria-required="true" aria-describedby="name-error">
+                        <div class="error-message" id="name-error" aria-live="polite">Please enter your name.</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email:</label>
+                        <input type="email" id="email" name="email" required aria-required="true" aria-describedby="email-error">
+                         <div class="error-message" id="email-error" aria-live="polite">Please enter a valid email address.</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="subject">Subject:</label>
+                        <input type="text" id="subject" name="subject">
+                    </div>
+                    <div class="form-group">
+                        <label for="message">Message:</label>
+                        <textarea id="message" name="message" required aria-required="true" aria-describedby="message-error"></textarea>
+                         <div class="error-message" id="message-error" aria-live="polite">Please enter your message.</div>
+                    </div>
+                    <div class="text-center">
+                        <button type="submit" class="btn-primary">Send Message</button>
+                    </div>
+                </form>
+                <div id="form-status" style="margin-top: var(--space-md); text-align: center; font-weight: bold;" aria-live="polite"></div>
+            </div>
+        </section>
+
+         <section class="section" id="search-results-page" style="display: none;" aria-labelledby="search-results-page-title">
+             <div class="container">
+                 <h2 class="section-title" id="search-results-page-title">Search Results for "<span id="search-query"></span>"</h2>
+                 <div id="search-results-list" role="region" aria-live="polite">
+                     <!-- Search Result Example -->
+                     <div class="search-result-item">
+                         <h3><a href="#" data-page="product-detail-page" data-product-id="1">Organic Sencha Green Tea</a></h3>
+                         <p>Find our high-quality Organic Sencha green tea...</p>
+                     </div>
+                     <div class="search-result-item">
+                         <h3><a href="#" data-page="learn-article-page" data-article-id="brewing">Brewing Guide for Green Tea</a></h3>
+                         <p>Learn how to brew the perfect cup of green tea...</p>
+                     </div>
+                      <!-- End Search Result Example -->
+                 </div>
+                 <div id="no-results" style="text-align: center; margin-top: var(--space-md); display: none;" aria-live="polite">
+                     No results found.
+                 </div>
+             </div>
+         </section>
+
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-content">
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="#" data-page="home">Home</a></li>
+                    <li><a href="#" data-page="shop">Shop</a></li>
+                    <li><a href="#" data-page="learn">Learn About Tea</a></li>
+                    <li><a href="#" data-page="about">About Us</a></li>
+                    <li><a href="#" data-page="store">Physical Store</a></li>
+                    <li><a href="#" data-page="contact">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Customer Service</h4>
+                 <ul>
+                    <li><a href="#">FAQs</a></li>
+                    <li><a href="#">Shipping & Returns</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#">Terms of Service</a></li>
+                </ul>
+            </div>
+             <div class="footer-section">
+                <h4>Follow Us</h4>
+                <div class="social-icons">
+                    <a href="#" aria-label="Facebook"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6S17 7.57 17 9.5V12h2l-1 3h-3v6.95c5.05-.71 9-4.94 9-9.95z" fill="currentColor"/></svg></a>
+                    <a href="#" aria-label="Instagram"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4c0 3.2-2.6 5.8-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8C2 4.6 4.6 2 7.8 2zm9 2.2c-.7 0-1.4.3-1.9.8-.5.5-.8 1.2-.8 1.9s.3 1.4.8 1.9c.5.5 1.2.8 1.9.8s1.4-.3 1.9-.8c.5-.5.8-1.2.8-1.9s-.3-1.4-.8-1.9c-.5-.5-1.2-.8-1.9-.8zm-4.2 2.4c2.3 0 4.2 1.9 4.2 4.2s-1.9 4.2-4.2 4.2-4.2-1.9-4.2-4.2 1.9-4.2 4.2-4.2zm0 1.8c-1.4 0-2.4 1.1-2.4 2.4s1.1 2.4 2.4 2.4 2.4-1.1 2.4-2.4-1.1-2.4-2.4-2.4z" fill="currentColor"/></svg></a>
+                    <a href="#" aria-label="Twitter"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M22.46 6c-.8.35-1.64.58-2.5.66.9-.54 1.5-1.4 1.8-2.4-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.48 0-4.5 2.02-4.5 4.5 0 .35.04.68.12 1C8.29 8.82 5.5 7.37 3.62 5.07c-.37.63-.58 1.37-.58 2.16 0 1.49.75 2.81 1.91 3.56-.7.02-1.36-.2-1.93-.53v.03c0 2.2 1.56 4.03 3.64 4.44-.38.1-.78.16-1.2.16-.29 0-.57-.03-.85-.08.58 1.8 2.26 3.12 4.25 3.16C14.1 18.09 12 18.8 12 18.8c-1.86 1.25-4.05 2-6.39 2 0 0 2.03.64 4.13.64 4.15 0 8.05-2.8 9.35-6.67.15-.42.24-.86.24-1.3 0-.06-.01-.12-.01-.18.96-.69 1.79-1.56 2.45-2.54z" fill="currentColor"/></svg></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            &copy; 2023 Specialty Tea Shop. All rights reserved.
+        </div>
+    </footer>
+
+    <!-- Simulated Modal -->
+    <div class="modal-overlay" id="statusModal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-content">
+            <button class="close-button" aria-label="Close modal">&times;</button>
+            <h3 id="modal-title"></h3>
+            <p id="modal-message"></p>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as L from "https://esm.sh/leaflet";
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const mainContent = document.getElementById('main-content');
+            const navLinks = document.querySelectorAll('.nav-link');
+            const cartCountSpan = document.getElementById('cart-count');
+            const statusModal = document.getElementById('statusModal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalMessage = document.getElementById('modal-message');
+            const closeModalButton = statusModal.querySelector('.close-button');
+            const contactForm = document.getElementById('contactForm');
+            const searchButton = document.querySelector('.search-button');
+            const searchResultsPage = document.getElementById('search-results-page');
+            const searchQuerySpan = document.getElementById('search-query');
+            const searchResultsList = document.getElementById('search-results-list');
+            const noSearchResultsDiv = document.getElementById('no-results');
+            const checkoutForm = document.getElementById('checkoutForm');
+            const checkoutSteps = document.querySelectorAll('.checkout-progress > div');
+            const shopProductGrid = document.getElementById('shop-product-grid'); // Get the shop grid
+
+            let cartItems = {}; // { productId: { quantity: N, price: X, name: '...', image: '...' } }
+            let currentCheckoutStep = 0; // 0: Shipping, 1: Payment, 2: Review
+
+            // --- Page Navigation Simulation ---
+            const pages = {
+                'home': ['home-hero', 'home-featured-products', 'home-learn-about-tea', 'home-about-store'],
+                'shop': ['shop-page'],
+                'learn': ['learn-page'],
+                'learn-article-page': ['learn-article-page'],
+                'about': ['about-page'],
+                'store': ['store-page'],
+                'contact': ['contact-page'],
+                'cart': ['cart-page'],
+                'checkout': ['checkout-page'],
+                'product-detail-page': ['product-detail-page'],
+                'search-results': ['search-results-page']
+            };
+
+            const pageSections = mainContent.querySelectorAll('section');
+
+            function showPage(pageId, data = {}) {
+                console.log('Showing page:', pageId, data);
+
+                // Hide all main sections and remove 'visible' class
+                pageSections.forEach(section => {
+                    section.style.display = 'none';
+                    section.classList.remove('visible');
+                });
+
+                // Show sections for the requested page
+                const sectionsToShow = pages[pageId] || [];
+                sectionsToShow.forEach(sectionId => {
+                     const section = document.getElementById(sectionId);
+                     if (section) {
+                         section.style.display = 'block';
+                         // Add fade-in effect
+                         requestAnimationFrame(() => { // Use rAF for smoother transition start
+                             setTimeout(() => { section.classList.add('visible'); }, 50); // Small delay for transition
+                         });
+                     }
+                });
+
+                // Update active navigation link
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    // Find the base page ID for highlighting (e.g., 'learn' for 'learn-article-page')
+                    const basePageId = pageId.split('-')[0]; // Simple heuristic
+                    if (link.getAttribute('data-page') === pageId || link.getAttribute('data-page') === basePageId) {
+                        link.classList.add('active');
+                    }
+                });
+
+                // Handle specific page data/setup
+                if (pageId === 'learn-article-page') {
+                    loadArticleContent(data.articleId);
+                } else if (pageId === 'search-results') {
+                     searchQuerySpan.textContent = data.query || '';
+                     displaySearchResults(data.query); // Simulate search results display
+                } else if (pageId === 'product-detail-page') {
+                     loadProductDetail(data.productId);
+                } else if (pageId === 'cart') {
+                     renderCartItems();
+                } else if (pageId === 'checkout') {
+                     resetCheckout();
+                     showCheckoutStep(0);
+                } else if (pageId === 'store') {
+                     // Invalidate map size if it's the store page
+                     if (typeof map !== 'undefined' && map) { // Check if map was initialized and exists
+                         // Use a slight delay to allow the section to become visible
+                         setTimeout(() => {
+                             map.invalidateSize();
+                             // Optionally center map on marker after invalidating size
+                             const storeLocation = [34.0522, -118.2437]; // Example: Los Angeles coordinates
+                             map.setView(storeLocation, 13);
+                         }, 150);
+                     }
+                } else if (pageId === 'shop') {
+                    // Simulate loading products for the shop page
+                    renderShopProducts();
+                }
+
+
+                // Scroll to top of main content
+                mainContent.scrollTop = 0;
+            }
+
+            // Initial page load (simulate homepage)
+            showPage('home');
+
+            // --- Navigation Click Handlers ---
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const pageId = link.getAttribute('data-page');
+                    showPage(pageId);
+                });
+            });
+
+            // Handle clicks on elements with data-page attributes (like buttons, cards)
+            mainContent.addEventListener('click', (e) => {
+                const target = e.target.closest('[data-page]');
+                // Ensure the click isn't on a button *within* a card that handles its own action (like add-to-cart)
+                if (target && !target.classList.contains('nav-link') && !e.target.closest('.add-to-cart')) {
+                    e.preventDefault();
+                    const pageId = target.getAttribute('data-page');
+                     // Pass data if needed (e.g., article ID from education card)
+                    const data = {};
+                    if (target.classList.contains('education-card')) {
+                         data.articleId = target.getAttribute('data-article-id');
+                         showPage('learn-article-page', data);
+                    } else if (target.classList.contains('product-card')) {
+                         data.productId = target.getAttribute('data-product-id');
+                         showPage('product-detail-page', data);
+                    }
+                    else {
+                        showPage(pageId);
+                    }
+                }
+            });
+
+            // Handle keyboard navigation for cards (Enter/Space)
+            mainContent.addEventListener('keypress', (e) => {
+                const target = e.target.closest('.product-card, .education-card');
+                if (target && (e.key === 'Enter' || e.key === ' ')) {
+                     e.preventDefault(); // Prevent default scroll for spacebar
+                     const pageId = target.getAttribute('data-page');
+                     const data = {};
+                     if (target.classList.contains('education-card')) {
+                          data.articleId = target.getAttribute('data-article-id');
+                          showPage('learn-article-page', data);
+                     } else if (target.classList.contains('product-card')) {
+                          data.productId = target.getAttribute('data-product-id');
+                          showPage('product-detail-page', data);
+                     }
+                }
+            });
+
+            // --- Dummy Product Data ---
+            const dummyProducts = {
+                 '1': { id: '1', name: 'Organic Sencha', price: 18.00, image: 'https://placehold.co/300x220/4a7c59/ffffff?text=Organic+Sencha', brief: 'A refreshing Japanese green tea.', detailed: 'Harvested from the first flush of spring, our Organic Sencha is carefully steamed, rolled, and dried to preserve its delicate aroma and nutrients. It offers a smooth, invigorating cup with notes of seaweed and fresh vegetables. Perfect for daily enjoyment.', brewing: 'Use 1 tsp (2g) of tea leaves per 8oz (240ml) of water. Heat water to 175°F (80°C). Steep for 1-2 minutes. Can be re-steeped multiple times.' },
+                 '2': { id: '2', name: 'Assam Breakfast', price: 15.00, image: 'https://placehold.co/300x220/8b5a2b/ffffff?text=Assam+Breakfast', brief: 'Bold and malty Indian black tea.', detailed: 'Our Assam Breakfast tea comes from the lush gardens of the Assam region in India. Known for its strong, malty flavor and bright, coppery liquor, it makes a perfect morning brew. Great with milk and sugar.', brewing: 'Use 1 tsp (2.5g) of tea leaves per 8oz (240ml) of water. Heat water to 205°F (96°C). Steep for 3-5 minutes.' },
+                 '3': { id: '3', name: 'Tie Guan Yin Oolong', price: 22.00, image: 'https://placehold.co/300x220/c28b00/ffffff?text=Tie+Guan+Yin', brief: 'Floral and smooth Chinese oolong.', detailed: 'A premium Chinese Oolong, Tie Guan Yin is celebrated for its complex floral aroma and smooth, slightly sweet taste. The leaves are partially oxidized and rolled into tight balls, unfurling beautifully during brewing.', brewing: 'Use 1 tsp (3g) of tea leaves per 8oz (240ml) of water. Heat water to 195°F (90°C). Steep for 30-60 seconds. Can be re-steeped multiple times, with increasing steep times.' },
+                 '4': { id: '4', name: 'Chamomile Dream', price: 12.00, image: 'https://placehold.co/300x220/e0e0d1/333?text=Chamomile+Dream', brief: 'Soothing herbal infusion.', detailed: 'A naturally caffeine-free blend of chamomile flowers, known for their calming properties. Perfect for winding down in the evening. Has a light, apple-like sweetness.', brewing: 'Use 1 tsp (1g) of dried flowers per 8oz (240ml) of water. Heat water to 205°F (96°C). Steep for 5-7 minutes.' },
+                 '5': { id: '5', name: 'Silver Needle White Tea', price: 28.00, image: 'https://placehold.co/300x220/e0e0d1/333?text=Silver+Needle', brief: 'Delicate and sweet.', detailed: 'Harvested only from the tender, unopened buds of the tea plant, Silver Needle is the highest grade of white tea. It brews into a pale, golden liquor with a delicate, slightly sweet, and subtly floral flavor.', brewing: 'Use 1 tsp (2g) of tea leaves per 8oz (240ml) of water. Heat water to 170°F (77°C). Steep for 2-3 minutes. Can be re-steeped multiple times.' },
+                 '6': { id: '6', name: 'Aged Pu-erh', price: 35.00, image: 'https://placehold.co/300x220/8b5a2b/ffffff?text=Aged+Pu-erh', brief: 'Rich and earthy.', detailed: 'Our Aged Pu-erh tea is fermented and aged, resulting in a dark, rich, and earthy brew. Known for its smooth texture and complex flavor profile that develops over time. Often enjoyed for its digestive properties.', brewing: 'Rinse leaves briefly with hot water and discard. Use 1 tsp (4g) of tea leaves per 8oz (240ml) of water. Heat water to 205°F (96°C). Steep for 20-30 seconds for the first infusion, increasing time for subsequent infusions.' },
+                 'related-1': { id: 'related-1', name: 'Related Tea 1', price: 10.00, image: 'https://placehold.co/300x220/e0e0d1/333?text=Related+1', brief: 'A related tea.', detailed: 'Detailed description for related tea 1.', brewing: 'Brewing guide for related tea 1.' },
+                 'related-2': { id: 'related-2', name: 'Related Tea 2', price: 11.00, image: 'https://placehold.co/300x220/e0e0d1/333?text=Related+2', brief: 'Another related tea.', detailed: 'Detailed description for related tea 2.', brewing: 'Brewing guide for related tea 2.' },
+            };
+
+            function getProductInfo(productId) {
+                 return dummyProducts[productId];
+            }
+
+             function renderShopProducts() {
+                 if (!shopProductGrid) return;
+                 shopProductGrid.innerHTML = ''; // Clear existing products
+
+                 // In a real app, filtering and sorting would happen here
+                 const productsToDisplay = Object.values(dummyProducts).filter(p => !p.id.startsWith('related-')); // Exclude related dummies
+
+                 productsToDisplay.forEach(product => {
+                     const productCard = document.createElement('div');
+                     productCard.classList.add('product-card');
+                     productCard.setAttribute('data-page', 'product-detail-page');
+                     productCard.setAttribute('data-product-id', product.id);
+                     productCard.setAttribute('tabindex', '0');
+                     productCard.setAttribute('role', 'link');
+                     productCard.setAttribute('aria-label', `View ${product.name}`);
+
+                     productCard.innerHTML = `
+                         <img src="${product.image}" alt="High-quality ${product.name} leaves">
+                         <div class="product-info">
+                             <div>
+                                 <h3>${product.name}</h3>
+                                 <p>${product.brief}</p>
+                             </div>
+                             <div class="price">$${product.price.toFixed(2)}</div>
+                             <button class="btn-primary add-to-cart" data-product-id="${product.id}" aria-label="Add ${product.name} to Cart">Add to Cart</button>
+                         </div>
+                     `;
+                     shopProductGrid.appendChild(productCard);
+                 });
+             }
+
+
+            // --- Cart Simulation ---
+            mainContent.addEventListener('click', (e) => {
+                const addToCartButton = e.target.closest('.add-to-cart');
+                if (addToCartButton) {
+                    e.preventDefault();
+                    const productId = addToCartButton.getAttribute('data-product-id');
+                    const productInfo = getProductInfo(productId);
+
+                    if (productInfo) {
+                         if (cartItems[productId]) {
+                             cartItems[productId].quantity++;
+                         } else {
+                             // Use a smaller image for the cart item display
+                             const cartImage = productInfo.image.replace('300x220', '80x80').replace('text=Product+Image', 'text=Item');
+                             cartItems[productId] = { ...productInfo, quantity: 1, image: cartImage };
+                         }
+                         updateCartCount();
+                         showModal('Item Added', `${productInfo.name} added to your cart.`);
+                         console.log('Cart state:', cartItems);
+                    } else {
+                         showModal('Error', 'Could not add item to cart.');
+                    }
+                }
+            });
+
+            function updateCartCount() {
+                 const totalCount = Object.values(cartItems).reduce((sum, item) => sum + item.quantity, 0);
+                 cartCountSpan.textContent = totalCount;
+                 // Optionally add a visual bounce/animation to the icon
+                 cartCountSpan.classList.add('bounce');
+                 setTimeout(() => { cartCountSpan.classList.remove('bounce'); }, 500);
+            }
+
+
+            // --- Quantity Controls Simulation ---
+            mainContent.addEventListener('click', (e) => {
+                const quantityButton = e.target.closest('.quantity-btn');
+                if (quantityButton) {
+                    e.preventDefault();
+                    const input = quantityButton.parentElement.querySelector('input[type="number"]');
+                    let quantity = parseInt(input.value);
+                    const action = quantityButton.getAttribute('data-action');
+
+                    if (action === 'increase') {
+                        quantity++;
+                    } else if (action === 'decrease' && quantity > 1) {
+                        quantity--;
+                    }
+                    input.value = quantity;
+
+                    // If on cart page, update cart state and re-render
+                    if (mainContent.querySelector('#cart-page').style.display !== 'none') {
+                         const cartItemElement = quantityButton.closest('.cart-item');
+                         const productId = cartItemElement.getAttribute('data-product-id');
+                         if (cartItems[productId]) {
+                             cartItems[productId].quantity = quantity;
+                             renderCartItems(); // Re-render the cart
+                             updateCartCount(); // Update header count
+                         }
+                    }
+                    // If on product detail page, just update the input value
+                }
+            });
+
+             // Handle remove from cart
+             mainContent.addEventListener('click', (e) => {
+                 const removeButton = e.target.closest('.remove-from-cart');
+                 if (removeButton) {
+                     e.preventDefault();
+                     const productId = removeButton.getAttribute('data-product-id');
+                     if (cartItems[productId]) {
+                         const removedItemName = cartItems[productId].name;
+                         delete cartItems[productId];
+                         updateCartCount();
+                         renderCartItems(); // Re-render the cart
+                         showModal('Item Removed', `${removedItemName} removed from your cart.`);
+                         console.log('Cart state:', cartItems);
+                     }
+                 }
+             });
+
+
+             function renderCartItems() {
+                 const cartItemsContainer = document.getElementById('cart-items');
+                 const cartSubtotalElement = document.getElementById('cart-subtotal');
+                 if (!cartItemsContainer || !cartSubtotalElement) return;
+
+                 cartItemsContainer.innerHTML = ''; // Clear current items
+                 let subtotal = 0;
+
+                 if (Object.keys(cartItems).length === 0) {
+                     cartItemsContainer.innerHTML = '<p style="text-align: center;">Your cart is empty.</p>';
+                 } else {
+                     for (const productId in cartItems) {
+                         const item = cartItems[productId];
+                         const itemTotal = item.price * item.quantity;
+                         subtotal += itemTotal;
+
+                         const itemElement = document.createElement('div');
+                         itemElement.classList.add('cart-item');
+                         itemElement.setAttribute('data-product-id', productId);
+                         itemElement.innerHTML = `
+                             <img src="${item.image}" alt="${item.name} image">
+                             <div class="cart-item-info">
+                                 <h3>${item.name}</h3>
+                                 <div class="price">$${item.price.toFixed(2)}</div>
+                             </div>
+                             <div class="quantity-control">
+                                 <button class="quantity-btn" data-action="decrease" aria-label="Decrease quantity">-</button>
+                                 <input type="number" value="${item.quantity}" min="1" style="width: 50px;" aria-label="Quantity">
+                                 <button class="quantity-btn" data-action="increase" aria-label="Increase quantity">+</button>
+                             </div>
+                             <div class="cart-item-total price">$${itemTotal.toFixed(2)}</div>
+                             <button class="icon-button remove-from-cart" aria-label="Remove Item" data-product-id="${productId}">
+                                 <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm2.46-7.12l1.41-1.41L12 13.17l2.12-2.12 1.41 1.41L13.41 14l2.12 2.12-1.41 1.41L12 14.83l-2.12 2.12-1.41-1.41L10.59 14l-2.13-2.12zM15.5 4l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                             </button>
+                         `;
+                         cartItemsContainer.appendChild(itemElement);
+                     }
+                 }
+
+                 cartSubtotalElement.textContent = `$${subtotal.toFixed(2)}`;
+                 // Disable checkout button if cart is empty
+                 const checkoutButton = document.querySelector('#cart-page .btn-primary[data-page="checkout"]');
+                 if (checkoutButton) {
+                     checkoutButton.disabled = Object.keys(cartItems).length === 0;
+                 }
+             }
+
+
+            // --- Modal Simulation ---
+            function showModal(title, message) {
+                modalTitle.textContent = title;
+                modalMessage.textContent = message;
+                statusModal.classList.add('active');
+                 // Set focus to the modal for accessibility
+                 modalContent.focus(); // Focus the modal content itself
+            }
+
+             const modalContent = statusModal.querySelector('.modal-content');
+
+            closeModalButton.addEventListener('click', () => {
+                statusModal.classList.remove('active');
+            });
+
+            statusModal.addEventListener('click', (e) => {
+                if (e.target === statusModal) {
+                    statusModal.classList.remove('active');
+                }
+            });
+
+             // Close modal with Escape key
+             document.addEventListener('keydown', (e) => {
+                 if (e.key === 'Escape' && statusModal.classList.contains('active')) {
+                     statusModal.classList.remove('active');
+                 }
+             });
+
+
+            // --- Form Validation Simulation ---
+            function validateInput(input) {
+                 const formGroup = input.closest('.form-group');
+                 const errorMessage = formGroup.querySelector('.error-message');
+                 let isValid = true;
+                 let message = '';
+
+                 if (input.required && input.value.trim() === '') {
+                     isValid = false;
+                     message = `Please enter your ${input.id.replace('shipping-', '').replace('card-', '').replace('expiry-', '').replace('cvv', 'CVV')}.`;
+                 } else if (input.type === 'email' && input.value.trim() !== '' && !input.value.includes('@')) {
+                      isValid = false;
+                      message = 'Please enter a valid email address.';
+                 } else if (input.id === 'expiry-date' && input.value.trim() !== '' && !/^(0[1-9]|1[0-2])\/?([0-9]{2})$/.test(input.value.trim())) {
+                      isValid = false;
+                      message = 'Please enter a valid expiry date (MM/YY).';
+                 } else if (input.id === 'cvv' && input.value.trim() !== '' && !/^[0-9]{3,4}$/.test(input.value.trim())) {
+                      isValid = false;
+                      message = 'Please enter a valid CVV.';
+                 } else if (input.pattern && input.value.trim() !== '' && !new RegExp('^' + input.pattern + '$').test(input.value.trim())) {
+                     // Basic pattern validation
+                     isValid = false;
+                     message = errorMessage.getAttribute('aria-live') === 'polite' ? errorMessage.textContent : 'Invalid input.'; // Use default or aria-live text
+                 }
+
+
+                 if (!isValid) {
+                     formGroup.classList.add('invalid');
+                     errorMessage.textContent = message;
+                     errorMessage.style.display = 'block';
+                     input.setAttribute('aria-invalid', 'true');
+                 } else {
+                     formGroup.classList.remove('invalid');
+                     errorMessage.textContent = '';
+                     errorMessage.style.display = 'none';
+                     input.setAttribute('aria-invalid', 'false');
+                 }
+                 return isValid;
+            }
+
+            function validateForm(form) {
+                 let isFormValid = true;
+                 const requiredInputs = form.querySelectorAll('input[required], textarea[required], select[required]');
+                 requiredInputs.forEach(input => {
+                     if (!validateInput(input)) {
+                         isFormValid = false;
+                     }
+                 });
+                 return isFormValid;
+            }
+
+
+            if (contactForm) {
+                contactForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const formStatus = document.getElementById('form-status');
+                    formStatus.textContent = ''; // Clear previous status
+                    formStatus.style.color = ''; // Reset color
+
+                    if (validateForm(contactForm)) {
+                        // Simulate successful submission
+                        formStatus.style.color = "var('--color-primary')";
+                        formStatus.textContent = 'Message sent successfully! We will get back to you shortly.';
+                        contactForm.reset(); // Clear form
+                         // Remove invalid classes
+                         contactForm.querySelectorAll('.form-group').forEach(group => group.classList.remove('invalid'));
+                         contactForm.querySelectorAll('[aria-invalid]').forEach(el => el.setAttribute('aria-invalid', 'false'));
+                        console.log('Form submitted:', {
+                            name: document.getElementById('name').value,
+                            email: document.getElementById('email').value,
+                            subject: document.getElementById('subject').value,
+                            message: document.getElementById('message').value
+                        });
+                    } else {
+                         formStatus.style.color = "var('--color-error')";
+                         formStatus.textContent = 'Please fix the errors in the form.';
+                        console.log('Contact Form validation failed');
+                    }
+                });
+
+                // Real-time validation on blur
+                contactForm.querySelectorAll('input[required], textarea[required], select[required]').forEach(input => {
+                    input.addEventListener('blur', () => {
+                         validateInput(input);
+                    });
+                });
+                 // Real-time validation on input for email/pattern fields
+                 contactForm.querySelectorAll('input[type="email"], input[pattern]').forEach(input => {
+                     input.addEventListener('input', () => {
+                         // Only validate if it's not empty, otherwise wait for blur
+                         if (input.value.trim() !== '') {
+                            validateInput(input);
+                         }
+                     });
+                 });
+            }
+
+             // --- Checkout Form Simulation ---
+             if (checkoutForm) {
+                 const checkoutStepsDivs = [
+                     document.getElementById('checkout-step-shipping'),
+                     document.getElementById('checkout-step-payment'),
+                     document.getElementById('checkout-step-review')
+                 ];
+                  const checkoutStatusDiv = document.getElementById('checkout-status');
+
+
+                 function showCheckoutStep(stepIndex) {
+                     checkoutStepsDivs.forEach((stepDiv, index) => {
+                         const stepIndicator = checkoutSteps[index];
+                         if (index === stepIndex) {
+                             stepDiv.style.display = 'block';
+                             stepIndicator.classList.add('active');
+                             stepIndicator.setAttribute('aria-selected', 'true');
+                             stepDiv.setAttribute('aria-hidden', 'false');
+                             stepDiv.focus(); // Move focus to the step content
+                         } else {
+                             stepDiv.style.display = 'none';
+                             stepIndicator.classList.remove('active');
+                             stepIndicator.setAttribute('aria-selected', 'false');
+                             stepDiv.setAttribute('aria-hidden', 'true');
+                         }
+                     });
+                      // Update progress indicators - active means visited or current
+                      checkoutSteps.forEach((stepIndicator, index) => {
+                          stepIndicator.classList.toggle('active', index <= stepIndex);
+                      });
+
+                     currentCheckoutStep = stepIndex;
+                     checkoutStatusDiv.textContent = ''; // Clear step status on step change
+                     console.log('Showing checkout step:', stepIndex);
+
+                     // Populate review step if needed
+                     if (stepIndex === 2) {
+                         populateOrderReview();
+                     }
+                 }
+
+                 function validateCurrentCheckoutStep() {
+                     const currentStepDiv = checkoutStepsDivs[currentCheckoutStep];
+                     let isStepValid = true;
+                     const requiredInputs = currentStepDiv.querySelectorAll('input[required], textarea[required], select[required]');
+
+                     requiredInputs.forEach(input => {
+                         if (!validateInput(input)) {
+                             isStepValid = false;
+                         }
+                     });
+                     return isStepValid;
+                 }
+
+                 function resetCheckout() {
+                     checkoutForm.reset();
+                      checkoutForm.querySelectorAll('.form-group').forEach(group => group.classList.remove('invalid'));
+                      checkoutForm.querySelectorAll('[aria-invalid]').forEach(el => el.setAttribute('aria-invalid', 'false'));
+                     checkoutStatusDiv.textContent = '';
+                     cartItems = {}; // Clear cart on successful order
+                     updateCartCount();
+                 }
+
+                 function populateOrderReview() {
+                     const orderSummaryDiv = document.getElementById('order-summary');
+                     if (!orderSummaryDiv) return;
+
+                     let summaryHTML = '<h4>Items:</h4><ul>';
+                     let total = 0;
+                     if (Object.keys(cartItems).length === 0) {
+                          summaryHTML += '<li>Cart is empty.</li>'; // Should not happen if checkout button is disabled
+                     } else {
+                          for (const productId in cartItems) {
+                              const item = cartItems[productId];
+                              const itemTotal = item.price * item.quantity;
+                              total += itemTotal;
+                              summaryHTML += `<li>${item.name} x ${item.quantity} - $${itemTotal.toFixed(2)}</li>`;
+                          }
+                     }
+                     summaryHTML += `</ul><p><strong>Subtotal: $${total.toFixed(2)}</strong></p>`;
+
+                     summaryHTML += '<h4>Shipping Address:</h4><p>';
+                     summaryHTML += `${document.getElementById('shipping-name').value}<br>`;
+                     summaryHTML += `${document.getElementById('shipping-address').value}<br>`;
+                     summaryHTML += `${document.getElementById('shipping-city').value}, ${document.getElementById('shipping-zip').value}`;
+                     summaryHTML += '</p>';
+
+                     // Add payment info placeholder (don't display actual card details)
+                     summaryHTML += '<h4>Payment Method:</h4><p>Card ending in XXXX (Simulated)</p>';
+
+
+                     orderSummaryDiv.innerHTML = summaryHTML;
+                 }
+
+
+                 checkoutForm.addEventListener('click', (e) => {
+                     const actionButton = e.target.closest('button[data-action]');
+                     if (actionButton) {
+                         e.preventDefault();
+                         const action = actionButton.getAttribute('data-action');
+
+                         if (action === 'next-step') {
+                             if (validateCurrentCheckoutStep()) {
+                                 if (currentCheckoutStep < checkoutStepsDivs.length - 1) {
+                                     showCheckoutStep(currentCheckoutStep + 1);
+                                 }
+                             } else {
+                                 checkoutStatusDiv.style.color = "var('--color-error')";
+                                 checkoutStatusDiv.textContent = 'Please complete the current step.';
+                             }
+                         } else if (action === 'prev-step') {
+                             if (currentCheckoutStep > 0) {
+                                 showCheckoutStep(currentCheckoutStep - 1);
+                             }
+                         }
+                     }
+                 });
+
+                 checkoutForm.addEventListener('submit', (e) => {
+                     e.preventDefault();
+                     // Final validation (optional, could rely on step validation)
+                     if (validateCurrentCheckoutStep()) {
+                         // Simulate order placement
+                         checkoutStatusDiv.style.color = "var('--color-primary')";
+                         checkoutStatusDiv.textContent = 'Order placed successfully!';
+                         console.log('Order Placed!', {
+                             shipping: {
+                                 name: document.getElementById('shipping-name').value,
+                                 address: document.getElementById('shipping-address').value,
+                                 city: document.getElementById('shipping-city').value,
+                                 zip: document.getElementById('shipping-zip').value
+                             },
+                             payment: 'Simulated Payment Details', // Never log real details
+                             items: cartItems
+                         });
+                         // Reset cart and show confirmation modal or page
+                         resetCheckout();
+                         showModal('Order Confirmed', 'Thank you for your order! Your order has been placed successfully.');
+                         // Optionally redirect to a confirmation page
+                         // showPage('order-confirmation');
+                     } else {
+                         checkoutStatusDiv.style.color = "var('--color-error')";
+                         checkoutStatusDiv.textContent = 'Please review your order details.';
+                     }
+                 });
+
+                 // Real-time validation on blur for checkout fields
+                 checkoutForm.querySelectorAll('input, textarea, select').forEach(input => {
+                     input.addEventListener('blur', () => {
+                         // Only validate if the input is in the currently visible step
+                         if (input.closest(`#checkout-step-${['shipping', 'payment', 'review'][currentCheckoutStep]}`) && input.closest(`#checkout-step-${['shipping', 'payment', 'review'][currentCheckoutStep]}`).style.display !== 'none') {
+                             validateInput(input);
+                         }
+                     });
+                      // Real-time validation on input for email/pattern fields
+                     if (input.type === 'email' || input.pattern) {
+                          input.addEventListener('input', () => {
+                              if (input.closest(`#checkout-step-${['shipping', 'payment', 'review'][currentCheckoutStep]}`) && input.closest(`#checkout-step-${['shipping', 'payment', 'review'][currentCheckoutStep]}`).style.display !== 'none' && input.value.trim() !== '') {
+                                  validateInput(input);
+                              }
+                          });
+                     }
+                 });
+             }
+
+
+            // --- Search Simulation ---
+            if (searchButton) {
+                searchButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    // Simulate a search input modal or overlay instead of prompt
+                    // For now, keeping prompt for simplicity in simulation
+                    const query = prompt("Enter search query:");
+                    if (query !== null && query.trim() !== "") {
+                        showPage('search-results', { query: query.trim() });
+                    }
+                });
+            }
+
+            function displaySearchResults(query) {
+                // Clear previous results
+                searchResultsList.innerHTML = '';
+                noSearchResultsDiv.style.display = 'none';
+
+                // Simulate search results
+                const dummyResults = [
+                    { title: 'Organic Sencha Green Tea', snippet: 'Find our high-quality Organic Sencha green tea...', page: 'product-detail-page', id: '1' },
+                    { title: 'Assam Breakfast Black Tea', snippet: 'Try our bold Assam Breakfast black tea...', page: 'product-detail-page', id: '2' },
+                    { title: 'Tie Guan Yin Oolong Tea', snippet: 'Experience the floral notes of Tie Guan Yin Oolong...', page: 'product-detail-page', id: '3' },
+                    { title: 'Chamomile Dream Herbal Tea', snippet: 'Relax with our soothing Chamomile Dream herbal infusion...', page: 'product-detail-page', id: '4' },
+                    { title: 'Silver Needle White Tea', snippet: 'Discover the delicate Silver Needle white tea...', page: 'product-detail-page', id: '5' },
+                    { title: 'Aged Pu-erh Tea', snippet: 'Explore our rich and earthy Aged Pu-erh...', page: 'product-detail-page', id: '6' },
+                    { title: 'Mastering the Perfect Brew', snippet: 'Learn how to brew the perfect cup of tea...', page: 'learn-article-page', id: 'brewing' },
+                    { title: 'Journey to Tea Origins', snippet: 'Explore the history and regions of tea...', page: 'learn-article-page', id: 'origins' },
+                    { title: 'Understanding Tea Types', snippet: 'Learn about different categories of tea...', page: 'learn-article-page', id: 'types' },
+                    { title: 'Health Benefits of Tea', snippet: 'Discover the health advantages of tea...', page: 'learn-article-page', id: 'health' },
+                    { title: 'About Our Shop', snippet: 'Read the story behind our specialty tea shop...', page: 'about' },
+                    { title: 'Contact Us', snippet: 'Get in touch with us via our contact form...', page: 'contact' },
+                    { title: 'Visit Our Physical Store', snippet: 'Find our store location and hours...', page: 'store' }
+                ];
+
+                const filteredResults = dummyResults.filter(result =>
+                    result.title.toLowerCase().includes(query.toLowerCase()) ||
+                    result.snippet.toLowerCase().includes(query.toLowerCase())
+                );
+
+                if (filteredResults.length > 0) {
+                    filteredResults.forEach(result => {
+                        const resultElement = document.createElement('div');
+                        resultElement.classList.add('search-result-item');
+                        const link = document.createElement('a');
+                        link.href = "#"; // Use # for simulation
+                        link.textContent = result.title;
+                        link.setAttribute('data-page', result.page);
+                        if (result.id) {
+                            if (result.page === 'learn-article-page') {
+                                link.setAttribute('data-article-id', result.id);
+                            } else if (result.page === 'product-detail-page') {
+                                link.setAttribute('data-product-id', result.id);
+                            }
+                        }
+                         // Add event listener directly to the link
+                        link.addEventListener('click', (e) => {
+                             e.preventDefault();
+                             const pageId = e.target.getAttribute('data-page');
+                             const articleId = e.target.getAttribute('data-article-id');
+                             const productId = e.target.getAttribute('data-product-id');
+                             const data = {};
+                             if (articleId) data.articleId = articleId;
+                             if (productId) data.productId = productId;
+                             showPage(pageId, data);
+                        });
+
+                        const titleElement = document.createElement('h3');
+                        titleElement.appendChild(link);
+
+                        const snippetElement = document.createElement('p');
+                        snippetElement.textContent = result.snippet;
+
+                        resultElement.appendChild(titleElement);
+                        resultElement.appendChild(snippetElement);
+                        searchResultsList.appendChild(resultElement);
+                    });
+                } else {
+                    noSearchResultsDiv.style.display = 'block';
+                }
+            }
+
+            // --- Product Detail Page Simulation ---
+            function loadProductDetail(productId) {
+                 const product = getProductInfo(productId); // Use the dummy function
+                 const productTitle = document.getElementById('product-title');
+                 const productPrice = document.getElementById('product-price');
+                 const productBriefDesc = document.getElementById('product-brief-description');
+                 const productDetailedDesc = document.getElementById('product-detailed-description');
+                 const productBrewingGuide = document.getElementById('product-brewing-guide');
+                 const productMainImage = document.getElementById('product-main-image');
+                 const productThumbnails = document.getElementById('product-thumbnails');
+                 const addToCartButton = document.querySelector('#product-detail-page .add-to-cart');
+                 const quantityInput = document.querySelector('#product-detail-page input[type="number"]');
+                 const quantityControl = document.querySelector('#product-detail-page .quantity-control');
+                 const relatedProductsSection = document.querySelector('#product-detail-page .product-grid');
+
+
+                 if (product) {
+                     productTitle.textContent = product.name;
+                     productPrice.textContent = `$${product.price.toFixed(2)}`;
+                     productBriefDesc.innerHTML = `<strong>Brief Description:</strong> ${product.brief || 'Description not available.'}`;
+                     productDetailedDesc.innerHTML = `<strong>Detailed Description:</strong> ${product.detailed || 'Detailed description not available.'}`;
+                     productBrewingGuide.innerHTML = `<p style="margin-top: var(--space-sm);">${product.brewing || 'Brewing guide not available.'}</p>`;
+                     productMainImage.src = product.image.replace('300x220', '500x500'); // Use larger image for main
+                     productMainImage.alt = `${product.name} image`;
+                     addToCartButton.setAttribute('data-product-id', productId);
+                     quantityInput.value = 1; // Reset quantity
+
+                     // Show controls if hidden
+                     addToCartButton.style.display = '';
+                     quantityControl.style.display = '';
+                     relatedProductsSection.parentElement.style.display = '';
+
+
+                     // Simulate thumbnails (using the main image placeholder for simplicity)
+                     productThumbnails.innerHTML = '';
+                     // Use product name or ID for placeholder text
+                     const thumbPlaceholderText = product.name.split(' ')[0];
+                     for (let i = 1; i <= 3; i++) { // Assume 3 thumbnails
+                         const thumb = document.createElement('img');
+                         thumb.src = product.image.replace('300x220', '80x80').replace('text=Organic+Sencha', `text=${thumbPlaceholderText}+${i}`).replace('text=Assam+Breakfast', `text=${thumbPlaceholderText}+${i}`).replace('text=Tie+Guan+Yin', `text=${thumbPlaceholderText}+${i}`).replace('text=Chamomile+Dream', `text=${thumbPlaceholderText}+${i}`).replace('text=Silver+Needle', `text=${thumbPlaceholderText}+${i}`).replace('text=Aged+Pu-erh', `text=${thumbPlaceholderText}+${i}`).replace('text=Related+1', `text=${thumbPlaceholderText}+${i}`).replace('text=Related+2', `text=${thumbPlaceholderText}+${i}`); // Use small placeholder
+                         thumb.alt = `${product.name} thumbnail ${i}`;
+                         thumb.classList.toggle('active', i === 1);
+                         thumb.setAttribute('tabindex', '0');
+                         thumb.setAttribute('role', 'button');
+                         thumb.setAttribute('aria-label', `View image ${i}`);
+                         // Add click listener to change main image (simulated)
+                         thumb.addEventListener('click', () => {
+                             productThumbnails.querySelectorAll('img').forEach(img => img.classList.remove('active'));
+                             thumb.classList.add('active');
+                              // Use the same placeholder logic for the main image
+                             productMainImage.src = thumb.src.replace('80x80', '500x500').replace(`text=${thumbPlaceholderText}+${i}`, `text=${encodeURIComponent(product.name)}+${i}`);
+                         });
+                         productThumbnails.appendChild(thumb);
+                     }
+
+
+                 } else {
+                     // Handle product not found
+                     productTitle.textContent = 'Product Not Found';
+                     productPrice.textContent = '';
+                     productBriefDesc.textContent = 'This product could not be found.';
+                     productDetailedDesc.textContent = '';
+                     productBrewingGuide.innerHTML = '';
+                     productMainImage.src = 'https://placehold.co/500x500/cccccc/333?text=Not+Found';
+                     productMainImage.alt = 'Product not found image';
+                     productThumbnails.innerHTML = '';
+                     addToCartButton.style.display = 'none'; // Hide add to cart button
+                     quantityControl.style.display = 'none'; // Hide quantity control
+                     relatedProductsSection.parentElement.style.display = 'none'; // Hide related products section
+                 }
+            }
+
+             // --- Article Page Simulation ---
+             function loadArticleContent(articleId) {
+                 const articleTitleElement = document.getElementById('article-title');
+                 const articleImageElement = document.getElementById('article-image');
+                 const articleContentElement = document.getElementById('article-content');
+
+                 const articleData = {
+                     'brewing': {
+                         title: 'Mastering the Perfect Brew',
+                         image: 'https://placehold.co/800x400/4a7c59/ffffff?text=Brewing+Guide',
+                         content: `
+                             <p>Achieving the perfect cup of tea requires attention to a few key details: water quality, temperature, and steep time. Always start with fresh, cold water. Avoid using re-boiled water as it can reduce oxygen content, affecting flavor.</p>
+                             <h3>Water Temperature</h3>
+                             <p>Different teas require different temperatures:</p>
+                             <ul>
+                                 <li><strong>Green & White Teas:</strong> 160-180°F (70-82°C). Hotter water can scorch delicate leaves.</li>
+                                 <li><strong>Oolong Teas:</strong> 180-195°F (82-90°C). Varies depending on the oxidation level.</li>
+                                 <li><strong>Black & Pu-erh Teas:</strong> 205°F (96°C) or boiling. These teas are more robust.</li>
+                                 <li><strong>Herbal Infusions:</strong> 205°F (96°C) or boiling.</li>
+                             </ul>
+                             <h3>Steep Time</h3>
+                             <p>Steep time also varies:</p>
+                             <ul>
+                                 <li><strong>Green & White Teas:</strong> 1-3 minutes.</li>
+                                 <li><strong>Oolong Teas:</strong> 30 seconds to 5 minutes (often multiple short infusions).</li>
+                                 <li><strong>Black & Pu-erh Teas:</strong> 3-5 minutes.</li>
+                                 <li><strong>Herbal Infusions:</strong> 5-7 minutes or longer for stronger flavor.</li>
+                             </ul>
+                             <p>Experiment to find your preferred strength! Enjoy your tea.</p>
+                         `
+                     },
+                     'origins': {
+                         title: 'Journey to Tea Origins',
+                         image: 'https://placehold.co/800x400/8b5a2b/ffffff?text=Tea+Origins',
+                         content: `
+                             <p>The history of tea is rich and spans thousands of years, originating in ancient China. Legend credits Emperor Shen Nong with discovering tea around 2737 BC.</p>
+                             <h3>Major Tea Growing Regions</h3>
+                             <p>Today, tea is cultivated in many parts of the world, each producing teas with unique characteristics:</p>
+                             <ul>
+                                 <li><strong>China:</strong> The birthplace of tea, known for green, white, yellow, oolong, pu-erh, and black teas (often called red tea in China). Famous regions include Hangzhou (Longjing), Fujian (Tie Guan Yin, White Peony), and Yunnan (Pu-erh).</li>
+                                 <li><strong>India:</strong> Famous for robust black teas like Assam and Darjeeling, and the spiced chai blends.</li>
+                                 <li><strong>Sri Lanka (Ceylon):</strong> Produces bright, brisk black teas from various elevations.</li>
+                                 <li><strong>Japan:</strong> Primarily produces green teas like Sencha, Matcha, and Gyokuro, known for their steamed processing method.</li>
+                                 <li><strong>Taiwan:</strong> Renowned for high-mountain oolongs and unique black teas.</li>
+                             </ul>
+                             <p>Exploring teas from different origins is a journey of flavor and culture.</p>
+                         `
+                     },
+                     'types': {
+                         title: 'Understanding Tea Types',
+                         image: 'https://placehold.co/800x400/c28b00/ffffff?text=Tea+Types',
+                         content: `
+                             <p>All true teas come from the same plant, Camellia sinensis. The difference between green, black, oolong, and white tea lies in the processing method, particularly the level of oxidation.</p>
+                             <h3>The Six Main Types</h3>
+                             <ul>
+                                 <li><strong>White Tea:</strong> Least processed. Leaves are withered and dried. Delicate flavor.</li>
+                                 <li><strong>Green Tea:</strong> Steamed or pan-fired to stop oxidation. Fresh, often grassy or vegetal flavors.</li>
+                                 <li><strong>Yellow Tea:</strong> Similar to green tea but with an added step of "steaming" the leaves under a damp cloth, giving it a slightly mellower, less vegetal taste.</li>
+                                 <li><strong>Oolong Tea:</strong> Partially oxidized, falling between green and black tea. Flavors range widely from floral and light to dark and roasted.</li>
+                                 <li><strong>Black Tea:</strong> Fully oxidized. Produces a dark liquor and strong, often malty or fruity flavors.</li>
+                                 <li><strong>Pu-erh Tea:</strong> Fermented tea from Yunnan, China. Can be aged for years, developing earthy, complex flavors.</li>
+                             </ul>
+                             <p>Herbal infusions (like chamomile or peppermint) are technically not teas, as they come from different plants, but are often enjoyed similarly.</p>
+                         `
+                     },
+                      'health': {
+                         title: 'Health Benefits of Tea',
+                         image: 'https://placehold.co/800x400/e0e0d1/333?text=Health+Benefits',
+                         content: `
+                            <p>Tea has been consumed for its potential health benefits for centuries. While not a substitute for medical treatment, regular tea drinking can be a healthy addition to your lifestyle.</p>
+                            <h3>Key Benefits</h3>
+                            <ul>
+                                <li><strong>Antioxidants:</strong> Teas, especially green tea, are rich in catechins, powerful antioxidants that help protect cells from damage.</li>
+                                <li><strong>Heart Health:</strong> Studies suggest tea consumption may contribute to lower risk of heart disease and stroke.</li>
+                                <li><strong>Improved Focus:</strong> L-theanine, an amino acid found in tea, promotes relaxation and focus without drowsiness, often working synergistically with caffeine.</li>
+                                <li><strong>Hydration:</strong> Tea is a great way to stay hydrated throughout the day.</li>
+                                <li><strong>Bone Density:</strong> Some research indicates a link between regular tea drinking and improved bone density.</li>
+                            </ul>
+                            <p>The specific benefits can vary depending on the type of tea. Enjoying a variety of teas can offer a range of potential health advantages.</p>
+                         `
+                      }
+                 };
+
+                 const article = articleData[articleId] || {
+                     title: 'Article Not Found',
+                     image: 'https://placehold.co/800x400/cccccc/333?text=Not+Found',
+                     content: '<p>The requested article could not be found.</p>'
+                 };
+
+                 articleTitleElement.textContent = article.title;
+                 articleImageElement.src = article.image;
+                 articleImageElement.alt = article.title;
+                 articleContentElement.innerHTML = article.content; // Use innerHTML for rich content
+             }
+
+
+            // --- Map Initialization (for Store Page) ---
+            let map; // Declare map variable in a scope accessible to showPage
+
+            const mapElement = document.getElementById('map');
+            if (mapElement) {
+                 // Initialize map only once
+                 map = L.map('map').setView([34.0522, -118.2437], 13); // Example: Los Angeles coordinates
+
+                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                     attribution: '© OpenStreetMap contributors'
+                 }).addTo(map);
+
+                 const storeLocation = [34.0522, -118.2437]; // Example: Los Angeles coordinates
+                 L.marker(storeLocation)
+                     .addTo(map)
+                     .bindPopup('Our Specialty Tea Shop')
+                     .openPopup();
+
+                 // The invalidation logic is now handled within showPage when 'store' is activated.
+            }
+
+             // --- Intersection Observer for Section Fade-in ---
+             const sections = document.querySelectorAll('.section');
+             const observerOptions = {
+                 root: null, // viewport
+                 rootMargin: '0px',
+                 threshold: 0.1 // Trigger when 10% of the section is visible
+             };
+
+             const sectionObserver = new IntersectionObserver((entries, observer) => {
+                 entries.forEach(entry => {
+                     if (entry.isIntersecting) {
+                         entry.target.classList.add('visible');
+                         // Optionally stop observing once it's visible
+                         // observer.unobserve(entry.target);
+                     } else {
+                         // Optional: remove 'visible' class when scrolled out of view
+                         // entry.target.classList.remove('visible');
+                     }
+                 });
+             }, observerOptions);
+
+             // Observe sections that are initially hidden or below the fold
+             sections.forEach(section => {
+                 // Only observe sections that are not the hero section and are initially hidden
+                 if (!section.id.startsWith('home-hero')) {
+                      sectionObserver.observe(section);
+                 }
+             });
+
+             // Manually add 'visible' to hero section on load
+             const heroSection = document.getElementById('home-hero');
+             if(heroSection) {
+                 heroSection.classList.add('visible');
+             }
+
+
+        });
+    </script>
+</body>
+</html>

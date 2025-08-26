@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Campaign</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --primary-color-dark: #0056b3;
+            --secondary-color: #6c757d;
+            --secondary-color-dark: #5a6268;
+            --success-color: #28a745;
+            --success-color-dark: #218838;
+            --danger-color: #dc3545;
+            --danger-color-dark: #c82333;
+            --background-color: #f4f7f6; /* Lighter background */
+            --surface-color: #ffffff;
+            --text-color: #343a40;
+            --border-color: #ced4da;
+            --focus-border-color: var(--primary-color);
+            --focus-shadow-color: rgba(0, 123, 255, 0.25);
+            --spacing-unit: 8px;
+            --border-radius: 8px;
+            --shadow: 0 6px 20px rgba(0, 0, 0, 0.08); /* Softer shadow */
+            --transition-duration: 0.3s;
+            --transition-timing-function: ease-in-out;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: var(--spacing-unit) * 4;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .campaign-wizard-container {
+            background-color: var(--surface-color);
+            padding: var(--spacing-unit) * 6;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 960px; /* Slightly wider */
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            color: var(--primary-color-dark);
+            margin-bottom: var(--spacing-unit) * 5;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        h2 {
+            color: var(--text-color);
+            margin-bottom: var(--spacing-unit) * 3;
+            font-weight: 500;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: var(--spacing-unit);
+        }
+
+        .progress-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-unit) * 5;
+            position: relative;
+            padding: 0 var(--spacing-unit) * 2; /* Add padding to align circles */
+        }
+
+        .progress-bar::before {
+            content: '';
+            position: absolute;
+            top: 35px; /* Align with center of circle */
+            left: var(--spacing-unit) * 3;
+            right: var(--spacing-unit) * 3;
+            height: 4px;
+            background-color: var(--border-color);
+            transform: translateY(-50%);
+            z-index: 0;
+        }
+
+        .progress-step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: transform var(--transition-duration) var(--transition-timing-function);
+        }
+
+         .progress-step:hover:not(.active):not(.completed) .progress-circle {
+             background-color: var(--border-color);
+             box-shadow: 0 0 0 4px rgba(var(--border-color), 0.3);
+         }
+
+         .progress-step:focus {
+             outline: none;
+         }
+
+         .progress-step:focus .progress-circle {
+             box-shadow: 0 0 0 4px var(--focus-shadow-color);
+         }
+
+
+        .progress-circle {
+            width: 40px; /* Larger circles */
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--border-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            margin-bottom: var(--spacing-unit);
+            transition: background-color var(--transition-duration) var(--transition-timing-function),
+                        color var(--transition-duration) var(--transition-timing-function),
+                        box-shadow var(--transition-duration) var(--transition-timing-function);
+            font-size: 1.1em;
+        }
+
+        .progress-step.active .progress-circle {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+            box-shadow: 0 0 0 4px var(--focus-shadow-color);
+        }
+
+        .progress-step.completed .progress-circle {
+             background-color: var(--success-color);
+            color: var(--surface-color);
+        }
+
+        .progress-label {
+            font-size: 0.95em;
+            color: var(--secondary-color-dark);
+            transition: color var(--transition-duration) var(--transition-timing-function);
+            text-align: center;
+        }
+
+        .progress-step.active .progress-label {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+         .progress-step.completed .progress-label {
+            color: var(--success-color-dark);
+        }
+
+
+        .wizard-step {
+            display: none;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: none; /* Remove initial animation, handle with JS */
+            transition: opacity var(--transition-duration) var(--transition-timing-function),
+                        transform var(--transition-duration) var(--transition-timing-function);
+        }
+
+        .wizard-step.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .form-group {
+            margin-bottom: var(--spacing-unit) * 4;
+        }
+
+        label {
+            display: block;
+            margin-bottom: var(--spacing-unit);
+            font-weight: 500;
+            color: var(--text-color);
+            font-size: 1em;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="datetime-local"],
+        textarea {
+            width: 100%;
+            padding: var(--spacing-unit) * 1.5 var(--spacing-unit) * 2;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            box-sizing: border-box;
+            transition: border-color var(--transition-duration) var(--transition-timing-function),
+                        box-shadow var(--transition-duration) var(--transition-timing-function);
+            background-color: var(--surface-color);
+            color: var(--text-color);
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="datetime-local"]:focus,
+        textarea:focus {
+            border-color: var(--focus-border-color);
+            box-shadow: 0 0 0 0.2rem var(--focus-shadow-color);
+            outline: none;
+        }
+
+         input[type="text"].invalid,
+        input[type="email"].invalid,
+        input[type="datetime-local"].invalid,
+        textarea.invalid {
+            border-color: var(--danger-color);
+        }
+
+         input[type="text"].invalid:focus,
+        input[type="email"].invalid:focus,
+        input[type="datetime-local"].invalid:focus,
+        textarea.invalid:focus {
+             border-color: var(--danger-color);
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25); /* Red shadow */
+        }
+
+
+        textarea {
+            min-height: 180px; /* Slightly less height */
+            resize: vertical;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: var(--spacing-unit) * 5;
+            gap: var(--spacing-unit) * 2; /* Gap between button groups */
+        }
+
+        .button-group > div {
+            display: flex;
+            gap: var(--spacing-unit) * 2; /* Gap between buttons within a group */
+        }
+
+        button {
+            padding: var(--spacing-unit) * 1.5 var(--spacing-unit) * 3;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: background-color var(--transition-duration) var(--transition-timing-function),
+                        opacity var(--transition-duration) var(--transition-timing-function),
+                        box-shadow var(--transition-duration) var(--transition-timing-function);
+            min-width: 120px; /* Ensure minimum button width */
+        }
+
+        button.primary {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+        }
+
+        button.primary:hover {
+            background-color: var(--primary-color-dark);
+            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3); /* Subtle hover shadow */
+        }
+
+         button.primary:focus {
+             outline: none;
+             box-shadow: 0 0 0 0.2rem var(--focus-shadow-color);
+         }
+
+        button.secondary {
+            background-color: var(--secondary-color);
+            color: var(--surface-color);
+        }
+
+        button.secondary:hover {
+            background-color: var(--secondary-color-dark);
+             box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3); /* Subtle hover shadow */
+        }
+
+         button.secondary:focus {
+             outline: none;
+             box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.25); /* Secondary focus shadow */
+         }
+
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .validation-error {
+            color: var(--danger-color);
+            font-size: 0.85em;
+            margin-top: var(--spacing-unit);
+            min-height: 1.2em; /* Reserve space to prevent layout shifts */
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            body {
+                padding: var(--spacing-unit) * 2;
+            }
+            .campaign-wizard-container {
+                padding: var(--spacing-unit) * 3;
+            }
+
+            h1 {
+                margin-bottom: var(--spacing-unit) * 3;
+            }
+
+            .progress-bar {
+                flex-direction: column;
+                align-items: center;
+                padding: 0;
+            }
+
+            .progress-step {
+                flex-direction: row;
+                align-items: center;
+                margin-bottom: var(--spacing-unit) * 3;
+                width: 100%;
+                justify-content: flex-start;
+                text-align: left;
+            }
+
+             .progress-bar::before {
+                display: none; /* Hide horizontal line on small screens */
+            }
+
+            .progress-circle {
+                margin-bottom: 0;
+                margin-right: var(--spacing-unit) * 2;
+            }
+
+            .button-group {
+                flex-direction: column;
+                gap: var(--spacing-unit) * 2;
+            }
+
+             .button-group > div {
+                 flex-direction: column-reverse; /* Place Next/Send below Save */
+                 gap: var(--spacing-unit) * 2;
+             }
+
+            button {
+                width: 100%;
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="campaign-wizard-container">
+        <h1>Create New Campaign</h1>
+
+        <div class="progress-bar" role="tablist" aria-label="Campaign Creation Steps">
+            <div class="progress-step active" data-step="1" role="tab" aria-selected="true" aria-controls="step1" id="step1-tab" tabindex="0">
+                <div class="progress-circle">1</div>
+                <div class="progress-label">Details</div>
+            </div>
+            <div class="progress-step" data-step="2" role="tab" aria-selected="false" aria-controls="step2" id="step2-tab" tabindex="-1">
+                <div class="progress-circle">2</div>
+                <div class="progress-label">Audience</div>
+            </div>
+            <div class="progress-step" data-step="3" role="tab" aria-selected="false" aria-controls="step3" id="step3-tab" tabindex="-1">
+                <div class="progress-circle">3</div>
+                <div class="progress-label">Content</div>
+            </div>
+            <div class="progress-step" data-step="4" role="tab" aria-selected="false" aria-controls="step4" id="step4-tab" tabindex="-1">
+                <div class="progress-circle">4</div>
+                <div class="progress-label">Schedule & Send</div>
+            </div>
+        </div>
+
+        <div id="step1" class="wizard-step active" role="tabpanel" aria-labelledby="step1-tab">
+            <h2>Campaign Details</h2>
+            <div class="form-group">
+                <label for="campaignName">Campaign Name:</label>
+                <input type="text" id="campaignName" required aria-required="true">
+                <div id="campaignNameError" class="validation-error" aria-live="polite"></div>
+            </div>
+            <div class="form-group">
+                <label for="emailSubject">Email Subject:</label>
+                <input type="text" id="emailSubject" required aria-required="true">
+                 <div id="emailSubjectError" class="validation-error" aria-live="polite"></div>
+            </div>
+            <div class="form-group">
+                <label for="senderName">Sender Name:</label>
+                <input type="text" id="senderName" required aria-required="true">
+                 <div id="senderNameError" class="validation-error" aria-live="polite"></div>
+            </div>
+            <div class="form-group">
+                <label for="senderEmail">Sender Email:</label>
+                <input type="email" id="senderEmail" required aria-required="true">
+                 <div id="senderEmailError" class="validation-error" aria-live="polite"></div>
+            </div>
+        </div>
+
+        <div id="step2" class="wizard-step" role="tabpanel" aria-labelledby="step2-tab" aria-hidden="true">
+            <h2>Audience Selection</h2>
+            <p>Select or segment your audience for this campaign.</p>
+            <div class="form-group">
+                <label for="audienceList">Audience List/Segment:</label>
+                <!-- Placeholder for audience selection component -->
+                 <!-- In a real app, this would be a dropdown, searchable select, or custom component -->
+                <textarea id="audienceList" placeholder="e.g., 'All Subscribers', 'Engaged Users', 'Specific Segment ID'" required aria-required="true"></textarea>
+                 <div id="audienceListError" class="validation-error" aria-live="polite"></div>
+            </div>
+            <!-- More audience segmentation options could go here -->
+        </div>
+
+        <div id="step3" class="wizard-step" role="tabpanel" aria-labelledby="step3-tab" aria-hidden="true">
+            <h2>Email Content</h2>
+            <p>Design your email content.</p>
+            <div class="form-group">
+                <label for="emailContent">Email Body:</label>
+                 <!-- Placeholder for Rich Text Editor or Drag-and-Drop Builder -->
+                 <!-- In a real app, this would be a complex editor component -->
+                <textarea id="emailContent" placeholder="Enter your email HTML or text content here." required aria-required="true"></textarea>
+                 <div id="emailContentError" class="validation-error" aria-live="polite"></div>
+            </div>
+            <!-- Options for templates, preview, etc. could go here -->
+        </div>
+
+        <div id="step4" class="wizard-step" role="tabpanel" aria-labelledby="step4-tab" aria-hidden="true">
+            <h2>Schedule & Send</h2>
+            <p>Choose when to send your campaign.</p>
+            <div class="form-group">
+                <label for="scheduleTime">Schedule Date and Time:</label>
+                <!-- Using datetime-local for simplicity, a real app might use a custom picker -->
+                <input type="datetime-local" id="scheduleTime" required aria-required="true">
+                 <div id="scheduleTimeError" class="validation-error" aria-live="polite"></div>
+            </div>
+            <!-- Options for immediate send, confirmation modal, etc. -->
+        </div>
+
+        <div class="button-group">
+            <button id="prevButton" class="secondary" disabled>Previous</button>
+            <div>
+                 <!-- Optional Save Draft button -->
+                 <!-- <button id="saveDraftButton" class="secondary">Save Draft</button> -->
+                <button id="nextButton" class="primary">Next</button>
+                <button id="sendButton" class="primary" style="display: none;">Send Campaign</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const steps = document.querySelectorAll('.wizard-step');
+        const progressSteps = document.querySelectorAll('.progress-step');
+        const prevButton = document.getElementById('prevButton');
+        const nextButton = document.getElementById('nextButton');
+        const sendButton = document.getElementById('sendButton');
+        let currentStep = 0;
+
+        const formFields = {
+            step1: ['campaignName', 'emailSubject', 'senderName', 'senderEmail'],
+            step2: ['audienceList'],
+            step3: ['emailContent'],
+            step4: ['scheduleTime']
+        };
+
+        function showStep(stepIndex) {
+            steps.forEach((step, index) => {
+                const isActive = index === stepIndex;
+                step.classList.toggle('active', isActive);
+                step.setAttribute('aria-hidden', !isActive);
+                 if (isActive) {
+                     // Focus the first input in the active step for accessibility
+                     const firstInput = step.querySelector('input, textarea');
+                     if (firstInput) {
+                         // Use a small delay to ensure the element is visible and focusable
+                         setTimeout(() => firstInput.focus(), 50);
+                     }
+                 }
+            });
+
+            progressSteps.forEach((pStep, index) => {
+                const isActive = index === stepIndex;
+                pStep.classList.toggle('active', isActive);
+                pStep.classList.toggle('completed', index < stepIndex);
+                pStep.setAttribute('aria-selected', isActive);
+                pStep.setAttribute('tabindex', isActive ? '0' : '-1'); // Make only active tab focusable via tab key
+            });
+
+            prevButton.disabled = stepIndex === 0;
+            nextButton.style.display = stepIndex === steps.length - 1 ? 'none' : 'inline-block';
+            sendButton.style.display = stepIndex === steps.length - 1 ? 'inline-block' : 'none';
+
+            currentStep = stepIndex;
+        }
+
+        function validateStep(stepIndex) {
+            const fields = formFields[`step${stepIndex + 1}`];
+            let isValid = true;
+            let firstInvalidField = null;
+
+            fields.forEach(fieldId => {
+                const input = document.getElementById(fieldId);
+                const errorElement = document.getElementById(`${fieldId}Error`);
+                let fieldIsValid = true;
+                let errorMessage = '';
+
+                input.classList.remove('invalid');
+                input.setAttribute('aria-invalid', 'false');
+                input.removeAttribute('aria-describedby');
+
+                if (input.hasAttribute('required') && !input.value.trim()) {
+                    fieldIsValid = false;
+                    errorMessage = `${input.previousElementSibling.textContent.replace(':', '')} is required.`;
+                } else if (input.type === 'email' && input.value.trim() && !isValidEmail(input.value.trim())) {
+                    fieldIsValid = false;
+                    errorMessage = `Please enter a valid email address.`;
+                } else if (input.type === 'datetime-local' && input.value.trim()) {
+                    // Basic future date validation for scheduleTime
+                    const selectedTime = new Date(input.value);
+                    const now = new Date();
+                    if (selectedTime <= now) {
+                         fieldIsValid = false;
+                         errorMessage = `Schedule time must be in the future.`;
+                    }
+                }
+
+
+                if (!fieldIsValid) {
+                    isValid = false;
+                    input.classList.add('invalid');
+                    errorElement.textContent = errorMessage;
+                    input.setAttribute('aria-invalid', 'true');
+                    input.setAttribute('aria-describedby', `${fieldId}Error`);
+                    if (!firstInvalidField) {
+                        firstInvalidField = input;
+                    }
+                } else {
+                    errorElement.textContent = ''; // Clear previous errors
+                }
+            });
+
+             // Focus the first invalid field after validating the step
+             if (!isValid && firstInvalidField) {
+                 firstInvalidField.focus();
+             }
+
+            return isValid;
+        }
+
+        function isValidEmail(email) {
+            // Basic email validation regex
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        function nextStep() {
+            if (validateStep(currentStep)) {
+                 if (currentStep < steps.length - 1) {
+                    showStep(currentStep + 1);
+                }
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 0) {
+                showStep(currentStep - 1);
+            }
+        }
+
+        function sendCampaign() {
+             if (validateStep(currentStep)) {
+                // Collect all data
+                const campaignData = {};
+                Object.values(formFields).flat().forEach(fieldId => {
+                    campaignData[fieldId] = document.getElementById(fieldId).value.trim();
+                });
+
+                console.log('Sending Campaign:', campaignData);
+                // Simulate API call
+                alert('Campaign data collected. Sending simulation complete. Check console for data.');
+                // In a real app, you would send this data to your backend API
+                // and handle success/failure feedback (e.g., show a modal, redirect)
+            }
+        }
+
+        // Event Listeners
+        nextButton.addEventListener('click', nextStep);
+        prevButton.addEventListener('click', prevStep);
+        sendButton.addEventListener('click', sendCampaign);
+
+        // Allow clicking on progress steps to navigate (if valid)
+        progressSteps.forEach((pStep, index) => {
+            pStep.addEventListener('click', () => {
+                // Allow navigation to any previous step or the current step
+                // Allow navigation to the next step only if the current step is valid
+                if (index < currentStep || (index === currentStep) || (index === currentStep + 1 && validateStep(currentStep))) {
+                     showStep(index);
+                } else if (index > currentStep) {
+                    // If trying to jump ahead, validate current step first
+                    validateStep(currentStep); // This will show errors if any
+                }
+            });
+             pStep.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                     event.preventDefault();
+                     if (index < currentStep || (index === currentStep) || (index === currentStep + 1 && validateStep(currentStep))) {
+                        showStep(index);
+                    } else if (index > currentStep) {
+                         validateStep(currentStep);
+                    }
+                } else if (event.key === 'ArrowRight') {
+                    // Navigate to the next progress step if available and valid
+                     if (index < progressSteps.length - 1 && (index === currentStep && validateStep(currentStep))) {
+                         progressSteps[index + 1].focus();
+                     }
+                } else if (event.key === 'ArrowLeft') {
+                    // Navigate to the previous progress step if available
+                     if (index > 0) {
+                         progressSteps[index - 1].focus();
+                     }
+                }
+            });
+        });
+
+        // Add input event listeners for dynamic validation feedback
+        Object.values(formFields).flat().forEach(fieldId => {
+            const input = document.getElementById(fieldId);
+            if (input) {
+                // Validate on blur
+                input.addEventListener('blur', () => {
+                    // Only validate if the field has a value or is required
+                    if (input.value.trim() !== '' || input.hasAttribute('required')) {
+                         validateStep(currentStep);
+                    }
+                });
+                 // Clear error on input (optional, can be noisy)
+                 // input.addEventListener('input', () => {
+                 //     const errorElement = document.getElementById(`${fieldId}Error`);
+                 //     errorElement.textContent = '';
+                 //     input.classList.remove('invalid');
+                 //     input.setAttribute('aria-invalid', 'false');
+                 //     input.removeAttribute('aria-describedby');
+                 // });
+            }
+        });
+
+
+        // Basic keyboard navigation for wizard buttons (Enter on Next/Send, Shift+Enter on Previous)
+        document.addEventListener('keydown', (event) => {
+            // Check if focus is not inside a text input or textarea before handling global shortcuts
+            const isTextInput = event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA';
+
+            if (event.key === 'Enter' && !isTextInput) {
+                event.preventDefault(); // Prevent default form submission
+                if (currentStep === steps.length - 1) {
+                    sendCampaign();
+                } else {
+                    nextStep();
+                }
+            } else if (event.key === 'ArrowRight' && !isTextInput) {
+                 // Navigate to next step with ArrowRight
+                 nextStep();
+            } else if (event.key === 'ArrowLeft' && !isTextInput) {
+                 // Navigate to previous step with ArrowLeft
+                prevStep();
+            }
+        });
+
+
+        // Initial display
+        showStep(0);
+
+    </script>
+</body>
+</html>

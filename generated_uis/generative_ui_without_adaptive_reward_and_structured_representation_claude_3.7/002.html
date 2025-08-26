@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding Docker Containers</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0db7ed;
+            /* Docker blue */
+            --secondary-color: #333;
+            /* Dark grey */
+            --accent-color: #f0f0f0;
+            /* Light grey */
+            --background-color: #ffffff;
+            /* White */
+            --text-color: #333;
+            /* Dark grey */
+            --card-background: #f9f9f9;
+            /* Very light grey */
+            --border-radius: 8px;
+            --padding-section: 80px 20px;
+            --padding-card: 20px;
+            --max-width: 1000px;
+            --nav-height: 60px;
+            --header-height: 60px;
+            --terminal-background: #1e1e1e;
+            /* VSCode dark background */
+            --terminal-text: #d4d4d4;
+            /* VSCode text color */
+            --terminal-prompt: #50fa7b;
+            /* Green for prompt */
+            --terminal-input: #f1fa8c;
+            /* Yellow for input */
+            --terminal-output: #8be9fd;
+            /* Cyan for output */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding-top: calc(var(--nav-height) + var(--header-height));
+            /* Space for sticky header + nav */
+            scroll-behavior: smooth;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0 20px;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: var(--header-height);
+            box-sizing: border-box;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8em;
+            font-weight: 700;
+        }
+
+        nav {
+            position: sticky;
+            top: var(--header-height);
+            background-color: var(--secondary-color);
+            color: white;
+            z-index: 999;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        nav li {
+            margin: 0 15px;
+        }
+
+        nav a {
+            display: block;
+            padding: 15px 0;
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease, border-bottom-color 0.3s ease;
+            border-bottom: 3px solid transparent;
+            outline-offset: 4px;
+            /* Add space for outline */
+        }
+
+        nav a:hover,
+        nav a:focus {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+            outline: 2px solid var(--primary-color);
+            /* Custom focus indicator */
+            outline-offset: 4px;
+        }
+
+        nav a.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        main {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        section {
+            padding: var(--padding-section);
+            margin-bottom: 40px;
+            border-bottom: 1px solid var(--accent-color);
+        }
+
+        section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        h2 {
+            font-size: 2em;
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 40px;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        p {
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        }
+
+        .section-content {
+            display: grid;
+            gap: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+
+        .card {
+            background-color: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: var(--padding-card);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid transparent;
+            outline-offset: 4px;
+            /* Add space for outline */
+        }
+
+        .card:hover,
+        .card:focus-within {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary-color);
+            outline: 2px solid var(--primary-color);
+            /* Custom focus indicator */
+            outline-offset: 4px;
+        }
+
+        .card:focus-within {
+            /* Ensure outline is visible when child element is focused */
+            outline: 2px solid var(--primary-color);
+            outline-offset: 4px;
+        }
+
+
+        .card h3 {
+            color: var(--secondary-color);
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+            font-weight: 600;
+        }
+
+        .card p {
+            font-size: 1em;
+            flex-grow: 1;
+        }
+
+        .interactive-diagram {
+            text-align: center;
+            margin-top: 40px;
+            position: relative;
+            /* For tooltip positioning */
+        }
+
+        .diagram-svg {
+            width: 100%;
+            max-width: 800px;
+            height: 500px;
+            /* Increased height for clarity */
+            border: 1px solid var(--accent-color);
+            border-radius: var(--border-radius);
+            background-color: #fff;
+            margin: 20px auto;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            display: block;
+            /* Centers the SVG if max-width is used */
+        }
+
+        .diagram-element {
+            cursor: pointer;
+            transition: fill 0.3s ease, stroke 0.3s ease, transform 0.3s ease;
+            outline-offset: 4px;
+            /* Add space for outline */
+        }
+
+        .diagram-element rect {
+            fill: #e0e0e0;
+            stroke: var(--secondary-color);
+            stroke-width: 2px;
+            rx: 5;
+            ry: 5;
+            transition: fill 0.3s ease, stroke 0.3s ease;
+        }
+
+        .diagram-element:hover rect,
+        .diagram-element:focus rect {
+            fill: #d0d0d0;
+            stroke: var(--primary-color);
+            outline: 2px solid var(--primary-color);
+            /* Custom focus indicator */
+            outline-offset: 4px;
+        }
+
+        .diagram-element text {
+            font-size: 14px;
+            fill: var(--secondary-color);
+            text-anchor: middle;
+            dominant-baseline: middle;
+            pointer-events: none;
+            /* Allow clicking the rect/group */
+            transition: fill 0.3s ease;
+        }
+
+        .diagram-element:hover text,
+        .diagram-element:focus text {
+            fill: var(--primary-color);
+        }
+
+        .diagram-line {
+            stroke: var(--secondary-color);
+            stroke-width: 2px;
+            marker-end: url(#arrowhead);
+            transition: stroke 0.3s ease;
+            fill: none;
+            /* Ensure lines don't have fill */
+        }
+
+        .diagram-line text {
+            font-size: 12px;
+            fill: var(--secondary-color);
+            text-anchor: middle;
+            dominant-baseline: middle;
+            transition: fill 0.3s ease;
+        }
+
+        /* Animation States */
+        .diagram-element.highlight rect {
+            fill: var(--primary-color);
+            /* Use primary color for highlight */
+            stroke: var(--secondary-color);
+        }
+
+        .diagram-element.highlight text {
+            fill: white;
+            /* Ensure text is readable on primary background */
+        }
+
+        .diagram-line.highlight {
+            stroke: var(--primary-color);
+            marker-end: url(#arrowhead-highlight);
+            /* Change arrow color */
+        }
+
+        .diagram-line.highlight text {
+            fill: var(--primary-color);
+        }
+
+        /* Line drawing animation */
+        .diagram-line.animated {
+            stroke-dasharray: 1000;
+            /* Needs to be longer than the longest line */
+            stroke-dashoffset: 1000;
+            animation: draw-line 1.5s ease-in-out forwards;
+        }
+
+        @keyframes draw-line {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+
+        .diagram-controls {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .diagram-controls button {
+            padding: 10px 20px;
+            font-size: 1em;
+            font-weight: 600;
+            color: white;
+            background-color: var(--primary-color);
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            outline-offset: 4px;
+            /* Add space for outline */
+        }
+
+        .diagram-controls button:hover,
+        .diagram-controls button:focus {
+            background-color: #0a95c0;
+            /* Slightly darker primary */
+            transform: translateY(-2px);
+            outline: 2px solid var(--secondary-color);
+            /* Contrast outline */
+            outline-offset: 4px;
+        }
+
+        .diagram-controls button:active {
+            transform: translateY(0);
+        }
+
+
+        .diagram-info-panel {
+            position: fixed;
+            top: calc(var(--header-height) + var(--nav-height));
+            right: -400px;
+            /* Start off-screen */
+            width: 350px;
+            height: calc(100% - var(--header-height) - var(--nav-height));
+            background-color: white;
+            box-shadow: -4px 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            box-sizing: border-box;
+            transition: right 0.4s ease-in-out;
+            overflow-y: auto;
+            z-index: 990;
+            border-left: 1px solid var(--accent-color);
+        }
+
+        .diagram-info-panel.open {
+            right: 0;
+        }
+
+        .diagram-info-panel h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+            font-size: 1.6em;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .diagram-info-panel p {
+            font-size: 1em;
+            margin-bottom: 15px;
+        }
+
+        .close-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 30px;
+            /* Larger click target */
+            cursor: pointer;
+            color: #999;
+            transition: color 0.3s ease;
+            background: none;
+            border: none;
+            padding: 5px;
+            line-height: 1;
+            outline-offset: 4px;
+            /* Add space for outline */
+        }
+
+        .close-panel:hover,
+        .close-panel:focus {
+            color: var(--secondary-color);
+            outline: 2px solid var(--secondary-color);
+            /* Contrast outline */
+            outline-offset: 4px;
+        }
+
+        .glossary-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .glossary-item {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed var(--accent-color);
+        }
+
+        .glossary-item dt {
+            font-weight: 600;
+            color: var(--primary-color);
+            font-size: 1.2em;
+            margin-bottom: 5px;
+        }
+
+        .glossary-item dd {
+            margin-left: 20px;
+            font-size: 1em;
+            color: var(--text-color);
+        }
+
+        .callout {
+            background-color: #e0f7fa;
+            /* Light blue */
+            border-left: 4px solid var(--primary-color);
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: var(--border-radius);
+            font-style: italic;
+            color: #0077c2;
+            /* Darker blue */
+        }
+
+        .callout p {
+            margin: 0;
+            font-size: 1em;
+        }
+
+        /* Tooltip styles */
+        .tooltip-term {
+            position: relative;
+            text-decoration: underline dotted;
+            cursor: help;
+            outline-offset: 4px;
+            /* Add space for outline */
+        }
+
+        .tooltip-term:focus {
+            outline: 2px solid var(--primary-color);
+            /* Custom focus indicator */
+            outline-offset: 4px;
+        }
+
+
+        .tooltip-box {
+            position: absolute;
+            top: 100%;
+            /* Position below the text */
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            /* Center and add space */
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 10px;
+            border-radius: var(--border-radius);
+            font-size: 0.9em;
+            white-space: nowrap;
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            pointer-events: none;
+            /* Don't block clicks */
+            min-width: 150px;
+            text-align: center;
+        }
+
+        .tooltip-term:hover .tooltip-box,
+        .tooltip-term:focus .tooltip-box {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .tooltip-box::after {
+            /* Arrow */
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 5px;
+            border-style: solid;
+            border-color: transparent transparent var(--secondary-color) transparent;
+        }
+
+        /* Interactive Terminal Styles */
+        .interactive-terminal {
+            background-color: var(--terminal-background);
+            color: var(--terminal-text);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1em;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            /* Handle wrapping */
+            word-break: break-all;
+            /* Break long words */
+            overflow-y: auto;
+            max-height: 400px;
+            /* Limit height */
+            margin-top: 30px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .terminal-output {
+            margin-bottom: 10px;
+        }
+
+        .terminal-prompt {
+            color: var(--terminal-prompt);
+        }
+
+        .terminal-input-line {
+            display: flex;
+            align-items: center;
+        }
+
+        .terminal-input-line span {
+            color: var(--terminal-prompt);
+            margin-right: 5px;
+        }
+
+        .terminal-input {
+            flex-grow: 1;
+            background: none;
+            border: none;
+            color: var(--terminal-input);
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1em;
+            caret-color: var(--terminal-input);
+            /* Blinking cursor color */
+            outline: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        footer {
+            background-color: var(--secondary-color);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.5em;
+            }
+
+            body {
+                padding-top: calc(var(--nav-height) + var(--header-height));
+            }
+
+            nav ul {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            nav li {
+                margin: 5px 0;
+            }
+
+            nav a {
+                padding: 10px 0;
+            }
+
+            section {
+                padding: 60px 15px;
+            }
+
+            h2 {
+                font-size: 1.8em;
+                margin-bottom: 30px;
+            }
+
+            .section-content {
+                grid-template-columns: 1fr;
+            }
+
+            .diagram-svg {
+                height: 400px;
+            }
+
+            .diagram-info-panel {
+                width: 100%;
+                right: -100%;
+                height: calc(100% - var(--header-height) - var(--nav-height));
+            }
+
+            .diagram-info-panel.open {
+                right: 0;
+            }
+
+            .diagram-controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .diagram-controls button {
+                width: 80%;
+                margin: 0 auto;
+            }
+
+            .interactive-terminal {
+                font-size: 0.9em;
+                padding: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            header h1 {
+                font-size: 1.3em;
+            }
+
+            nav a {
+                font-size: 0.9em;
+            }
+
+            section {
+                padding: 40px 10px;
+            }
+
+            h2 {
+                font-size: 1.6em;
+            }
+
+            .card h3 {
+                font-size: 1.2em;
+            }
+
+            .diagram-svg {
+                height: 350px;
+            }
+
+            .interactive-terminal {
+                font-size: 0.8em;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header role="banner">
+        <h1>Understanding Docker Containers</h1>
+    </header>
+
+    <nav role="navigation" aria-label="Main navigation">
+        <ul>
+            <li><a href="#intro">Introduction</a></li>
+            <li><a href="#what-is-docker">What is Docker?</a></li>
+            <li><a href="#what-are-containers">What are Containers?</a></li>
+            <li><a href="#how-it-works">How it Works</a></li>
+            <li><a href="#diagram">Interactive Diagram</a></li>
+            <li><a href="#interactive-example">Interactive Example</a></li>
+            <li><a href="#benefits">Benefits</a></li>
+            <li><a href="#glossary">Glossary</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <section id="intro" role="region" aria-labelledby="intro-heading">
+            <h2 id="intro-heading">Introduction</h2>
+            <p>Welcome to this guide on Docker containers! If you've heard the terms "Docker" or "container" but aren't
+                quite sure what they mean or why they're important, you're in the right place. This page will walk you
+                through the basics, explain the key concepts, and show you how they fit together.</p>
+            <p>In today's fast-paced software development world, <span class="tooltip-term"
+                    data-tooltip="Ensuring software behaves the same way every time, everywhere."
+                    tabindex="0">consistency</span> and <span class="tooltip-term"
+                    data-tooltip="Achieving maximum productivity with minimal wasted effort or resources."
+                    tabindex="0">efficiency</span> are crucial. Docker provides a powerful solution to package,
+                distribute, and run applications reliably across different environments. Let's dive in!</p>
+            <div class="callout" role="note">
+                <p>Think of Docker like a standardized shipping container. Just as a physical container can hold
+                    anything from electronics to furniture and be transported by ship, train, or truck, a Docker
+                    container can hold any application and its dependencies and be run on any computer or server.</p>
+            </div>
+        </section>
+
+        <section id="what-is-docker" role="region" aria-labelledby="what-is-docker-heading">
+            <h2 id="what-is-docker-heading">What is Docker?</h2>
+            <p>Docker is an open-source platform that automates the deployment, scaling, and management of applications
+                using <span class="tooltip-term"
+                    data-tooltip="A technology that packages applications and their dependencies into isolated, portable units called containers."
+                    tabindex="0">containerization</span>. Think of it as a tool that allows you to package your
+                application and its dependencies into a standardized unit – a container – that can run anywhere.</p>
+            <div class="section-content">
+                <div class="card" tabindex="0">
+                    <h3>Platform</h3>
+                    <p>Docker provides the engine and tools needed to build, run, and manage containers.</p>
+                </div>
+                <div class="card" tabindex="0">
+                    <h3>Open-Source</h3>
+                    <p>It's free to use and has a large, active community contributing to its development.</p>
+                </div>
+                <div class="card" tabindex="0">
+                    <h3>Containerization</h3>
+                    <p>The core technology that isolates applications into self-contained units, sharing the host OS
+                        kernel.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="what-are-containers" role="region" aria-labelledby="what-are-containers-heading">
+            <h2 id="what-are-containers-heading">What are Containers?</h2>
+            <p>Containers are lightweight, portable, and self-sufficient units that encapsulate an application and its
+                entire environment: code, runtime, libraries, environment variables, and configuration files. They are
+                designed to run consistently regardless of the underlying infrastructure.</p>
+            <p>Unlike traditional <span class="tooltip-term"
+                    data-tooltip="Software that emulates a computer system, including hardware. VMs require a full guest OS for each instance."
+                    tabindex="0">virtual machines (VMs)</span> which virtualize the entire hardware stack and include a
+                full guest operating system, containers share the host operating system's kernel. This makes them much
+                smaller, faster to start, and more resource-efficient.</p>
+            <div class="section-content">
+                <div class="card" tabindex="0">
+                    <h3>Portable</h3>
+                    <p>Run the same container on your laptop, a server, or the cloud without modification.</p>
+                </div>
+                <div class="card" tabindex="0">
+                    <h3>Consistent</h3>
+                    <p>Ensures your application behaves the same way everywhere, eliminating "it works on my machine"
+                        problems.</p>
+                </div>
+                <div class="card" tabindex="0">
+                    <h3>Isolated</h3>
+                    <p>Containers run in isolation from each other and the host system, providing security and
+                        preventing conflicts.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="how-it-works" role="region" aria-labelledby="how-it-works-heading">
+            <h2 id="how-it-works-heading">How Docker Works</h2>
+            <p>Docker uses a client-server architecture. The Docker client talks to the <span class="tooltip-term"
+                    data-tooltip="The background service running on the host that manages Docker objects like images, containers, networks, and volumes."
+                    tabindex="0">Docker daemon</span> (the server), which does the heavy lifting of building, running,
+                and managing containers.</p>
+            <p>The core components and process involve:</p>
+            <div class="section-content">
+                <div class="card" tabindex="0">
+                    <h3>Dockerfile</h3>
+                    <p>A text file containing instructions to build a Docker Image. It defines everything needed for the
+                        application environment.</p>
+                </div>
+                <div class="card" tabindex="0">
+                    <h3>Docker Image</h3>
+                    <p>A read-only template built from a Dockerfile. It's a snapshot of the application and its
+                        dependencies, ready to be run.</p>
+                </div>
+                <div class="card" tabindex="0">
+                    <h3>Docker Container</h3>
+                    <p>A runnable instance of a Docker Image. This is where the application actually runs in isolation.
+                    </p>
+                </div>
+            </div>
+            <p>Let's visualize this process with an interactive diagram below. Click on elements to learn more, or use
+                the buttons to see the build and run processes animated.</p>
+        </section>
+
+        <section id="diagram" role="region" aria-labelledby="diagram-heading">
+            <h2 id="diagram-heading">Interactive Diagram</h2>
+            <p>Click on the elements in the diagram below to learn more about each component, or use the buttons to
+                trigger animations.</p>
+            <div class="interactive-diagram">
+                <svg class="diagram-svg" viewBox="0 0 800 500" role="img"
+                    aria-label="Diagram showing Docker architecture: Dockerfile builds Image, Engine manages Image and Container which runs on Host OS">
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="var(--secondary-color)"></polygon>
+                        </marker>
+                        <marker id="arrowhead-highlight" markerWidth="10" markerHeight="7" refX="10" refY="3.5"
+                            orient="auto" fill="var(--primary-color)">
+                            <polygon points="0 0, 10 3.5, 0 7"></polygon>
+                        </marker>
+                    </defs>
+
+                    <!-- Dockerfile -->
+                    <g class="diagram-element" id="diagram-dockerfile" data-info="dockerfile" tabindex="0" role="button"
+                        aria-label="Dockerfile component">
+                        <rect x="150" y="50" width="200" height="80"></rect>
+                        <text x="250" y="90">Dockerfile</text>
+                    </g>
+
+                    <!-- Docker Image -->
+                    <g class="diagram-element" id="diagram-image" data-info="docker-image" tabindex="0" role="button"
+                        aria-label="Docker Image component">
+                        <rect x="150" y="190" width="200" height="80"></rect>
+                        <text x="250" y="230">Docker Image</text>
+                    </g>
+
+                    <!-- Docker Container -->
+                    <g class="diagram-element" id="diagram-container" data-info="docker-container" tabindex="0"
+                        role="button" aria-label="Docker Container component">
+                        <rect x="450" y="190" width="200" height="80"></rect>
+                        <text x="550" y="230">Docker Container(s)</text>
+                    </g>
+
+                    <!-- Docker Engine -->
+                    <g class="diagram-element" id="diagram-engine" data-info="docker-engine" tabindex="0" role="button"
+                        aria-label="Docker Engine component">
+                        <rect x="100" y="310" width="600" height="80"></rect>
+                        <text x="400" y="350">Docker Engine (Daemon)</text>
+                    </g>
+
+                    <!-- Host OS -->
+                    <g class="diagram-element" id="diagram-host" data-info="host-os" tabindex="0" role="button"
+                        aria-label="Host Operating System component">
+                        <rect x="50" y="410" width="700" height="50"></rect>
+                        <text x="400" y="435">Host Operating System (Linux, Windows, macOS)</text>
+                    </g>
+
+                    <!-- Lines/Arrows -->
+                    <!-- Dockerfile to Image (Build) -->
+                    <line class="diagram-line" id="line-build" x1="250" y1="130" x2="250" y2="190"
+                        marker-end="url(#arrowhead)"></line>
+                    <text x="250" y="160" font-size="12" text-anchor="middle" fill="#333">Build</text>
+
+                    <!-- Image to Container (Run) -->
+                    <line class="diagram-line" id="line-run" x1="350" y1="230" x2="450" y2="230"
+                        marker-end="url(#arrowhead)"></line>
+                    <text x="400" y="220" font-size="12" text-anchor="middle" fill="#333">Run</text>
+
+                    <!-- Engine manages Image -->
+                    <line class="diagram-line" id="line-engine-image" x1="400" y1="310" x2="250" y2="270"
+                        marker-end="url(#arrowhead)"></line>
+                    <text x="325" y="295" font-size="12" text-anchor="middle" fill="#333">Manages</text>
+
+
+                    <!-- Engine manages Container -->
+                    <line class="diagram-line" id="line-engine-container" x1="400" y1="310" x2="550" y2="270"
+                        marker-end="url(#arrowhead)"></line>
+                    <text x="475" y="295" font-size="12" text-anchor="middle" fill="#333">Manages</text>
+
+
+                    <!-- Engine to Host OS -->
+                    <line class="diagram-line" id="line-engine-host" x1="400" y1="390" x2="400" y2="410"
+                        marker-end="url(#arrowhead)"></line>
+                    <text x="400" y="400" font-size="12" text-anchor="middle" fill="#333">Runs on</text>
+
+                </svg>
+                <div class="diagram-controls">
+                    <button id="animate-build" aria-controls="diagram-svg">Show Build Process</button>
+                    <button id="animate-run" aria-controls="diagram-svg">Show Run Process</button>
+                    <button id="animate-full" aria-controls="diagram-svg">Show Full Process</button>
+                    <button id="reset-diagram" aria-controls="diagram-svg">Reset Diagram</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="interactive-example" role="region" aria-labelledby="interactive-example-heading">
+            <h2 id="interactive-example-heading">Interactive Example: Docker Terminal</h2>
+            <p>Experience a simplified Docker command-line interface. Type commands like <code>build myapp</code> or
+                <code>run myapp</code> and press Enter to see simulated output.</p>
+            <div class="interactive-terminal" id="dockerTerminal" aria-live="polite" aria-atomic="true">
+                <div class="terminal-output" id="terminalOutput"></div>
+                <div class="terminal-input-line">
+                    <span class="terminal-prompt">$</span>
+                    <input type="text" class="terminal-input" id="terminalInput" aria-label="Docker command input">
+                </div>
+            </div>
+        </section>
+
+        <section id="benefits" role="region" aria-labelledby="benefits-heading">
+            <h2 id="benefits-heading">Benefits of Docker</h2>
+            <p>Using Docker offers numerous advantages for developers and operations teams:</p>
+            <div class="section-content">
+                <div class="card" tabindex="0">
+                    <h3>Speed & Agility</h3>
+                    <p>Faster development cycles, quicker deployments, and rapid scaling.</p>
+                </div>
+                <div class="card" tabindex="0">
+                    <h3>Efficiency</h3>
+                    <p>Containers are lightweight, reducing resource consumption compared to VMs.</p>
+                </div>
+                <div class="card" tabindex="0">
+                    <h3>Consistency</h3>
+                    <p>Eliminates environmental inconsistencies from development to production.</p>
+                </div>
+                <div class="card" tabindex="0">
+                    <h3>Portability</h3>
+                    <p>Run applications consistently across any infrastructure (cloud, on-premise, laptop).</p>
+                </div>
+                <div class="card" tabindex="0">
+                    <h3>Isolation</h3>
+                    <p>Applications are isolated from each other and the host, improving security and stability.</p>
+                </div>
+                <div class="card" tabindex="0">
+                    <h3>Scalability</h3>
+                    <p>Easily scale applications up or down by starting or stopping containers.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="glossary" role="region" aria-labelledby="glossary-heading">
+            <h2 id="glossary-heading">Glossary</h2>
+            <p>Here are some key terms related to Docker and containers:</p>
+            <dl class="glossary-list">
+                <div class="glossary-item">
+                    <dt>Dockerfile</dt>
+                    <dd>A text file that contains all the commands, in order, needed to build a given image. It's the
+                        blueprint for a Docker Image.</dd>
+                </div>
+                <div class="glossary-item">
+                    <dt>Docker Image</dt>
+                    <dd>A read-only template used to create Docker containers. It contains the application code,
+                        libraries, dependencies, and configuration. Images are stored in registries.</dd>
+                </div>
+                <div class="glossary-item">
+                    <dt>Docker Container</dt>
+                    <dd>A runnable instance of a Docker image. It's an isolated environment where the application runs,
+                        based on the image template.</dd>
+                </div>
+                <div class="glossary-item">
+                    <dt>Docker Engine</dt>
+                    <dd>The core Docker technology that builds and runs containerized applications. It consists of the
+                        Docker daemon, API, and CLI.</dd>
+                </div>
+                <div class="glossary-item">
+                    <dt>Docker Hub</dt>
+                    <dd>A cloud-based registry service provided by Docker for sharing and managing Docker images. It's
+                        like GitHub for Docker Images.</dd>
+                </div>
+                <div class="glossary-item">
+                    <dt>Volume</dt>
+                    <dd>A mechanism for persisting data generated by and used by Docker containers, ensuring data is not
+                        lost when a container is stopped or removed.</dd>
+                </div>
+                <div class="glossary-item">
+                    <dt>Registry</dt>
+                    <dd>A storage and distribution system for Docker Images. Docker Hub is the most well-known public
+                        registry.</dd>
+                </div>
+                <div class="glossary-item">
+                    <dt>Orchestration</dt>
+                    <dd>The automated configuration, coordination, and management of computer systems, applications, and
+                        services. Docker Swarm and Kubernetes are popular container orchestration tools.</dd>
+                </div>
+            </dl>
+        </section>
+    </main>
+
+    <footer role="contentinfo">
+        <p>&copy; 2023 Understanding Docker Containers</p>
+    </footer>
+
+    <div class="diagram-info-panel" id="diagramInfoPanel" role="dialog" aria-modal="true"
+        aria-labelledby="infoPanelTitle">
+        <button class="close-panel" onclick="closeInfoPanel()" aria-label="Close information panel">&times;</button>
+        <h3 id="infoPanelTitle"></h3>
+        <p id="infoPanelContent"></p>
+    </div>
+
+    <script>
+        // Smooth scrolling for navigation
+        document.querySelectorAll('nav a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    const headerOffset = document.querySelector('header').offsetHeight;
+                    const navOffset = document.querySelector('nav').offsetHeight;
+                    const totalOffset = headerOffset + navOffset;
+                    const elementPosition = targetElement.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - totalOffset;
+
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: "smooth"
+                    });
+                }
+            });
+        });
+
+        // Highlight active section in navigation
+        const sections = document.querySelectorAll('section');
+        const navLinks = document.querySelectorAll('nav a');
+        const headerHeight = document.querySelector('header').offsetHeight;
+        const navHeight = document.querySelector('nav').offsetHeight;
+        const offset = headerHeight + navHeight + 1; // Add a small buffer
+
+        const highlightNav = () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop - offset;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= sectionTop && pageYOffset < sectionTop + sectionHeight) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href').substring(1) === current) {
+                    link.classList.add('active');
+                }
+            });
+        };
+
+        window.addEventListener('scroll', highlightNav);
+        document.addEventListener('DOMContentLoaded', highlightNav); // Highlight on load
+
+
+        // Diagram Interaction (Click to open info panel)
+        const diagramElements = document.querySelectorAll('.diagram-element');
+        const infoPanel = document.getElementById('diagramInfoPanel');
+        const infoPanelTitle = document.getElementById('infoPanelTitle');
+        const infoPanelContent = document.getElementById('infoPanelContent');
+        const closePanelButton = infoPanel.querySelector('.close-panel');
+
+        const diagramData = {
+            'host-os': {
+                title: 'Host Operating System',
+                content: 'This is the operating system (like Linux, Windows, or macOS) on which Docker is installed. Docker Engine runs directly on or interacts closely with the host OS kernel. It provides the underlying resources (CPU, memory, storage, network) that Docker uses.'
+            },
+            'docker-engine': {
+                title: 'Docker Engine',
+                content: 'The core Docker service (daemon) that runs on the host OS. It\'s responsible for building images from Dockerfiles, running containers from images, managing volumes for data persistence, orchestrating networks for container communication, and interacting with registries like Docker Hub.'
+            },
+            'dockerfile': {
+                title: 'Dockerfile',
+                content: 'A simple text file that defines the steps to build a Docker image. Each instruction in the Dockerfile (like COPY, RUN, EXPOSE) creates a layer in the image. It\'s the script that automates the creation of your application\'s environment.'
+            },
+            'docker-image': {
+                title: 'Docker Image',
+                content: 'A read-only template built from a Dockerfile. It\'s a layered filesystem snapshot containing the application code, libraries, dependencies, and configuration. Images are immutable and serve as the base for creating containers. They are stored in registries like Docker Hub.'
+            },
+            'docker-container': {
+                title: 'Docker Container',
+                content: 'A runnable instance of a Docker image. It\'s an isolated process or set of processes running on the host OS, packaged with everything needed to run the application defined in the image. Containers are lightweight and share the host kernel.'
+            }
+        };
+
+        diagramElements.forEach(element => {
+            element.addEventListener('click', function () {
+                const infoKey = this.getAttribute('data-info');
+                const data = diagramData[infoKey];
+                if (data) {
+                    infoPanelTitle.textContent = data.title;
+                    infoPanelContent.textContent = data.content;
+                    infoPanel.classList.add('open');
+                    // Set focus to the close button for accessibility
+                    closePanelButton.focus();
+                }
+            });
+            // Add keyboard support for diagram elements (Enter/Space)
+            element.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.click();
+                }
+            });
+        });
+
+        function closeInfoPanel() {
+            infoPanel.classList.remove('open');
+            // Return focus to the element that opened the panel (if possible)
+            // This requires storing the previously focused element, which can be complex.
+            // For now, just remove focusability from the panel itself.
+            infoPanel.removeAttribute('tabindex');
+        }
+
+        // Close panel on Escape key
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && infoPanel.classList.contains('open')) {
+                closeInfoPanel();
+            }
+        });
+
+
+        // Diagram Animation
+        const animateBuildButton = document.getElementById('animate-build');
+        const animateRunButton = document.getElementById('animate-run');
+        const animateFullButton = document.getElementById('animate-full');
+        const resetButton = document.getElementById('reset-diagram');
+
+        const dockerfileElement = document.getElementById('diagram-dockerfile');
+        const imageElement = document.getElementById('diagram-image');
+        const containerElement = document.getElementById('diagram-container');
+        const engineElement = document.getElementById('diagram-engine');
+        const hostElement = document.getElementById('diagram-host');
+
+        const buildLine = document.getElementById('line-build');
+        const runLine = document.getElementById('line-run');
+        const engineImageLine = document.getElementById('line-engine-image');
+        const engineContainerLine = document.getElementById('line-engine-container');
+        const engineHostLine = document.getElementById('line-engine-host');
+
+        const diagramElementsArr = [dockerfileElement, imageElement, containerElement, engineElement, hostElement];
+        const diagramLinesArr = [buildLine, runLine, engineImageLine, engineContainerLine, engineHostLine];
+
+        function resetDiagram() {
+            diagramElementsArr.forEach(el => el.classList.remove('highlight'));
+            diagramLinesArr.forEach(line => {
+                line.classList.remove('highlight', 'animated');
+                line.style.animation = ''; // Clear animation style
+                line.style.strokeDashoffset = ''; // Reset dashoffset
+                line.setAttribute('marker-end', 'url(#arrowhead)'); // Reset arrow color
+            });
+        }
+
+        function animateElement(element, delay = 0) {
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    element.classList.add('highlight');
+                    resolve();
+                }, delay);
+            });
+        }
+
+        function animateLine(line, delay = 0) {
+            // Calculate line length for stroke-dasharray/offset
+            const length = line.getTotalLength ? line.getTotalLength() : 500; // Fallback length
+            line.style.strokeDasharray = length;
+            line.style.strokeDashoffset = length;
+
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    line.classList.add('highlight');
+                    line.setAttribute('marker-end', 'url(#arrowhead-highlight)'); // Change arrow color
+                    line.style.animation = `draw-line 1.5s ease-in-out forwards`;
+                    line.addEventListener('animationend', function handler() {
+                        line.removeEventListener('animationend', handler);
+                        resolve();
+                    });
+                }, delay);
+            });
+        }
+
+        async function animateBuildProcess() {
+            resetDiagram();
+            await animateElement(dockerfileElement, 300);
+            await animateLine(buildLine, 500);
+            await animateElement(imageElement, 500);
+            await animateElement(engineElement, 300); // Engine is involved in build
+            await animateLine(engineImageLine, 0);
+        }
+
+        async function animateRunProcess() {
+            resetDiagram();
+            await animateElement(hostElement, 300);
+            await animateElement(engineElement, 500);
+            await animateLine(engineHostLine, 500);
+            await animateElement(imageElement, 500);
+            await animateLine(runLine, 500);
+            await animateElement(containerElement, 500);
+            await animateLine(engineContainerLine, 0);
+            await animateLine(engineImageLine, 0); // Engine interacts with image too
+        }
+
+        async function animateFullProcess() {
+            resetDiagram();
+            await animateElement(hostElement, 300);
+            await animateElement(engineElement, 500);
+            await animateLine(engineHostLine, 500);
+
+            await animateElement(dockerfileElement, 1000);
+            await animateLine(buildLine, 500);
+            await animateElement(imageElement, 500);
+            await animateLine(engineImageLine, 0); // Engine interacts with image
+
+            await animateLine(runLine, 1000);
+            await animateElement(containerElement, 500);
+            await animateLine(engineContainerLine, 0); // Engine interacts with container
+        }
+
+
+        animateBuildButton.addEventListener('click', animateBuildProcess);
+        animateRunButton.addEventListener('click', animateRunProcess);
+        animateFullButton.addEventListener('click', animateFullProcess);
+        resetButton.addEventListener('click', resetDiagram);
+
+
+        // Tooltip implementation
+        const tooltipTerms = document.querySelectorAll('.tooltip-term');
+
+        tooltipTerms.forEach(term => {
+            // Create tooltip box element
+            const tooltipBox = document.createElement('div');
+            tooltipBox.classList.add('tooltip-box');
+            tooltipBox.textContent = term.getAttribute('data-tooltip');
+            term.appendChild(tooltipBox);
+
+            // CSS handles hover/focus visibility and transition
+        });
+
+
+        // Interactive Terminal Logic
+        const terminalInput = document.getElementById('terminalInput');
+        const terminalOutput = document.getElementById('terminalOutput');
+
+        function writeToTerminal(text, color = 'var(--terminal-text)') {
+            const line = document.createElement('span');
+            line.textContent = text;
+            line.style.color = color;
+            terminalOutput.appendChild(line);
+            terminalOutput.appendChild(document.createElement('br'));
+            // Scroll to bottom
+            terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        }
+
+        function processCommand(command) {
+            writeToTerminal(`$ ${command}`, 'var(--terminal-input)'); // Echo command
+
+            const [cmd, ...args] = command.trim().toLowerCase().split(' ');
+
+            if (cmd === 'build') {
+                const appName = args[0] || 'your-app';
+                writeToTerminal(`Sending Dockerfile to Docker daemon...`);
+                writeToTerminal(`Step 1/3: FROM base-image`);
+                writeToTerminal(`Step 2/3: COPY . /app`);
+                writeToTerminal(`Step 3/3: RUN install dependencies`);
+                writeToTerminal(`Successfully built image for '${appName}'`);
+                writeToTerminal(`Image ID: abcdef123456`);
+                // Trigger diagram animation (optional)
+                animateBuildProcess();
+
+            } else if (cmd === 'run') {
+                const appName = args[0] || 'your-app';
+                writeToTerminal(`Looking for image '${appName}'...`);
+                writeToTerminal(`Starting container from image '${appName}'...`);
+                writeToTerminal(`Container ID: fedcba654321`);
+                writeToTerminal(`Application '${appName}' is running in container!`);
+                // Trigger diagram animation (optional)
+                animateRunProcess();
+
+            } else if (cmd === 'help') {
+                writeToTerminal(`Available commands:`);
+                writeToTerminal(`  build [app_name] - Simulate building a Docker image.`);
+                writeToTerminal(`  run [app_name] - Simulate running a container from an image.`);
+                writeToTerminal(`  clear - Clear the terminal output.`);
+            } else if (cmd === 'clear') {
+                terminalOutput.innerHTML = '';
+            }
+            else {
+                writeToTerminal(`Error: unknown command '${command}'`, 'red');
+                writeToTerminal(`Type 'help' for available commands.`);
+            }
+            // Scroll to bottom after processing
+            terminalOutput.parentElement.scrollTop = terminalOutput.parentElement.scrollHeight;
+        }
+
+        terminalInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Prevent default form submission if input was in a form
+                const command = terminalInput.value;
+                if (command.trim() !== '') {
+                    processCommand(command);
+                    terminalInput.value = ''; // Clear input after processing
+                }
+            }
+        });
+
+        // Initial welcome message in terminal
+        document.addEventListener('DOMContentLoaded', () => {
+            writeToTerminal('Welcome to the Docker Terminal Simulator!');
+            writeToTerminal('Type "help" to see available commands.');
+            terminalInput.focus(); // Set focus to input on load
+        });
+
+
+    </script>
+
+</body>
+
+</html>

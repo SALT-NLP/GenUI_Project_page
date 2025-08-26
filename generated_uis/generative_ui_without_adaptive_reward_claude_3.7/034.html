@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Translator</title>
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --text-color: #333333;
+            --background-color: #f8f9fa;
+            --container-bg: #ffffff;
+            --border-color: #e0e0e0;
+            --success-color: #2ecc71;
+            --focus-color: #3a56d4;
+            --hover-color: #3a56d4;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: var(--container-bg);
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            padding: 30px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: var(--primary-color);
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+        }
+        
+        .translator {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .translator {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .text-box {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .text-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .language-label {
+            font-weight: 600;
+            font-size: 16px;
+            color: var(--primary-color);
+        }
+        
+        textarea {
+            width: 100%;
+            height: 300px;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: var(--focus-color);
+            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        
+        .btn:hover {
+            background-color: var(--hover-color);
+        }
+        
+        .btn:active {
+            transform: translateY(2px);
+        }
+        
+        .btn-copy {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            padding: 8px 12px;
+            font-size: 14px;
+            margin-left: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .btn-copy:hover {
+            background-color: rgba(67, 97, 238, 0.1);
+        }
+        
+        .btn-copy svg {
+            width: 16px;
+            height: 16px;
+        }
+        
+        .loading {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(67, 97, 238, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        .loading-text {
+            font-size: 14px;
+            color: var(--primary-color);
+        }
+        
+        .success-message {
+            display: none;
+            color: var(--success-color);
+            font-size: 14px;
+            margin-left: 10px;
+            animation: fadeOut 2s forwards;
+            animation-delay: 2s;
+        }
+        
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Document Translator</h1>
+            <p class="subtitle">Translate your documents from English to Spanish</p>
+        </header>
+        
+        <div class="translator">
+            <div class="text-box">
+                <div class="text-header">
+                    <span class="language-label">English Text</span>
+                </div>
+                <textarea id="sourceText" placeholder="Paste your English document here..."></textarea>
+            </div>
+            
+            <div class="text-box">
+                <div class="text-header">
+                    <span class="language-label">Spanish Translation</span>
+                    <button id="copyButton" class="btn btn-copy">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        Copy
+                    </button>
+                    <span id="copySuccess" class="success-message">Copied!</span>
+                </div>
+                <textarea id="targetText" placeholder="Translated Spanish text will appear here..." readonly></textarea>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="translateButton" class="btn">Translate</button>
+        </div>
+        
+        <div id="loading" class="loading">
+            <div class="loading-spinner"></div>
+            <span class="loading-text">Translating...</span>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sourceText = document.getElementById('sourceText');
+            const targetText = document.getElementById('targetText');
+            const translateButton = document.getElementById('translateButton');
+            const copyButton = document.getElementById('copyButton');
+            const copySuccess = document.getElementById('copySuccess');
+            const loading = document.getElementById('loading');
+            
+            // Mock translation API call (in a real app, this would call an actual translation API)
+            async function translateText(text) {
+                // Simulate API call delay
+                loading.style.display = 'flex';
+                
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        // Simple word-by-word mock translation dictionary
+                        const dictionary = {
+                            'hello': 'hola',
+                            'world': 'mundo',
+                            'good': 'bueno',
+                            'morning': 'mañana',
+                            'welcome': 'bienvenido',
+                            'thank': 'gracias',
+                            'you': 'tú',
+                            'please': 'por favor',
+                            'yes': 'sí',
+                            'no': 'no',
+                            'document': 'documento',
+                            'translator': 'traductor',
+                            'english': 'inglés',
+                            'spanish': 'español',
+                            'translate': 'traducir',
+                            'language': 'idioma',
+                            'text': 'texto'
+                        };
+                        
+                        // Very basic mock translation - just to demonstrate UI functionality
+                        const translatedText = text.split(' ').map(word => {
+                            const lowerWord = word.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
+                            return dictionary[lowerWord] || word;
+                        }).join(' ');
+                        
+                        loading.style.display = 'none';
+                        resolve(translatedText);
+                    }, 1500); // Simulate network delay
+                });
+            }
+            
+            // Handle translate button click
+            translateButton.addEventListener('click', async function() {
+                const text = sourceText.value.trim();
+                
+                if (!text) {
+                    alert('Please enter some text to translate.');
+                    return;
+                }
+                
+                translateButton.disabled = true;
+                
+                try {
+                    const translatedText = await translateText(text);
+                    targetText.value = translatedText;
+                } catch (error) {
+                    console.error('Translation error:', error);
+                    alert('An error occurred during translation. Please try again.');
+                } finally {
+                    translateButton.disabled = false;
+                }
+            });
+            
+            // Handle copy button click
+            copyButton.addEventListener('click', function() {
+                const text = targetText.value.trim();
+                
+                if (!text) {
+                    alert('There is no translated text to copy.');
+                    return;
+                }
+                
+                navigator.clipboard.writeText(text).then(() => {
+                    copySuccess.style.display = 'inline';
+                    copySuccess.style.animation = 'none';
+                    copySuccess.offsetHeight; // Trigger reflow
+                    copySuccess.style.animation = 'fadeOut 2s forwards';
+                    copySuccess.style.animationDelay = '2s';
+                }).catch(err => {
+                    console.error('Copy failed:', err);
+                    alert('Failed to copy text. Please try again.');
+                });
+            });
+            
+            // Enable keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // Ctrl+Enter or Cmd+Enter to translate
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    translateButton.click();
+                }
+                
+                // Ctrl+Shift+C or Cmd+Shift+C to copy translated text
+                if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'c') {
+                    copyButton.click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

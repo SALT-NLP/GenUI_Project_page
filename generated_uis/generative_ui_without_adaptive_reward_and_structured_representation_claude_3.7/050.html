@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Readmission Risk Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-primary: #005f73; /* Dark Blue */
+            --color-secondary: #0a9396; /* Teal */
+            --color-accent: #94d2bd; /* Mint */
+            --color-background: #f8f9fa; /* Light Grey */
+            --color-surface: #ffffff; /* White */
+            --color-text-primary: #333333; /* Dark Grey */
+            --color-text-secondary: #666666; /* Medium Grey */
+            --color-risk-low: #8fbc8f; /* Green */
+            --color-risk-medium: #f0e68c; /* Yellow */
+            --color-risk-high: #cd5c5c; /* Red */
+            --color-danger: #dc3545; /* Red for errors */
+            --color-border: #cccccc; /* Light grey border */
+            --spacing-unit: 8px;
+            --border-radius: 8px;
+            --box-shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.05);
+            --box-shadow-medium: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--color-background);
+            color: var(--color-text-primary);
+            line-height: 1.6;
+            overflow-x: hidden; /* Prevent horizontal scroll due to panel */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: calc(var(--spacing-unit) * 3);
+        }
+
+        .header {
+            background-color: var(--color-surface);
+            padding: calc(var(--spacing-unit) * 2) calc(var(--spacing-unit) * 3);
+            box-shadow: var(--box-shadow-subtle);
+            margin-bottom: calc(var(--spacing-unit) * 3);
+        }
+
+        .header__title {
+            margin: 0;
+            font-size: 1.8em;
+            color: var(--color-primary);
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: calc(var(--spacing-unit) * 3);
+        }
+
+        .card {
+            background-color: var(--color-surface);
+            padding: calc(var(--spacing-unit) * 2);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow-subtle);
+        }
+
+        .card__title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--color-primary);
+            margin-bottom: var(--spacing-unit) * 2;
+            padding-bottom: var(--spacing-unit);
+            border-bottom: 1px solid #eee;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: calc(var(--spacing-unit) * 2);
+            align-items: center;
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-unit);
+        }
+
+        .filter-bar__label {
+            font-weight: 500;
+            color: var(--color-text-secondary);
+            white-space: nowrap; /* Prevent label wrapping */
+        }
+
+        .filter-bar__input,
+        .filter-bar__select {
+            padding: var(--spacing-unit);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            font-family: inherit;
+            font-size: 1em;
+            color: var(--color-text-primary);
+            min-width: 150px; /* Give inputs/selects a minimum width */
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .filter-bar__input:focus,
+        .filter-bar__select:focus {
+            outline: none;
+            border-color: var(--color-secondary);
+            box-shadow: 0 0 0 2px rgba(var(--color-secondary), 0.2);
+        }
+
+
+        .patient-list {
+            display: grid;
+            gap: var(--spacing-unit) * 2;
+        }
+
+        .patient-card {
+            background-color: var(--color-surface);
+            padding: calc(var(--spacing-unit) * 2);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow-subtle);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: 1px solid transparent; /* Add border for focus state */
+        }
+
+        .patient-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--box-shadow-medium);
+        }
+
+         .patient-card:focus {
+            outline: none;
+            border-color: var(--color-secondary);
+            box-shadow: 0 0 0 2px rgba(var(--color-secondary), 0.2);
+        }
+
+
+        .patient-card__info {
+            flex-grow: 1;
+            margin-right: var(--spacing-unit) * 2; /* Add space between info and risk */
+        }
+
+        .patient-card__id {
+            font-weight: 600;
+            color: var(--color-primary);
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .patient-card__details {
+            font-size: 0.9em;
+            color: var(--color-text-secondary);
+        }
+
+        .patient-card__risk {
+            font-weight: 700;
+            padding: calc(var(--spacing-unit) / 2) var(--spacing-unit);
+            border-radius: var(--border-radius);
+            min-width: 80px;
+            text-align: center;
+            white-space: nowrap; /* Prevent risk score wrapping */
+        }
+
+        .patient-card__risk--low {
+            background-color: var(--color-risk-low);
+            color: #333;
+        }
+
+        .patient-card__risk--medium {
+            background-color: var(--color-risk-medium);
+            color: #333;
+        }
+
+        .patient-card__risk--high {
+            background-color: var(--color-risk-high);
+            color: white;
+        }
+
+        /* Loading Indicator */
+        .loading-indicator {
+            text-align: center;
+            padding: calc(var(--spacing-unit) * 3);
+            color: var(--color-text-secondary);
+            font-style: italic;
+        }
+
+        .loading-indicator.is-hidden {
+            display: none;
+        }
+
+        /* Error Message */
+        .error-message {
+            text-align: center;
+            padding: calc(var(--spacing-unit) * 3);
+            color: var(--color-danger);
+            font-weight: 500;
+        }
+
+        .error-message.is-hidden {
+            display: none;
+        }
+
+
+        /* Detail Panel */
+        .detail-panel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 450px; /* Increased width for better content display */
+            max-width: 90%; /* Ensure it doesn't exceed viewport width on smaller screens */
+            height: 100%;
+            background-color: var(--color-surface);
+            box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+            z-index: 1000;
+            padding: calc(var(--spacing-unit) * 3);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box; /* Include padding in width */
+        }
+
+        .detail-panel.is-visible {
+            transform: translateX(0);
+        }
+
+        .detail-panel__header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            border-bottom: 1px solid #eee;
+            padding-bottom: var(--spacing-unit) * 2;
+        }
+
+        .detail-panel__title {
+            margin: 0;
+            font-size: 1.5em;
+            color: var(--color-primary);
+        }
+
+        .detail-panel__close {
+            background: none;
+            border: none;
+            font-size: 1.8em; /* Increased size for better click target */
+            cursor: pointer;
+            color: var(--color-text-secondary);
+            transition: color 0.2s ease;
+            padding: var(--spacing-unit); /* Add padding for larger click area */
+            margin: calc(var(--spacing-unit) * -1); /* Offset padding */
+        }
+
+        .detail-panel__close:hover,
+        .detail-panel__close:focus {
+            color: var(--color-text-primary);
+            outline: none; /* Remove default outline */
+            box-shadow: 0 0 0 2px var(--color-accent); /* Custom focus indicator */
+            border-radius: var(--border-radius);
+        }
+
+        .detail-panel__section {
+            margin-bottom: calc(var(--spacing-unit) * 3);
+        }
+
+        .detail-panel__section-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--color-primary);
+            margin-bottom: var(--spacing-unit) * 2;
+            border-bottom: 1px solid var(--color-accent);
+            padding-bottom: var(--spacing-unit);
+        }
+
+        .detail-panel__risk-score {
+            font-size: 2.2em; /* Increased size */
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            padding: calc(var(--spacing-unit) * 2);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow-subtle);
+        }
+
+        .detail-panel__risk-score--low {
+            background-color: var(--color-risk-low);
+            color: #333;
+        }
+
+        .detail-panel__risk-score--medium {
+            background-color: var(--color-risk-medium);
+            color: #333;
+        }
+
+        .detail-panel__risk-score--high {
+            background-color: var(--color-risk-high);
+            color: white;
+        }
+
+        .detail-panel__demographics p,
+        .detail-panel__key-info p {
+             margin: var(--spacing-unit) 0;
+             font-size: 1em;
+        }
+
+         .detail-panel__demographics strong,
+        .detail-panel__key-info strong {
+            color: var(--color-text-primary);
+            display: inline-block;
+            min-width: 120px; /* Align key info */
+        }
+
+
+        .chart-container {
+            position: relative;
+            height: 300px; /* Increased height for better chart visibility */
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            cursor: pointer; /* Indicate interactivity */
+            padding: var(--spacing-unit); /* Add padding around chart */
+            margin: calc(var(--spacing-unit) * -1); /* Offset padding */
+        }
+
+         /* Chart Floating Controls */
+        .floating-controls {
+            position: absolute;
+            top: calc(var(--spacing-unit) * 2);
+            right: calc(var(--spacing-unit) * 2);
+            background: rgba(255, 255, 255, 0.98); /* More opaque background */
+            padding: calc(var(--spacing-unit) * 2);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow-medium);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 10;
+            min-width: 180px;
+            box-sizing: border-box;
+        }
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+        .control-group {
+            margin-bottom: var(--spacing-unit) * 2;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-unit);
+        }
+         .control-group:last-child {
+             margin-bottom: 0;
+         }
+        .control-group label {
+            font-size: 0.9em;
+            color: var(--color-text-secondary);
+            font-weight: 500;
+        }
+        .control-group input[type="color"],
+        .control-group select {
+            padding: var(--spacing-unit);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            font-family: inherit;
+            font-size: 0.9em;
+            width: 100%; /* Make controls fill container */
+            box-sizing: border-box;
+        }
+         .control-group input[type="color"] {
+             height: calc(var(--spacing-unit) * 4 + 2px); /* Match height of select */
+             padding: calc(var(--spacing-unit) / 2);
+         }
+
+
+        /* Overlay */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+
+        .overlay.is-visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                padding: calc(var(--spacing-unit) * 2);
+            }
+
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-group {
+                flex-direction: column;
+                align-items: stretch;
+                width: 100%;
+            }
+
+            .filter-bar__input,
+            .filter-bar__select {
+                 min-width: unset; /* Remove min-width on small screens */
+                 width: 100%; /* Make them fill the width */
+            }
+
+            .detail-panel {
+                width: 100%;
+                max-width: 100%;
+            }
+             .floating-controls {
+                 top: calc(var(--spacing-unit));
+                 right: calc(var(--spacing-unit));
+                 padding: calc(var(--spacing-unit) * 1.5);
+                 min-width: 150px;
+             }
+             .control-group {
+                 margin-bottom: var(--spacing-unit) * 1.5;
+             }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="container">
+            <h1 class="header__title">Patient Readmission Risk Dashboard</h1>
+        </div>
+    </div>
+
+    <div class="container dashboard">
+        <div class="card filter-bar" role="search">
+            <div class="filter-group">
+                <label for="filter-search" class="filter-bar__label">Search Patient ID:</label>
+                <input type="text" id="filter-search" class="filter-bar__input" placeholder="e.g., P1001" aria-label="Search by Patient ID">
+            </div>
+
+            <div class="filter-group">
+                <label for="sort-risk" class="filter-bar__label">Sort by Risk:</label>
+                <select id="sort-risk" class="filter-bar__select" aria-label="Sort patient list by risk score">
+                    <option value="none">None</option>
+                    <option value="low-to-high">Low to High</option>
+                    <option value="high-to-low">High to Low</option>
+                </select>
+            </div>
+             <div class="filter-group">
+                <label for="filter-risk-level" class="filter-bar__label">Filter by Risk Level:</label>
+                <select id="filter-risk-level" class="filter-bar__select" aria-label="Filter patient list by risk level">
+                    <option value="all">All Levels</option>
+                    <option value="low">Low Risk</option>
+                    <option value="medium">Medium Risk</option>
+                    <option value="high">High Risk</option>
+                </select>
+            </div>
+        </div>
+
+         <div class="card">
+            <h2 class="card__title">Aggregate Risk Distribution</h2>
+            <div id="aggregate-chart-container" class="chart-container" role="img" aria-label="Aggregate risk distribution chart">
+                <canvas id="aggregateRiskChart"></canvas>
+                 <!-- Floating control panel for Aggregate Chart -->
+                <div class="floating-controls" id="aggregate-chart-controls">
+                    <div class="control-group">
+                        <label for="aggregate-chart-type">Chart Type</label>
+                        <select id="aggregate-chart-type" aria-controls="aggregateRiskChart">
+                            <option value="bar">Bar</option>
+                            <option value="pie">Pie</option>
+                            <option value="doughnut">Doughnut</option>
+                        </select>
+                    </div>
+                     <div class="control-group">
+                        <label for="aggregate-color-low">Low Risk Color</label>
+                        <input type="color" id="aggregate-color-low" value="#8fbc8f" aria-controls="aggregateRiskChart">
+                    </div>
+                    <div class="control-group">
+                        <label for="aggregate-color-medium">Medium Risk Color</label>
+                        <input type="color" id="aggregate-color-medium" value="#f0e68c" aria-controls="aggregateRiskChart">
+                    </div>
+                     <div class="control-group">
+                        <label for="aggregate-color-high">High Risk Color</label>
+                        <input type="color" id="aggregate-color-high" value="#cd5c5c" aria-controls="aggregateRiskChart">
+                    </div>
+                </div>
+            </div>
+         </div>
+
+        <div id="patient-list" class="patient-list" role="region" aria-live="polite" aria-label="Patient list">
+            <!-- Patient cards will be rendered here by JavaScript -->
+        </div>
+
+        <div id="loading-indicator" class="loading-indicator is-hidden" aria-live="polite">Loading patient data...</div>
+        <div id="error-message" class="error-message is-hidden" aria-live="assertive"></div>
+    </div>
+
+    <!-- Detail Panel -->
+    <div id="detail-panel" class="detail-panel" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="detail-patient-id">
+        <div class="detail-panel__header">
+            <h2 id="detail-patient-id" class="detail-panel__title"></h2>
+            <button id="detail-close" class="detail-panel__close" aria-label="Close detail panel">&times;</button>
+        </div>
+
+        <div class="detail-panel__section">
+            <h3 class="detail-panel__section-title">Predicted Risk Score</h3>
+            <div id="detail-risk-score" class="detail-panel__risk-score" role="status"></div>
+        </div>
+
+        <div class="detail-panel__section">
+            <h3 class="detail-panel__section-title">Contributing Factors</h3>
+            <div id="detail-chart-container" class="chart-container" role="img" aria-label="Contributing factors chart">
+                 <canvas id="factorChart"></canvas>
+                  <!-- Floating control panel for Factor Chart -->
+                <div class="floating-controls" id="factor-chart-controls">
+                    <div class="control-group">
+                        <label for="factor-chart-type">Chart Type</label>
+                        <select id="factor-chart-type" aria-controls="factorChart">
+                            <option value="bar">Vertical Bar</option>
+                            <option value="horizontalBar">Horizontal Bar</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="factor-chart-color">Bar Color</label>
+                        <input type="color" id="factor-chart-color" value="#0a9396" aria-controls="factorChart">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="detail-panel__section detail-panel__demographics">
+            <h3 class="detail-panel__section-title">Demographics</h3>
+            <p><strong>Age:</strong> <span id="detail-age"></span></p>
+            <p><strong>Gender:</strong> <span id="detail-gender"></span></p>
+            <p><strong>Ethnicity:</strong> <span id="detail-ethnicity"></span></p>
+        </div>
+
+        <div class="detail-panel__section detail-panel__key-info">
+            <h3 class="detail-panel__section-title">Key Information</h3>
+             <p><strong>Primary Diagnosis:</strong> <span id="detail-diagnosis"></span></p>
+             <p><strong>Medications:</strong> <span id="detail-medications"></span></p>
+             <p><strong>Last Lab Result:</strong> <span id="detail-lab"></span></p>
+        </div>
+
+    </div>
+
+    <!-- Overlay -->
+    <div id="overlay" class="overlay"></div>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        // Dummy Data
+        const patientData = [
+            { id: 'P1001', age: 75, gender: 'Female', ethnicity: 'Caucasian', riskScore: 0.85, riskLevel: 'high', diagnosis: 'Heart Failure', medications: 'Lisinopril, Furosemide', lab: 'BNP High', factors: { 'Age': 0.3, 'Diagnosis (HF)': 0.2, 'Medications (Diuretics)': 0.15, 'Lab (BNP)': 0.2 } },
+            { id: 'P1002', age: 62, gender: 'Male', ethnicity: 'African American', riskScore: 0.32, riskLevel: 'medium', diagnosis: 'COPD', medications: 'Albuterol, Prednisone', lab: 'FEV1 Low', factors: { 'Diagnosis (COPD)': 0.15, 'Age': 0.08, 'Medications (Steroids)': 0.05, 'Smoking History': 0.04 } },
+            { id: 'P1003', age: 50, gender: 'Female', ethnicity: 'Hispanic', riskScore: 0.15, riskLevel: 'low', diagnosis: 'Hypertension', medications: 'Amlodipine', lab: 'Normal', factors: { 'Age': 0.05, 'Diagnosis (HTN)': 0.04, 'Medications (CCB)': 0.03 } },
+            { id: 'P1004', age: 88, gender: 'Male', ethnicity: 'Caucasian', riskScore: 0.92, riskLevel: 'high', diagnosis: 'Pneumonia', medications: 'Antibiotics', lab: 'WBC High', factors: { 'Age': 0.4, 'Diagnosis (Pneumonia)': 0.25, 'Recent Hospitalization': 0.15, 'Lab (WBC)': 0.1 } },
+            { id: 'P1005', age: 45, gender: 'Male', ethnicity: 'Asian', riskScore: 0.08, riskLevel: 'low', diagnosis: 'Diabetes', medications: 'Metformin', lab: 'A1C Controlled', factors: { 'Diagnosis (Diabetes)': 0.03, 'Age': 0.02, 'Medications (Oral Hypoglycemics)': 0.02 } },
+             { id: 'P1006', age: 70, gender: 'Female', ethnicity: 'African American', riskScore: 0.48, riskLevel: 'medium', diagnosis: 'Kidney Disease', medications: 'Dialysis', lab: 'Creatinine High', factors: { 'Diagnosis (CKD)': 0.2, 'Age': 0.1, 'Dialysis': 0.1, 'Lab (Creatinine)': 0.08 } },
+             { id: 'P1007', age: 68, gender: 'Male', ethnicity: 'Caucasian', riskScore: 0.25, riskLevel: 'low', diagnosis: 'Stroke (History)', medications: 'Aspirin, Statin', lab: 'Cholesterol Controlled', factors: { 'Diagnosis (Stroke History)': 0.08, 'Medications (Antiplatelet)': 0.06, 'Age': 0.05 } },
+             { id: 'P1008', age: 80, gender: 'Female', ethnicity: 'Caucasian', riskScore: 0.70, riskLevel: 'high', diagnosis: 'Heart Failure', medications: 'Digoxin', lab: 'Potassium Low', factors: { 'Age': 0.25, 'Diagnosis (HF)': 0.2, 'Medications (Digoxin)': 0.1, 'Lab (Potassium)': 0.1 } },
+             { id: 'P1009', age: 55, gender: 'Male', ethnicity: 'Hispanic', riskScore: 0.12, riskLevel: 'low', diagnosis: 'Asthma', medications: 'Inhaler', lab: 'Normal', factors: { 'Diagnosis (Asthma)': 0.05, 'Age': 0.03 } },
+             { id: 'P1010', age: 90, gender: 'Female', ethnicity: 'African American', riskScore: 0.95, riskLevel: 'high', diagnosis: 'Multiple Chronic Conditions', medications: 'Polypharmacy', lab: 'Abnormal', factors: { 'Age': 0.4, 'Polypharmacy': 0.2, 'Multiple Diagnoses': 0.2 } },
+        ];
+
+        let currentPatientList = [...patientData];
+        let factorChartInstance = null;
+        let aggregateRiskChartInstance = null;
+
+        const patientListEl = document.getElementById('patient-list');
+        const detailPanelEl = document.getElementById('detail-panel');
+        const overlayEl = document.getElementById('overlay');
+        const detailCloseBtn = document.getElementById('detail-close');
+        const detailPatientIdEl = document.getElementById('detail-patient-id');
+        const detailRiskScoreEl = document.getElementById('detail-risk-score');
+        const detailAgeEl = document.getElementById('detail-age');
+        const detailGenderEl = document.getElementById('detail-gender');
+        const detailEthnicityEl = document.getElementById('detail-ethnicity');
+        const detailDiagnosisEl = document.getElementById('detail-diagnosis');
+        const detailMedicationsEl = document.getElementById('detail-medications');
+        const detailLabEl = document.getElementById('detail-lab');
+        const factorChartCanvas = document.getElementById('factorChart');
+        const factorChartControls = document.getElementById('factor-chart-controls');
+        const factorChartTypeSelect = document.getElementById('factor-chart-type');
+        const factorChartColorInput = document.getElementById('factor-chart-color');
+        const aggregateRiskChartCanvas = document.getElementById('aggregateRiskChart');
+        const aggregateChartControls = document.getElementById('aggregate-chart-controls');
+        const aggregateChartTypeSelect = document.getElementById('aggregate-chart-type');
+        const aggregateColorLowInput = document.getElementById('aggregate-color-low');
+        const aggregateColorMediumInput = document.getElementById('aggregate-color-medium');
+        const aggregateColorHighInput = document.getElementById('aggregate-color-high');
+
+        const filterSearchInput = document.getElementById('filter-search');
+        const sortRiskSelect = document.getElementById('sort-risk');
+        const filterRiskLevelSelect = document.getElementById('filter-risk-level');
+        const loadingIndicatorEl = document.getElementById('loading-indicator');
+        const errorMessageEl = document.getElementById('error-message');
+
+
+        // --- Helper Functions ---
+        function showLoading() {
+            loadingIndicatorEl.classList.remove('is-hidden');
+            errorMessageEl.classList.add('is-hidden');
+        }
+
+        function hideLoading() {
+            loadingIndicatorEl.classList.add('is-hidden');
+        }
+
+        function showErrorMessage(message) {
+            hideLoading();
+            errorMessageEl.textContent = message;
+            errorMessageEl.classList.remove('is-hidden');
+        }
+
+        function hideErrorMessage() {
+             errorMessageEl.classList.add('is-hidden');
+        }
+
+        // --- Rendering ---
+        function renderPatientList(patients) {
+            showLoading();
+            hideErrorMessage();
+            patientListEl.innerHTML = ''; // Clear current list
+
+            // Simulate data loading delay
+            setTimeout(() => {
+                 hideLoading();
+                if (patients.length === 0) {
+                    patientListEl.innerHTML = '<p style="text-align: center; color: var(--color-text-secondary);">No patients found matching criteria.</p>';
+                    return;
+                }
+
+                patients.forEach(patient => {
+                    const card = document.createElement('div');
+                    card.classList.add('patient-card');
+                    card.setAttribute('data-patient-id', patient.id);
+                    card.setAttribute('role', 'button');
+                    card.setAttribute('tabindex', '0');
+                    card.setAttribute('aria-label', `Patient ${patient.id} with risk score ${(patient.riskScore * 100).toFixed(1)} percent, which is ${patient.riskLevel} risk. Click to view details.`);
+
+                    const riskClass = `patient-card__risk--${patient.riskLevel}`;
+
+                    card.innerHTML = `
+                        <div class="patient-card__info">
+                            <div class="patient-card__id">${patient.id}</div>
+                            <div class="patient-card__details">Age: ${patient.age}, Gender: ${patient.gender}</div>
+                        </div>
+                        <div class="patient-card__risk ${riskClass}">${(patient.riskScore * 100).toFixed(1)}%</div>
+                    `;
+
+                    card.addEventListener('click', () => showPatientDetail(patient.id));
+                    card.addEventListener('keydown', (event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                             event.preventDefault();
+                             showPatientDetail(patient.id);
+                        }
+                    });
+
+                    patientListEl.appendChild(card);
+                });
+            }, 300); // Simulate network delay
+        }
+
+        function showPatientDetail(patientId) {
+            const patient = patientData.find(p => p.id === patientId);
+            if (!patient) {
+                showErrorMessage(`Patient with ID ${patientId} not found.`);
+                return;
+            }
+            hideErrorMessage();
+
+            detailPatientIdEl.textContent = `Patient ${patient.id}`;
+            detailAgeEl.textContent = patient.age;
+            detailGenderEl.textContent = patient.gender;
+            detailEthnicityEl.textContent = patient.ethnicity;
+            detailDiagnosisEl.textContent = patient.diagnosis;
+            detailMedicationsEl.textContent = patient.medications;
+            detailLabEl.textContent = patient.lab;
+
+            detailRiskScoreEl.textContent = `${(patient.riskScore * 100).toFixed(1)}%`;
+            detailRiskScoreEl.className = 'detail-panel__risk-score'; // Reset classes
+            detailRiskScoreEl.classList.add(`detail-panel__risk-score--${patient.riskLevel}`);
+            detailRiskScoreEl.setAttribute('aria-label', `Predicted risk score: ${(patient.riskScore * 100).toFixed(1)} percent, which is ${patient.riskLevel} risk.`);
+
+
+            renderFactorChart(patient.factors);
+
+            detailPanelEl.classList.add('is-visible');
+            detailPanelEl.setAttribute('aria-hidden', 'false');
+            overlayEl.classList.add('is-visible');
+            document.body.style.overflow = 'hidden'; // Prevent scrolling body when panel is open
+            detailCloseBtn.focus(); // Focus close button for accessibility
+        }
+
+        function hidePatientDetail() {
+            detailPanelEl.classList.remove('is-visible');
+            detailPanelEl.setAttribute('aria-hidden', 'true');
+            overlayEl.classList.remove('is-visible');
+            document.body.style.overflow = ''; // Restore body scrolling
+            if (factorChartInstance) {
+                factorChartInstance.destroy();
+                factorChartInstance = null;
+            }
+             factorChartControls.classList.remove('active'); // Hide chart controls
+        }
+
+        function renderFactorChart(factors) {
+             if (factorChartInstance) {
+                factorChartInstance.destroy(); // Destroy previous chart instance
+            }
+
+            const factorLabels = Object.keys(factors);
+            const factorValues = Object.values(factors);
+
+            const ctx = factorChartCanvas.getContext('2d');
+             factorChartInstance = new Chart(ctx, {
+                type: factorChartTypeSelect.value === 'horizontalBar' ? 'bar' : factorChartTypeSelect.value, // Use bar type for horizontalBar option
+                data: {
+                    labels: factorLabels,
+                    datasets: [{
+                        label: 'Contribution',
+                        data: factorValues,
+                        backgroundColor: factorChartColorInput.value,
+                        borderColor: factorChartColorInput.value,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: factorChartTypeSelect.value === 'horizontalBar' ? 'y' : 'x', // Set index axis for horizontal bar
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    // Check indexAxis to format value correctly
+                                    const value = context.parsed[factorChartInstance.options.indexAxis === 'x' ? 'x' : 'y'];
+                                     label += (value * 100).toFixed(1) + '%';
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: {
+                                display: factorChartTypeSelect.value !== 'horizontalBar', // Title on X for vertical bar
+                                text: 'Contribution',
+                                color: "var('--color-text-secondary')" // Use CSS variable
+                            },
+                             ticks: {
+                                callback: function(value) {
+                                    // Format ticks as percentage only for the contribution axis
+                                     if (factorChartTypeSelect.value !== 'horizontalBar') {
+                                         return (value * 100).toFixed(0) + '%';
+                                     }
+                                     return value; // Category labels for horizontal bar
+                                },
+                                color: "var('--color-text-secondary')" // Use CSS variable
+                            },
+                             grid: {
+                                color: "var('--color-border')" // Use CSS variable
+                             }
+                        },
+                         y: {
+                             beginAtZero: true,
+                            title: {
+                                display: factorChartTypeSelect.value === 'horizontalBar', // Title on Y for horizontal bar
+                                text: 'Contribution',
+                                color: "var('--color-text-secondary')" // Use CSS variable
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    // Format ticks as percentage only for the contribution axis
+                                     if (factorChartTypeSelect.value === 'horizontalBar') {
+                                         return (value * 100).toFixed(0) + '%';
+                                     }
+                                     return value; // Category labels for vertical bar
+                                },
+                                color: "var('--color-text-secondary')" // Use CSS variable
+                            },
+                             grid: {
+                                color: "var('--color-border')" // Use CSS variable
+                             }
+                        }
+                    },
+                     onClick: (e) => toggleChartControls(factorChartControls),
+                }
+            });
+             factorChartControls.classList.remove('active'); // Hide controls initially
+        }
+
+        function renderAggregateRiskChart(patients) {
+            if (aggregateRiskChartInstance) {
+                aggregateRiskChartInstance.destroy();
+            }
+
+            const riskCounts = { low: 0, medium: 0, high: 0 };
+            patients.forEach(p => riskCounts[p.riskLevel]++);
+
+            const labels = ['Low Risk', 'Medium Risk', 'High Risk'];
+            const data = [riskCounts.low, riskCounts.medium, riskCounts.high];
+            const colors = [
+                 aggregateColorLowInput.value,
+                 aggregateColorMediumInput.value,
+                 aggregateColorHighInput.value
+            ];
+
+            const ctx = aggregateRiskChartCanvas.getContext('2d');
+             aggregateRiskChartInstance = new Chart(ctx, {
+                type: aggregateChartTypeSelect.value,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Number of Patients',
+                        data: data,
+                        backgroundColor: colors,
+                        borderColor: "var('--color-surface')", // Use CSS variable
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: "var('--color-text-primary')" // Use CSS variable
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw;
+                                    const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+                                    const percentage = total > 0 ? (value / total * 100).toFixed(1) + '%' : '0%';
+                                    return `${label}: ${value} (${percentage})`;
+                                }
+                            }
+                        }
+                    },
+                     scales: {
+                        x: {
+                            display: aggregateChartTypeSelect.value === 'bar', // Only display axis for bar chart
+                            ticks: { color: "var('--color-text-secondary')" },
+                            grid: { display: false }
+                        },
+                        y: {
+                            display: aggregateChartTypeSelect.value === 'bar', // Only display axis for bar chart
+                            beginAtZero: true,
+                             ticks: {
+                                 color: "var('--color-text-secondary')", // Use CSS variable
+                                 stepSize: 1 // Ensure integer ticks for count
+                             },
+                             grid: { color: "var('--color-border')" } // Use CSS variable
+                        }
+                    },
+                    onClick: (e) => toggleChartControls(aggregateChartControls),
+                }
+            });
+             aggregateChartControls.classList.remove('active'); // Hide controls initially
+        }
+
+        function toggleChartControls(controlsElement) {
+            controlsElement.classList.toggle('active');
+        }
+
+
+        // --- Filtering and Sorting ---
+        function applyFiltersAndSorting() {
+            const searchTerm = filterSearchInput.value.toLowerCase();
+            const sortBy = sortRiskSelect.value;
+            const filterLevel = filterRiskLevelSelect.value;
+
+            let filteredPatients = patientData.filter(patient => {
+                const matchesSearch = patient.id.toLowerCase().includes(searchTerm) ||
+                                      patient.diagnosis.toLowerCase().includes(searchTerm) ||
+                                      patient.medications.toLowerCase().includes(searchTerm) ||
+                                      patient.lab.toLowerCase().includes(searchTerm); // Also search other fields
+
+                const matchesLevel = filterLevel === 'all' || patient.riskLevel === filterLevel;
+
+                return matchesSearch && matchesLevel;
+            });
+
+            if (sortBy !== 'none') {
+                filteredPatients.sort((a, b) => {
+                    if (sortBy === 'low-to-high') {
+                        return a.riskScore - b.riskScore;
+                    } else { // high-to-low
+                        return b.riskScore - a.riskScore;
+                    }
+                });
+            }
+
+            currentPatientList = filteredPatients;
+            renderPatientList(currentPatientList);
+             // Re-render aggregate chart based on filtered list (optional, could be based on full list)
+            renderAggregateRiskChart(filteredPatients);
+        }
+
+
+        // --- Event Listeners ---
+        detailCloseBtn.addEventListener('click', hidePatientDetail);
+        overlayEl.addEventListener('click', hidePatientDetail);
+
+        // Close panel with Escape key
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && detailPanelEl.classList.contains('is-visible')) {
+                hidePatientDetail();
+            }
+        });
+
+
+        filterSearchInput.addEventListener('input', applyFiltersAndSorting);
+        sortRiskSelect.addEventListener('change', applyFiltersAndSorting);
+        filterRiskLevelSelect.addEventListener('change', applyFiltersAndSorting);
+
+
+         // Factor Chart control listeners
+        factorChartTypeSelect.addEventListener('change', updateFactorChart);
+        factorChartColorInput.addEventListener('input', updateFactorChart);
+
+         // Aggregate Chart control listeners
+        aggregateChartTypeSelect.addEventListener('change', updateAggregateChart);
+        aggregateColorLowInput.addEventListener('input', updateAggregateChart);
+        aggregateColorMediumInput.addEventListener('input', updateAggregateChart);
+        aggregateColorHighInput.addEventListener('input', updateAggregateChart);
+
+
+        function updateFactorChart() {
+            if (!factorChartInstance) return;
+
+            const newChartType = factorChartTypeSelect.value;
+            const newColor = factorChartColorInput.value;
+
+            // Update chart type and axis
+            factorChartInstance.config.type = newChartType === 'horizontalBar' ? 'bar' : newChartType;
+            factorChartInstance.options.indexAxis = newChartType === 'horizontalBar' ? 'y' : 'x';
+
+            // Update axis titles based on indexAxis
+             if (factorChartInstance.options.scales.x.title) {
+                 factorChartInstance.options.scales.x.title.display = newChartType !== 'horizontalBar';
+             }
+             if (factorChartInstance.options.scales.y.title) {
+                 factorChartInstance.options.scales.y.title.display = newChartType === 'horizontalBar';
+             }
+
+             // Update tick callbacks based on indexAxis
+             if (factorChartInstance.options.scales.x.ticks) {
+                 factorChartInstance.options.scales.x.ticks.callback = newChartType === 'horizontalBar' ? function(value) { return value; } : function(value) { return (value * 100).toFixed(0) + '%'; };
+             }
+             if (factorChartInstance.options.scales.y.ticks) {
+                 factorChartInstance.options.scales.y.ticks.callback = newChartType === 'horizontalBar' ? function(value) { return (value * 100).toFixed(0) + '%'; } : function(value) { return value; };
+             }
+
+             // Update grid display based on indexAxis
+             if (factorChartInstance.options.scales.x.grid) {
+                 factorChartInstance.options.scales.x.grid.display = newChartType !== 'horizontalBar';
+             }
+             if (factorChartInstance.options.scales.y.grid) {
+                 factorChartInstance.options.scales.y.grid.display = newChartType === 'horizontalBar';
+             }
+
+
+            // Update dataset color
+            if (factorChartInstance.data.datasets.length > 0) {
+                factorChartInstance.data.datasets[0].backgroundColor = newColor;
+                factorChartInstance.data.datasets[0].borderColor = newColor;
+            }
+
+            factorChartInstance.update();
+        }
+
+         function updateAggregateChart() {
+            if (!aggregateRiskChartInstance) return;
+
+            const newChartType = aggregateChartTypeSelect.value;
+            const newColors = [
+                 aggregateColorLowInput.value,
+                 aggregateColorMediumInput.value,
+                 aggregateColorHighInput.value
+            ];
+
+            aggregateRiskChartInstance.config.type = newChartType;
+
+            // Update axis display based on chart type
+            if (aggregateRiskChartInstance.options.scales.x) {
+                aggregateRiskChartInstance.options.scales.x.display = newChartType === 'bar';
+            }
+             if (aggregateRiskChartInstance.options.scales.y) {
+                aggregateRiskChartInstance.options.scales.y.display = newChartType === 'bar';
+            }
+
+
+            // Update dataset colors
+            if (aggregateRiskChartInstance.data.datasets.length > 0) {
+                aggregateRiskChartInstance.data.datasets[0].backgroundColor = newColors;
+                aggregateRiskChartInstance.data.datasets[0].borderColor = "var('--color-surface')"; // Keep border white
+            }
+
+            aggregateRiskChartInstance.update();
+        }
+
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            applyFiltersAndSorting(); // Initial render with default filters/sorting
+            renderAggregateRiskChart(patientData); // Render aggregate chart on load
+        });
+
+    </script>
+
+</body>
+</html>

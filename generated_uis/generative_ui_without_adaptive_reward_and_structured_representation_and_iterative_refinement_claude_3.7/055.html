@@ -1,0 +1,1537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Segmentation Tool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007acc;
+            --secondary-color: #4CAF50;
+            --background-color: #f4f7f6;
+            --surface-color: #ffffff;
+            --text-color: #333;
+            --text-light-color: #666;
+            --border-color: #ddd;
+            --success-color: #4CAF50;
+            --error-color: #f44336;
+            --warning-color: #ff9800;
+            --spacing-unit: 8px;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+            padding: var(--spacing-unit) * 2;
+            box-shadow: var(--box-shadow);
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8em;
+            font-weight: 500;
+        }
+
+        .container {
+            display: flex;
+            flex-grow: 1;
+            padding: var(--spacing-unit) * 3;
+            gap: var(--spacing-unit) * 3;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: var(--surface-color);
+            padding: var(--spacing-unit) * 2;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            flex-shrink: 0;
+        }
+
+        .sidebar h2 {
+            margin-top: 0;
+            font-size: 1.2em;
+            color: var(--primary-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: var(--spacing-unit);
+            margin-bottom: var(--spacing-unit) * 2;
+        }
+
+        .step-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .step-item {
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .step-button {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: var(--spacing-unit) 0;
+            background: none;
+            border: none;
+            text-align: left;
+            cursor: pointer;
+            font-size: 1em;
+            color: var(--text-light-color);
+            transition: color 0.2s ease, font-weight 0.2s ease;
+        }
+
+        .step-button .step-number {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            line-height: 24px;
+            text-align: center;
+            border-radius: 50%;
+            background-color: var(--border-color);
+            color: var(--text-color);
+            margin-right: var(--spacing-unit);
+            font-weight: 500;
+            flex-shrink: 0;
+        }
+
+        .step-button:hover {
+            color: var(--primary-color);
+        }
+
+        .step-item.active .step-button {
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        .step-item.active .step-button .step-number {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+        }
+
+        .main-content {
+            flex-grow: 1;
+            background-color: var(--surface-color);
+            padding: var(--spacing-unit) * 3;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+
+        .step-section {
+            display: none;
+        }
+
+        .step-section.active {
+            display: block;
+        }
+
+        .step-section h2 {
+            margin-top: 0;
+            color: var(--primary-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: var(--spacing-unit);
+            margin-bottom: var(--spacing-unit) * 2;
+        }
+
+        .button-group {
+            margin-top: var(--spacing-unit) * 3;
+            display: flex;
+            gap: var(--spacing-unit) * 2;
+            justify-content: flex-end;
+        }
+
+        button {
+            padding: var(--spacing-unit) var(--spacing-unit) * 2;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.2s ease, opacity 0.2s ease;
+        }
+
+        button.primary {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+        }
+
+        button.primary:hover {
+            background-color: darken(var(--primary-color), 10%); /* Placeholder for darker color */
+        }
+
+        button.secondary {
+            background-color: var(--border-color);
+            color: var(--text-color);
+        }
+
+        button.secondary:hover {
+            background-color: darken(var(--border-color), 10%); /* Placeholder for darker color */
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Step 1: Upload Data */
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-unit) * 4;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s ease;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-color);
+        }
+
+        .upload-area input[type="file"] {
+            display: none;
+        }
+
+        .upload-area p {
+            margin: var(--spacing-unit) 0;
+            color: var(--text-light-color);
+        }
+
+        .upload-area .icon {
+            font-size: 3em;
+            color: var(--primary-color);
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .file-info {
+            margin-top: var(--spacing-unit) * 2;
+            padding: var(--spacing-unit) * 2;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: var(--background-color);
+        }
+
+        .file-info p {
+            margin: var(--spacing-unit) 0;
+            font-size: 0.9em;
+        }
+
+        .data-preview {
+            margin-top: var(--spacing-unit) * 3;
+        }
+
+        .data-preview h3 {
+            margin-top: 0;
+            margin-bottom: var(--spacing-unit);
+            color: var(--text-color);
+        }
+
+        .data-table-container {
+            max-height: 400px; /* Limit height for scrolling */
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: var(--spacing-unit) 12px;
+            border-bottom: 1px solid var(--border-color);
+            text-align: left;
+            font-size: 0.9em;
+        }
+
+        .data-table th {
+            background-color: var(--background-color);
+            font-weight: 500;
+            position: sticky;
+            top: 0;
+        }
+
+        /* Step 3: Select Variables */
+        .variable-selection label {
+            display: block;
+            margin-bottom: var(--spacing-unit);
+            cursor: pointer;
+        }
+
+        .variable-selection input[type="checkbox"] {
+            margin-right: var(--spacing-unit);
+        }
+
+        /* Step 4: Cluster */
+        .clustering-config label {
+            display: block;
+            margin-bottom: var(--spacing-unit) * 0.5;
+            font-weight: 500;
+        }
+
+        .clustering-config select,
+        .clustering-config input[type="number"] {
+            padding: var(--spacing-unit);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin-bottom: var(--spacing-unit) * 2;
+            font-size: 1em;
+        }
+
+        /* Step 5: Optimal Segments */
+        .chart-container {
+            margin-bottom: var(--spacing-unit) * 3;
+            padding: var(--spacing-unit) * 2;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: var(--background-color);
+            position: relative; /* Needed for floating controls */
+        }
+
+        .chart-container canvas {
+            max-width: 100%;
+            height: 350px; /* Fixed height for charts */
+        }
+
+        .floating-controls {
+            position: absolute;
+            top: var(--spacing-unit) * 2;
+            right: var(--spacing-unit) * 2;
+            background: rgba(255, 255, 255, 0.9);
+            padding: var(--spacing-unit);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .floating-controls.active {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: all;
+        }
+
+        .control-group {
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 0.9em;
+            margin-bottom: var(--spacing-unit) * 0.5;
+            color: var(--text-light-color);
+        }
+
+        .control-group input,
+        .control-group select {
+            padding: var(--spacing-unit) * 0.5;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius) * 0.5;
+            font-size: 0.9em;
+        }
+
+        .select-optimal-k label {
+            display: block;
+            margin-bottom: var(--spacing-unit);
+            font-weight: 500;
+        }
+
+        .select-optimal-k input[type="number"] {
+            padding: var(--spacing-unit);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1em;
+        }
+
+        /* Step 6: Visualize Segments */
+        .segment-visualization .chart-container canvas {
+             height: 500px; /* Larger height for scatter plot */
+        }
+
+
+        /* Step 7: Interpret Segments */
+        .segment-interpretation .segment-profile {
+            margin-bottom: var(--spacing-unit) * 3;
+            padding: var(--spacing-unit) * 2;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: var(--background-color);
+        }
+
+        .segment-interpretation .segment-profile h3 {
+            margin-top: 0;
+            color: var(--secondary-color);
+        }
+
+        .segment-interpretation .segment-profile p {
+            font-size: 0.9em;
+            color: var(--text-light-color);
+        }
+
+        .segment-interpretation .segment-profile label {
+            display: block;
+            margin-top: var(--spacing-unit) * 1.5;
+            margin-bottom: var(--spacing-unit) * 0.5;
+            font-weight: 500;
+        }
+
+        .segment-interpretation .segment-profile input[type="text"],
+        .segment-interpretation .segment-profile textarea {
+            width: calc(100% - var(--spacing-unit) * 2);
+            padding: var(--spacing-unit);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            resize: vertical;
+        }
+
+        /* Loading Spinner */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .loading-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Utility Classes */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Darken function placeholder for CSS variables */
+        /* In a real app, this would be handled by a preprocessor or JS */
+        /* For this example, we'll rely on simple color values or JS for hover */
+        button.primary:hover { background-color: #005f99; }
+        button.secondary:hover { background-color: #ccc; }
+
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Customer Segmentation Workflow</h1>
+    </header>
+
+    <div class="container">
+        <aside class="sidebar">
+            <h2>Steps</h2>
+            <ul class="step-list" id="step-list">
+                <li class="step-item active" data-step="1">
+                    <button class="step-button">
+                        <span class="step-number">1</span> Upload Data
+                    </button>
+                </li>
+                <li class="step-item" data-step="2">
+                    <button class="step-button">
+                        <span class="step-number">2</span> Prepare Data
+                    </button>
+                </li>
+                <li class="step-item" data-step="3">
+                    <button class="step-button">
+                        <span class="step-number">3</span> Select Variables
+                    </button>
+                </li>
+                <li class="step-item" data-step="4">
+                    <button class="step-button">
+                        <span class="step-number">4</span> Cluster
+                    </button>
+                </li>
+                <li class="step-item" data-step="5">
+                    <button class="step-button">
+                        <span class="step-number">5</span> Optimal Segments (K)
+                    </button>
+                </li>
+                <li class="step-item" data-step="6">
+                    <button class="step-button">
+                        <span class="step-number">6</span> Visualize Segments
+                    </button>
+                </li>
+                <li class="step-item" data-step="7">
+                    <button class="step-button">
+                        <span class="step-number">7</span> Interpret Segments
+                    </button>
+                </li>
+                <li class="step-item" data-step="8">
+                    <button class="step-button">
+                        <span class="step-number">8</span> Export Results
+                    </button>
+                </li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <div id="step-1" class="step-section active">
+                <h2>Step 1: Upload Your Data</h2>
+                <p>Upload your e-commerce customer data. Supported formats: CSV.</p>
+                <div id="upload-area" class="upload-area">
+                    <input type="file" id="file-upload" accept=".csv">
+                    <div class="icon">⬆️</div>
+                    <p>Drag & drop your file here, or click to select</p>
+                    <p>Max file size: 10MB (for demo purposes)</p>
+                </div>
+                <div id="file-info" class="file-info hidden">
+                    <p>File Name: <strong id="file-name"></strong></p>
+                    <p>File Size: <strong id="file-size"></strong></p>
+                    <p>Status: <strong id="upload-status">Ready</strong></p>
+                </div>
+                <div id="data-preview" class="data-preview hidden">
+                    <h3>Data Preview (First 10 rows)</h3>
+                    <div class="data-table-container">
+                        <table class="data-table" id="data-table">
+                            <thead>
+                                <tr></tr>
+                            </thead>
+                            <tbody>
+                                <tr></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p style="font-size: 0.9em; margin-top: var(--spacing-unit);">Note: For large datasets (like 50,000 customers), full data processing and table display client-side may be slow. This preview shows a sample. Server-side processing is recommended for production.</p>
+                </div>
+                <div class="button-group">
+                    <button id="next-step-1" class="primary" disabled>Next</button>
+                </div>
+            </div>
+
+            <div id="step-2" class="step-section">
+                <h2>Step 2: Prepare Your Data</h2>
+                <p>Review your data and apply necessary transformations. Common steps include handling missing values, converting data types, and creating new features (e.g., RFM metrics).</p>
+                <p><em>(Data preparation steps are simulated in this demo. In a real application, you would have controls here for data cleaning, transformation, and feature engineering.)</em></p>
+                 <div id="prepared-data-preview" class="data-preview hidden">
+                    <h3>Prepared Data Preview (Simulated RFM)</h3>
+                    <div class="data-table-container">
+                        <table class="data-table" id="prepared-data-table">
+                             <thead>
+                                <tr></tr>
+                            </thead>
+                            <tbody>
+                                <tr></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                     <p style="font-size: 0.9em; margin-top: var(--spacing-unit);">Simulated RFM (Recency, Frequency, Monetary) features have been added.</p>
+                </div>
+                <div class="button-group">
+                    <button id="prev-step-2" class="secondary">Previous</button>
+                    <button id="next-step-2" class="primary">Next</button>
+                </div>
+            </div>
+
+            <div id="step-3" class="step-section">
+                <h2>Step 3: Select Variables for Segmentation</h2>
+                <p>Choose the variables you want to use for clustering. It's often recommended to use the prepared RFM metrics.</p>
+                <div id="variable-selection" class="variable-selection">
+                    <!-- Checkboxes will be populated by JS -->
+                </div>
+                <div class="button-group">
+                    <button id="prev-step-3" class="secondary">Previous</button>
+                    <button id="next-step-3" class="primary" disabled>Next</button>
+                </div>
+            </div>
+
+            <div id="step-4" class="step-section">
+                <h2>Step 4: Configure Clustering</h2>
+                <p>Select the clustering algorithm and configure its parameters.</p>
+                <div class="clustering-config">
+                    <label for="algorithm-select">Clustering Algorithm:</label>
+                    <select id="algorithm-select">
+                        <option value="kmeans">K-Means</option>
+                        <!-- Add other algorithms if implemented -->
+                    </select>
+
+                    <p><em>(Parameters like initialization method, max iterations, etc., would be configured here in a full application.)</em></p>
+                </div>
+                <div class="button-group">
+                    <button id="prev-step-4" class="secondary">Previous</button>
+                    <button id="next-step-4" class="primary">Next</button>
+                </div>
+            </div>
+
+            <div id="step-5" class="step-section">
+                <h2>Step 5: Determine Optimal Number of Segments (K)</h2>
+                <p>Use visualization methods like the Elbow Method and Silhouette Score to help choose the optimal number of segments (K).</p>
+
+                <div class="chart-container">
+                    <h3>Elbow Method</h3>
+                    <canvas id="elbow-chart"></canvas>
+                     <!-- Floating controls for Elbow chart -->
+                    <div class="floating-controls" id="elbow-controls">
+                         <div class="control-group">
+                            <label>Line Color</label>
+                            <input type="color" id="elbowLineColor" value="#007acc">
+                        </div>
+                         <div class="control-group">
+                            <label>Point Color</label>
+                            <input type="color" id="elbowPointColor" value="#007acc">
+                        </div>
+                         <div class="control-group">
+                            <label>Point Size</label>
+                            <input type="number" id="elbowPointSize" value="6" min="1" max="15">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h3>Silhouette Score</h3>
+                    <canvas id="silhouette-chart"></canvas>
+                     <!-- Floating controls for Silhouette chart -->
+                    <div class="floating-controls" id="silhouette-controls">
+                         <div class="control-group">
+                            <label>Line Color</label>
+                            <input type="color" id="silhouetteLineColor" value="#4CAF50">
+                        </div>
+                         <div class="control-group">
+                            <label>Point Color</label>
+                            <input type="color" id="silhouettePointColor" value="#4CAF50">
+                        </div>
+                         <div class="control-group">
+                            <label>Point Size</label>
+                            <input type="number" id="silhouettePointSize" value="6" min="1" max="15">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="select-optimal-k">
+                    <label for="optimal-k">Enter your chosen number of segments (K):</label>
+                    <input type="number" id="optimal-k" min="2" value="3">
+                </div>
+
+                <div class="button-group">
+                    <button id="prev-step-5" class="secondary">Previous</button>
+                    <button id="next-step-5" class="primary">Run Clustering</button>
+                </div>
+            </div>
+
+            <div id="step-6" class="step-section segment-visualization">
+                <h2>Step 6: Visualize Segments</h2>
+                <p>Explore the resulting customer segments visually.</p>
+                 <p><em>(Scatter plot visualization is simulated using two selected variables. In a real application, you might use dimensionality reduction techniques like PCA or t-SNE for multi-dimensional data.)</em></p>
+
+                <div class="chart-container">
+                    <h3>Segment Scatter Plot</h3>
+                    <canvas id="segment-scatter-chart"></canvas>
+                     <!-- Floating controls for Scatter chart -->
+                    <div class="floating-controls" id="scatter-controls">
+                         <div class="control-group">
+                            <label>X-axis Variable</label>
+                            <select id="scatterXVar"></select>
+                        </div>
+                         <div class="control-group">
+                            <label>Y-axis Variable</label>
+                            <select id="scatterYVar"></select>
+                        </div>
+                         <div class="control-group">
+                            <label>Point Size</label>
+                            <input type="number" id="scatterPointSize" value="5" min="1" max="10">
+                        </div>
+                         <div class="control-group">
+                            <label>Legend Position</label>
+                            <select id="scatterLegendPosition">
+                                <option value="top">Top</option>
+                                <option value="bottom">Bottom</option>
+                                <option value="left">Left</option>
+                                <option value="right">Right</option>
+                                <option value="chartArea">Chart Area</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button id="prev-step-6" class="secondary">Previous</button>
+                    <button id="next-step-6" class="primary">Next</button>
+                </div>
+            </div>
+
+            <div id="step-7" class="step-section segment-interpretation">
+                <h2>Step 7: Interpret Segments & Define Strategies</h2>
+                <p>Analyze the characteristics of each segment and define tailored marketing strategies.</p>
+
+                <div id="segment-profiles">
+                    <!-- Segment profiles will be populated by JS -->
+                </div>
+
+                <div class="button-group">
+                    <button id="prev-step-7" class="secondary">Previous</button>
+                    <button id="next-step-7" class="primary">Next</button>
+                </div>
+            </div>
+
+            <div id="step-8" class="step-section">
+                <h2>Step 8: Export Results</h2>
+                <p>Your customer segmentation analysis is complete. You can now export the results.</p>
+                <p>The export includes:</p>
+                <ul>
+                    <li>Original data with assigned segment ID for each customer.</li>
+                    <li>Segment profiles and characteristics.</li>
+                    <li>Defined segment names and strategies.</li>
+                </ul>
+                <div class="button-group">
+                    <button id="prev-step-8" class="secondary">Previous</button>
+                    <button id="export-results" class="primary">Export Results</button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+        import Papa from 'https://esm.sh/papaparse'; // For CSV parsing
+
+        let currentStep = 1;
+        const totalSteps = 8;
+        const stepList = document.getElementById('step-list');
+        const mainContent = document.querySelector('.main-content');
+        const loadingOverlay = document.getElementById('loading-overlay');
+
+        let rawData = [];
+        let preparedData = []; // Will simulate adding RFM
+        let dataHeaders = [];
+        let preparedHeaders = []; // Headers including RFM
+        let selectedVariables = [];
+        let optimalK = 3; // Default optimal K
+        let clusteringResults = null; // Stores simulated clustering output
+
+        // --- Navigation Functions ---
+        function showStep(step) {
+            document.querySelectorAll('.step-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(`step-${step}`).classList.add('active');
+
+            document.querySelectorAll('.step-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`.step-item[data-step="${step}"]`).classList.add('active');
+
+            currentStep = step;
+            // Trigger specific step logic if needed
+            handleStepDisplay(step);
+        }
+
+        function nextStep() {
+            if (currentStep < totalSteps) {
+                showStep(currentStep + 1);
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                showStep(currentStep - 1);
+            }
+        }
+
+        function showLoading(isLoading) {
+            loadingOverlay.classList.toggle('active', isLoading);
+        }
+
+        // --- Step Specific Logic ---
+
+        // Step 1: Upload Data
+        const uploadArea = document.getElementById('upload-area');
+        const fileUpload = document.getElementById('file-upload');
+        const fileInfo = document.getElementById('file-info');
+        const fileNameSpan = document.getElementById('file-name');
+        const fileSizeSpan = document.getElementById('file-size');
+        const uploadStatusSpan = document.getElementById('upload-status');
+        const dataPreviewDiv = document.getElementById('data-preview');
+        const dataTable = document.getElementById('data-table');
+        const nextStep1Button = document.getElementById('next-step-1');
+
+        uploadArea.addEventListener('click', () => fileUpload.click());
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = var('--primary-color');
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.borderColor = var('--border-color');
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = var('--border-color');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+        fileUpload.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (file.type !== 'text/csv') {
+                uploadStatusSpan.textContent = 'Invalid file type. Please upload a CSV.';
+                uploadStatusSpan.style.color = var('--error-color');
+                fileInfo.classList.remove('hidden');
+                dataPreviewDiv.classList.add('hidden');
+                nextStep1Button.disabled = true;
+                return;
+            }
+
+            if (file.size > 10 * 1024 * 1024) { // 10MB limit for demo
+                 uploadStatusSpan.textContent = 'File size exceeds 10MB limit.';
+                 uploadStatusSpan.style.color = var('--error-color');
+                 fileInfo.classList.remove('hidden');
+                 dataPreviewDiv.classList.add('hidden');
+                 nextStep1Button.disabled = true;
+                 return;
+            }
+
+            fileNameSpan.textContent = file.name;
+            fileSizeSpan.textContent = `${(file.size / 1024).toFixed(2)} KB`;
+            uploadStatusSpan.textContent = 'Parsing...';
+            uploadStatusSpan.style.color = var('--warning-color');
+            fileInfo.classList.remove('hidden');
+            dataPreviewDiv.classList.add('hidden');
+            nextStep1Button.disabled = true;
+
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    if (results.errors.length > 0) {
+                        uploadStatusSpan.textContent = `Parsing error: ${results.errors[0].message}`;
+                        uploadStatusSpan.style.color = var('--error-color');
+                        dataPreviewDiv.classList.add('hidden');
+                        nextStep1Button.disabled = true;
+                    } else {
+                        rawData = results.data;
+                        dataHeaders = results.meta.fields;
+                        uploadStatusSpan.textContent = 'Success!';
+                        uploadStatusSpan.style.color = var('--success-color');
+                        displayDataPreview(rawData, dataTable);
+                        dataPreviewDiv.classList.remove('hidden');
+                        nextStep1Button.disabled = false;
+                    }
+                },
+                error: function(err) {
+                     uploadStatusSpan.textContent = `Parsing error: ${err.message}`;
+                     uploadStatusSpan.style.color = var('--error-color');
+                     dataPreviewDiv.classList.add('hidden');
+                     nextStep1Button.disabled = true;
+                }
+            });
+        }
+
+        function displayDataPreview(data, tableElement) {
+            const thead = tableElement.querySelector('thead tr');
+            const tbody = tableElement.querySelector('tbody');
+
+            // Clear previous content
+            thead.innerHTML = '';
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="100%">No data available.</td></tr>';
+                return;
+            }
+
+            // Display headers
+            const headers = Object.keys(data[0]);
+            headers.forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header;
+                thead.appendChild(th);
+            });
+
+            // Display first 10 rows (or fewer if data is smaller)
+            const rowsToShow = Math.min(data.length, 10);
+            for (let i = 0; i < rowsToShow; i++) {
+                const row = data[i];
+                const tr = document.createElement('tr');
+                headers.forEach(header => {
+                    const td = document.createElement('td');
+                    td.textContent = row[header] || ''; // Handle null/undefined
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            }
+        }
+
+        // Step 2: Prepare Data (Simulated RFM)
+        const preparedDataTable = document.getElementById('prepared-data-table');
+        const preparedDataPreviewDiv = document.getElementById('prepared-data-preview');
+
+        function simulateDataPreparation() {
+            // This is a simplified simulation.
+            // In a real app, this would involve calculating RFM based on purchase data.
+            // We'll just add dummy RFM columns to the raw data for demonstration.
+            preparedData = rawData.map((row, index) => {
+                // Simulate adding RFM values (replace with actual calculation)
+                const recency = Math.floor(Math.random() * 365); // Days since last purchase
+                const frequency = Math.floor(Math.random() * 50) + 1; // Number of purchases
+                const monetary = (Math.random() * 1000 + 10).toFixed(2); // Total spent
+
+                return {
+                    ...row,
+                    'RFM_Recency': recency,
+                    'RFM_Frequency': frequency,
+                    'RFM_Monetary': monetary
+                };
+            });
+            preparedHeaders = [...dataHeaders, 'RFM_Recency', 'RFM_Frequency', 'RFM_Monetary'];
+            displayDataPreview(preparedData, preparedDataTable);
+            preparedDataPreviewDiv.classList.remove('hidden');
+        }
+
+        // Step 3: Select Variables
+        const variableSelectionDiv = document.getElementById('variable-selection');
+        const nextStep3Button = document.getElementById('next-step-3');
+
+        function populateVariableSelection() {
+            variableSelectionDiv.innerHTML = '';
+            preparedHeaders.forEach(header => {
+                const label = document.createElement('label');
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = header;
+                checkbox.name = 'selected-variable';
+                checkbox.addEventListener('change', updateSelectedVariables);
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(header));
+                variableSelectionDiv.appendChild(label);
+            });
+            updateSelectedVariables(); // Initial check
+        }
+
+        function updateSelectedVariables() {
+            selectedVariables = Array.from(variableSelectionDiv.querySelectorAll('input[name="selected-variable"]:checked'))
+                                .map(cb => cb.value);
+            nextStep3Button.disabled = selectedVariables.length === 0;
+        }
+
+        // Step 5: Optimal Segments (Charts)
+        const elbowChartCanvas = document.getElementById('elbow-chart');
+        const silhouetteChartCanvas = document.getElementById('silhouette-chart');
+        const optimalKInput = document.getElementById('optimal-k');
+        const nextStep5Button = document.getElementById('next-step-5');
+
+        let elbowChart = null;
+        let silhouetteChart = null;
+
+        const elbowControls = document.getElementById('elbow-controls');
+        const silhouetteControls = document.getElementById('silhouette-controls');
+
+        function renderOptimalKCharts() {
+            // Simulate data for Elbow and Silhouette plots
+            // In a real scenario, this data would come from running K-Means for a range of K values
+            const kValues = [2, 3, 4, 5, 6, 7, 8, 9, 10];
+            const simulatedElbowData = [30000, 15000, 8000, 6000, 5500, 5200, 5000, 4900, 4850]; // Example WCSS values
+            const simulatedSilhouetteData = [0.3, 0.5, 0.65, 0.6, 0.58, 0.55, 0.53, 0.51, 0.5]; // Example silhouette scores
+
+            if (elbowChart) elbowChart.destroy();
+            elbowChart = new Chart(elbowChartCanvas, {
+                type: 'line',
+                data: {
+                    labels: kValues,
+                    datasets: [{
+                        label: 'Within-Cluster Sum of Squares (WCSS)',
+                        data: simulatedElbowData,
+                        borderColor: getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim(),
+                        backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() + '40', // Add some transparency
+                        tension: 0.1,
+                        pointRadius: 6,
+                        pointBackgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim(),
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                     onClick: (e) => toggleFloatingControls(e, 'elbow-controls'),
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Number of Clusters (K)'
+                            },
+                            ticks: {
+                                precision: 0
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'WCSS'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: (context) => `K = ${context[0].label}`,
+                                label: (context) => `WCSS: ${context.raw.toFixed(2)}`
+                            }
+                        }
+                    }
+                }
+            });
+
+            if (silhouetteChart) silhouetteChart.destroy();
+            silhouetteChart = new Chart(silhouetteChartCanvas, {
+                type: 'line',
+                data: {
+                    labels: kValues,
+                    datasets: [{
+                        label: 'Average Silhouette Score',
+                        data: simulatedSilhouetteData,
+                        borderColor: getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim(),
+                         backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim() + '40',
+                        tension: 0.1,
+                        pointRadius: 6,
+                        pointBackgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim(),
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                     onClick: (e) => toggleFloatingControls(e, 'silhouette-controls'),
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Number of Clusters (K)'
+                            },
+                             ticks: {
+                                precision: 0
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Silhouette Score'
+                            }
+                        }
+                    },
+                     plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: (context) => `K = ${context[0].label}`,
+                                label: (context) => `Score: ${context.raw.toFixed(3)}`
+                            }
+                        }
+                    }
+                }
+            });
+
+             // Add event listeners for floating controls
+            document.getElementById('elbowLineColor').addEventListener('input', (e) => {
+                elbowChart.data.datasets[0].borderColor = e.target.value;
+                elbowChart.update();
+            });
+             document.getElementById('elbowPointColor').addEventListener('input', (e) => {
+                elbowChart.data.datasets[0].pointBackgroundColor = e.target.value;
+                elbowChart.update();
+            });
+             document.getElementById('elbowPointSize').addEventListener('input', (e) => {
+                elbowChart.data.datasets[0].pointRadius = parseInt(e.target.value);
+                elbowChart.update();
+            });
+
+             document.getElementById('silhouetteLineColor').addEventListener('input', (e) => {
+                silhouetteChart.data.datasets[0].borderColor = e.target.value;
+                silhouetteChart.update();
+            });
+             document.getElementById('silhouettePointColor').addEventListener('input', (e) => {
+                silhouetteChart.data.datasets[0].pointBackgroundColor = e.target.value;
+                silhouetteChart.update();
+            });
+             document.getElementById('silhouettePointSize').addEventListener('input', (e) => {
+                silhouetteChart.data.datasets[0].pointRadius = parseInt(e.target.value);
+                silhouetteChart.update();
+            });
+
+             // Close controls when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.floating-controls') && !e.target.closest('.chart-container canvas')) {
+                    document.querySelectorAll('.floating-controls').forEach(controls => {
+                        controls.classList.remove('active');
+                    });
+                }
+            });
+        }
+
+        function toggleFloatingControls(event, controlsId) {
+             // Close all other controls
+             document.querySelectorAll('.floating-controls').forEach(controls => {
+                if (controls.id !== controlsId) {
+                     controls.classList.remove('active');
+                }
+            });
+            const controls = document.getElementById(controlsId);
+            controls.classList.toggle('active');
+        }
+
+
+        optimalKInput.addEventListener('change', (e) => {
+            optimalK = parseInt(e.target.value);
+            if (isNaN(optimalK) || optimalK < 2) {
+                optimalK = 2; // Set minimum
+                optimalKInput.value = optimalK;
+            }
+        });
+
+        nextStep5Button.addEventListener('click', simulateClustering);
+
+        function simulateClustering() {
+            showLoading(true);
+            // Simulate clustering process
+            console.log(`Simulating K-Means clustering with K=${optimalK} using variables: ${selectedVariables.join(', ')}`);
+
+            // Simulate adding cluster ID to preparedData
+            clusteringResults = preparedData.map((row, index) => {
+                // Assign a random cluster ID for simulation
+                const clusterId = Math.floor(Math.random() * optimalK);
+                 // Simulate cluster center values for the selected variables
+                 const simulatedCenters = {};
+                 selectedVariables.forEach(variable => {
+                     simulatedCenters[variable] = parseFloat(row[variable]) + (Math.random() - 0.5) * 100; // Add some noise
+                 });
+
+                return {
+                    ...row,
+                    'Cluster_ID': clusterId,
+                    'Simulated_Cluster_Centers': simulatedCenters // Store simulated centers
+                };
+            });
+
+            // Simulate calculating segment profiles
+            const segmentProfiles = {};
+            for (let i = 0; i < optimalK; i++) {
+                segmentProfiles[i] = {
+                    count: 0,
+                    average_RFM_Recency: 0,
+                    average_RFM_Frequency: 0,
+                    average_RFM_Monetary: 0,
+                    name: '', // User-defined name
+                    strategy: '' // User-defined strategy
+                };
+            }
+
+            clusteringResults.forEach(row => {
+                const clusterId = row['Cluster_ID'];
+                segmentProfiles[clusterId].count++;
+                segmentProfiles[clusterId].average_RFM_Recency += parseFloat(row['RFM_Recency']);
+                segmentProfiles[clusterId].average_RFM_Frequency += parseFloat(row['RFM_Frequency']);
+                segmentProfiles[clusterId].average_RFM_Monetary += parseFloat(row['RFM_Monetary']);
+            });
+
+            for (let i = 0; i < optimalK; i++) {
+                const profile = segmentProfiles[i];
+                if (profile.count > 0) {
+                    profile.average_RFM_Recency = (profile.average_RFM_Recency / profile.count).toFixed(1);
+                    profile.average_RFM_Frequency = (profile.average_RFM_Frequency / profile.count).toFixed(1);
+                    profile.average_RFM_Monetary = (profile.average_RFM_Monetary / profile.count).toFixed(2);
+                }
+            }
+
+            clusteringResults.segmentProfiles = segmentProfiles; // Attach profiles to results
+
+            setTimeout(() => { // Simulate processing time
+                showLoading(false);
+                nextStep(); // Move to Step 6
+            }, 1500);
+        }
+
+        // Step 6: Visualize Segments
+        const segmentScatterCanvas = document.getElementById('segment-scatter-chart');
+        const scatterXVarSelect = document.getElementById('scatterXVar');
+        const scatterYVarSelect = document.getElementById('scatterYVar');
+        const scatterPointSizeInput = document.getElementById('scatterPointSize');
+        const scatterLegendPositionSelect = document.getElementById('scatterLegendPosition');
+
+        let segmentScatterChart = null;
+        const scatterControls = document.getElementById('scatter-controls');
+
+
+        function populateScatterVariableSelects() {
+            scatterXVarSelect.innerHTML = '';
+            scatterYVarSelect.innerHTML = '';
+            // Use prepared headers, ideally numerical ones
+            const numericalHeaders = preparedHeaders.filter(header => header.startsWith('RFM_')); // Simple filter for demo
+
+            numericalHeaders.forEach(header => {
+                const optionX = document.createElement('option');
+                optionX.value = header;
+                optionX.textContent = header;
+                scatterXVarSelect.appendChild(optionX);
+
+                const optionY = document.createElement('option');
+                optionY.value = header;
+                optionY.textContent = header;
+                scatterYVarSelect.appendChild(optionY);
+            });
+
+            // Set default selection (e.g., Frequency vs Monetary)
+             scatterXVarSelect.value = 'RFM_Frequency';
+             scatterYVarSelect.value = 'RFM_Monetary';
+
+             // Add event listeners
+             scatterXVarSelect.addEventListener('change', renderSegmentScatterPlot);
+             scatterYVarSelect.addEventListener('change', renderSegmentScatterPlot);
+             scatterPointSizeInput.addEventListener('input', renderSegmentScatterPlot);
+             scatterLegendPositionSelect.addEventListener('change', renderSegmentScatterPlot);
+
+             // Add event listener for floating controls
+             segmentScatterCanvas.addEventListener('click', (e) => toggleFloatingControls(e, 'scatter-controls'));
+        }
+
+        function renderSegmentScatterPlot() {
+            if (!clusteringResults || selectedVariables.length < 2) {
+                console.warn("Clustering results not available or not enough variables selected for scatter plot.");
+                return;
+            }
+
+            const xVar = scatterXVarSelect.value;
+            const yVar = scatterYVarSelect.value;
+            const pointSize = parseInt(scatterPointSizeInput.value);
+            const legendPosition = scatterLegendPositionSelect.value;
+
+            // Generate distinct colors for segments
+            const segmentColors = generateColors(optimalK);
+
+            const datasets = [];
+            for (let i = 0; i < optimalK; i++) {
+                const segmentData = clusteringResults
+                    .filter(row => row['Cluster_ID'] === i)
+                    .map(row => ({
+                        x: parseFloat(row[xVar]),
+                        y: parseFloat(row[yVar]),
+                        originalRow: row // Keep reference to original data
+                    }));
+
+                datasets.push({
+                    label: `Segment ${i + 1}`,
+                    data: segmentData,
+                    backgroundColor: segmentColors[i],
+                    pointRadius: pointSize,
+                    pointHoverRadius: pointSize + 2,
+                });
+            }
+
+            if (segmentScatterChart) segmentScatterChart.destroy();
+            segmentScatterChart = new Chart(segmentScatterCanvas, {
+                type: 'scatter',
+                data: {
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: xVar
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: yVar
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: legendPosition,
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const point = context.raw;
+                                    let label = `Segment ${context.datasetIndex + 1}`;
+                                    label += ` (${xVar}: ${point.x.toFixed(2)}, ${yVar}: ${point.y.toFixed(2)})`;
+                                    // Add some original data info to tooltip
+                                    label += ` | Customer ID: ${point.originalRow['Customer ID'] || 'N/A'}`; // Assuming 'Customer ID' exists
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function generateColors(numColors) {
+            const colors = [];
+            const hueStep = 360 / numColors;
+            for (let i = 0; i < numColors; i++) {
+                const hue = i * hueStep;
+                // Using HSL for vibrant colors, adjust saturation and lightness as needed
+                colors.push(`hsl(${hue}, 70%, 50%)`);
+            }
+            return colors;
+        }
+
+
+        // Step 7: Interpret Segments
+        const segmentProfilesDiv = document.getElementById('segment-profiles');
+
+        function displaySegmentProfiles() {
+            segmentProfilesDiv.innerHTML = '';
+            if (!clusteringResults || !clusteringResults.segmentProfiles) {
+                segmentProfilesDiv.innerHTML = '<p>Segment profiles not available.</p>';
+                return;
+            }
+
+            const profiles = clusteringResults.segmentProfiles;
+            for (const clusterId in profiles) {
+                const profile = profiles[clusterId];
+                const profileElement = document.createElement('div');
+                profileElement.classList.add('segment-profile');
+                profileElement.innerHTML = `
+                    <h3>Segment ${parseInt(clusterId) + 1}</h3>
+                    <p><strong>Customers:</strong> ${profile.count}</p>
+                    <p><strong>Average RFM:</strong> Recency=${profile.average_RFM_Recency}, Frequency=${profile.average_RFM_Frequency}, Monetary=${profile.average_RFM_Monetary}</p>
+                    <p><em>(Add more relevant average metrics for selected variables here)</em></p>
+                    <label for="segment-name-${clusterId}">Segment Name:</label>
+                    <input type="text" id="segment-name-${clusterId}" value="${profile.name}" placeholder="e.g., High-Value Loyal Customers">
+                    <label for="segment-strategy-${clusterId}">Marketing Strategy:</label>
+                    <textarea id="segment-strategy-${clusterId}" rows="4" placeholder="e.g., Offer exclusive discounts and loyalty rewards.">${profile.strategy}</textarea>
+                `;
+                segmentProfilesDiv.appendChild(profileElement);
+
+                // Add event listeners to save user input
+                profileElement.querySelector(`#segment-name-${clusterId}`).addEventListener('input', (e) => {
+                    profiles[clusterId].name = e.target.value;
+                });
+                 profileElement.querySelector(`#segment-strategy-${clusterId}`).addEventListener('input', (e) => {
+                    profiles[clusterId].strategy = e.target.value;
+                });
+            }
+        }
+
+        // Step 8: Export Results
+        const exportResultsButton = document.getElementById('export-results');
+        exportResultsButton.addEventListener('click', exportResults);
+
+        function exportResults() {
+             if (!clusteringResults) {
+                 alert("No results to export. Please complete the clustering steps.");
+                 return;
+             }
+
+             showLoading(true);
+
+             // Prepare data for export
+             // Include original data + Cluster_ID
+             const dataToExport = clusteringResults.map(row => {
+                 const exportRow = { ...row };
+                 delete exportRow['Simulated_Cluster_Centers']; // Remove simulation artifact
+                 return exportRow;
+             });
+
+             // Prepare segment profiles for export
+             const profilesToExport = Object.keys(clusteringResults.segmentProfiles).map(clusterId => {
+                 const profile = clusteringResults.segmentProfiles[clusterId];
+                 return {
+                     'Segment ID': parseInt(clusterId) + 1,
+                     'Segment Name': profile.name || `Segment ${parseInt(clusterId) + 1}`,
+                     'Customer Count': profile.count,
+                     'Avg RFM Recency': profile.average_RFM_Recency,
+                     'Avg RFM Frequency': profile.average_RFM_Frequency,
+                     'Avg RFM Monetary': profile.average_RFM_Monetary,
+                     'Marketing Strategy': profile.strategy || ''
+                 };
+             });
+
+             // Convert to CSV format
+             const dataCsv = Papa.unparse(dataToExport);
+             const profilesCsv = Papa.unparse(profilesToExport);
+
+             // Create Blob objects
+             const dataBlob = new Blob([dataCsv], { type: 'text/csv;charset=utf-8;' });
+             const profilesBlob = new Blob([profilesCsv], { type: 'text/csv;charset=utf-8;' });
+
+             // Create download links
+             const dataLink = document.createElement('a');
+             dataLink.href = URL.createObjectURL(dataBlob);
+             dataLink.download = 'customer_segmentation_data.csv';
+
+             const profilesLink = document.createElement('a');
+             profilesLink.href = URL.createObjectURL(profilesBlob);
+             profilesLink.download = 'customer_segmentation_profiles.csv';
+
+             // Append links to body, click them, and remove
+             document.body.appendChild(dataLink);
+             dataLink.click();
+             document.body.removeChild(dataLink);
+
+             document.body.appendChild(profilesLink);
+             profilesLink.click();
+             document.body.removeChild(profilesLink);
+
+             showLoading(false);
+             alert("Export complete! Check your downloads folder.");
+        }
+
+
+        // --- Step Display Handler ---
+        function handleStepDisplay(step) {
+            // This function is called when a step becomes active
+            switch (step) {
+                case 1:
+                    // Nothing specific needed on display, handled by file upload events
+                    break;
+                case 2:
+                    if (rawData.length > 0 && preparedData.length === 0) {
+                         showLoading(true);
+                         setTimeout(() => { // Simulate processing time
+                            simulateDataPreparation();
+                            showLoading(false);
+                         }, 1000);
+                    } else if (preparedData.length > 0) {
+                         preparedDataPreviewDiv.classList.remove('hidden');
+                         displayDataPreview(preparedData, preparedDataTable);
+                    }
+                    break;
+                case 3:
+                    if (preparedData.length > 0 && variableSelectionDiv.innerHTML === '') {
+                        populateVariableSelection();
+                    }
+                    break;
+                case 4:
+                    // Nothing specific needed
+                    break;
+                case 5:
+                    if (!elbowChart || !silhouetteChart) {
+                        showLoading(true);
+                         setTimeout(() => { // Simulate processing time for optimal K calculation
+                            renderOptimalKCharts();
+                            showLoading(false);
+                         }, 1500);
+                    }
+                    break;
+                case 6:
+                    if (clusteringResults) {
+                        if (scatterXVarSelect.innerHTML === '') {
+                            populateScatterVariableSelects();
+                        }
+                        showLoading(true);
+                         setTimeout(() => { // Simulate processing time for visualization
+                             renderSegmentScatterPlot();
+                             showLoading(false);
+                         }, 1500);
+                    } else {
+                        // If somehow we land here without clustering, go back
+                        showStep(5);
+                    }
+                    break;
+                case 7:
+                     if (clusteringResults) {
+                        displaySegmentProfiles();
+                     } else {
+                         showStep(6);
+                     }
+                    break;
+                case 8:
+                    // Nothing specific needed
+                    break;
+            }
+        }
+
+
+        // --- Event Listeners for Navigation Buttons ---
+        document.getElementById('next-step-1').addEventListener('click', nextStep);
+        document.getElementById('prev-step-2').addEventListener('click', prevStep);
+        document.getElementById('next-step-2').addEventListener('click', nextStep);
+        document.getElementById('prev-step-3').addEventListener('click', prevStep);
+        document.getElementById('next-step-3').addEventListener('click', nextStep);
+        document.getElementById('prev-step-4').addEventListener('click', prevStep);
+        document.getElementById('next-step-4').addEventListener('click', nextStep); // This button just moves to Step 5
+        document.getElementById('prev-step-5').addEventListener('click', prevStep);
+        // next-step-5 triggers clustering and then calls nextStep()
+        document.getElementById('prev-step-6').addEventListener('click', prevStep);
+        document.getElementById('next-step-6').addEventListener('click', nextStep);
+        document.getElementById('prev-step-7').addEventListener('click', prevStep);
+        document.getElementById('next-step-7').addEventListener('click', nextStep);
+        document.getElementById('prev-step-8').addEventListener('click', prevStep);
+        // export-results has its own handler
+
+        // Event listeners for sidebar step buttons
+        document.querySelectorAll('.step-button').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const step = parseInt(e.target.closest('.step-item').dataset.step);
+                 // Allow navigation only to previous steps or the current step
+                if (step <= currentStep) {
+                    showStep(step);
+                } else {
+                    // Prevent skipping steps if data/processing is required
+                    // More sophisticated logic needed for production
+                    alert("Please complete the current step before proceeding.");
+                }
+            });
+        });
+
+        // Initial display
+        showStep(1);
+
+    </script>
+
+</body>
+</html>

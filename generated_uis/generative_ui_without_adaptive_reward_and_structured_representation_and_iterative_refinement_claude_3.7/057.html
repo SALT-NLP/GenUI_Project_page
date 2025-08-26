@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Environmental Data Analysis Platform</title>
+    <style>
+        /* CSS variables for color palette */
+        :root {
+            --primary-color: #3498db; /* Blue */
+            --secondary-color: #2ecc71; /* Green */
+            --accent-color: #e74c3c; /* Red */
+            --background-color: #ffffff; /* White */
+            --surface-color: #f8f9fa; /* Light Gray */
+            --text-color: #333; /* Dark Gray */
+            --text-light-color: #666; /* Medium Gray */
+            --border-color: #ddd; /* Light Border */
+            --shadow-color: rgba(0, 0, 0, 0.1); /* Subtle Shadow */
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --error-color: #dc3545;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--surface-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            padding: 15px 20px;
+            box-shadow: 0 2px 4px var(--shadow-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8em;
+            color: var(--primary-color);
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 250px 1fr; /* Sidebar width, Main content */
+            flex-grow: 1;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        aside.sidebar {
+            background-color: var(--background-color);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px var(--shadow-color);
+            height: fit-content; /* Adjust height based on content */
+        }
+
+        .sidebar h2 {
+            margin-top: 0;
+            color: var(--primary-color);
+            font-size: 1.4em;
+            margin-bottom: 15px;
+        }
+
+        .step-indicator {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .step-indicator li {
+            padding: 12px 0;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-light-color);
+            transition: color 0.2s ease, font-weight 0.2s ease;
+        }
+
+        .step-indicator li:last-child {
+            border-bottom: none;
+        }
+
+        .step-indicator li.active {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .step-indicator li:hover:not(.active) {
+            color: var(--text-color);
+        }
+
+        main.content-area {
+            background-color: var(--background-color);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px var(--shadow-color);
+        }
+
+        .content-section {
+            display: none; /* Hidden by default */
+        }
+
+        .content-section.active {
+            display: block; /* Show active section */
+        }
+
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-size: 1.6em;
+        }
+
+        /* Data Load Section */
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s ease, background-color 0.2s ease;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background-color: var(--surface-color);
+        }
+
+        .upload-area input[type="file"] {
+            display: none;
+        }
+
+        .upload-area p {
+            margin: 10px 0;
+            color: var(--text-light-color);
+        }
+
+        .upload-area button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.2s ease;
+        }
+
+        .upload-area button:hover {
+            background-color: #2980b9; /* Darker blue */
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            background-color: var(--surface-color);
+            border-radius: 5px;
+            margin-top: 20px;
+            overflow: hidden;
+            height: 10px;
+            display: none; /* Hidden by default */
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: var(--secondary-color);
+            transition: width 0.3s ease;
+        }
+
+        /* Data Table Section (Placeholder) */
+        .data-table-container {
+            max-height: 400px; /* Example fixed height for scroll */
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th, .data-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            background-color: var(--surface-color);
+            font-weight: bold;
+            cursor: pointer; /* For sorting */
+        }
+
+        .data-table td.missing {
+            background-color: #f9e3e3; /* Light red for missing */
+        }
+
+        /* Data Cleaning Section */
+        .cleaning-controls {
+            margin-top: 20px;
+        }
+
+        .cleaning-controls h3 {
+            color: var(--text-color);
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--surface-color);
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: var(--text-light-color);
+        }
+
+        .control-group select,
+        .control-group input[type="number"],
+        .control-group input[type="range"] {
+            width: calc(100% - 22px); /* Adjust for padding/border */
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            font-size: 1em;
+        }
+
+        .control-group input[type="range"] {
+            padding: 0; /* Sliders don't need internal padding */
+            margin-top: 10px;
+        }
+
+        .cleaning-actions {
+            margin-top: 20px;
+            text-align: right;
+        }
+
+        .cleaning-actions button {
+            padding: 10px 20px;
+            margin-left: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.2s ease;
+        }
+
+        .cleaning-actions button.preview {
+            background-color: #bdc3c7; /* Gray */
+            color: var(--text-color);
+        }
+
+        .cleaning-actions button.preview:hover {
+            background-color: #95a5a6; /* Darker gray */
+        }
+
+        .cleaning-actions button.apply {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .cleaning-actions button.apply:hover {
+            background-color: #27ae60; /* Darker green */
+        }
+
+        /* Analysis/Modeling/Visualization Sections (Placeholders) */
+        .analysis-config,
+        .policy-modeling,
+        .visualization-dashboard {
+            margin-top: 20px;
+        }
+
+        .visualization-dashboard {
+             display: grid;
+             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive grid for charts */
+             gap: 20px;
+             margin-top: 20px;
+        }
+
+        .chart-card {
+            background: var(--background-color);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px var(--shadow-color);
+            padding: 20px;
+            position: relative;
+            cursor: pointer; /* Indicate interactivity */
+        }
+
+        .chart-container {
+            height: 300px; /* Fixed height for charts */
+            position: relative;
+        }
+
+        /* Floating controls for charts - similar to example */
+        .floating-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px var(--shadow-color);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 5; /* Above chart canvas */
+        }
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+        .floating-controls .control-group {
+            margin: 8px 0;
+            padding: 0;
+            border: none;
+            background: none;
+        }
+         .floating-controls label {
+             font-size: 0.9em;
+             margin-bottom: 4px;
+         }
+         .floating-controls select,
+         .floating-controls input[type="color"] {
+             width: auto; /* Auto width for controls */
+             padding: 5px;
+             font-size: 0.9em;
+         }
+
+
+        /* Report Section */
+        .report-actions {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .report-actions button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background-color 0.2s ease;
+        }
+
+        .report-actions button:hover {
+            background-color: #2980b9; /* Darker blue */
+        }
+
+        /* Feedback Messages */
+        .feedback-message {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            display: none; /* Hidden by default */
+            font-weight: bold;
+        }
+
+        .feedback-message.success {
+            background-color: #d4edda;
+            color: var(--success-color);
+            border: 1px solid #c3e6cb;
+        }
+
+        .feedback-message.warning {
+            background-color: #fff3cd;
+            color: var(--warning-color);
+            border: 1px solid #ffeeba;
+        }
+
+        .feedback-message.error {
+            background-color: #f8d7da;
+            color: var(--error-color);
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr; /* Stack sidebar and content */
+                padding: 10px;
+                gap: 10px;
+            }
+
+            aside.sidebar {
+                padding: 15px;
+            }
+
+            main.content-area {
+                padding: 15px;
+            }
+
+            header h1 {
+                font-size: 1.5em;
+            }
+        }
+
+        @media (max-width: 480px) {
+             header {
+                 flex-direction: column;
+                 align-items: flex-start;
+                 padding: 10px;
+             }
+             header h1 {
+                 margin-bottom: 10px;
+             }
+             .upload-area {
+                 padding: 20px;
+             }
+             .cleaning-actions {
+                 text-align: center;
+             }
+             .cleaning-actions button {
+                 margin: 5px;
+                 width: calc(50% - 10px); /* Make buttons take half width */
+             }
+             .visualization-dashboard {
+                 grid-template-columns: 1fr; /* Stack charts */
+             }
+        }
+
+        /* Accessibility */
+        [tabindex="0"], button, input, select, textarea, [role="button"] {
+            outline-offset: 2px;
+        }
+        button:focus, input:focus, select:focus, textarea:focus, [role="button"]:focus {
+             outline: 2px solid var('--primary-color');
+        }
+        .step-indicator li:focus {
+             outline: 2px solid var('--primary-color');
+             outline-offset: 2px;
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Environmental Data Analysis Platform</h1>
+        <!-- Navigation/Help toggle could go here -->
+    </header>
+
+    <div class="container">
+        <aside class="sidebar" aria-label="Analysis Steps">
+            <h2>Analysis Workflow</h2>
+            <ul class="step-indicator" role="tablist">
+                <li data-step="load" class="active" role="tab" aria-selected="true" tabindex="0">Data Load & Inspect</li>
+                <li data-step="clean" role="tab" aria-selected="false" tabindex="-1">Data Cleaning</li>
+                <li data-step="analyze" role="tab" aria-selected="false" tabindex="-1">Data Analysis</li>
+                <li data-step="model" role="tab" aria-selected="false" tabindex="-1">Policy Modeling</li>
+                <li data-step="visualize" role="tab" aria-selected="false" tabindex="-1">Visualization</li>
+                <li data-step="report" role="tab" aria-selected="false" tabindex="-1">Report Generation</li>
+            </ul>
+        </aside>
+
+        <main class="content-area">
+            <div id="feedbackMessages">
+                <!-- Feedback messages will be inserted here -->
+            </div>
+
+            <!-- Step 1: Data Load & Inspect -->
+            <section id="step-load" class="content-section active" role="region" aria-labelledby="load-heading">
+                <h2 id="load-heading">Data Load & Inspect</h2>
+                <div class="upload-area" id="dropArea" role="group" aria-label="Data Upload">
+                    <input type="file" id="fileInput" accept=".csv, .xlsx, .json">
+                    <p>Drag & drop your data file here, or</p>
+                    <button id="selectFileButton" aria-controls="fileInput">Select File</button>
+                    <p>Accepted formats: CSV, XLSX, JSON</p>
+                </div>
+                <div class="progress-bar-container" id="uploadProgressBarContainer">
+                    <div class="progress-bar" id="uploadProgressBar"></div>
+                </div>
+                <div id="fileInfo" style="margin-top: 20px; display: none;">
+                    <h3>Loaded File Info:</h3>
+                    <p id="fileName"></p>
+                    <p id="fileSize"></p>
+                    <p id="fileType"></p>
+                </div>
+                <div id="initialDataPreview" class="data-table-container" style="margin-top: 20px; display: none;">
+                    <h3>Initial Data Preview:</h3>
+                     <!-- Data table will be rendered here -->
+                     <table class="data-table" id="previewTable">
+                         <thead>
+                             <tr>
+                                 <th>Timestamp</th>
+                                 <th>AirQualityIndex</th>
+                                 <th>TrafficFlow</th>
+                                 <th>Temperature</th>
+                                 <th>ConstructionActivity</th>
+                             </tr>
+                         </thead>
+                         <tbody>
+                             <tr>
+                                 <td>2023-01-01 08:00</td>
+                                 <td>55</td>
+                                 <td>High</td>
+                                 <td>5°C</td>
+                                 <td>Low</td>
+                             </tr>
+                             <tr>
+                                 <td>2023-01-01 09:00</td>
+                                 <td>62</td>
+                                 <td>Very High</td>
+                                 <td>6°C</td>
+                                 <td class="missing"></td>
+                             </tr>
+                             <tr>
+                                 <td>2023-01-01 10:00</td>
+                                 <td>58</td>
+                                 <td>High</td>
+                                 <td>7°C</td>
+                                 <td>Low</td>
+                             </tr>
+                         </tbody>
+                     </table>
+                </div>
+            </section>
+
+            <!-- Step 2: Data Cleaning -->
+            <section id="step-clean" class="content-section" role="region" aria-labelledby="clean-heading">
+                <h2 id="clean-heading">Data Cleaning</h2>
+                <div class="data-table-container" id="cleanedDataTableContainer">
+                     <h3>Current Data Preview:</h3>
+                     <!-- Data table will be rendered here -->
+                     <table class="data-table" id="cleanedDataTable">
+                          <thead>
+                             <tr>
+                                 <th>Timestamp</th>
+                                 <th>AirQualityIndex</th>
+                                 <th>TrafficFlow</th>
+                                 <th>Temperature</th>
+                                 <th>ConstructionActivity</th>
+                             </tr>
+                         </thead>
+                         <tbody>
+                             <tr>
+                                 <td>2023-01-01 08:00</td>
+                                 <td>55</td>
+                                 <td>High</td>
+                                 <td>5°C</td>
+                                 <td>Low</td>
+                             </tr>
+                             <tr>
+                                 <td>2023-01-01 09:00</td>
+                                 <td>62</td>
+                                 <td>Very High</td>
+                                 <td>6°C</td>
+                                 <td class="missing"></td>
+                             </tr>
+                             <tr>
+                                 <td>2023-01-01 10:00</td>
+                                 <td>58</td>
+                                 <td>High</td>
+                                 <td>7°C</td>
+                                 <td>Low</td>
+                             </tr>
+                         </tbody>
+                     </table>
+                </div>
+
+                <div class="cleaning-controls">
+                    <h3>Cleaning Operations</h3>
+
+                    <div class="control-group">
+                        <label for="missingValueMethod">Missing Value Handling:</label>
+                        <select id="missingValueMethod">
+                            <option value="none">None</option>
+                            <option value="drop_row">Drop Rows with Missing Values</option>
+                            <option value="drop_col">Drop Columns with Missing Values</option>
+                            <option value="impute_mean">Impute with Mean</option>
+                            <option value="impute_median">Impute with Median</option>
+                            <option value="impute_mode">Impute with Mode</option>
+                        </select>
+                    </div>
+
+                     <div class="control-group">
+                         <label for="outlierMethod">Outlier Detection & Handling:</label>
+                         <select id="outlierMethod">
+                             <option value="none">None</option>
+                             <option value="iqr">IQR Method</option>
+                             <option value="zscore">Z-Score Method</option>
+                         </select>
+                         <label for="iqrMultiplier" style="margin-top: 10px;">IQR Multiplier (for IQR Method):</label>
+                         <input type="range" id="iqrMultiplier" min="1.0" max="3.0" step="0.1" value="1.5">
+                         <span id="iqrMultiplierValue">1.5</span>
+                         <label for="outlierAction" style="margin-top: 10px;">Outlier Action:</label>
+                         <select id="outlierAction">
+                             <option value="none">None</option>
+                             <option value="remove">Remove Outliers</option>
+                             <option value="cap">Cap Outliers</option>
+                         </select>
+                     </div>
+
+                    <div class="control-group">
+                        <label for="standardizationMethod">Data Standardization/Normalization:</label>
+                        <select id="standardizationMethod">
+                            <option value="none">None</option>
+                            <option value="zscore">Z-Score Scaling</option>
+                            <option value="minmax">Min-Max Scaling</option>
+                        </select>
+                    </div>
+
+                     <div class="control-group">
+                         <label for="dataTypeConversion">Data Type Conversion (Select Column):</label>
+                          <!-- Placeholder for column selection dropdown -->
+                         <select id="dataTypeColumnSelect">
+                             <option value="">-- Select Column --</option>
+                             <!-- Options populated by JS -->
+                             <option value="Timestamp">Timestamp</option>
+                             <option value="AirQualityIndex">AirQualityIndex</option>
+                             <option value="TrafficFlow">TrafficFlow</option>
+                             <option value="Temperature">Temperature</option>
+                             <option value="ConstructionActivity">ConstructionActivity</option>
+                         </select>
+                         <label for="newDataType" style="margin-top: 10px;">Convert to Type:</label>
+                         <select id="newDataType">
+                             <option value="number">Number</option>
+                             <option value="string">String</option>
+                             <option value="date">Date</option>
+                         </select>
+                     </div>
+
+                    <div class="cleaning-actions">
+                        <button class="preview">Preview Changes</button>
+                        <button class="apply">Apply Cleaning Steps</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Step 3: Data Analysis -->
+            <section id="step-analyze" class="content-section" role="region" aria-labelledby="analyze-heading">
+                <h2 id="analyze-heading">Data Analysis</h2>
+                <div class="analysis-config">
+                    <h3>Exploratory Data Analysis (EDA)</h3>
+                    <p>Configure and run EDA tasks like correlation matrices, descriptive statistics, etc.</p>
+                    <!-- Placeholder for variable selection and EDA options -->
+                    <div class="control-group">
+                        <label>Select Variables for Analysis:</label>
+                        <!-- Multi-select or checklist placeholder -->
+                        <p>[Placeholder: Variable Selection Component]</p>
+                    </div>
+                    <div class="control-group">
+                        <label>Choose Analysis Type:</label>
+                        <select>
+                            <option>Descriptive Statistics</option>
+                            <option>Correlation Matrix</option>
+                            <option>Distribution Plots</option>
+                        </select>
+                    </div>
+                    <button class="apply">Run EDA</button>
+
+                    <h3 style="margin-top: 30px;">Statistical Modeling</h3>
+                     <p>Set up and run models to identify key contributors (e.g., Regression).</p>
+                     <!-- Placeholder for model configuration -->
+                     <div class="control-group">
+                         <label>Dependent Variable:</label>
+                         <select><option>-- Select --</option></select>
+                     </div>
+                     <div class="control-group">
+                         <label>Independent Variables:</label>
+                         <!-- Multi-select placeholder -->
+                         <p>[Placeholder: Independent Variable Selection]</p>
+                     </div>
+                     <div class="control-group">
+                         <label>Model Type:</label>
+                         <select>
+                             <option>Linear Regression</option>
+                             <option>Panel Regression</option>
+                             <!-- Add other model types -->
+                         </select>
+                     </div>
+                    <button class="apply">Run Model</button>
+                </div>
+                <div id="analysisResults" style="margin-top: 20px;">
+                    <h3>Analysis Results:</h3>
+                    <p>[Placeholder: Display analysis results here]</p>
+                </div>
+            </section>
+
+            <!-- Step 4: Policy Modeling -->
+            <section id="step-model" class="content-section" role="region" aria-labelledby="model-heading">
+                <h2 id="model-heading">Policy Modeling</h2>
+                <div class="policy-modeling">
+                    <p>Define hypothetical policy changes and simulate their potential impact on air quality.</p>
+                    <!-- Placeholder for policy definition form -->
+                    <div class="control-group">
+                        <label>Define Policy Scenario:</label>
+                        <textarea rows="4" placeholder="e.g., 'Reduce traffic by 20% in downtown area', 'Increase green spaces by 10% in neighborhood X'"></textarea>
+                    </div>
+                    <div class="control-group">
+                        <label>Simulation Parameters:</label>
+                        <p>[Placeholder: Input fields for simulation parameters like time horizon, affected areas]</p>
+                    </div>
+                    <button class="apply">Run Simulation</button>
+                </div>
+                <div id="simulationResults" style="margin-top: 20px;">
+                    <h3>Simulation Results:</h3>
+                    <p>[Placeholder: Display simulation results and predicted impact]</p>
+                </div>
+            </section>
+
+            <!-- Step 5: Visualization -->
+            <section id="step-visualize" class="content-section" role="region" aria-labelledby="visualize-heading">
+                <h2 id="visualize-heading">Visualization</h2>
+                <div class="visualization-controls">
+                    <h3>Visualization Controls</h3>
+                    <!-- Placeholder for visualization control panel toggle/area -->
+                    <p>Click on a chart to show its controls. Add new charts below.</p>
+                    <button class="apply" id="addChartButton">Add New Chart</button>
+                </div>
+                <div class="visualization-dashboard" id="chartDashboard">
+                    <!-- Charts will be added here dynamically -->
+                    <!-- Example Chart Card (will be dynamically added) -->
+                     <div class="chart-card" id="chartCard1">
+                         <div class="chart-container">
+                             <canvas id="chart1"></canvas>
+                             <div class="floating-controls" id="chartControls1">
+                                 <div class="control-group">
+                                     <label for="chartTypechart1">Chart Type</label>
+                                     <select id="chartTypechart1">
+                                         <option value="line">Line</option>
+                                         <option value="bar">Bar</option>
+                                         <option value="scatter">Scatter</option>
+                                         <option value="pie">Pie</option>
+                                     </select>
+                                 </div>
+                                 <div class="control-group">
+                                     <label for="chartColorchart1">Color</label>
+                                     <input type="color" id="chartColorchart1" value="#3498db">
+                                 </div>
+                                  <!-- More controls like axis selection, filters would go here -->
+                                  <div class="control-group">
+                                     <label for="chartXAxischart1">X-Axis</label>
+                                     <select id="chartXAxischart1">
+                                         <option value="">-- Select --</option>
+                                          <option value="Timestamp">Timestamp</option>
+                                          <option value="TrafficFlow">TrafficFlow</option>
+                                          <option value="Temperature">Temperature</option>
+                                          <option value="ConstructionActivity">ConstructionActivity</option>
+                                          <option value="AirQualityIndex">AirQualityIndex</option>
+                                          <!-- Populate with actual data columns -->
+                                     </select>
+                                  </div>
+                                  <div class="control-group">
+                                     <label for="chartYAxischart1">Y-Axis</label>
+                                     <select id="chartYAxischart1">
+                                         <option value="">-- Select --</option>
+                                         <option value="AirQualityIndex">Air Quality</option>
+                                         <option value="TrafficFlow">TrafficFlow</option>
+                                          <option value="Temperature">Temperature</option>
+                                          <option value="ConstructionActivity">ConstructionActivity</option>
+                                         <!-- Populate with actual data columns -->
+                                     </select>
+                                  </div>
+                             </div>
+                         </div>
+                     </div>
+                </div>
+            </section>
+
+            <!-- Step 6: Report Generation -->
+            <section id="step-report" class="content-section" role="region" aria-labelledby="report-heading">
+                <h2 id="report-heading">Report Generation</h2>
+                <div class="report-actions">
+                    <p>Compile your analysis findings, visualizations, and policy simulation results into a comprehensive report.</p>
+                    <button>Generate Report (PDF/HTML)</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        const steps = document.querySelectorAll('.step-indicator li');
+        const sections = document.querySelectorAll('.content-section');
+        const feedbackContainer = document.getElementById('feedbackMessages');
+
+        // --- Workflow Navigation ---
+        steps.forEach(step => {
+            step.addEventListener('click', () => {
+                const targetStep = step.getAttribute('data-step');
+                activateStep(targetStep);
+            });
+            step.addEventListener('keydown', (e) => {
+                 if (e.key === 'Enter' || e.key === ' ') {
+                     e.preventDefault();
+                     const targetStep = step.getAttribute('data-step');
+                     activateStep(targetStep);
+                 }
+            });
+        });
+
+        function activateStep(targetStep) {
+            steps.forEach(step => {
+                const isActive = step.getAttribute('data-step') === targetStep;
+                step.classList.toggle('active', isActive);
+                 step.setAttribute('aria-selected', isActive);
+                 step.setAttribute('tabindex', isActive ? '0' : '-1');
+            });
+
+            sections.forEach(section => {
+                const isActive = section.id === `step-${targetStep}`;
+                section.classList.toggle('active', isActive);
+            });
+        }
+
+        // --- Feedback Messages ---
+        function showFeedback(message, type = 'info') {
+            const msgDiv = document.createElement('div');
+            msgDiv.classList.add('feedback-message', type);
+            msgDiv.textContent = message;
+            feedbackContainer.appendChild(msgDiv);
+            msgDiv.style.display = 'block';
+
+            // Auto-remove after a few seconds
+            setTimeout(() => {
+                msgDiv.style.display = 'none';
+                msgDiv.remove(); // Clean up DOM
+            }, 5000);
+        }
+
+        // --- Data Load Section ---
+        const dropArea = document.getElementById('dropArea');
+        const fileInput = document.getElementById('fileInput');
+        const selectFileButton = document.getElementById('selectFileButton');
+        const uploadProgressBarContainer = document.getElementById('uploadProgressBarContainer');
+        const uploadProgressBar = document.getElementById('uploadProgressBar');
+        const fileInfoDiv = document.getElementById('fileInfo');
+        const fileNameSpan = document.getElementById('fileName');
+        const fileSizeSpan = document.getElementById('fileSize');
+        const fileTypeSpan = document.getElementById('fileType');
+        const previewTable = document.getElementById('previewTable'); // Example table
+
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false); // Prevent default on body too
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // Highlight drop area on drag enter/over
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => dropArea.classList.add('highlight'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => dropArea.classList.remove('highlight'), false);
+        });
+
+        // Handle dropped files
+        dropArea.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+
+        // Handle file selection via button
+        selectFileButton.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            if (files.length === 0) return;
+
+            const file = files[0]; // Assume single file upload for simplicity
+
+            // Basic file info display
+            fileNameSpan.textContent = `Name: ${file.name}`;
+            fileSizeSpan.textContent = `Size: ${(file.size / 1024).toFixed(2)} KB`;
+            fileTypeSpan.textContent = `Type: ${file.type || 'N/A'}`;
+            fileInfoDiv.style.display = 'block';
+
+            // Simulate upload progress
+            uploadProgressBarContainer.style.display = 'block';
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 10;
+                uploadProgressBar.style.width = `${progress}%`;
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    showFeedback(`File "${file.name}" loaded successfully!`, 'success');
+                    uploadProgressBarContainer.style.display = 'none';
+                    uploadProgressBar.style.width = '0%'; // Reset for next upload
+                    // Simulate data loading and show preview
+                    simulateDataLoad(file);
+                }
+            }, 100);
+        }
+
+        function simulateDataLoad(file) {
+             // In a real app, you'd parse the file (CSV, XLSX, JSON) here.
+             // For this example, we'll just show the placeholder table.
+             console.log(`Simulating data load for ${file.name}`);
+             document.getElementById('initialDataPreview').style.display = 'block';
+             document.getElementById('cleanedDataTableContainer').style.display = 'block'; // Also show on clean step
+             // Populate placeholder column select for cleaning step
+             populateColumnSelect(['Timestamp', 'AirQualityIndex', 'TrafficFlow', 'Temperature', 'ConstructionActivity']);
+             // Optionally, activate the next step automatically
+             // setTimeout(() => activateStep('clean'), 1000);
+        }
+
+        // --- Data Cleaning Section ---
+        const iqrMultiplierInput = document.getElementById('iqrMultiplier');
+        const iqrMultiplierValueSpan = document.getElementById('iqrMultiplierValue');
+        const dataTypeColumnSelect = document.getElementById('dataTypeColumnSelect');
+        const previewChangesButton = document.querySelector('#step-clean .cleaning-actions .preview');
+        const applyCleaningButton = document.querySelector('#step-clean .cleaning-actions .apply');
+
+        iqrMultiplierInput.addEventListener('input', () => {
+            iqrMultiplierValueSpan.textContent = iqrMultiplierInput.value;
+        });
+
+        previewChangesButton.addEventListener('click', () => {
+            const missingMethod = document.getElementById('missingValueMethod').value;
+            const outlierMethod = document.getElementById('outlierMethod').value;
+            const outlierAction = document.getElementById('outlierAction').value;
+            const iqrValue = iqrMultiplierInput.value;
+            const standardizationMethod = document.getElementById('standardizationMethod').value;
+            const dataTypeCol = dataTypeColumnSelect.value;
+            const newDataType = document.getElementById('newDataType').value;
+
+            let feedbackMsg = 'Previewing changes based on: ';
+            const changes = [];
+            if (missingMethod !== 'none') changes.push(`Missing Values: ${missingMethod}`);
+            if (outlierMethod !== 'none') changes.push(`Outliers (${outlierMethod}, IQR=${iqrValue}): ${outlierAction}`);
+            if (standardizationMethod !== 'none') changes.push(`Standardization: ${standardizationMethod}`);
+             if (dataTypeCol) changes.push(`Convert "${dataTypeCol}" to "${newDataType}"`);
+
+            if (changes.length > 0) {
+                showFeedback(feedbackMsg + changes.join(', '), 'info');
+                 // In a real app, update the preview table visually
+            } else {
+                 showFeedback('No cleaning steps selected to preview.', 'warning');
+            }
+        });
+
+        applyCleaningButton.addEventListener('click', () => {
+             const missingMethod = document.getElementById('missingValueMethod').value;
+             const outlierMethod = document.getElementById('outlierMethod').value;
+             const outlierAction = document.getElementById('outlierAction').value;
+             const iqrValue = iqrMultiplierInput.value;
+             const standardizationMethod = document.getElementById('standardizationMethod').value;
+             const dataTypeCol = dataTypeColumnSelect.value;
+             const newDataType = document.getElementById('newDataType').value;
+
+             let feedbackMsg = 'Applying cleaning steps: ';
+             const stepsApplied = [];
+             if (missingMethod !== 'none') stepsApplied.push(`Missing Values: ${missingMethod}`);
+             if (outlierMethod !== 'none') stepsApplied.push(`Outliers (${outlierMethod}, IQR=${iqrValue}): ${outlierAction}`);
+             if (standardizationMethod !== 'none') stepsApplied.push(`Standardization: ${standardizationMethod}`);
+              if (dataTypeCol) stepsApplied.push(`Convert "${dataTypeCol}" to "${newDataType}"`);
+
+             if (stepsApplied.length > 0) {
+                 showFeedback(feedbackMsg + stepsApplied.join(', '), 'success');
+                  // In a real app, apply the cleaning logic to the data
+                  // Then update the displayed table and potentially move to the next step
+                  // setTimeout(() => activateStep('analyze'), 2000);
+             } else {
+                  showFeedback('No cleaning steps selected to apply.', 'warning');
+             }
+        });
+
+        function populateColumnSelect(columns) {
+            dataTypeColumnSelect.innerHTML = '<option value="">-- Select Column --</option>';
+            columns.forEach(col => {
+                const option = document.createElement('option');
+                option.value = col;
+                option.textContent = col;
+                dataTypeColumnSelect.appendChild(option);
+            });
+             // Also populate other column selects in Analysis/Modeling sections if needed
+        }
+
+
+        // --- Visualization Section (Chart.js Integration) ---
+        const addChartButton = document.getElementById('addChartButton');
+        const chartDashboard = document.getElementById('chartDashboard');
+        let chartCount = 1; // Start from 1 because one example card is in HTML
+        const charts = {}; // Store chart instances
+
+        // Initialize the first chart (the example one)
+        document.addEventListener('DOMContentLoaded', () => {
+            const ctx1 = document.getElementById('chart1').getContext('2d');
+            const dummyData1 = {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Air Quality Index',
+                    data: [65, 59, 80, 81, 56, 55],
+                    backgroundColor: 'rgba(52, 152, 219, 0.5)',
+                    borderColor: 'var("--primary-color")',
+                    borderWidth: 1
+                }]
+            };
+             const chart1 = new Chart(ctx1, {
+                 type: 'bar', // Default type
+                 data: dummyData1,
+                 options: {
+                     responsive: true,
+                     maintainAspectRatio: false,
+                     plugins: {
+                         legend: { display: true },
+                         tooltip: { enabled: true } // Enable tooltips
+                     },
+                     onClick: (e, elements) => {
+                          // Toggle controls visibility on chart click
+                         const controls = document.getElementById('chartControls1');
+                         controls.classList.toggle('active');
+                     }
+                 }
+             });
+             charts['chart1'] = chart1; // Store the chart instance
+
+             // Add event listeners for floating controls for the first chart
+             const controls1 = document.getElementById('chartControls1');
+             controls1.querySelectorAll('select, input[type="color"]').forEach(control => {
+                 control.addEventListener('change', () => updateChart('chart1'));
+             });
+
+              // Hide controls when clicking outside the card or controls
+              document.addEventListener('click', (e) => {
+                  const card = document.getElementById('chartCard1');
+                  if (card && !card.contains(e.target) && controls1.classList.contains('active')) {
+                       controls1.classList.remove('active');
+                  }
+              });
+        });
+
+
+        addChartButton.addEventListener('click', () => {
+            chartCount++;
+            const chartId = `chart${chartCount}`;
+            const cardId = `chartCard${chartCount}`;
+            const controlsId = `chartControls${chartCount}`;
+
+            const chartCardHtml = `
+                <div class="chart-card" id="${cardId}">
+                    <div class="chart-container">
+                        <canvas id="${chartId}"></canvas>
+                        <div class="floating-controls" id="${controlsId}">
+                            <div class="control-group">
+                                <label for="chartType${chartId}">Chart Type</label>
+                                <select id="chartType${chartId}">
+                                    <option value="line">Line</option>
+                                    <option value="bar">Bar</option>
+                                    <option value="scatter">Scatter</option>
+                                    <option value="pie">Pie</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label for="chartColor${chartId}">Color</label>
+                                <input type="color" id="chartColor${chartId}" value="#3498db">
+                            </div>
+                             <!-- Add more controls dynamically based on chart type/data -->
+                             <div class="control-group">
+                                <label for="chartXAxis${chartId}">X-Axis</label>
+                                <select id="chartXAxis${chartId}">
+                                    <option value="">-- Select --</option>
+                                     <option value="Timestamp">Timestamp</option>
+                                     <option value="TrafficFlow">TrafficFlow</option>
+                                     <option value="Temperature">Temperature</option>
+                                     <option value="ConstructionActivity">ConstructionActivity</option>
+                                     <option value="AirQualityIndex">AirQualityIndex</option>
+                                     <!-- Populate with actual data columns -->
+                                </select>
+                             </div>
+                             <div class="control-group">
+                                <label for="chartYAxis${chartId}">Y-Axis</label>
+                                <select id="chartYAxis${chartId}">
+                                    <option value="">-- Select --</option>
+                                    <option value="AirQualityIndex">Air Quality</option>
+                                    <option value="TrafficFlow">TrafficFlow</option>
+                                     <option value="Temperature">Temperature</option>
+                                     <option value="ConstructionActivity">ConstructionActivity</option>
+                                    <!-- Populate with actual data columns -->
+                                </select>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            chartDashboard.insertAdjacentHTML('beforeend', chartCardHtml);
+
+            // Initialize Chart.js
+            const ctx = document.getElementById(chartId).getContext('2d');
+            // Dummy data for demonstration
+            const dummyData = {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'New Data Series',
+                    data: [Math.random()*100, Math.random()*100, Math.random()*100, Math.random()*100, Math.random()*100, Math.random()*100],
+                    backgroundColor: 'rgba(52, 152, 219, 0.5)',
+                    borderColor: 'var("--primary-color")',
+                    borderWidth: 1
+                }]
+            };
+            const newChart = new Chart(ctx, {
+                type: 'bar', // Default type
+                data: dummyData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true },
+                        tooltip: { enabled: true } // Enable tooltips
+                    },
+                    onClick: (e, elements) => {
+                         // Toggle controls visibility on chart click
+                        const controls = document.getElementById(controlsId);
+                        controls.classList.toggle('active');
+                    }
+                }
+            });
+            charts[chartId] = newChart; // Store the chart instance
+
+            // Add event listeners for floating controls
+            const controls = document.getElementById(controlsId);
+            controls.querySelectorAll('select, input[type="color"]').forEach(control => {
+                control.addEventListener('change', () => updateChart(chartId));
+            });
+
+             // Hide controls when clicking outside the card or controls
+             document.addEventListener('click', (e) => {
+                 const card = document.getElementById(cardId);
+                 if (card && !card.contains(e.target) && controls.classList.contains('active')) {
+                      controls.classList.remove('active');
+                 }
+             });
+        });
+
+        function updateChart(chartId) {
+            const chart = charts[chartId];
+            if (!chart) return;
+
+            const controls = document.getElementById(`chartControls${chartId}`);
+            const newChartType = controls.querySelector(`#chartType${chartId}`).value;
+            const newColor = controls.querySelector(`#chartColor${chartId}`).value;
+            const xAxis = controls.querySelector(`#chartXAxis${chartId}`).value;
+            const yAxis = controls.querySelector(`#chartYAxis${chartId}`).value;
+
+            chart.config.type = newChartType;
+            chart.data.datasets[0].backgroundColor = newColor + '80'; // Add some transparency
+            chart.data.datasets[0].borderColor = newColor;
+            chart.data.datasets[0].label = yAxis || 'Value'; // Update label based on Y-axis selection
+
+            // In a real app, you'd update chart.data based on selected X/Y axes and filters
+            // For this example, we just update type and color.
+            console.log(`Updating chart ${chartId}: Type=${newChartType}, Color=${newColor}, X=${xAxis}, Y=${yAxis}`);
+
+
+            chart.update();
+        }
+
+        // Initial setup: activate the first step
+        activateStep('load');
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Curriculum Builder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-green: #4CAF50; /* Nature-inspired green */
+            --primary-blue: #2196F3; /* Clean blue */
+            --accent-orange: #FF9800; /* Vibrant accent */
+            --background-light: #F4F6F8; /* Light background */
+            --surface-white: #FFFFFF; /* Card/Panel background */
+            --text-dark: #333333; /* Dark text */
+            --text-medium: #666666; /* Medium text */
+            --border-light: #E0E0E0; /* Light border */
+            --shadow-subtle: 0 2px 4px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+            --spacing-unit: 8px;
+            --sidebar-width: 250px;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-light);
+            color: var(--text-dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            overflow: hidden; /* Prevent body scroll when panels scroll */
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--surface-white);
+            box-shadow: var(--shadow-subtle);
+            padding: calc(var(--spacing-unit) * 2) 0;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-nav-item {
+            display: flex;
+            align-items: center;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            color: var(--text-medium);
+            text-decoration: none;
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .sidebar-nav-item:hover {
+            background-color: rgba(var(--primary-green), 0.1);
+            color: var(--primary-green);
+        }
+
+        .sidebar-nav-item.active {
+            background-color: var(--primary-green);
+            color: var(--surface-white);
+        }
+
+        .sidebar-nav-item i {
+            margin-right: var(--spacing-unit);
+            font-size: 20px;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: calc(var(--spacing-unit) * 3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Prevent main content area scroll */
+        }
+
+        .dashboard-placeholder,
+        .curriculum-editor-placeholder,
+        .resources-placeholder,
+        .settings-placeholder {
+            background-color: var(--surface-white);
+            border-radius: 8px;
+            box-shadow: var(--shadow-subtle);
+            padding: calc(var(--spacing-unit) * 3);
+            flex-grow: 1;
+            overflow: hidden; /* Handle internal scrolling */
+        }
+
+        .curriculum-editor-placeholder {
+             display: flex; /* Use flex for editor layout */
+             gap: calc(var(--spacing-unit) * 3);
+        }
+
+
+        .curriculum-structure-panel {
+            flex: 1; /* Takes 1 part of the space */
+            border-right: 1px solid var(--border-light);
+            padding-right: calc(var(--spacing-unit) * 3);
+            overflow-y: auto; /* Add scrolling if structure gets long */
+            max-height: 100%; /* Ensure panel respects parent height */
+        }
+
+        .content-editor-panel {
+            flex: 2; /* Takes 2 parts of the space */
+            padding-left: calc(var(--spacing-unit) * 3);
+            overflow-y: auto; /* Add scrolling for editor content */
+            max-height: 100%; /* Ensure panel respects parent height */
+        }
+
+        h1, h2, h3 {
+            color: var(--text-dark);
+            margin-top: 0;
+        }
+
+        h2 {
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            font-size: 1.5rem;
+            font-weight: 500;
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-bottom: var(--spacing-unit);
+        }
+
+        /* Placeholder styles */
+        .placeholder-section {
+            border: 1px dashed var(--border-light);
+            background-color: var(--background-light);
+            padding: calc(var(--spacing-unit) * 2);
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            border-radius: 4px;
+            color: var(--text-medium);
+            font-style: italic;
+            font-size: 0.9rem;
+        }
+
+        .placeholder-section h3 {
+            margin-top: 0;
+            margin-bottom: var(--spacing-unit);
+            color: var(--text-dark);
+            font-size: 1.1rem;
+        }
+
+        /* Basic Curriculum Structure Tree Placeholder */
+        .curriculum-tree {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .tree-item {
+            padding: var(--spacing-unit);
+            margin-bottom: var(--spacing-unit);
+            background-color: var(--surface-white);
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+            display: flex;
+            align-items: center;
+            font-size: 1rem;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+        }
+
+        .tree-item:hover {
+            background-color: rgba(var(--primary-blue), 0.05);
+            border-color: var(--primary-blue);
+        }
+
+        .tree-item i {
+            margin-right: var(--spacing-unit);
+            font-size: 18px;
+            color: var(--primary-blue);
+        }
+
+        .tree-item.module i { color: var(--primary-green); }
+        .tree-item.lesson i { color: var(--accent-orange); }
+        .tree-item.activity i { color: var(--primary-blue); }
+
+        .tree-item .drag-handle {
+            margin-right: var(--spacing-unit);
+            cursor: grab;
+            color: var(--text-medium);
+            font-size: 1.2rem;
+            line-height: 1;
+        }
+
+        .tree-item .add-button {
+             margin-left: auto;
+             background: none;
+             border: none;
+             color: var(--primary-green);
+             cursor: pointer;
+             font-size: 1.5rem;
+             padding: 0;
+             line-height: 1;
+             transition: color 0.2s ease;
+        }
+
+        .tree-item .add-button:hover {
+            color: darken(var(--primary-green), 15%); /* Placeholder */
+            filter: brightness(0.8);
+        }
+
+
+        /* Basic Content Editor Placeholder */
+        .editor-section {
+            margin-bottom: calc(var(--spacing-unit) * 3);
+        }
+
+        .editor-section label {
+            display: block;
+            margin-bottom: var(--spacing-unit);
+            font-weight: 500;
+            color: var(--text-dark);
+            font-size: 1rem;
+        }
+
+        .editor-section input[type="text"],
+        .editor-section textarea,
+        .editor-section select {
+            width: 100%;
+            padding: var(--spacing-unit);
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 1rem;
+            box-sizing: border-box; /* Include padding and border in element's total width and height */
+        }
+
+        .editor-section textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .content-type-selector {
+            display: flex;
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+            gap: var(--spacing-unit);
+            margin-bottom: calc(var(--spacing-unit) * 2);
+        }
+
+        .content-type-button {
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+            background-color: var(--background-light);
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .content-type-button.selected {
+            background-color: var(--primary-blue);
+            color: var(--surface-white);
+            border-color: var(--primary-blue);
+        }
+
+        .content-type-button:hover:not(.selected) {
+            background-color: rgba(var(--primary-blue), 0.1);
+            border-color: rgba(var(--primary-blue), 0.3);
+        }
+
+        /* Icons (using Material Symbols - requires link, but will use text placeholders for now) */
+        /* For actual implementation, would link Material Icons or similar */
+        .icon {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            /* background-color: var(--text-medium); /* Placeholder icon color */
+            /* border-radius: 4px; */
+            /* margin-right: var(--spacing-unit); */
+            vertical-align: middle;
+            text-align: center;
+            line-height: 20px; /* Center placeholder text */
+            color: var(--text-medium); /* Placeholder color */
+            font-style: normal; /* Override italic for placeholder text */
+            font-size: 16px; /* Placeholder text size */
+        }
+
+        /* Add basic button styles */
+        button {
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.2s ease, opacity 0.2s ease;
+            font-weight: 500;
+        }
+
+        button.primary {
+            background-color: var(--primary-green);
+            color: var(--surface-white);
+        }
+
+        button.primary:hover {
+             filter: brightness(0.9); /* Simple hover effect */
+        }
+
+        button.secondary {
+            background-color: var(--border-light);
+            color: var(--text-dark);
+        }
+
+        button.secondary:hover {
+             filter: brightness(0.95); /* Simple hover effect */
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Accessibility / Tech Checklist Placeholder */
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: var(--spacing-unit);
+            font-size: 1rem;
+        }
+
+        .checklist-item input[type="checkbox"] {
+            margin-right: var(--spacing-unit);
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .checklist-item label {
+             margin-bottom: 0;
+             font-weight: 400;
+             color: var(--text-dark);
+             cursor: pointer;
+        }
+
+
+        /* Standards Alignment Placeholder */
+        .standards-input {
+            display: flex;
+            gap: var(--spacing-unit);
+            align-items: center;
+        }
+
+        .standards-input input[type="text"] {
+            flex-grow: 1;
+        }
+
+        /* Resource Library Placeholder */
+        .resource-item {
+            padding: var(--spacing-unit);
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+            margin-bottom: var(--spacing-unit);
+            background-color: var(--background-light);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 1rem;
+        }
+
+        .resource-item span {
+            display: flex;
+            align-items: center;
+        }
+
+        .resource-item i {
+             margin-right: var(--spacing-unit);
+             font-size: 18px;
+             color: var(--text-medium);
+        }
+
+        .resource-item .add-button {
+            margin-left: var(--spacing-unit);
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+            font-size: 0.9rem;
+        }
+
+        /* Add some basic focus states for accessibility */
+        *:focus {
+            outline: 2px solid var(--primary-blue);
+            outline-offset: 2px;
+        }
+
+        /* Hide sections by default, JS will show the active one */
+        .main-content section {
+            display: none;
+        }
+
+        /* Ensure the initial active section is displayed correctly */
+        .main-content section#dashboard-section {
+             display: block; /* Default or initial view */
+        }
+         .main-content section#curriculum-editor-section {
+              /* This will be set to flex by JS if it's the active one */
+         }
+
+
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <ul class="sidebar-nav" role="navigation">
+            <li class="sidebar-nav-item active" data-section="dashboard" role="menuitem" tabindex="0">
+                <i class="icon">🏠</i> Dashboard
+            </li>
+            <li class="sidebar-nav-item" data-section="curriculum-editor" role="menuitem" tabindex="0">
+                 <i class="icon">📝</i> Curriculum Editor
+            </li>
+            <li class="sidebar-nav-item" data-section="resources" role="menuitem" tabindex="0">
+                 <i class="icon">📚</i> Resources
+            </li>
+            <li class="sidebar-nav-item" data-section="settings" role="menuitem" tabindex="0">
+                 <i class="icon">⚙️</i> Settings
+            </li>
+        </ul>
+    </aside>
+    <main class="main-content">
+        <!-- Dashboard Placeholder -->
+        <section class="dashboard-placeholder" id="dashboard-section" role="region" aria-labelledby="dashboard-heading">
+            <h2 id="dashboard-heading">Dashboard Overview</h2>
+            <div class="placeholder-section">
+                <h3>Course Development Progress</h3>
+                <p>Placeholder for dashboard cards showing courses, progress, etc.</p>
+                <p>Example: Card 1 (Course Title, Standards Alignment: 60%), Card 2 (Course Title, Standards Alignment: 30%)</p>
+                <div style="margin-top: var(--spacing-unit) * 2; display: flex; gap: var(--spacing-unit) * 2;">
+                     <div style="padding: var(--spacing-unit) * 2; border: 1px solid var(--border-light); border-radius: 4px; background-color: var(--background-light); flex: 1;">
+                         <h4>Course A</h4>
+                         <p>Progress: 75%</p>
+                         <p>Standards Aligned: 60%</p>
+                         <button class="secondary" style="margin-top: var(--spacing-unit);">Edit</button>
+                     </div>
+                     <div style="padding: var(--spacing-unit) * 2; border: 1px solid var(--border-light); border-radius: 4px; background-color: var(--background-light); flex: 1;">
+                          <h4>Course B</h4>
+                          <p>Progress: 30%</p>
+                          <p>Standards Aligned: 30%</p>
+                          <button class="secondary" style="margin-top: var(--spacing-unit);">Edit</button>
+                     </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Curriculum Editor Placeholder -->
+        <section class="curriculum-editor-placeholder" id="curriculum-editor-section" role="region" aria-labelledby="editor-heading">
+            <div class="curriculum-structure-panel">
+                <h2 id="editor-heading">Curriculum Structure</h2>
+                <div class="placeholder-section">
+                    <h3>Structure Tree</h3>
+                    <ul class="curriculum-tree" role="tree">
+                        <li class="tree-item module" role="treeitem" aria-expanded="true">
+                            <span class="drag-handle" aria-label="Drag to reorder">⋮⋮</span> <i class="icon">📦</i> Module 1: Introduction to Sustainability
+                            <button class="add-button" aria-label="Add element to Module 1">+</button>
+                        </li>
+                        <li class="tree-item lesson" role="treeitem" style="margin-left: calc(var(--spacing-unit) * 3);">
+                             <span class="drag-handle" aria-label="Drag to reorder">⋮⋮</span> <i class="icon">📖</i> Lesson 1.1: What is Sustainability?
+                             <button class="add-button" aria-label="Add element to Lesson 1.1">+</button>
+                        </li>
+                         <li class="tree-item activity" role="treeitem" style="margin-left: calc(var(--spacing-unit) * 6);">
+                              <span class="drag-handle" aria-label="Drag to reorder">⋮⋮</span> <i class="icon">💡</i> Activity 1.1.1: Discussion - Local Issues
+                              <button class="add-button" aria-label="Add element to Activity 1.1.1">+</button>
+                         </li>
+                         <li class="tree-item lesson" role="treeitem" style="margin-left: calc(var(--spacing-unit) * 3);">
+                              <span class="drag-handle" aria-label="Drag to reorder">⋮⋮</span> <i class="icon">📖</i> Lesson 1.2: Environmental Systems
+                              <button class="add-button" aria-label="Add element to Lesson 1.2">+</button>
+                         </li>
+                        <li class="tree-item module" role="treeitem">
+                             <span class="drag-handle" aria-label="Drag to reorder">⋮⋮</span> <i class="icon">📦</i> Module 2: Climate Change
+                             <button class="add-button" aria-label="Add element to Module 2">+</button>
+                        </li>
+                    </ul>
+                    <p>Placeholder for drag-and-drop structure tree.</p>
+                    <p>Clicking an item opens it in the editor panel.</p>
+                </div>
+            </div>
+            <div class="content-editor-panel">
+                <h2>Content Editor</h2>
+                <div class="placeholder-section">
+                    <h3>Selected Element Details</h3>
+                    <p>Placeholder for editing title, description, content type, etc.</p>
+
+                    <div class="editor-section">
+                        <label for="element-title">Title</label>
+                        <input type="text" id="element-title" placeholder="e.g., Lesson 1.1: What is Sustainability?" aria-label="Element Title">
+                    </div>
+
+                     <div class="editor-section">
+                         <label for="element-description">Description</label>
+                         <textarea id="element-description" placeholder="Enter description..." aria-label="Element Description"></textarea>
+                         <p style="font-size: 0.9em; color: var(--text-medium);">Placeholder for Rich Text Editor.</p>
+                     </div>
+
+                    <div class="editor-section">
+                        <label>Content Type</label>
+                        <div class="content-type-selector" role="group" aria-label="Select Content Type">
+                            <button class="content-type-button selected" role="radio" aria-checked="true">Text</button>
+                            <button class="content-type-button" role="radio" aria-checked="false">Video</button>
+                            <button class="content-type-button" role="radio" aria-checked="false">Quiz</button>
+                            <button class="content-type-button" role="radio" aria-checked="false">Simulation</button>
+                            <button class="content-type-button" role="radio" aria-checked="false">Project</button>
+                            <button class="content-type-button" role="radio" aria-checked="false">Discussion</button>
+                        </div>
+                        <p style="font-size: 0.9em; color: var(--text-medium);">Clicking changes available fields below.</p>
+                    </div>
+
+                    <div class="editor-section">
+                         <label for="standards-alignment">Standards Alignment</label>
+                         <div class="standards-input">
+                             <input type="text" id="standards-alignment" placeholder="Search and link standards..." aria-label="Search Standards">
+                             <button class="secondary" aria-label="Search Standards">Search</button>
+                         </div>
+                         <p style="font-size: 0.9em; color: var(--text-medium);">Placeholder for standards search/linker.</p>
+                    </div>
+
+                    <div class="editor-section">
+                         <label>Engagement Strategies</label>
+                         <div class="placeholder-section">
+                             <p>Placeholder for suggestions/prompts.</p>
+                             <p style="font-size: 0.9em; color: var(--text-medium);">e.g., "Idea: Add a local case study", "Tip: Incorporate a peer review step"</p>
+                         </div>
+                    </div>
+
+                    <div class="editor-section">
+                        <label>Accessibility & Technology Considerations</label>
+                        <div class="placeholder-section" role="group" aria-label="Accessibility and Technology Checklist">
+                            <p>Placeholder for checklist.</p>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="access-low-bandwidth" aria-label="Low-bandwidth option available">
+                                <label for="access-low-bandwidth">Low-bandwidth option available</label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="access-captions" aria-label="Captions added to video">
+                                <label for="access-captions">Captions added to video</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="primary" aria-label="Save Element">Save Element</button>
+                    <button class="secondary" aria-label="Preview Element">Preview Element</button>
+
+                </div>
+            </div>
+        </section>
+
+         <!-- Resources Placeholder -->
+         <section class="resources-placeholder" id="resources-section" role="region" aria-labelledby="resources-heading">
+             <h2 id="resources-heading">Resource Library</h2>
+             <div class="placeholder-section">
+                 <h3>Available Resources</h3>
+                 <div class="resource-item">
+                     <span><i class="icon">🔗</i> Link: NASA Climate Data</span>
+                     <button class="secondary add-button" aria-label="Add NASA Climate Data to current element">Add to Lesson</button>
+                 </div>
+                  <div class="resource-item">
+                      <span><i class="icon">📄</i> File: Environmental Policy PDF</span>
+                      <button class="secondary add-button" aria-label="Add Environmental Policy PDF to current element">Add to Lesson</button>
+                  </div>
+                 <p>Placeholder for searchable, filterable list of resources.</p>
+             </div>
+         </section>
+
+          <!-- Settings Placeholder -->
+          <section class="settings-placeholder" id="settings-section" role="region" aria-labelledby="settings-heading">
+              <h2 id="settings-heading">Settings</h2>
+              <div class="placeholder-section">
+                  <h3>Application Settings</h3>
+                  <p>Placeholder for user settings, standards database configuration, etc.</p>
+              </div>
+          </section>
+
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navItems = document.querySelectorAll('.sidebar-nav-item');
+            const sections = document.querySelectorAll('.main-content section');
+
+            // Function to show a specific section
+            const showSection = (sectionId) => {
+                sections.forEach(section => {
+                    section.style.display = 'none';
+                    section.setAttribute('aria-hidden', 'true');
+                });
+
+                const targetSection = document.getElementById(sectionId);
+                if (targetSection) {
+                    if (sectionId === 'curriculum-editor-section') {
+                         targetSection.style.display = 'flex';
+                    } else {
+                         targetSection.style.display = 'block';
+                    }
+                    targetSection.setAttribute('aria-hidden', 'false');
+                }
+            };
+
+            // Function to set active nav item
+            const setActiveNavItem = (targetSectionId) => {
+                 navItems.forEach(nav => {
+                     nav.classList.remove('active');
+                     nav.setAttribute('aria-selected', 'false');
+                     nav.setAttribute('tabindex', '-1'); // Make non-active items not focusable via Tab
+                 });
+                 const activeItem = document.querySelector(`.sidebar-nav-item[data-section="${targetSectionId.replace('-section', '')}"]`);
+                 if (activeItem) {
+                     activeItem.classList.add('active');
+                     activeItem.setAttribute('aria-selected', 'true');
+                     activeItem.setAttribute('tabindex', '0'); // Make active item focusable via Tab
+                 }
+            };
+
+
+            navItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const targetSectionId = item.getAttribute('data-section') + '-section';
+                    setActiveNavItem(targetSectionId);
+                    showSection(targetSectionId);
+                });
+
+                // Add keyboard support for navigation items
+                item.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault(); // Prevent default scroll/space action
+                        const targetSectionId = item.getAttribute('data-section') + '-section';
+                        setActiveNavItem(targetSectionId);
+                        showSection(targetSectionId);
+                    }
+                });
+            });
+
+            // Initialize the view: show the default active section (Dashboard)
+            const initialActiveItem = document.querySelector('.sidebar-nav-item.active');
+            if (initialActiveItem) {
+                const targetSectionId = initialActiveItem.getAttribute('data-section') + '-section';
+                showSection(targetSectionId);
+                 setActiveNavItem(targetSectionId); // Ensure initial active item has correct ARIA/tabindex
+            } else {
+                 // If no active item is set by default, set the first one as active
+                 if (navItems.length > 0) {
+                     const firstItem = navItems[0];
+                     const targetSectionId = firstItem.getAttribute('data-section') + '-section';
+                     setActiveNavItem(targetSectionId);
+                     showSection(targetSectionId);
+                 }
+            }
+
+            // Basic Content Type Selector Interaction (Placeholder)
+            const contentTypeButtons = document.querySelectorAll('.content-type-button');
+            contentTypeButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    contentTypeButtons.forEach(btn => {
+                        btn.classList.remove('selected');
+                        btn.setAttribute('aria-checked', 'false');
+                    });
+                    button.classList.add('selected');
+                    button.setAttribute('aria-checked', 'true');
+                    // In a real app, this would trigger UI changes in the editor panel
+                    console.log('Content type selected:', button.textContent);
+                });
+            });
+
+        });
+    </script>
+</body>
+</html>

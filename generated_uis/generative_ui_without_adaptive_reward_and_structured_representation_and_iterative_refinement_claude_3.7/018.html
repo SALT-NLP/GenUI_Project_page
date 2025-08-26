@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Health Clinic Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --white-color: #ffffff;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-400: #ced4da;
+            --gray-500: #adb5bd;
+            --gray-600: #6c757d;
+            --gray-700: #495057;
+            --gray-800: #343a40;
+            --gray-900: #212529;
+
+            --background-color: var(--gray-100);
+            --surface-color: var(--white-color);
+            --text-color: var(--gray-900);
+            --text-secondary-color: var(--gray-700);
+            --border-color: var(--gray-300);
+            --card-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            --border-radius: 8px;
+            --spacing-unit: 8px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--surface-color);
+            color: var(--dark-color);
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 3);
+            box-shadow: var(--card-shadow);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            z-index: 100;
+            height: 60px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .main-layout {
+            display: flex;
+            flex-grow: 1;
+            padding-top: 60px; /* Offset for fixed header */
+        }
+
+        .sidebar {
+            width: 300px;
+            background-color: var(--surface-color);
+            padding: calc(var(--spacing-unit) * 3);
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+            flex-shrink: 0;
+            transition: transform 0.3s ease-in-out;
+            overflow-y: auto;
+            position: fixed;
+            height: calc(100vh - 60px);
+            top: 60px;
+            left: 0;
+            z-index: 50;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-300px);
+        }
+
+        .sidebar-toggle {
+            position: absolute;
+            top: calc(var(--spacing-unit) * 2);
+            right: calc(var(--spacing-unit) * 2);
+            background-color: var(--primary-color);
+            color: var(--white-color);
+            border: none;
+            border-radius: var(--border-radius);
+            padding: var(--spacing-unit);
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.2s ease;
+            z-index: 51; /* Above sidebar */
+        }
+
+        .sidebar-toggle:hover {
+            background-color: #0056b3;
+        }
+
+        .content-area {
+            flex-grow: 1;
+            padding: calc(var(--spacing-unit) * 3);
+            display: flex;
+            flex-direction: column;
+            gap: calc(var(--spacing-unit) * 3);
+            margin-left: 300px; /* Offset for sidebar */
+            transition: margin-left 0.3s ease-in-out;
+        }
+
+        .content-area.sidebar-collapsed {
+            margin-left: 0;
+        }
+
+        .summary-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: calc(var(--spacing-unit) * 3);
+        }
+
+        .metric-card {
+            background-color: var(--surface-color);
+            padding: calc(var(--spacing-unit) * 3);
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .metric-card h3 {
+            margin: 0 0 var(--spacing-unit) 0;
+            font-size: 1rem;
+            color: var(--text-secondary-color);
+            font-weight: 500;
+        }
+
+        .metric-card p {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: calc(var(--spacing-unit) * 3);
+        }
+
+        .card {
+            background-color: var(--surface-color);
+            padding: calc(var(--spacing-unit) * 3);
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            color: var(--dark-color);
+        }
+
+        .filter-group {
+            margin-bottom: calc(var(--spacing-unit) * 3);
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: var(--spacing-unit);
+            font-weight: 500;
+            color: var(--text-secondary-color);
+            font-size: 0.9rem;
+        }
+
+        .filter-group input[type="text"],
+        .filter-group input[type="date"],
+        .filter-group input[type="range"],
+        .filter-group select {
+            width: 100%;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            box-sizing: border-box;
+            background-color: var(--white-color);
+            color: var(--text-color);
+        }
+
+        .filter-group input[type="range"] {
+            padding: 0;
+        }
+
+        .filter-group input[type="checkbox"],
+        .filter-group input[type="radio"] {
+            margin-right: var(--spacing-unit);
+        }
+
+        .filter-group .checkbox-list,
+        .filter-group .radio-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-unit);
+        }
+
+        .filter-group .checkbox-list label,
+        .filter-group .radio-list label {
+            margin-bottom: 0;
+            font-weight: 400;
+            color: var(--text-color);
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        button {
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background-color 0.2s ease, opacity 0.2s ease;
+        }
+
+        button.primary {
+            background-color: var(--primary-color);
+            color: var(--white-color);
+        }
+
+        button.primary:hover {
+            background-color: #0056b3;
+        }
+
+        button.secondary {
+            background-color: var(--secondary-color);
+            color: var(--white-color);
+        }
+
+        button.secondary:hover {
+            background-color: #545b62;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .button-group {
+            display: flex;
+            gap: var(--spacing-unit);
+            margin-top: calc(var(--spacing-unit) * 2);
+        }
+
+        .chart-container {
+            flex-grow: 1;
+            position: relative;
+        }
+
+        .floating-controls {
+            position: absolute;
+            top: var(--spacing-unit);
+            right: var(--spacing-unit);
+            background: rgba(255, 255, 255, 0.95);
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .card:hover .floating-controls,
+        .floating-controls.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .control-group {
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-secondary-color);
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .control-group input[type="color"],
+        .control-group select,
+        .control-group input[type="number"] {
+            width: 100%;
+            padding: var(--spacing-unit);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 0.9rem;
+            box-sizing: border-box;
+        }
+
+        .control-group input[type="color"] {
+             padding: var(--spacing-unit) 0; /* Adjust padding for color input */
+             height: 38px; /* Match height of other inputs */
+        }
+
+
+        /* Table Styles */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: calc(var(--spacing-unit) * 2);
+            font-size: 0.95rem;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: calc(var(--spacing-unit) * 1.5);
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            background-color: var(--gray-200);
+            font-weight: 600;
+            color: var(--gray-700);
+            cursor: pointer;
+        }
+
+        .data-table tbody tr:nth-child(even) {
+            background-color: var(--gray-100);
+        }
+
+        .data-table tbody tr:hover {
+            background-color: var(--gray-200);
+        }
+
+        .data-table td {
+            color: var(--text-color);
+        }
+
+        .loading-indicator {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100px; /* Placeholder height */
+            font-size: 1.2rem;
+            color: var(--primary-color);
+        }
+
+         /* Guided Tour Tooltip Styles (Basic) */
+        .guided-tour-tooltip {
+            position: absolute;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+            background-color: var(--dark-color);
+            color: var(--white-color);
+            border-radius: var(--border-radius);
+            font-size: 0.9rem;
+            z-index: 1000;
+            max-width: 250px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .guided-tour-tooltip::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: var(--spacing-unit) solid transparent;
+            border-right: var(--spacing-unit) solid transparent;
+            border-top: var(--spacing-unit) solid var(--dark-color);
+            bottom: -var(--spacing-unit);
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .tooltip-step-active {
+            position: relative; /* To anchor tooltip */
+            z-index: 1001; /* Above tooltip */
+            box-shadow: 0 0 0 3px var(--warning-color); /* Highlight */
+        }
+
+
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Community Health Clinic Dashboard</h1>
+        <!-- Navigation or user info can go here -->
+    </header>
+
+    <div class="container">
+        <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
+            &lt;
+        </button>
+        <aside class="sidebar" id="sidebar">
+            <h2>Filters & Options</h2>
+
+            <div class="filter-group">
+                <label for="dateRangeStart">Date Range Start:</label>
+                <input type="date" id="dateRangeStart" value="2019-01-01">
+            </div>
+
+            <div class="filter-group">
+                <label for="dateRangeEnd">Date Range End:</label>
+                <input type="date" id="dateRangeEnd" value="2023-12-31">
+            </div>
+
+            <div class="filter-group">
+                <label for="demographicFilter">Demographic Group:</label>
+                <select id="demographicFilter">
+                    <option value="">All</option>
+                    <option value="age">Age Group</option>
+                    <option value="gender">Gender</option>
+                    <option value="ethnicity">Ethnicity</option>
+                    <option value="insurance">Insurance Status</option>
+                </select>
+            </div>
+
+             <div class="filter-group">
+                <label for="ageRange">Age Range:</label>
+                <input type="range" id="ageRange" min="0" max="120" value="60">
+                <span id="ageRangeValue">0 - 60</span>
+            </div>
+
+
+            <div class="filter-group">
+                <label for="diagnosisFilter">Diagnosis:</label>
+                <select id="diagnosisFilter">
+                    <option value="">All Diagnoses</option>
+                    <!-- Options populated by JS -->
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="treatmentFilter">Treatment:</label>
+                <select id="treatmentFilter">
+                    <option value="">All Treatments</option>
+                     <!-- Options populated by JS -->
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>Appointment Type:</label>
+                <div class="checkbox-list" id="appointmentTypeFilter">
+                    <!-- Checkboxes populated by JS -->
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="primary" id="applyFilters">Apply Filters</button>
+                <button class="secondary" id="clearFilters">Clear Filters</button>
+            </div>
+
+            <div class="filter-group" style="margin-top: calc(var(--spacing-unit) * 4);">
+                 <h3>Pre-configured Views</h3>
+                 <button class="secondary" style="width: 100%; margin-bottom: var(--spacing-unit);">Visit Patterns</button>
+                 <button class="secondary" style="width: 100%; margin-bottom: var(--spacing-unit);">Treatment Outcomes</button>
+                 <button class="secondary" style="width: 100%;">Resource Use</button>
+            </div>
+
+        </aside>
+
+        <main class="content-area" id="contentArea">
+            <section class="summary-metrics">
+                <div class="metric-card">
+                    <h3>Total Visits (Filtered)</h3>
+                    <p id="totalVisits">...</p>
+                </div>
+                 <div class="metric-card">
+                    <h3>Unique Patients (Filtered)</h3>
+                    <p id="uniquePatients">...</p>
+                </div>
+                 <div class="metric-card">
+                    <h3>Most Common Diagnosis</h3>
+                    <p id="commonDiagnosis">...</p>
+                </div>
+                 <div class="metric-card">
+                    <h3>Average Visit Duration</h3>
+                    <p id="avgVisitDuration">...</p>
+                </div>
+            </section>
+
+            <section class="dashboard-grid">
+                <div class="card" id="chartCard1">
+                    <h2 class="card-title">Patient Demographics Distribution</h2>
+                    <div class="chart-container">
+                         <canvas id="demographicsChart"></canvas>
+                         <div class="floating-controls" id="demographicsControls">
+                             <div class="control-group">
+                                <label>Chart Type</label>
+                                <select id="demographicsChartType">
+                                    <option value="bar">Bar</option>
+                                    <option value="pie">Pie</option>
+                                    <option value="doughnut">Doughnut</option>
+                                </select>
+                             </div>
+                             <div class="control-group">
+                                 <button class="secondary export-chart" data-chart-id="demographicsChart">Export PNG</button>
+                             </div>
+                         </div>
+                    </div>
+                </div>
+
+                 <div class="card" id="chartCard2">
+                    <h2 class="card-title">Monthly Visit Trends</h2>
+                    <div class="chart-container">
+                         <canvas id="visitTrendsChart"></canvas>
+                          <div class="floating-controls" id="visitTrendsControls">
+                             <div class="control-group">
+                                <label>Chart Type</label>
+                                <select id="visitTrendsChartType">
+                                    <option value="line">Line</option>
+                                    <option value="bar">Bar</option>
+                                </select>
+                             </div>
+                             <div class="control-group">
+                                 <button class="secondary export-chart" data-chart-id="visitTrendsChart">Export PNG</button>
+                             </div>
+                         </div>
+                    </div>
+                </div>
+
+                 <div class="card" id="chartCard3">
+                    <h2 class="card-title">Diagnosis Frequency</h2>
+                    <div class="chart-container">
+                         <canvas id="diagnosisFrequencyChart"></canvas>
+                          <div class="floating-controls" id="diagnosisFrequencyControls">
+                             <div class="control-group">
+                                <label>Top N</label>
+                                <input type="number" id="diagnosisTopN" value="10" min="1" max="50">
+                             </div>
+                              <div class="control-group">
+                                <label>Chart Type</label>
+                                <select id="diagnosisFrequencyChartType">
+                                    <option value="bar">Bar</option>
+                                     <option value="pie">Pie</option>
+                                </select>
+                             </div>
+                             <div class="control-group">
+                                 <button class="secondary export-chart" data-chart-id="diagnosisFrequencyChart">Export PNG</button>
+                             </div>
+                         </div>
+                    </div>
+                </div>
+
+                <div class="card" id="chartCard4">
+                    <h2 class="card-title">Treatment Outcomes</h2>
+                    <div class="chart-container">
+                         <canvas id="treatmentOutcomesChart"></canvas>
+                          <div class="floating-controls" id="treatmentOutcomesControls">
+                             <div class="control-group">
+                                <label>Chart Type</label>
+                                <select id="treatmentOutcomesChartType">
+                                    <option value="bar">Bar</option>
+                                    <option value="pie">Pie</option>
+                                </select>
+                             </div>
+                             <div class="control-group">
+                                 <button class="secondary export-chart" data-chart-id="treatmentOutcomesChart">Export PNG</button>
+                             </div>
+                         </div>
+                    </div>
+                </div>
+
+                 <div class="card" id="chartCard5" style="grid-column: span 2;">
+                    <h2 class="card-title">Detailed Data Table (Filtered)</h2>
+                    <div class="data-table-container">
+                        <div class="loading-indicator" id="tableLoading">Loading data...</div>
+                        <table class="data-table" id="dataTable" style="display: none;">
+                            <thead>
+                                <tr>
+                                    <th data-sort="patientId">Patient ID</th>
+                                    <th data-sort="date">Date</th>
+                                    <th data-sort="appointmentType">Appointment Type</th>
+                                    <th data-sort="diagnosis">Diagnosis</th>
+                                    <th data-sort="treatment">Treatment</th>
+                                    <th data-sort="outcome">Outcome</th>
+                                    <th data-sort="age">Age</th>
+                                    <th data-sort="gender">Gender</th>
+                                    <th data-sort="ethnicity">Ethnicity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Table rows populated by JS -->
+                            </tbody>
+                        </table>
+                         <!-- Pagination controls can go here -->
+                    </div>
+                </div>
+
+            </section>
+
+             <!-- Guided Tour Tooltips -->
+            <div class="guided-tour-tooltip" id="tooltip1">Welcome! This is your dashboard. Use the sidebar on the left to filter data.</div>
+            <div class="guided-tour-tooltip" id="tooltip2">These cards show key performance metrics based on your filters.</div>
+            <div class="guided-tour-tooltip" id="tooltip3">This is a chart card. Hover to see controls like export. Click on chart elements (like bars) to apply quick filters! (Simulated)</div>
+             <div class="guided-tour-tooltip" id="tooltip4">This is the detailed data table showing the records that match your current filters. Click headers to sort! (Simulated)</div>
+
+
+        </main>
+    </div>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        // --- Data Simulation ---
+        const generateSimulatedData = (count = 1000) => {
+            const diagnoses = ["Hypertension", "Diabetes", "Asthma", "Obesity", "Depression", "Anxiety", "Common Cold", "Influenza", "Back Pain", "Migraine"];
+            const treatments = ["Medication", "Therapy", "Exercise Plan", "Referral", "Education", "Monitoring"];
+            const outcomes = ["Improved", "Stable", "Worsened", "Resolved"];
+            const appointmentTypes = ["Primary Care", "Specialist", "Follow-up", "Walk-in"];
+            const genders = ["Male", "Female", "Non-binary"];
+            const ethnicities = ["Hispanic or Latino", "Not Hispanic or Latino", "Unknown"];
+            const races = ["American Indian or Alaska Native", "Asian", "Black or African American", "Native Hawaiian or Other Pacific Islander", "White", "More Than One Race", "Unknown"];
+
+            const data = [];
+            const startDate = new Date('2019-01-01');
+            const endDate = new Date('2023-12-31');
+            const diffTime = Math.abs(endDate - startDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            for (let i = 0; i < count; i++) {
+                const randomDay = Math.floor(Math.random() * diffDays);
+                const visitDate = new Date(startDate);
+                visitDate.setDate(startDate.getDate() + randomDay);
+
+                const age = Math.floor(Math.random() * 80) + 1; // Age 1-80
+                 const gender = genders[Math.floor(Math.random() * genders.length)];
+                 const ethnicity = ethnicities[Math.floor(Math.random() * ethnicities.length)];
+                 const race = races[Math.floor(Math.random() * races.length)];
+                 const diagnosis = diagnoses[Math.floor(Math.random() * diagnoses.length)];
+                 const treatment = treatments[Math.floor(Math.random() * treatments.length)];
+                 const outcome = outcomes[Math.floor(Math.random() * outcomes.length)];
+                 const appointmentType = appointmentTypes[Math.floor(Math.random() * appointmentTypes.length)];
+
+
+                data.push({
+                    patientId: `P${1000 + i}`,
+                    date: visitDate.toISOString().split('T')[0],
+                    appointmentType: appointmentType,
+                    diagnosis: diagnosis,
+                    treatment: treatment,
+                    outcome: outcome,
+                    age: age,
+                    gender: gender,
+                    ethnicity: ethnicity,
+                    race: race,
+                    // Add more fields as needed for analysis
+                });
+            }
+            return data;
+        };
+
+        let allPatientData = generateSimulatedData(5000); // Simulate 5 years of data
+        let filteredPatientData = [...allPatientData]; // Start with all data
+
+        // --- Helper Functions ---
+        const getUniqueValues = (data, field) => {
+            return [...new Set(data.map(item => item[field]))].sort();
+        };
+
+        const countOccurrences = (data, field) => {
+            const counts = {};
+            data.forEach(item => {
+                counts[item[field]] = (counts[item[field]] || 0) + 1;
+            });
+            return Object.entries(counts).sort(([, a], [, b]) => b - a);
+        };
+
+        const getMonthlyVisitCounts = (data) => {
+             const monthlyCounts = {};
+             data.forEach(item => {
+                 const date = new Date(item.date);
+                 const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                 monthlyCounts[monthYear] = (monthlyCounts[monthYear] || 0) + 1;
+             });
+             return Object.entries(monthlyCounts).sort(([a,], [b,]) => a.localeCompare(b));
+        };
+
+
+        // --- UI Element References ---
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const contentArea = document.getElementById('contentArea');
+        const dateRangeStartInput = document.getElementById('dateRangeStart');
+        const dateRangeEndInput = document.getElementById('dateRangeEnd');
+        const demographicFilterSelect = document.getElementById('demographicFilter');
+        const ageRangeInput = document.getElementById('ageRange');
+        const ageRangeValueSpan = document.getElementById('ageRangeValue');
+        const diagnosisFilterSelect = document.getElementById('diagnosisFilter');
+        const treatmentFilterSelect = document.getElementById('treatmentFilter');
+        const appointmentTypeFilterDiv = document.getElementById('appointmentTypeFilter');
+        const applyFiltersButton = document.getElementById('applyFilters');
+        const clearFiltersButton = document.getElementById('clearFilters');
+
+        const totalVisitsMetric = document.getElementById('totalVisits');
+        const uniquePatientsMetric = document.getElementById('uniquePatients');
+        const commonDiagnosisMetric = document.getElementById('commonDiagnosis');
+        const avgVisitDurationMetric = document.getElementById('avgVisitDuration'); // Placeholder
+
+        const demographicsChartCanvas = document.getElementById('demographicsChart');
+        const visitTrendsChartCanvas = document.getElementById('visitTrendsChart');
+        const diagnosisFrequencyChartCanvas = document.getElementById('diagnosisFrequencyChart');
+        const treatmentOutcomesChartCanvas = document.getElementById('treatmentOutcomesChart');
+        const dataTableBody = document.querySelector('#dataTable tbody');
+        const dataTable = document.getElementById('dataTable');
+        const tableLoadingIndicator = document.getElementById('tableLoading');
+
+        // Chart Instances
+        let demographicsChart, visitTrendsChart, diagnosisFrequencyChart, treatmentOutcomesChart;
+
+        // --- Populate Filters ---
+        const populateFilters = () => {
+            const diagnoses = getUniqueValues(allPatientData, 'diagnosis');
+            diagnosisFilterSelect.innerHTML = '<option value="">All Diagnoses</option>' + diagnoses.map(d => `<option value="${d}">${d}</option>`).join('');
+
+            const treatments = getUniqueValues(allPatientData, 'treatment');
+            treatmentFilterSelect.innerHTML = '<option value="">All Treatments</option>' + treatments.map(t => `<option value="${t}">${t}</option>`).join('');
+
+            const appointmentTypes = getUniqueValues(allPatientData, 'appointmentType');
+            appointmentTypeFilterDiv.innerHTML = appointmentTypes.map(type => `
+                <div>
+                    <input type="checkbox" id="appt-${type.replace(/\s+/g, '-')}" value="${type}" checked>
+                    <label for="appt-${type.replace(/\s+/g, '-')}" aria-label="Filter by ${type}">${type}</label>
+                </div>
+            `).join('');
+
+            // Update age range value display
+            ageRangeInput.addEventListener('input', () => {
+                ageRangeValueSpan.textContent = `0 - ${ageRangeInput.value}`;
+            });
+             ageRangeValueSpan.textContent = `0 - ${ageRangeInput.value}`; // Set initial value
+        };
+
+
+        // --- Filtering Logic ---
+        const applyFilters = () => {
+            const startDate = new Date(dateRangeStartInput.value);
+            const endDate = new Date(dateRangeEndInput.value);
+            const selectedDemographic = demographicFilterSelect.value;
+            const maxAge = parseInt(ageRangeInput.value, 10);
+            const selectedDiagnosis = diagnosisFilterSelect.value;
+            const selectedTreatment = treatmentFilterSelect.value;
+            const selectedAppointmentTypes = Array.from(appointmentTypeFilterDiv.querySelectorAll('input[type="checkbox"]:checked'))
+                                                .map(cb => cb.value);
+
+            filteredPatientData = allPatientData.filter(item => {
+                const itemDate = new Date(item.date);
+                const itemAge = item.age;
+                const itemDiagnosis = item.diagnosis;
+                const itemTreatment = item.treatment;
+                const itemAppointmentType = item.appointmentType;
+
+                const dateMatch = itemDate >= startDate && itemDate <= endDate;
+                const ageMatch = itemAge <= maxAge;
+                const diagnosisMatch = selectedDiagnosis === "" || itemDiagnosis === selectedDiagnosis;
+                const treatmentMatch = selectedTreatment === "" || itemTreatment === selectedTreatment;
+                const appointmentTypeMatch = selectedAppointmentTypes.includes(itemAppointmentType);
+
+                // Add demographic filter logic here if needed, based on selectedDemographic
+                // For now, age is the only demographic filter implemented
+
+                return dateMatch && ageMatch && diagnosisMatch && treatmentMatch && appointmentTypeMatch;
+            });
+
+            updateDashboard();
+        };
+
+        const clearFilters = () => {
+            dateRangeStartInput.value = '2019-01-01';
+            dateRangeEndInput.value = '2023-12-31';
+            demographicFilterSelect.value = '';
+            ageRangeInput.value = 120; // Reset to max age
+            ageRangeValueSpan.textContent = `0 - 120`;
+            diagnosisFilterSelect.value = '';
+            treatmentFilterSelect.value = '';
+            appointmentTypeFilterDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
+
+            filteredPatientData = [...allPatientData];
+            updateDashboard();
+        };
+
+        // --- Update Dashboard ---
+        const updateDashboard = () => {
+            updateSummaryMetrics();
+            updateCharts();
+            updateDataTable();
+        };
+
+        const updateSummaryMetrics = () => {
+            totalVisitsMetric.textContent = filteredPatientData.length;
+
+            const uniquePatients = new Set(filteredPatientData.map(item => item.patientId)).size;
+            uniquePatientsMetric.textContent = uniquePatients;
+
+            const diagnosisCounts = countOccurrences(filteredPatientData, 'diagnosis');
+            commonDiagnosisMetric.textContent = diagnosisCounts.length > 0 ? diagnosisCounts[0][0] : 'N/A';
+
+            // Placeholder for Average Visit Duration (requires visit duration data)
+            avgVisitDurationMetric.textContent = 'N/A';
+        };
+
+        const updateCharts = () => {
+            // Destroy existing charts before creating new ones
+            if (demographicsChart) demographicsChart.destroy();
+            if (visitTrendsChart) visitTrendsChart.destroy();
+            if (diagnosisFrequencyChart) diagnosisFrequencyChart.destroy();
+            if (treatmentOutcomesChart) treatmentOutcomesChart.destroy();
+
+            // Demographics Chart (using Gender as example)
+            const genderCounts = countOccurrences(filteredPatientData, 'gender');
+            const demographicsLabels = genderCounts.map(item => item[0]);
+            const demographicsData = genderCounts.map(item => item[1]);
+            demographicsChart = new Chart(demographicsChartCanvas, {
+                type: document.getElementById('demographicsChartType').value, // Use selected type
+                data: {
+                    labels: demographicsLabels,
+                    datasets: [{
+                        label: 'Patient Count',
+                        data: demographicsData,
+                        backgroundColor: [
+                            'rgba(0, 123, 255, 0.8)', // primary
+                            'rgba(108, 117, 125, 0.8)', // secondary
+                            'rgba(40, 167, 69, 0.8)', // success
+                            'rgba(220, 53, 69, 0.8)', // danger
+                            'rgba(255, 193, 7, 0.8)', // warning
+                            'rgba(23, 162, 184, 0.8)' // info
+                        ],
+                        borderColor: var('--surface-color'),
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' },
+                        title: { display: false },
+                        tooltip: {
+                             callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw;
+                                    const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) + '%' : '0%';
+                                    return `${label}: ${value} (${percentage})`;
+                                }
+                             }
+                        }
+                    },
+                     onClick: (e, elements) => handleChartClick(e, elements, 'gender', demographicsLabels) // Simulate filtering
+                }
+            });
+
+             // Monthly Visit Trends Chart
+            const monthlyCounts = getMonthlyVisitCounts(filteredPatientData);
+            const monthlyLabels = monthlyCounts.map(item => item[0]);
+            const monthlyData = monthlyCounts.map(item => item[1]);
+            visitTrendsChart = new Chart(visitTrendsChartCanvas, {
+                type: document.getElementById('visitTrendsChartType').value, // Use selected type
+                data: {
+                    labels: monthlyLabels,
+                    datasets: [{
+                        label: 'Number of Visits',
+                        data: monthlyData,
+                        backgroundColor: 'rgba(0, 123, 255, 0.5)',
+                        borderColor: var('--primary-color'),
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top' }, title: { display: false } },
+                    scales: {
+                        x: { title: { display: true, text: 'Month' } },
+                        y: { beginAtZero: true, title: { display: true, text: 'Visits' } }
+                    },
+                    onClick: (e, elements) => handleChartClick(e, elements, 'date', monthlyLabels, 'month') // Simulate filtering
+                }
+            });
+
+            // Diagnosis Frequency Chart
+            const diagnosisCounts = countOccurrences(filteredPatientData, 'diagnosis');
+            const topNDiagnoses = diagnosisCounts.slice(0, parseInt(document.getElementById('diagnosisTopN').value, 10)); // Use Top N
+            const diagnosisLabels = topNDiagnoses.map(item => item[0]);
+            const diagnosisData = topNDiagnoses.map(item => item[1]);
+             diagnosisFrequencyChart = new Chart(diagnosisFrequencyChartCanvas, {
+                type: document.getElementById('diagnosisFrequencyChartType').value, // Use selected type
+                data: {
+                    labels: diagnosisLabels,
+                    datasets: [{
+                        label: 'Count',
+                        data: diagnosisData,
+                         backgroundColor: 'rgba(40, 167, 69, 0.8)', // success
+                        borderColor: var('--surface-color'),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, title: { display: false } },
+                    scales: {
+                        x: { title: { display: true, text: 'Diagnosis' } },
+                        y: { beginAtZero: true, title: { display: true, text: 'Frequency' } }
+                    },
+                     onClick: (e, elements) => handleChartClick(e, elements, 'diagnosis', diagnosisLabels) // Simulate filtering
+                }
+            });
+
+            // Treatment Outcomes Chart
+            const outcomeCounts = countOccurrences(filteredPatientData, 'outcome');
+            const outcomeLabels = outcomeCounts.map(item => item[0]);
+            const outcomeData = outcomeCounts.map(item => item[1]);
+             treatmentOutcomesChart = new Chart(treatmentOutcomesChartCanvas, {
+                type: document.getElementById('treatmentOutcomesChartType').value, // Use selected type
+                data: {
+                    labels: outcomeLabels,
+                    datasets: [{
+                        label: 'Count',
+                        data: outcomeData,
+                         backgroundColor: [
+                            'rgba(0, 123, 255, 0.8)', // primary (e.g., Improved)
+                            'rgba(108, 117, 125, 0.8)', // secondary (e.g., Stable)
+                            'rgba(220, 53, 69, 0.8)', // danger (e.g., Worsened)
+                            'rgba(40, 167, 69, 0.8)' // success (e.g., Resolved)
+                        ],
+                        borderColor: var('--surface-color'),
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top' }, title: { display: false } },
+                     onClick: (e, elements) => handleChartClick(e, elements, 'outcome', outcomeLabels) // Simulate filtering
+                }
+            });
+
+             // Add event listeners for floating controls
+             document.getElementById('demographicsChartType').onchange = () => updateCharts();
+             document.getElementById('visitTrendsChartType').onchange = () => updateCharts();
+             document.getElementById('diagnosisTopN').onchange = () => updateCharts();
+             document.getElementById('diagnosisFrequencyChartType').onchange = () => updateCharts();
+             document.getElementById('treatmentOutcomesChartType').onchange = () => updateCharts();
+        };
+
+        const updateDataTable = () => {
+            tableLoadingIndicator.style.display = 'block';
+            dataTable.style.display = 'none';
+            dataTableBody.innerHTML = ''; // Clear current rows
+
+            // Simulate data loading delay
+            setTimeout(() => {
+                const rowsHtml = filteredPatientData.map(item => `
+                    <tr>
+                        <td>${item.patientId}</td>
+                        <td>${item.date}</td>
+                        <td>${item.appointmentType}</td>
+                        <td>${item.diagnosis}</td>
+                        <td>${item.treatment}</td>
+                        <td>${item.outcome}</td>
+                        <td>${item.age}</td>
+                        <td>${item.gender}</td>
+                        <td>${item.ethnicity}</td>
+                    </tr>
+                `).join('');
+                dataTableBody.innerHTML = rowsHtml;
+
+                tableLoadingIndicator.style.display = 'none';
+                dataTable.style.display = 'table';
+            }, 500); // Simulate 0.5 second load time
+        };
+
+        // --- Event Handlers ---
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            contentArea.classList.toggle('sidebar-collapsed');
+             // Trigger chart resize after sidebar transition
+            setTimeout(() => {
+                 if (demographicsChart) demographicsChart.resize();
+                 if (visitTrendsChart) visitTrendsChart.resize();
+                 if (diagnosisFrequencyChart) diagnosisFrequencyChart.resize();
+                 if (treatmentOutcomesChart) treatmentOutcomesChart.resize();
+            }, 300); // Match CSS transition duration
+        });
+
+        applyFiltersButton.addEventListener('click', applyFilters);
+        clearFiltersButton.addEventListener('click', clearFilters);
+
+        // Simulate Chart Click for Filtering
+        const handleChartClick = (event, elements, field, labels, granularity = null) => {
+             if (!elements || elements.length === 0) return;
+
+             const firstElement = elements[0];
+             const index = firstElement.index;
+             const clickedValue = labels[index];
+
+             // --- SIMULATED FILTERING ---
+             // In a real application, this would update the global filter state
+             // and trigger a dashboard update.
+             console.log(`Simulating filter: Clicked on "${clickedValue}" in ${field} chart.`);
+             console.log("In a real app, this would update the filters and re-render the dashboard.");
+
+             // Example: If clicking on a diagnosis bar, select that diagnosis in the filter dropdown
+             if (field === 'diagnosis') {
+                 diagnosisFilterSelect.value = clickedValue;
+                 applyFilters(); // Apply the simulated filter
+             } else if (field === 'gender') {
+                  // No direct gender filter dropdown, just log
+                  console.log(`Simulated filter: Selected gender "${clickedValue}"`);
+             } else if (field === 'outcome') {
+                  // No direct outcome filter dropdown, just log
+                   console.log(`Simulated filter: Selected outcome "${clickedValue}"`);
+             } else if (field === 'date' && granularity === 'month') {
+                 // Simulate setting date range to the clicked month
+                 const [year, month] = clickedValue.split('-');
+                 const startDate = new Date(year, month - 1, 1);
+                 const endDate = new Date(year, month, 0); // Last day of the month
+                 dateRangeStartInput.value = startDate.toISOString().split('T')[0];
+                 dateRangeEndInput.value = endDate.toISOString().split('T')[0];
+                 applyFilters(); // Apply the simulated filter
+             }
+             // --- END SIMULATED FILTERING ---
+        };
+
+        // Simulate Data Table Sorting
+        document.querySelectorAll('#dataTable th[data-sort]').forEach(header => {
+            header.addEventListener('click', () => {
+                const sortBy = header.getAttribute('data-sort');
+                const currentOrder = header.getAttribute('data-order') || 'asc';
+                const newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+
+                // Clear previous sort indicators (basic)
+                document.querySelectorAll('#dataTable th[data-sort]').forEach(th => th.removeAttribute('data-order'));
+                header.setAttribute('data-order', newOrder);
+
+                // --- SIMULATED SORTING ---
+                 filteredPatientData.sort((a, b) => {
+                     const aValue = a[sortBy];
+                     const bValue = b[sortBy];
+
+                     if (typeof aValue === 'string' && typeof bValue === 'string') {
+                         return newOrder === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+                     } else {
+                          return newOrder === 'asc' ? aValue - bValue : bValue - aValue;
+                     }
+                 });
+                 updateDataTable(); // Re-render the table with sorted data
+                // --- END SIMULATED SORTING ---
+            });
+        });
+
+        // Export Chart Functionality
+        document.querySelectorAll('.export-chart').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const chartId = e.target.getAttribute('data-chart-id');
+                const canvas = document.getElementById(chartId);
+                if (canvas) {
+                    const link = document.createElement('a');
+                    link.download = `${chartId}_dashboard.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                }
+            });
+        });
+
+
+        // --- Guided Tour Simulation (Basic) ---
+        const tourSteps = [
+            { element: '#sidebar', tooltip: '#tooltip1', position: 'right' },
+            { element: '.summary-metrics', tooltip: '#tooltip2', position: 'bottom' },
+            { element: '#chartCard1', tooltip: '#tooltip3', position: 'top' },
+            { element: '#chartCard5', tooltip: '#tooltip4', position: 'top' },
+        ];
+
+        let currentTourStep = 0;
+
+        const showTooltip = (stepIndex) => {
+            if (stepIndex >= tourSteps.length) {
+                hideAllTooltips();
+                return;
+            }
+
+            hideAllTooltips(); // Hide previous tooltip
+
+            const step = tourSteps[stepIndex];
+            const targetElement = document.querySelector(step.element);
+            const tooltipElement = document.querySelector(step.tooltip);
+
+            if (targetElement && tooltipElement) {
+                 // Add highlight class
+                targetElement.classList.add('tooltip-step-active');
+
+                const rect = targetElement.getBoundingClientRect();
+                tooltipElement.style.opacity = 1;
+                tooltipElement.style.visibility = 'visible';
+
+                // Position tooltip (basic positioning)
+                switch (step.position) {
+                    case 'right':
+                        tooltipElement.style.left = `${rect.right + 10}px`;
+                        tooltipElement.style.top = `${rect.top + rect.height / 2 - tooltipElement.offsetHeight / 2}px`;
+                        tooltipElement.style.removeProperty('bottom');
+                        tooltipElement.style.removeProperty('right');
+                        tooltipElement.style.removeProperty('left');
+                         tooltipElement.style.left = `${rect.right + 10}px`;
+                         tooltipElement.style.top = `${rect.top + window.scrollY}px`; // Adjust for scroll
+                         tooltipElement.style.transform = 'translateY(0)';
+                         // Adjust arrow position for 'right'
+                         tooltipElement.style.setProperty('--tooltip-arrow-left', 'auto');
+                         tooltipElement.style.setProperty('--tooltip-arrow-right', '100%');
+                         tooltipElement.style.setProperty('--tooltip-arrow-top', '50%');
+                         tooltipElement.style.setProperty('--tooltip-arrow-bottom', 'auto');
+                         tooltipElement.style.setProperty('--tooltip-arrow-transform', 'translateY(-50%) rotate(90deg)');
+
+                         break;
+                    case 'bottom':
+                        tooltipElement.style.top = `${rect.bottom + 10}px`;
+                        tooltipElement.style.left = `${rect.left + rect.width / 2 - tooltipElement.offsetWidth / 2}px`;
+                        tooltipElement.style.removeProperty('bottom');
+                        tooltipElement.style.removeProperty('right');
+                         tooltipElement.style.removeProperty('left');
+                         tooltipElement.style.left = `${rect.left + rect.width / 2 - tooltipElement.offsetWidth / 2}px`;
+                         tooltipElement.style.top = `${rect.bottom + 10 + window.scrollY}px`; // Adjust for scroll
+                         tooltipElement.style.transform = 'translateY(0)';
+                         // Adjust arrow position for 'bottom'
+                         tooltipElement.style.setProperty('--tooltip-arrow-left', '50%');
+                         tooltipElement.style.setProperty('--tooltip-arrow-right', 'auto');
+                         tooltipElement.style.setProperty('--tooltip-arrow-top', 'auto');
+                         tooltipElement.style.setProperty('--tooltip-arrow-bottom', '100%');
+                          tooltipElement.style.setProperty('--tooltip-arrow-transform', 'translateX(-50%) rotate(180deg)');
+                        break;
+                    case 'top':
+                        tooltipElement.style.bottom = `${window.innerHeight - rect.top + 10}px`;
+                        tooltipElement.style.left = `${rect.left + rect.width / 2 - tooltipElement.offsetWidth / 2}px`;
+                        tooltipElement.style.removeProperty('top');
+                        tooltipElement.style.removeProperty('right');
+                         tooltipElement.style.removeProperty('left');
+                         tooltipElement.style.left = `${rect.left + rect.width / 2 - tooltipElement.offsetWidth / 2}px`;
+                         tooltipElement.style.top = `${rect.top - tooltipElement.offsetHeight - 10 + window.scrollY}px`; // Adjust for scroll
+                         tooltipElement.style.transform = 'translateY(0)';
+                          // Adjust arrow position for 'top'
+                         tooltipElement.style.setProperty('--tooltip-arrow-left', '50%');
+                         tooltipElement.style.setProperty('--tooltip-arrow-right', 'auto');
+                         tooltipElement.style.setProperty('--tooltip-arrow-top', '100%');
+                         tooltipElement.style.setProperty('--tooltip-arrow-bottom', 'auto');
+                         tooltipElement.style.setProperty('--tooltip-arrow-transform', 'translateX(-50%)');
+                        break;
+                    // Add other positions (left, bottom, etc.)
+                }
+
+
+                // Add next button to tooltip (simulated)
+                if (!tooltipElement.querySelector('.tour-next-button')) {
+                     const nextButton = document.createElement('button');
+                     nextButton.textContent = stepIndex === tourSteps.length - 1 ? 'Finish Tour' : 'Next';
+                     nextButton.classList.add('primary', 'tour-next-button');
+                     nextButton.style.marginTop = '10px';
+                     nextButton.style.width = '100%';
+                     nextButton.style.display = 'block';
+                     nextButton.onclick = () => {
+                         targetElement.classList.remove('tooltip-step-active'); // Remove highlight
+                         showTooltip(stepIndex + 1);
+                     };
+                     tooltipElement.appendChild(nextButton);
+                }
+
+
+            } else {
+                 console.error("Could not find element or tooltip for step", stepIndex);
+                 showTooltip(stepIndex + 1); // Skip this step
+            }
+        };
+
+        const hideAllTooltips = () => {
+            document.querySelectorAll('.guided-tour-tooltip').forEach(tooltip => {
+                tooltip.style.opacity = 0;
+                tooltip.style.visibility = 'hidden';
+                 // Clean up next button
+                const nextButton = tooltip.querySelector('.tour-next-button');
+                if (nextButton) nextButton.remove();
+            });
+             document.querySelectorAll('.tooltip-step-active').forEach(el => el.classList.remove('tooltip-step-active'));
+        };
+
+        // Start tour (e.g., on page load or button click)
+        const startTour = () => {
+             currentTourStep = 0;
+             showTooltip(currentTourStep);
+        };
+
+        // Add a button to start the tour (for demonstration)
+        const tourButton = document.createElement('button');
+        tourButton.textContent = 'Start Guided Tour';
+        tourButton.classList.add('secondary');
+        tourButton.style.marginLeft = 'calc(var(--spacing-unit) * 3)';
+        tourButton.onclick = startTour;
+        document.querySelector('header').appendChild(tourButton);
+
+
+        // --- Initial Load ---
+        const init = () => {
+            populateFilters();
+            applyFilters(); // Apply initial filters and load dashboard
+            // startTour(); // Optionally start the tour automatically
+        };
+
+        init(); // Run initialization
+
+    </script>
+</body>
+</html>

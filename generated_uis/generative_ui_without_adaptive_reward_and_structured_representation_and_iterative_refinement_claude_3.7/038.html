@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Molecular Chemistry Explorer</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --accent-color: #28a745;
+            --background-color: #f8f9fa;
+            --surface-color: #ffffff;
+            --text-color: #212529;
+            --border-color: #dee2e6;
+            --hover-color: #e9ecef;
+            --active-color: #cce5ff;
+            --atom-carbon: #343a40;
+            --atom-hydrogen: #adb5bd;
+            --atom-oxygen: #dc3545;
+            --atom-nitrogen: #007bff;
+            --atom-sulfur: #ffc107;
+            --atom-chlorine: #28a745;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: grid;
+            grid-template-rows: auto 1fr;
+            grid-template-columns: 280px 1fr; /* Desktop: Sidebar + Main */
+            height: 100vh;
+            overflow: hidden; /* Prevent body scroll */
+        }
+
+        header {
+            grid-column: 1 / -1; /* Span across all columns */
+            background-color: var(--surface-color);
+            padding: 1rem 1.5rem;
+            box-shadow: 0 2px 4px var(--shadow-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 100;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            color: var(--primary-color);
+        }
+
+        .nav-toggle {
+            display: none; /* Hide on desktop */
+        }
+
+        aside {
+            grid-row: 2 / 3;
+            grid-column: 1 / 2;
+            background-color: var(--surface-color);
+            box-shadow: 2px 0 4px var(--shadow-color);
+            padding: 1.5rem 1rem;
+            overflow-y: auto;
+            transition: transform 0.3s ease-in-out;
+            z-index: 50;
+        }
+
+        main {
+            grid-row: 2 / 3;
+            grid-column: 2 / 3;
+            padding: 1.5rem;
+            overflow-y: auto; /* Allow main content to scroll */
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        section {
+            background-color: var(--surface-color);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px var(--shadow-color);
+        }
+
+        h2 {
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        /* Sidebar Styles */
+        aside nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        aside nav ul li {
+            margin-bottom: 0.5rem;
+        }
+
+        aside nav ul li a {
+            display: block;
+            padding: 0.75rem 1rem;
+            text-decoration: none;
+            color: var(--text-color);
+            border-radius: 4px;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        aside nav ul li a:hover {
+            background-color: var(--hover-color);
+            color: var(--primary-color);
+        }
+
+        aside nav ul li a.active {
+            background-color: var(--active-color);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        /* Main Content Sections */
+        #molecular-viewer {
+            min-height: 500px; /* Placeholder height for viewer */
+            position: relative;
+        }
+
+        #viewer-controls {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            display: flex;
+            gap: 0.5rem;
+            z-index: 10;
+        }
+
+        #molecule-tools h3,
+        #prediction-interface h3,
+        #simulation-interface h3,
+        #property-explorer h3,
+        #learning-modules h3 {
+            color: var(--text-color);
+            margin-top: 0;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        /* Form and Control Styles */
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-sizing: border-box; /* Include padding and border in element's total width and height */
+            font-size: 1rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus,
+        textarea:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            outline: none;
+        }
+
+        button {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        button.primary {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        button.primary:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+        }
+
+        button.secondary {
+            background-color: var(--secondary-color);
+            color: white;
+            border-color: var(--secondary-color);
+        }
+
+        button.secondary:hover {
+            background-color: #545b62;
+            border-color: #32383e;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .validation-feedback {
+            font-size: 0.875rem;
+            color: #dc3545;
+            margin-top: 0.25rem;
+        }
+
+        /* Placeholder for 3D Viewer */
+        #viewer-canvas {
+            width: 100%;
+            height: 100%;
+            background-color: #e9ecef; /* Light grey background for viewer area */
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            color: var(--secondary-color);
+            border: 1px dashed var(--border-color);
+        }
+
+        /* Utility Classes */
+        .hidden {
+            display: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Molecular Chemistry Explorer</h1>
+        <button class="nav-toggle" aria-label="Toggle navigation">☰</button>
+    </header>
+
+    <aside id="sidebar">
+        <nav aria-label="Main navigation">
+            <ul>
+                <li><a href="#molecular-viewer" class="active">3D Viewer</a></li>
+                <li><a href="#molecule-tools">Molecule Tools</a></li>
+                <li><a href="#prediction-interface">Predict Properties</a></li>
+                <li><a href="#simulation-interface">Run Simulation</a></li>
+                <li><a href="#property-explorer">Property Explorer</a></li>
+                <li><a href="#learning-modules">Learning Modules</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main>
+        <section id="molecular-viewer" aria-labelledby="viewer-heading">
+            <h2 id="viewer-heading">Interactive 3D Molecular Viewer</h2>
+            <div id="viewer-controls">
+                <button class="secondary" aria-label="Rotate model">Rotate</button>
+                <button class="secondary" aria-label="Zoom model">Zoom</button>
+                <button class="secondary" aria-label="Pan model">Pan</button>
+                <button class="secondary" aria-label="Change rendering style">Style</button>
+            </div>
+            <div id="viewer-canvas">
+                3D Molecular Model Placeholder
+                <!-- The 3D visualization library will render here -->
+            </div>
+        </section>
+
+        <section id="molecule-tools" class="hidden" aria-labelledby="tools-heading">
+            <h2 id="tools-heading">Molecule Selection and Building</h2>
+            <div class="form-group">
+                <label for="molecule-select">Select a Molecule:</label>
+                <select id="molecule-select">
+                    <option value="">-- Select --</option>
+                    <option value="h2o">Water (H₂O)</option>
+                    <option value="ch4">Methane (CH₄)</option>
+                    <option value="nh3">Ammonia (NH₃)</option>
+                    <option value="co2">Carbon Dioxide (CO₂)</option>
+                    <!-- Add more molecules -->
+                </select>
+            </div>
+            <div>
+                <h3>Build Your Own</h3>
+                <!-- Placeholder for building tools -->
+                <button class="primary">Add Atom</button>
+                <button class="primary">Add Bond</button>
+                <button class="secondary">Clear Builder</button>
+            </div>
+        </section>
+
+        <section id="prediction-interface" class="hidden" aria-labelledby="prediction-heading">
+            <h2 id="prediction-heading">Predict Bond Angles and Properties</h2>
+            <form id="prediction-form">
+                <div class="form-group">
+                    <label for="molecule-formula">Molecule Formula:</label>
+                    <input type="text" id="molecule-formula" placeholder="e.g., CH4" aria-describedby="formula-feedback">
+                    <div id="formula-feedback" class="validation-feedback" aria-live="polite"></div>
+                </div>
+                <div class="form-group">
+                    <label for="central-atom">Central Atom:</label>
+                    <input type="text" id="central-atom" placeholder="e.g., C" aria-describedby="atom-feedback">
+                    <div id="atom-feedback" class="validation-feedback" aria-live="polite"></div>
+                </div>
+                <div class="form-group">
+                    <label for="predicted-angle">Predict Bond Angle (degrees):</label>
+                    <input type="number" id="predicted-angle" placeholder="e.g., 109.5" aria-describedby="angle-feedback">
+                    <div id="angle-feedback" class="validation-feedback" aria-live="polite"></div>
+                </div>
+                <button type="submit" class="primary">Submit Prediction</button>
+            </form>
+            <div id="prediction-results" style="margin-top: 1.5rem;">
+                <h3>Results:</h3>
+                <!-- Prediction feedback will appear here -->
+            </div>
+        </section>
+
+        <section id="simulation-interface" class="hidden" aria-labelledby="simulation-heading">
+            <h2 id="simulation-heading">Chemical Reaction Simulator</h2>
+            <div class="form-group">
+                <label for="reaction-select">Select a Reaction:</label>
+                <select id="reaction-select">
+                    <option value="">-- Select --</option>
+                    <option value="formation-of-water">2H₂ + O₂ → 2H₂O</option>
+                    <option value="combustion-of-methane">CH₄ + 2O₂ → CO₂ + 2H₂O</option>
+                    <!-- Add more reactions -->
+                </select>
+            </div>
+            <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                <button class="primary">Start Simulation</button>
+                <button class="secondary">Pause</button>
+                <button class="secondary">Reset</button>
+            </div>
+            <div id="simulation-output">
+                <h3>Simulation Output:</h3>
+                <!-- Simulation animation/results will appear here -->
+            </div>
+        </section>
+
+        <section id="property-explorer" class="hidden" aria-labelledby="property-heading">
+            <h2 id="property-heading">Structure-Property Relationship Explorer</h2>
+            <div class="form-group">
+                <label for="property-select">Select a Property:</label>
+                <select id="property-select">
+                    <option value="">-- Select --</option>
+                    <option value="polarity">Polarity</option>
+                    <option value="boiling-point">Boiling Point</option>
+                    <option value="solubility">Solubility</option>
+                    <!-- Add more properties -->
+                </select>
+            </div>
+            <div id="property-details" style="margin-top: 1.5rem;">
+                <h3>Property Details:</h3>
+                <!-- Explanation and visualizations will appear here -->
+            </div>
+        </section>
+
+        <section id="learning-modules" class="hidden" aria-labelledby="modules-heading">
+            <h2 id="modules-heading">Guided Learning Modules</h2>
+            <ul>
+                <li><a href="#" aria-label="Start module on VSEPR Theory">VSEPR Theory</a></li>
+                <li><a href="#" aria-label="Start module on Hybridization">Hybridization</a></li>
+                <li><a href="#" aria-label="Start module on Polarity">Molecular Polarity</a></li>
+                <!-- Add more modules -->
+            </ul>
+            <div id="module-content" style="margin-top: 1.5rem;">
+                <!-- Module content/tutorials will load here -->
+            </div>
+        </section>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navLinks = document.querySelectorAll('#sidebar nav a');
+            const sections = document.querySelectorAll('main section');
+            const navToggle = document.querySelector('.nav-toggle');
+            const sidebar = document.getElementById('sidebar');
+
+            // Function to show a specific section and hide others
+            const showSection = (targetId) => {
+                sections.forEach(section => {
+                    if ('#' + section.id === targetId) {
+                        section.classList.remove('hidden');
+                        section.setAttribute('aria-hidden', 'false');
+                    } else {
+                        section.classList.add('hidden');
+                        section.setAttribute('aria-hidden', 'true');
+                    }
+                });
+
+                // Update active link in sidebar
+                navLinks.forEach(link => {
+                    if (link.getAttribute('href') === targetId) {
+                        link.classList.add('active');
+                    } else {
+                        link.classList.remove('active');
+                    }
+                });
+            };
+
+            // Handle navigation clicks
+            navLinks.forEach(link => {
+                link.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    const targetId = link.getAttribute('href');
+                    showSection(targetId);
+                    // Close sidebar on mobile after click (optional, depending on design)
+                    // if (window.innerWidth <= 768) {
+                    //     sidebar.style.transform = 'translateX(-100%)';
+                    // }
+                });
+            });
+
+            // Initial load: show the first section (3D Viewer)
+            if (navLinks.length > 0) {
+                showSection(navLinks[0].getAttribute('href'));
+            }
+
+            // Placeholder for 3D viewer initialization
+            const viewerCanvas = document.getElementById('viewer-canvas');
+            // In a real application, you would initialize your 3D library here
+            // E.g., Mol* Viewer, Three.js, JSmol
+            // Example: init3DViewer(viewerCanvas);
+            console.log("Placeholder for 3D viewer initialization.");
+
+            // Placeholder for Molecule Selection/Building
+            const moleculeSelect = document.getElementById('molecule-select');
+            moleculeSelect.addEventListener('change', (event) => {
+                const selectedMolecule = event.target.value;
+                console.log(`Molecule selected: ${selectedMolecule}`);
+                // Call function to load molecule into 3D viewer
+                // loadMolecule(selectedMolecule);
+            });
+
+            // Placeholder for Prediction Form
+            const predictionForm = document.getElementById('prediction-form');
+            predictionForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+                const formula = document.getElementById('molecule-formula').value;
+                const centralAtom = document.getElementById('central-atom').value;
+                const predictedAngle = document.getElementById('predicted-angle').value;
+                console.log(`Prediction submitted: Formula=${formula}, Atom=${centralAtom}, Angle=${predictedAngle}`);
+                // Call function to validate and process prediction
+                // processPrediction(formula, centralAtom, predictedAngle);
+            });
+
+            // Placeholder for Simulation Controls
+            const simulationButtons = document.querySelectorAll('#simulation-interface button');
+            simulationButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    console.log(`Simulation action: ${button.textContent}`);
+                    // Call simulation control functions
+                    // if (button.textContent === 'Start Simulation') startSimulation();
+                    // else if (button.textContent === 'Pause') pauseSimulation();
+                    // else if (button.textContent === 'Reset') resetSimulation();
+                });
+            });
+
+            // Placeholder for Property Explorer
+            const propertySelect = document.getElementById('property-select');
+            propertySelect.addEventListener('change', (event) => {
+                const selectedProperty = event.target.value;
+                console.log(`Property selected: ${selectedProperty}`);
+                // Call function to display property details
+                // displayPropertyDetails(selectedProperty);
+            });
+
+            // Placeholder for Learning Modules
+            const moduleLinks = document.querySelectorAll('#learning-modules a');
+            moduleLinks.forEach(link => {
+                link.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    const moduleName = link.textContent;
+                    console.log(`Module selected: ${moduleName}`);
+                    // Call function to load module content
+                    // loadModule(moduleName);
+                });
+            });
+
+            // Basic Sidebar Toggle (for potential future mobile/tablet responsiveness)
+            navToggle.addEventListener('click', () => {
+                 // This would typically toggle a class to show/hide the sidebar
+                 // On desktop, it remains open as per grid layout
+                 console.log("Sidebar toggle clicked - implement mobile logic here");
+            });
+
+            // Add basic keyboard navigation for buttons
+            document.querySelectorAll('button, select, input').forEach(element => {
+                element.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        // Prevent default space behavior on buttons to avoid double click
+                        if (element.tagName === 'BUTTON' && event.key === ' ') {
+                             event.preventDefault();
+                        }
+                        element.click(); // Trigger click on Enter or Space
+                    }
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>

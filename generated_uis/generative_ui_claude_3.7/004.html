@@ -1,0 +1,1865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding Neural Networks</title>
+    <style>
+        :root {
+            --primary-color: #4A6FFF;
+            --secondary-color: #FF6B6B;
+            --tertiary-color: #53D769;
+            --background-color: #FFFFFF;
+            --text-color: #333333;
+            --light-gray: #F5F7FA;
+            --medium-gray: #E1E5EB;
+            --dark-gray: #9AA5B5;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            --border-radius: 8px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--light-gray);
+            padding: 0;
+            margin: 0;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+            z-index: 1;
+        }
+
+        header h1, header p {
+            position: relative;
+            z-index: 2;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        nav {
+            background-color: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+
+        nav ul {
+            display: flex;
+            justify-content: center;
+            list-style: none;
+            padding: 0;
+        }
+
+        nav li {
+            margin: 0;
+        }
+
+        nav a {
+            display: block;
+            padding: 1rem 1.5rem;
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+            border-bottom: 3px solid transparent;
+            position: relative;
+        }
+
+        nav a:hover, nav a.active {
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--primary-color);
+        }
+
+        nav a::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 0;
+            height: 3px;
+            background-color: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+
+        nav a:hover::after {
+            width: 100%;
+        }
+
+        nav a.active::after {
+            width: 100%;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        section {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--medium-gray);
+            position: relative;
+        }
+
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 80px;
+            height: 2px;
+            background-color: var(--primary-color);
+        }
+
+        h3 {
+            margin: 1.5rem 0 1rem;
+            color: var(--text-color);
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        .card-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            border: 1px solid var(--medium-gray);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 0;
+            background-color: var(--primary-color);
+            transition: height 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .card:hover::before {
+            height: 100%;
+        }
+
+        .card:focus-within {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+            transition: var(--transition);
+        }
+
+        .card:hover .card-icon {
+            transform: scale(1.1);
+            color: var(--secondary-color);
+        }
+
+        .card h3 {
+            margin-top: 0;
+            transition: var(--transition);
+        }
+
+        .card:hover h3 {
+            color: var(--primary-color);
+        }
+
+        .neural-network-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            margin: 2rem 0;
+            border: 1px solid var(--medium-gray);
+            border-radius: var(--border-radius);
+            background-color: var(--light-gray);
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .neural-network-container:focus-within {
+            box-shadow: 0 0 0 3px rgba(74, 111, 255, 0.3);
+        }
+
+        .node {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            border: 2px solid var(--medium-gray);
+            z-index: 2;
+            cursor: pointer;
+        }
+
+        .node:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(74, 111, 255, 0.5);
+            border-color: var(--primary-color);
+        }
+
+        .node:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(74, 111, 255, 0.5), var(--shadow);
+            border-color: var(--primary-color);
+        }
+
+        .node-value {
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: var(--text-color);
+            transition: var(--transition);
+        }
+
+        .connection {
+            position: absolute;
+            height: 2px;
+            background-color: var(--dark-gray);
+            transform-origin: left center;
+            z-index: 1;
+            transition: background-color 0.3s ease, height 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .connection.active {
+            background-color: var(--primary-color);
+            height: 3px;
+            box-shadow: 0 0 8px rgba(74, 111, 255, 0.5);
+        }
+
+        .control-panel {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%, -50%);
+            transform-origin: 50% 50%;
+        }
+
+        button:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(74, 111, 255, 0.3);
+        }
+
+        @keyframes ripple {
+            0% {
+                transform: scale(0, 0);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(100, 100);
+                opacity: 0;
+            }
+        }
+
+        button:active::after {
+            animation: ripple 0.6s ease-out;
+        }
+
+        button:hover {
+            background-color: #3a5cd0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+
+        button.secondary {
+            background-color: var(--medium-gray);
+            color: var(--text-color);
+        }
+
+        button.secondary:hover {
+            background-color: var(--dark-gray);
+        }
+
+        button.secondary:focus {
+            box-shadow: 0 0 0 3px rgba(154, 165, 181, 0.3);
+        }
+
+        .activation-btn {
+            background-color: var(--medium-gray);
+            color: var(--text-color);
+            position: relative;
+        }
+
+        .activation-btn::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 3px;
+            background-color: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+
+        .activation-btn:hover::before {
+            width: 100%;
+        }
+
+        .activation-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .activation-btn.active::before {
+            width: 100%;
+        }
+
+        .activation-function {
+            width: 100%;
+            height: 200px;
+            margin: 2rem 0;
+            border: 1px solid var(--medium-gray);
+            border-radius: var(--border-radius);
+            background-color: white;
+            position: relative;
+            transition: var(--transition);
+        }
+
+        .activation-function:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .axis {
+            position: absolute;
+            background-color: var(--dark-gray);
+            transition: background-color 0.3s ease;
+        }
+
+        .activation-function:hover .axis {
+            background-color: var(--text-color);
+        }
+
+        .x-axis {
+            width: 90%;
+            height: 1px;
+            bottom: 50%;
+            left: 5%;
+        }
+
+        .y-axis {
+            width: 1px;
+            height: 90%;
+            left: 50%;
+            top: 5%;
+        }
+
+        .function-line {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background-color: var(--secondary-color);
+            border-radius: 50%;
+            transition: transform 0.3s ease, background-color 0.3s ease;
+        }
+
+        .activation-function:hover .function-line {
+            transform: scale(1.5);
+            background-color: var(--primary-color);
+        }
+
+        .glossary-term {
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--medium-gray);
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+
+        .glossary-term:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .glossary-term h3 {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            padding: 0.75rem;
+            background-color: var(--light-gray);
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            transition: var(--transition);
+            margin: 0;
+        }
+
+        .glossary-term h3:hover {
+            background-color: var(--medium-gray);
+        }
+
+        .glossary-term h3:focus {
+            outline: none;
+            box-shadow: inset 0 0 0 2px var(--primary-color);
+        }
+
+        .glossary-term h3::after {
+            content: "+";
+            margin-left: auto;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            transition: var(--transition);
+        }
+
+        .glossary-term.active h3 {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .glossary-term.active h3::after {
+            content: "-";
+            color: white;
+        }
+
+        .glossary-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: var(--transition);
+            padding: 0 0.75rem;
+            background-color: white;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+        }
+
+        .glossary-term.active .glossary-content {
+            max-height: 500px;
+            margin-top: 0;
+            padding: 1rem 0.75rem;
+            border-top: 1px solid var(--medium-gray);
+        }
+
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 0.5rem;
+            border-radius: var(--border-radius);
+            font-size: 0.8rem;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 10;
+            max-width: 200px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(4px);
+        }
+
+        footer {
+            background-color: var(--text-color);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 2rem;
+            position: relative;
+        }
+
+        footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color), var(--tertiary-color));
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background-color: var(--medium-gray);
+            border-radius: 4px;
+            margin: 2rem 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: var(--tertiary-color);
+            transition: width 0.5s ease;
+            position: relative;
+            border-radius: 4px;
+        }
+
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, 
+                rgba(255,255,255,0) 0%, 
+                rgba(255,255,255,0.2) 50%, 
+                rgba(255,255,255,0) 100%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 100% 0;
+            }
+            100% {
+                background-position: -100% 0;
+            }
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+            background-color: white;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .speed-slider {
+            flex: 1;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--medium-gray);
+            border-radius: 3px;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .speed-slider:hover {
+            background: var(--dark-gray);
+        }
+
+        .speed-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .speed-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            border: none;
+        }
+
+        .speed-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background-color: #3a5cd0;
+        }
+
+        .speed-slider::-moz-range-thumb:hover {
+            transform: scale(1.2);
+            background-color: #3a5cd0;
+        }
+
+        .speed-slider:focus {
+            box-shadow: 0 0 0 2px rgba(74, 111, 255, 0.3);
+        }
+
+        .speed-label {
+            font-size: 0.9rem;
+            color: var(--dark-gray);
+            min-width: 120px;
+            font-weight: 500;
+        }
+
+        ol {
+            padding-left: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+            position: relative;
+            padding-left: 0.5rem;
+        }
+
+        ol li::marker {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .error-graph {
+            width: 100%;
+            height: 200px;
+            margin: 2rem 0;
+            position: relative;
+            background-color: white;
+            border: 1px solid var(--medium-gray);
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+
+        .error-graph:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .graph-label {
+            position: absolute;
+            font-size: 0.8rem;
+            color: var(--dark-gray);
+            transition: var(--transition);
+        }
+
+        .error-graph:hover .graph-label {
+            color: var(--text-color);
+        }
+
+        .graph-label.x-label {
+            bottom: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .graph-label.y-label {
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%) rotate(-90deg);
+            transform-origin: left center;
+        }
+
+        .keyboard-shortcut {
+            display: inline-block;
+            background-color: var(--light-gray);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-left: 0.5rem;
+            color: var(--dark-gray);
+            transition: var(--transition);
+            border: 1px solid var(--medium-gray);
+        }
+
+        button:hover .keyboard-shortcut {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border-color: transparent;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 10;
+            transition: var(--transition);
+        }
+
+        .theme-toggle:hover {
+            transform: rotate(30deg);
+        }
+
+        .theme-toggle:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+        }
+
+        .skip-to-content {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            z-index: 1000;
+            background: var(--primary-color);
+            color: white;
+            padding: 8px 16px;
+            transition: top 0.3s;
+            border-radius: 0 0 var(--border-radius) 0;
+        }
+
+        .skip-to-content:focus {
+            top: 0;
+            outline: none;
+        }
+
+        @media (max-width: 768px) {
+            nav ul {
+                flex-direction: column;
+            }
+
+            nav a {
+                padding: 0.75rem;
+                text-align: center;
+                border-bottom: none;
+                border-left: 3px solid transparent;
+            }
+
+            nav a:hover, nav a.active {
+                border-bottom: none;
+                border-left: 3px solid var(--primary-color);
+            }
+
+            nav a::after {
+                bottom: auto;
+                left: -3px;
+                width: 3px;
+                height: 0;
+            }
+
+            nav a:hover::after, nav a.active::after {
+                width: 3px;
+                height: 100%;
+            }
+
+            .card-container {
+                grid-template-columns: 1fr;
+            }
+
+            .neural-network-container {
+                height: 600px;
+                overflow-x: auto;
+            }
+
+            .control-panel {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            .speed-control {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .speed-slider {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-to-content">Skip to content</a>
+    <header>
+        <button class="theme-toggle" aria-label="Toggle dark mode" id="theme-toggle">☀️</button>
+        <h1>Understanding Neural Networks</h1>
+        <p>A simple visual explanation of how artificial neural networks work</p>
+    </header>
+
+    <nav aria-label="Main navigation">
+        <ul>
+            <li><a href="#introduction" class="active" aria-current="page">Introduction</a></li>
+            <li><a href="#components">Components</a></li>
+            <li><a href="#how-it-works">How It Works</a></li>
+            <li><a href="#learning">Learning</a></li>
+            <li><a href="#glossary">Glossary</a></li>
+        </ul>
+    </nav>
+
+    <main id="main-content">
+        <section id="introduction">
+            <h2>Introduction to Neural Networks</h2>
+            <p>Neural networks are computing systems inspired by the human brain. They're designed to recognize patterns, learn from data, and make decisions or predictions without being explicitly programmed for specific tasks.</p>
+            <p>Think of a neural network as a team of people working together to solve a problem. Each person (neuron) receives information, processes it, and passes it along to others. Through practice (training), the team gets better at solving the problem.</p>
+            <p>Neural networks excel at tasks like image recognition, language translation, and even playing games. They can find complex patterns in data that might be difficult for humans or traditional algorithms to detect.</p>
+        </section>
+
+        <section id="components">
+            <h2>Key Components</h2>
+            <p>Neural networks are made up of several important parts working together:</p>
+
+            <div class="card-container">
+                <div class="card" tabindex="0" aria-label="Neurons: The basic processing units that receive inputs, apply a transformation, and produce an output">
+                    <div class="card-icon" aria-hidden="true">●</div>
+                    <h3>Neurons</h3>
+                    <p>The basic processing units that receive inputs, apply a transformation, and produce an output. Similar to how brain cells process signals.</p>
+                </div>
+                <div class="card" tabindex="0" aria-label="Layers: Groups of neurons that work together">
+                    <div class="card-icon" aria-hidden="true">≡</div>
+                    <h3>Layers</h3>
+                    <p>Groups of neurons that work together. Networks typically have an input layer, hidden layers, and an output layer.</p>
+                </div>
+                <div class="card" tabindex="0" aria-label="Weights & Biases: Weights determine how important each input is, while biases allow neurons to activate even when inputs are small">
+                    <div class="card-icon" aria-hidden="true">↔️</div>
+                    <h3>Weights & Biases</h3>
+                    <p>Weights determine how important each input is, while biases allow neurons to activate even when inputs are small.</p>
+                </div>
+                <div class="card" tabindex="0" aria-label="Activation Function: Transforms the neuron's input into a specific output range, introducing non-linearity">
+                    <div class="card-icon" aria-hidden="true">∫</div>
+                    <h3>Activation Function</h3>
+                    <p>Transforms the neuron's input into a specific output range, introducing non-linearity that allows networks to learn complex patterns.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="how-it-works">
+            <h2>How Neural Networks Work</h2>
+            <p>Let's see a neural network in action through this interactive diagram:</p>
+
+            <div class="control-panel" role="toolbar" aria-label="Neural network controls">
+                <button id="step-forward-btn" aria-label="Step forward through neural network activation">Step Forward <span class="keyboard-shortcut" aria-hidden="true">S</span></button>
+                <button id="activate-input-btn" aria-label="Activate input neurons with random values">Activate Input <span class="keyboard-shortcut" aria-hidden="true">A</span></button>
+                <button id="reset-btn" class="secondary" aria-label="Reset neural network to initial state">Reset <span class="keyboard-shortcut" aria-hidden="true">R</span></button>
+                <button id="auto-play-btn" class="secondary" aria-label="Automatically step through the network">Auto Play <span class="keyboard-shortcut" aria-hidden="true">P</span></button>
+            </div>
+
+            <div class="speed-control">
+                <span class="speed-label">Animation Speed:</span>
+                <input type="range" min="1" max="10" value="5" class="speed-slider" id="speed-slider" aria-label="Control animation speed">
+            </div>
+
+            <div class="progress-container" role="progressbar" aria-label="Neural network propagation progress" aria-valuemin="0" aria-valuemax="4" aria-valuenow="0">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+
+            <div class="neural-network-container" id="network-diagram" tabindex="0" aria-label="Interactive neural network diagram showing signal propagation">
+                <!-- Neural network will be rendered here by JavaScript -->
+            </div>
+
+            <h3>Forward Propagation</h3>
+            <p>Information flows from the input layer through the hidden layers to the output layer. Each neuron:</p>
+            <ol>
+                <li>Receives inputs from the previous layer</li>
+                <li>Multiplies each input by its corresponding weight</li>
+                <li>Adds all weighted inputs plus the bias</li>
+                <li>Applies an activation function to determine its output</li>
+                <li>Passes this output to the next layer</li>
+            </ol>
+
+            <h3>Activation Functions</h3>
+            <p>These functions determine when a neuron "fires" based on its inputs. Common activation functions include:</p>
+
+            <div class="control-panel" role="radiogroup" aria-label="Select activation function">
+                <button id="relu-btn" class="activation-btn active" aria-pressed="true" role="radio">ReLU</button>
+                <button id="sigmoid-btn" class="activation-btn" aria-pressed="false" role="radio">Sigmoid</button>
+                <button id="tanh-btn" class="activation-btn" aria-pressed="false" role="radio">Tanh</button>
+            </div>
+
+            <div class="activation-function" id="activation-graph" aria-label="Graph showing the selected activation function">
+                <div class="axis x-axis" aria-hidden="true"></div>
+                <div class="axis y-axis" aria-hidden="true"></div>
+                <div class="graph-label x-label" aria-hidden="true">Input</div>
+                <div class="graph-label y-label" aria-hidden="true">Output</div>
+                <!-- Activation function will be drawn here by JavaScript -->
+            </div>
+        </section>
+
+        <section id="learning">
+            <h2>How Neural Networks Learn</h2>
+            <p>Neural networks learn through a process called backpropagation:</p>
+
+            <ol>
+                <li><strong>Forward Pass:</strong> The network makes a prediction based on input data</li>
+                <li><strong>Error Calculation:</strong> The prediction is compared to the actual target value</li>
+                <li><strong>Backward Pass:</strong> The error is propagated backward through the network</li>
+                <li><strong>Weight Updates:</strong> Weights and biases are adjusted to reduce the error</li>
+                <li><strong>Repeat:</strong> This process is repeated many times with different examples</li>
+            </ol>
+
+            <p>Over time, the network adjusts its weights and biases to minimize the error, improving its predictions. This is similar to how you might learn a new skill through practice and feedback.</p>
+
+            <div class="error-graph" id="error-graph" aria-label="Graph showing how error decreases during training">
+                <!-- Error graph will be drawn here by JavaScript -->
+                <div class="graph-label x-label" aria-hidden="true">Training Progress (Epochs)</div>
+                <div class="graph-label y-label" aria-hidden="true">Error</div>
+            </div>
+        </section>
+
+        <section id="glossary">
+            <h2>Glossary of Terms</h2>
+            
+            <div class="glossary-term">
+                <h3 tabindex="0" aria-expanded="false" aria-controls="content-ann">Artificial Neural Network (ANN)</h3>
+                <div class="glossary-content" id="content-ann">
+                    <p>A computing system inspired by biological neural networks that can learn to perform tasks by considering examples, generally without being programmed with task-specific rules.</p>
+                </div>
+            </div>
+
+            <div class="glossary-term">
+                <h3 tabindex="0" aria-expanded="false" aria-controls="content-dl">Deep Learning</h3>
+                <div class="glossary-content" id="content-dl">
+                    <p>A subset of machine learning that uses neural networks with many layers (deep neural networks) to analyze various factors of data.</p>
+                </div>
+            </div>
+
+            <div class="glossary-term">
+                <h3 tabindex="0" aria-expanded="false" aria-controls="content-bp">Backpropagation</h3>
+                <div class="glossary-content" id="content-bp">
+                    <p>The primary algorithm for training neural networks. It calculates the gradient of the loss function with respect to the weights, allowing the network to adjust weights to minimize error.</p>
+                </div>
+            </div>
+
+            <div class="glossary-term">
+                <h3 tabindex="0" aria-expanded="false" aria-controls="content-gd">Gradient Descent</h3>
+                <div class="glossary-content" id="content-gd">
+                    <p>An optimization algorithm used to minimize the loss function by iteratively moving in the direction of steepest descent as defined by the negative of the gradient.</p>
+                </div>
+            </div>
+
+            <div class="glossary-term">
+                <h3 tabindex="0" aria-expanded="false" aria-controls="content-epoch">Epoch</h3>
+                <div class="glossary-content" id="content-epoch">
+                    <p>One complete pass through the entire training dataset during the training process.</p>
+                </div>
+            </div>
+
+            <div class="glossary-term">
+                <h3 tabindex="0" aria-expanded="false" aria-controls="content-of">Overfitting</h3>
+                <div class="glossary-content" id="content-of">
+                    <p>When a model learns the training data too well, including its noise and outliers, resulting in poor performance on new, unseen data.</p>
+                </div>
+            </div>
+
+            <div class="glossary-term">
+                <h3 tabindex="0" aria-expanded="false" aria-controls="content-cnn">Convolutional Neural Network (CNN)</h3>
+                <div class="glossary-content" id="content-cnn">
+                    <p>A specialized type of neural network designed for processing structured grid data such as images. CNNs use convolutional layers to automatically detect important features without manual feature extraction.</p>
+                </div>
+            </div>
+
+            <div class="glossary-term">
+                <h3 tabindex="0" aria-expanded="false" aria-controls="content-rnn">Recurrent Neural Network (RNN)</h3>
+                <div class="glossary-content" id="content-rnn">
+                    <p>A type of neural network designed to recognize patterns in sequences of data, such as text, genomes, handwriting, or spoken word. RNNs use their internal memory to process variable length sequences of inputs.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="tooltip" id="tooltip" role="tooltip"></div>
+
+    <footer>
+        <p>&copy; 2023 Neural Networks Explained | A Simple Visual Guide</p>
+    </footer>
+
+    <script>
+        // Dark mode toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        const root = document.documentElement;
+        let isDarkMode = false;
+
+        themeToggle.addEventListener('click', () => {
+            isDarkMode = !isDarkMode;
+            if (isDarkMode) {
+                root.style.setProperty('--background-color', '#121212');
+                root.style.setProperty('--text-color', '#EEEEEE');
+                root.style.setProperty('--light-gray', '#1E1E1E');
+                root.style.setProperty('--medium-gray', '#333333');
+                root.style.setProperty('--dark-gray', '#666666');
+                root.style.setProperty('--shadow', '0 4px 6px rgba(0, 0, 0, 0.3)');
+                document.body.style.backgroundColor = '#121212';
+                themeToggle.textContent = '🌙';
+                themeToggle.setAttribute('aria-label', 'Switch to light mode');
+            } else {
+                root.style.setProperty('--background-color', '#FFFFFF');
+                root.style.setProperty('--text-color', '#333333');
+                root.style.setProperty('--light-gray', '#F5F7FA');
+                root.style.setProperty('--medium-gray', '#E1E5EB');
+                root.style.setProperty('--dark-gray', '#9AA5B5');
+                root.style.setProperty('--shadow', '0 4px 6px rgba(0, 0, 0, 0.05)');
+                document.body.style.backgroundColor = '#F5F7FA';
+                themeToggle.textContent = '☀️';
+                themeToggle.setAttribute('aria-label', 'Switch to dark mode');
+            }
+            createNetwork(); // Redraw network with new theme
+            drawActivationFunction(document.querySelector('.activation-btn.active').id.split('-')[0]);
+            drawErrorGraph();
+        });
+
+        // Navigation highlighting
+        const navLinks = document.querySelectorAll('nav a');
+        const sections = document.querySelectorAll('section');
+
+        function highlightNav() {
+            let scrollPosition = window.scrollY + 100;
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                
+                if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+                    const id = section.getAttribute('id');
+                    
+                    navLinks.forEach(link => {
+                        link.classList.remove('active');
+                        link.setAttribute('aria-current', 'false');
+                        if (link.getAttribute('href') === `#${id}`) {
+                            link.classList.add('active');
+                            link.setAttribute('aria-current', 'page');
+                        }
+                    });
+                }
+            });
+        }
+
+        window.addEventListener('scroll', highlightNav);
+
+        // Smooth scrolling
+        navLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetSection = document.querySelector(targetId);
+                
+                window.scrollTo({
+                    top: targetSection.offsetTop - 70,
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Glossary accordion
+        const glossaryTerms = document.querySelectorAll('.glossary-term h3');
+        
+        glossaryTerms.forEach(term => {
+            term.addEventListener('click', () => {
+                const parent = term.parentElement;
+                const wasActive = parent.classList.contains('active');
+                const contentId = term.getAttribute('aria-controls');
+                
+                // Close all other terms
+                document.querySelectorAll('.glossary-term').forEach(item => {
+                    item.classList.remove('active');
+                    item.querySelector('h3').setAttribute('aria-expanded', 'false');
+                });
+                
+                // Toggle current term
+                if (!wasActive) {
+                    parent.classList.add('active');
+                    term.setAttribute('aria-expanded', 'true');
+                }
+            });
+            
+            term.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    term.click();
+                }
+            });
+        });
+
+        // Neural Network Visualization
+        const networkDiagram = document.getElementById('network-diagram');
+        const tooltip = document.getElementById('tooltip');
+        const progressBar = document.getElementById('progress-bar');
+        const speedSlider = document.getElementById('speed-slider');
+        
+        // Network configuration
+        const layers = [
+            { name: 'Input Layer', neurons: 3 },
+            { name: 'Hidden Layer 1', neurons: 4 },
+            { name: 'Hidden Layer 2', neurons: 4 },
+            { name: 'Output Layer', neurons: 2 }
+        ];
+        
+        const nodes = [];
+        const connections = [];
+        let activationStep = 0;
+        let animationSpeed = parseInt(speedSlider.value);
+        let autoPlayInterval = null;
+        
+        // Create network visualization
+        function createNetwork() {
+            // Clear previous network
+            networkDiagram.innerHTML = '';
+            nodes.length = 0;
+            connections.length = 0;
+            
+            const containerWidth = networkDiagram.clientWidth;
+            const containerHeight = networkDiagram.clientHeight;
+            const nodeSize = 50;
+            
+            // Calculate layer positions
+            const layerWidth = containerWidth / (layers.length + 1);
+            
+            // Create nodes
+            layers.forEach((layer, layerIndex) => {
+                const x = layerWidth * (layerIndex + 1);
+                const layerHeight = containerHeight / (layer.neurons + 1);
+                
+                for (let i = 0; i < layer.neurons; i++) {
+                    const y = layerHeight * (i + 1);
+                    
+                    // Create node
+                    const node = document.createElement('div');
+                    node.className = 'node';
+                    node.setAttribute('role', 'button');
+                    node.setAttribute('aria-label', `${layer.name} neuron ${i+1}`);
+                    node.setAttribute('tabindex', '0');
+                    node.style.left = `${x - nodeSize/2}px`;
+                    node.style.top = `${y - nodeSize/2}px`;
+                    
+                    const nodeValue = document.createElement('div');
+                    nodeValue.className = 'node-value';
+                    nodeValue.textContent = '0.0';
+                    node.appendChild(nodeValue);
+                    
+                    // Store node data
+                    const nodeData = {
+                        element: node,
+                        valueElement: nodeValue,
+                        x: x,
+                        y: y,
+                        layer: layerIndex,
+                        index: i,
+                        value: 0,
+                        activated: false
+                    };
+                    
+                    nodes.push(nodeData);
+                    networkDiagram.appendChild(node);
+                    
+                    // Add hover event
+                    node.addEventListener('mouseenter', (e) => {
+                        showTooltip(e, `${layer.name} - Neuron ${i+1}<br>Value: ${nodeData.value.toFixed(2)}`);
+                    });
+                    
+                    node.addEventListener('mouseleave', () => {
+                        hideTooltip();
+                    });
+                    
+                    node.addEventListener('mousemove', (e) => {
+                        positionTooltip(e);
+                    });
+                    
+                    // Add keyboard accessibility
+                    node.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            showTooltip(e, `${layer.name} - Neuron ${i+1}<br>Value: ${nodeData.value.toFixed(2)}`);
+                            
+                            // Hide tooltip after 3 seconds
+                            setTimeout(() => {
+                                hideTooltip();
+                            }, 3000);
+                        }
+                    });
+                    
+                    // Add focus events for accessibility
+                    node.addEventListener('focus', (e) => {
+                        showTooltip(e, `${layer.name} - Neuron ${i+1}<br>Value: ${nodeData.value.toFixed(2)}`);
+                    });
+                    
+                    node.addEventListener('blur', () => {
+                        hideTooltip();
+                    });
+                }
+            });
+            
+            // Create connections
+            for (let layerIndex = 0; layerIndex < layers.length - 1; layerIndex++) {
+                const currentLayerNodes = nodes.filter(node => node.layer === layerIndex);
+                const nextLayerNodes = nodes.filter(node => node.layer === layerIndex + 1);
+                
+                currentLayerNodes.forEach(sourceNode => {
+                    nextLayerNodes.forEach(targetNode => {
+                        // Create connection line
+                        const connection = document.createElement('div');
+                        connection.className = 'connection';
+                        
+                        // Calculate length and angle
+                        const dx = targetNode.x - sourceNode.x;
+                        const dy = targetNode.y - sourceNode.y;
+                        const length = Math.sqrt(dx * dx + dy * dy);
+                        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                        
+                        // Position and rotate
+                        connection.style.width = `${length}px`;
+                        connection.style.left = `${sourceNode.x}px`;
+                        connection.style.top = `${sourceNode.y}px`;
+                        connection.style.transform = `rotate(${angle}deg)`;
+                        
+                        // Store connection data
+                        const weight = (Math.random() * 2 - 1).toFixed(2);
+                        const connectionData = {
+                            element: connection,
+                            source: sourceNode,
+                            target: targetNode,
+                            weight: parseFloat(weight),
+                            active: false
+                        };
+                        
+                        connections.push(connectionData);
+                        networkDiagram.appendChild(connection);
+                        
+                        // Add hover event
+                        connection.addEventListener('mouseenter', (e) => {
+                            showTooltip(e, `Weight: ${connectionData.weight.toFixed(2)}`);
+                        });
+                        
+                        connection.addEventListener('mouseleave', () => {
+                            hideTooltip();
+                        });
+                        
+                        connection.addEventListener('mousemove', (e) => {
+                            positionTooltip(e);
+                        });
+                    });
+                });
+            }
+        }
+        
+        // Tooltip functions
+        function showTooltip(event, content) {
+            tooltip.innerHTML = content;
+            tooltip.style.opacity = '1';
+            
+            if (event.type === 'focus') {
+                const targetRect = event.target.getBoundingClientRect();
+                tooltip.style.left = `${targetRect.right + 10}px`;
+                tooltip.style.top = `${targetRect.top}px`;
+            } else {
+                positionTooltip(event);
+            }
+        }
+        
+        function hideTooltip() {
+            tooltip.style.opacity = '0';
+        }
+        
+        function positionTooltip(event) {
+            tooltip.style.left = `${event.pageX + 10}px`;
+            tooltip.style.top = `${event.pageY + 10}px`;
+        }
+        
+        // Initialize network on load and resize
+        createNetwork();
+        window.addEventListener('resize', createNetwork);
+        
+        // Network interaction controls
+        document.getElementById('step-forward-btn').addEventListener('click', stepForward);
+        document.getElementById('activate-input-btn').addEventListener('click', activateInput);
+        document.getElementById('reset-btn').addEventListener('click', resetNetwork);
+        document.getElementById('auto-play-btn').addEventListener('click', toggleAutoPlay);
+        
+        // Speed slider control
+        speedSlider.addEventListener('input', () => {
+            animationSpeed = parseInt(speedSlider.value);
+            if (autoPlayInterval) {
+                clearInterval(autoPlayInterval);
+                autoPlayInterval = setInterval(stepForward, 1100 - animationSpeed * 100);
+            }
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            
+            if (e.key === 's' || e.key === 'S') {
+                stepForward();
+            } else if (e.key === 'a' || e.key === 'A') {
+                activateInput();
+            } else if (e.key === 'r' || e.key === 'R') {
+                resetNetwork();
+            } else if (e.key === 'p' || e.key === 'P') {
+                toggleAutoPlay();
+            }
+        });
+        
+        function toggleAutoPlay() {
+            const autoPlayBtn = document.getElementById('auto-play-btn');
+            
+            if (autoPlayInterval) {
+                clearInterval(autoPlayInterval);
+                autoPlayInterval = null;
+                autoPlayBtn.textContent = 'Auto Play';
+                autoPlayBtn.classList.remove('active');
+                autoPlayBtn.classList.add('secondary');
+                autoPlayBtn.setAttribute('aria-pressed', 'false');
+            } else {
+                if (activationStep === 0) {
+                    activateInput();
+                }
+                autoPlayInterval = setInterval(stepForward, 1100 - animationSpeed * 100);
+                autoPlayBtn.textContent = 'Stop';
+                autoPlayBtn.classList.add('active');
+                autoPlayBtn.classList.remove('secondary');
+                autoPlayBtn.setAttribute('aria-pressed', 'true');
+            }
+        }
+        
+        function activateInput() {
+            // If auto-playing, stop it
+            if (autoPlayInterval) {
+                toggleAutoPlay();
+            }
+            
+            // Reset to start
+            resetNetwork();
+            
+            // Activate input layer nodes with random values
+            const inputNodes = nodes.filter(node => node.layer === 0);
+            inputNodes.forEach(node => {
+                const value = Math.random().toFixed(2);
+                node.value = parseFloat(value);
+                node.valueElement.textContent = value;
+                node.activated = true;
+                node.element.style.backgroundColor = '#53D769';
+                node.element.style.borderColor = '#2A9E3F';
+            });
+            
+            activationStep = 1;
+            updateProgress();
+            
+            // Announce for screen readers
+            announceAction('Input layer activated with random values');
+        }
+        
+        function stepForward() {
+            if (activationStep === 0) {
+                activateInput();
+                return;
+            }
+            
+            if (activationStep >= layers.length) {
+                if (autoPlayInterval) {
+                    toggleAutoPlay();
+                }
+                return;
+            }
+            
+            // Get nodes in the current layer being activated
+            const currentLayerNodes = nodes.filter(node => node.layer === activationStep);
+            const layerName = layers[activationStep].name;
+            
+            // For each node in the current layer
+            currentLayerNodes.forEach(node => {
+                // Find all connections going into this node
+                const incomingConnections = connections.filter(conn => conn.target === node);
+                
+                // Calculate weighted sum
+                let sum = 0;
+                incomingConnections.forEach(conn => {
+                    sum += conn.source.value * conn.weight;
+                    
+                    // Activate the connection with a delay for visual effect
+                    setTimeout(() => {
+                        conn.active = true;
+                        conn.element.classList.add('active');
+                    }, 100 * node.index);
+                });
+                
+                // Add bias (random for demonstration)
+                const bias = (Math.random() * 0.5 - 0.25).toFixed(2);
+                sum += parseFloat(bias);
+                
+                // Apply activation function based on selected type
+                let activatedValue;
+                const activeFunction = document.querySelector('.activation-btn.active').id.split('-')[0];
+                
+                switch (activeFunction) {
+                    case 'sigmoid':
+                        activatedValue = 1 / (1 + Math.exp(-sum));
+                        break;
+                    case 'tanh':
+                        activatedValue = Math.tanh(sum);
+                        break;
+                    default: // ReLU
+                        activatedValue = Math.max(0, sum);
+                }
+                
+                activatedValue = Math.min(1, activatedValue).toFixed(2);
+                
+                // Update node with a delay for visual effect
+                setTimeout(() => {
+                    // Update node
+                    node.value = parseFloat(activatedValue);
+                    node.valueElement.textContent = activatedValue;
+                    node.activated = true;
+                    
+                    // Apply different colors based on layer
+                    if (node.layer === layers.length - 1) {
+                        // Output layer
+                        node.element.style.backgroundColor = '#FF6B6B';
+                        node.element.style.borderColor = '#D04A4A';
+                    } else {
+                        // Hidden layers
+                        node.element.style.backgroundColor = '#4A6FFF';
+                        node.element.style.borderColor = '#3A5CD0';
+                    }
+                    
+                    // Add a pulse animation
+                    node.element.animate([
+                        { transform: 'scale(1)', boxShadow: '0 0 0 rgba(74, 111, 255, 0)' },
+                        { transform: 'scale(1.2)', boxShadow: '0 0 15px rgba(74, 111, 255, 0.5)' },
+                        { transform: 'scale(1)', boxShadow: '0 0 0 rgba(74, 111, 255, 0)' }
+                    ], {
+                        duration: 600,
+                        iterations: 1
+                    });
+                }, 300 + 100 * node.index);
+            });
+            
+            activationStep++;
+            updateProgress();
+            
+            // Announce for screen readers
+            announceAction(`${layerName} activated`);
+        }
+        
+        function resetNetwork() {
+            // If auto-playing, stop it
+            if (autoPlayInterval) {
+                toggleAutoPlay();
+            }
+            
+            // Reset all nodes
+            nodes.forEach(node => {
+                node.value = 0;
+                node.valueElement.textContent = '0.0';
+                node.activated = false;
+                node.element.style.backgroundColor = 'white';
+                node.element.style.borderColor = '#E1E5EB';
+            });
+            
+            // Reset all connections
+            connections.forEach(conn => {
+                conn.active = false;
+                conn.element.classList.remove('active');
+            });
+            
+            activationStep = 0;
+            updateProgress();
+            
+            // Announce for screen readers
+            announceAction('Network reset to initial state');
+        }
+        
+        function updateProgress() {
+            const totalSteps = layers.length;
+            const progress = (activationStep / totalSteps) * 100;
+            progressBar.style.width = `${progress}%`;
+            
+            // Update ARIA attributes for accessibility
+            const progressContainer = document.querySelector('.progress-container');
+            progressContainer.setAttribute('aria-valuenow', activationStep);
+            progressContainer.setAttribute('aria-valuetext', `Step ${activationStep} of ${totalSteps}`);
+        }
+        
+        // Screen reader announcements
+        function announceAction(message) {
+            const announcer = document.createElement('div');
+            announcer.setAttribute('aria-live', 'polite');
+            announcer.className = 'sr-only';
+            announcer.textContent = message;
+            document.body.appendChild(announcer);
+            
+            // Remove after announcement
+            setTimeout(() => {
+                document.body.removeChild(announcer);
+            }, 1000);
+        }
+        
+        // Activation function visualization
+        const activationGraph = document.getElementById('activation-graph');
+        const activationBtns = document.querySelectorAll('.activation-btn');
+        
+        // Draw activation function
+        function drawActivationFunction(type) {
+            // Clear previous graph
+            const points = activationGraph.querySelectorAll('.function-line');
+            points.forEach(point => point.remove());
+            
+            const graphWidth = activationGraph.clientWidth;
+            const graphHeight = activationGraph.clientHeight;
+            const centerX = graphWidth / 2;
+            const centerY = graphHeight / 2;
+            
+            // Draw function
+            for (let i = 0; i < graphWidth; i += 5) {
+                const x = i / graphWidth * 10 - 5; // Range from -5 to 5
+                let y;
+                
+                // Calculate y based on function type
+                switch (type) {
+                    case 'relu':
+                        y = Math.max(0, x);
+                        break;
+                    case 'sigmoid':
+                        y = 1 / (1 + Math.exp(-x));
+                        break;
+                    case 'tanh':
+                        y = Math.tanh(x);
+                        break;
+                    default:
+                        y = Math.max(0, x);
+                }
+                
+                // Scale and position
+                const pointX = (i / graphWidth) * graphWidth;
+                const pointY = centerY - y * (graphHeight / 10);
+                
+                const point = document.createElement('div');
+                point.className = 'function-line';
+                point.style.left = `${pointX}px`;
+                point.style.top = `${pointY}px`;
+                
+                // Add hover tooltip
+                point.addEventListener('mouseenter', (e) => {
+                    showTooltip(e, `Input: ${x.toFixed(2)}<br>Output: ${y.toFixed(2)}`);
+                });
+                
+                point.addEventListener('mouseleave', () => {
+                    hideTooltip();
+                });
+                
+                point.addEventListener('mousemove', (e) => {
+                    positionTooltip(e);
+                });
+                
+                activationGraph.appendChild(point);
+            }
+            
+            // Update ARIA description
+            let description = "";
+            switch(type) {
+                case 'relu':
+                    description = "ReLU function: Returns 0 for negative inputs, and the input value for positive inputs. The graph shows a flat line at zero for negative x-values, then a 45-degree line for positive x-values.";
+                    break;
+                case 'sigmoid':
+                    description = "Sigmoid function: Transforms inputs to values between 0 and 1. The graph shows an S-shaped curve that approaches 0 for very negative inputs and 1 for very positive inputs.";
+                    break;
+                case 'tanh':
+                    description = "Hyperbolic tangent function: Transforms inputs to values between -1 and 1. The graph shows an S-shaped curve that approaches -1 for very negative inputs and 1 for very positive inputs.";
+                    break;
+            }
+            activationGraph.setAttribute('aria-label', description);
+        }
+        
+        // Initialize with ReLU
+        drawActivationFunction('relu');
+        
+        // Activation function button handlers
+        activationBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                activationBtns.forEach(b => {
+                    b.classList.remove('active');
+                    b.setAttribute('aria-pressed', 'false');
+                });
+                btn.classList.add('active');
+                btn.setAttribute('aria-pressed', 'true');
+                
+                const type = btn.id.split('-')[0];
+                drawActivationFunction(type);
+                
+                // Announce for screen readers
+                announceAction(`Activation function changed to ${type}`);
+            });
+            
+            // Add keyboard support
+            btn.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    btn.click();
+                }
+            });
+        });
+        
+        // Draw error graph
+        function drawErrorGraph() {
+            const errorGraph = document.getElementById('error-graph');
+            errorGraph.innerHTML = ''; // Clear previous content
+            
+            const width = errorGraph.clientWidth;
+            const height = errorGraph.clientHeight;
+            
+            // Create SVG element
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('width', width);
+            svg.setAttribute('height', height);
+            svg.style.position = 'absolute';
+            svg.style.top = '0';
+            svg.style.left = '0';
+            svg.setAttribute('role', 'img');
+            svg.setAttribute('aria-label', 'Graph showing how error decreases during neural network training. The error starts high and gradually decreases over time as the network learns from training data.');
+            
+            // Create axes
+            const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            xAxis.setAttribute('x1', '40');
+            xAxis.setAttribute('y1', height - 30);
+            xAxis.setAttribute('x2', width - 20);
+            xAxis.setAttribute('y2', height - 30);
+            xAxis.setAttribute('stroke', '#9AA5B5');
+            xAxis.setAttribute('stroke-width', '1');
+            
+            const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            yAxis.setAttribute('x1', '40');
+            yAxis.setAttribute('y1', '20');
+            yAxis.setAttribute('x2', '40');
+            yAxis.setAttribute('y2', height - 30);
+            yAxis.setAttribute('stroke', '#9AA5B5');
+            yAxis.setAttribute('stroke-width', '1');
+            
+            svg.appendChild(xAxis);
+            svg.appendChild(yAxis);
+            
+            // Create error line
+            const points = [];
+            const numPoints = 50;
+            const maxX = width - 60;
+            const maxY = height - 50;
+            
+            // Generate path data
+            for (let i = 0; i < numPoints; i++) {
+                const x = 40 + (i / (numPoints - 1)) * maxX;
+                // Exponential decay function for error
+                const normalizedX = i / (numPoints - 1);
+                const y = height - 30 - (Math.exp(-4 * normalizedX) * 0.8 + 0.05 + Math.random() * 0.1) * maxY;
+                points.push(`${x},${y}`);
+            }
+            
+            // Create path for smooth curve
+            const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+            polyline.setAttribute('points', points.join(' '));
+            polyline.setAttribute('fill', 'none');
+            polyline.setAttribute('stroke', '#FF6B6B');
+            polyline.setAttribute('stroke-width', '2');
+            polyline.setAttribute('stroke-linecap', 'round');
+            polyline.setAttribute('stroke-linejoin', 'round');
+            
+            // Add gradient
+            const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            const gradient = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+            gradient.setAttribute('id', 'errorGradient');
+            gradient.setAttribute('x1', '0%');
+            gradient.setAttribute('y1', '0%');
+            gradient.setAttribute('x2', '100%');
+            gradient.setAttribute('y2', '0%');
+            
+            const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+            stop1.setAttribute('offset', '0%');
+            stop1.setAttribute('stop-color', '#FF6B6B');
+            
+            const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+            stop2.setAttribute('offset', '100%');
+            stop2.setAttribute('stop-color', '#4A6FFF');
+            
+            gradient.appendChild(stop1);
+            gradient.appendChild(stop2);
+            defs.appendChild(gradient);
+            svg.appendChild(defs);
+            
+            polyline.setAttribute('stroke', 'url(#errorGradient)');
+            
+            // Create area under the curve
+            const area = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const areaPoints = [...points, `${40 + maxX},${height - 30}`, `40,${height - 30}`];
+            area.setAttribute('d', `M${areaPoints.join(' L')}`);
+            area.setAttribute('fill', 'url(#errorGradient)');
+            area.setAttribute('fill-opacity', '0.1');
+            area.setAttribute('stroke', 'none');
+            
+            svg.appendChild(area);
+            svg.appendChild(polyline);
+            
+            // Add tick marks
+            for (let i = 0; i <= 5; i++) {
+                // X-axis ticks
+                const xTick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                const xPos = 40 + (i / 5) * maxX;
+                xTick.setAttribute('x1', xPos);
+                xTick.setAttribute('y1', height - 30);
+                xTick.setAttribute('x2', xPos);
+                xTick.setAttribute('y2', height - 25);
+                xTick.setAttribute('stroke', '#9AA5B5');
+                xTick.setAttribute('stroke-width', '1');
+                
+                const xLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                xLabel.setAttribute('x', xPos);
+                xLabel.setAttribute('y', height - 15);
+                xLabel.setAttribute('text-anchor', 'middle');
+                xLabel.setAttribute('font-size', '10');
+                xLabel.setAttribute('fill', '#9AA5B5');
+                xLabel.textContent = i * 20;
+                
+                svg.appendChild(xTick);
+                svg.appendChild(xLabel);
+                
+                // Y-axis ticks
+                const yTick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                const yPos = height - 30 - (i / 5) * maxY;
+                yTick.setAttribute('x1', '35');
+                yTick.setAttribute('y1', yPos);
+                yTick.setAttribute('x2', '40');
+                yTick.setAttribute('y2', yPos);
+                yTick.setAttribute('stroke', '#9AA5B5');
+                yTick.setAttribute('stroke-width', '1');
+                
+                const yLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                yLabel.setAttribute('x', '30');
+                yLabel.setAttribute('y', yPos + 3);
+                yLabel.setAttribute('text-anchor', 'end');
+                yLabel.setAttribute('font-size', '10');
+                yLabel.setAttribute('fill', '#9AA5B5');
+                yLabel.textContent = (1 - i / 5).toFixed(1);
+                
+                svg.appendChild(yTick);
+                svg.appendChild(yLabel);
+            }
+            
+            // Add animation
+            const animateMotion = document.createElementNS('http://www.w3.org/2000/svg', 'animateMotion');
+            animateMotion.setAttribute('dur', '10s');
+            animateMotion.setAttribute('repeatCount', 'indefinite');
+            animateMotion.setAttribute('path', `M${points.join(' L')}`);
+            
+            const marker = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            marker.setAttribute('r', '4');
+            marker.setAttribute('fill', '#FF6B6B');
+            marker.setAttribute('stroke', 'white');
+            marker.setAttribute('stroke-width', '2');
+            marker.appendChild(animateMotion);
+            
+            svg.appendChild(marker);
+            
+            errorGraph.appendChild(svg);
+            
+            // Add hover interaction
+            errorGraph.addEventListener('mousemove', (e) => {
+                const rect = errorGraph.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                if (x >= 40 && x <= width - 20 && y >= 20 && y <= height - 30) {
+                    const normalizedX = (x - 40) / maxX;
+                    const epochValue = Math.round(normalizedX * 100);
+                    const errorValue = Math.exp(-4 * normalizedX) * 0.8 + 0.05;
+                    
+                    showTooltip(e, `Epoch: ${epochValue}<br>Error: ${errorValue.toFixed(3)}`);
+                }
+            });
+            
+            errorGraph.addEventListener('mouseleave', () => {
+                hideTooltip();
+            });
+        }
+        
+        // Initialize error graph
+        drawErrorGraph();
+        window.addEventListener('resize', () => {
+            const errorGraph = document.getElementById('error-graph');
+            errorGraph.innerHTML = '';
+            drawErrorGraph();
+        });
+        
+        // Add CSS for screen reader only elements
+        const style = document.createElement('style');
+        style.textContent = `
+            .sr-only {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                padding: 0;
+                margin: -1px;
+                overflow: hidden;
+                clip: rect(0, 0, 0, 0);
+                white-space: nowrap;
+                border-width: 0;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

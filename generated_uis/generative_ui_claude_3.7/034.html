@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Translator</title>
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #f8f9fa;
+            --accent-color: #28a745;
+            --border-color: #dee2e6;
+            --text-color: #343a40;
+            --error-color: #dc3545;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --border-radius: 8px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: #f0f2f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background-color: white;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(to right, var(--primary-color), var(--accent-color));
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            font-size: 2rem;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        h1 svg {
+            width: 28px;
+            height: 28px;
+        }
+
+        .translator-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .translator-container {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .text-box {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            transition: var(--transition);
+            height: 100%;
+        }
+
+        .text-box:hover {
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .text-box-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .language-label {
+            font-weight: bold;
+            font-size: 18px;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .language-icon {
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .copy-button {
+            background-color: transparent;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .copy-button:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .copy-button:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(74, 111, 165, 0.3);
+        }
+
+        .copy-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        textarea {
+            width: 100%;
+            height: 300px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            font-size: 16px;
+            resize: vertical;
+            transition: var(--transition);
+            line-height: 1.6;
+            flex-grow: 1;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.2);
+        }
+
+        #output-text {
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+            gap: 15px;
+        }
+
+        .translate-button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+        }
+
+        .translate-button:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+        }
+
+        .translate-button:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(40, 167, 69, 0.2);
+        }
+
+        .translate-button:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.3);
+        }
+
+        .translate-button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .loading-spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .message {
+            text-align: center;
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: var(--border-radius);
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .error-message {
+            color: var(--error-color);
+            background-color: rgba(220, 53, 69, 0.1);
+        }
+
+        .success-message {
+            color: var(--success-color);
+            background-color: rgba(40, 167, 69, 0.1);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .copy-tooltip {
+            position: relative;
+        }
+
+        .copy-tooltip .tooltip-text {
+            visibility: hidden;
+            width: 120px;
+            background-color: #333;
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -60px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 14px;
+        }
+
+        .copy-tooltip .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #333 transparent transparent transparent;
+        }
+
+        .copy-tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .character-count {
+            color: #6c757d;
+            font-size: 12px;
+            text-align: right;
+            margin-top: 5px;
+        }
+
+        .text-box-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #6c757d;
+            transition: var(--transition);
+        }
+
+        .status-dot.active {
+            background-color: var(--accent-color);
+        }
+
+        .keyboard-shortcut {
+            display: inline-flex;
+            align-items: center;
+            background-color: #f1f3f5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 5px;
+            border: 1px solid #dee2e6;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .clear-button {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: #6c757d;
+            padding: 5px 10px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .clear-button:hover {
+            background-color: #f1f3f5;
+        }
+
+        .paste-button {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--primary-color);
+            padding: 5px 10px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: var(--transition);
+        }
+
+        .paste-button:hover {
+            background-color: #f1f3f5;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-upload {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--primary-color);
+            padding: 5px 10px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .file-upload:hover {
+            background-color: #f1f3f5;
+        }
+
+        .file-upload svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .switch-languages {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--primary-color);
+            padding: 8px 15px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: var(--transition);
+        }
+
+        .switch-languages:hover {
+            background-color: #f1f3f5;
+            transform: translateY(-2px);
+        }
+
+        .switch-languages:active {
+            transform: translateY(0);
+        }
+
+        .switch-languages svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .language-selector {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+
+        .language-option {
+            background-color: white;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 8px 15px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .language-option:hover {
+            background-color: #f1f3f5;
+        }
+
+        .language-option.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .language-option.active:hover {
+            background-color: #3d5d8a;
+        }
+
+        .progress-bar {
+            height: 4px;
+            width: 100%;
+            background-color: #e9ecef;
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background-color: var(--accent-color);
+            width: 0%;
+            transition: width 0.3s ease-in-out;
+        }
+
+        .shortcut-hint {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .pronunciation-button {
+            background-color: transparent;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            padding: 2px 5px;
+            border-radius: 4px;
+            transition: var(--transition);
+            margin-left: 5px;
+        }
+
+        .pronunciation-button:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .pronunciation-button svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .character-limit-warning {
+            color: var(--warning-color);
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .premium-feature {
+            position: relative;
+        }
+
+        .premium-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: var(--warning-color);
+            color: #212529;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 5px;
+            border-radius: 10px;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 8l6 6"></path>
+                    <path d="M4 14l6-6 2-3"></path>
+                    <path d="M2 5l7 7"></path>
+                    <path d="M15 8h.01"></path>
+                    <path d="M18 11h.01"></path>
+                    <path d="M21 14h.01"></path>
+                    <path d="M15 12a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1a1 1 0 0 0-1-1h-1a1 1 0 0 0-1 1v1z"></path>
+                    <path d="M19 15v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1a1 1 0 0 0-1-1h-1a1 1 0 0 0-1 1z"></path>
+                </svg>
+                Document Translator
+            </h1>
+        </header>
+
+        <main>
+            <div class="language-selector">
+                <div class="language-option active" data-lang="en">
+                    <span>English</span>
+                </div>
+                <div class="language-option" data-lang="es">
+                    <span>Spanish</span>
+                </div>
+                <div class="language-option premium-feature" data-lang="fr">
+                    <span class="premium-badge">PRO</span>
+                    <span>French</span>
+                </div>
+                <div class="language-option premium-feature" data-lang="de">
+                    <span class="premium-badge">PRO</span>
+                    <span>German</span>
+                </div>
+                <button id="switch-languages" class="switch-languages" aria-label="Switch languages">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M1 11.5a.5.5 0 0 0 .5.5h11.793l-3.147 3.146a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 11H1.5a.5.5 0 0 0-.5.5zm14-7a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 1 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 4H14.5a.5.5 0 0 1 .5.5z"/>
+                    </svg>
+                    <span>Switch</span>
+                </button>
+            </div>
+
+            <div class="translator-container">
+                <div class="text-box">
+                    <div class="text-box-header">
+                        <span class="language-label">
+                            <span class="language-icon">EN</span>
+                            English Text
+                        </span>
+                        <div class="action-buttons">
+                            <label for="file-input" class="file-upload">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                                    <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
+                                </svg>
+                                Upload
+                            </label>
+                            <input type="file" id="file-input" class="file-input" accept=".txt,.doc,.docx,.pdf">
+                            <button id="paste-button" class="paste-button">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+                                    <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
+                                </svg>
+                                Paste
+                            </button>
+                            <button id="clear-input-button" class="clear-button">Clear</button>
+                        </div>
+                    </div>
+                    <textarea id="input-text" placeholder="Paste your English document here..." aria-label="English text to translate"></textarea>
+                    <div class="progress-bar" id="input-progress">
+                        <div class="progress-bar-fill" id="input-progress-fill"></div>
+                    </div>
+                    <div class="text-box-footer">
+                        <div class="status-indicator">
+                            <span class="status-dot" id="input-status-dot"></span>
+                            <span id="input-status-text">Ready</span>
+                        </div>
+                        <div>
+                            <div class="character-limit-warning" id="character-limit-warning">
+                                Approaching character limit (5000 max)
+                            </div>
+                            <div class="character-count" id="input-character-count">0 characters</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-box">
+                    <div class="text-box-header">
+                        <span class="language-label">
+                            <span class="language-icon">ES</span>
+                            Spanish Translation
+                            <button id="pronunciation-button" class="pronunciation-button" title="Listen to pronunciation" disabled>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M11.536 14.01A8.473 8.473 0 0 0 14.026 8a8.473 8.473 0 0 0-2.49-6.01l-.708.707A7.476 7.476 0 0 1 13.025 8c0 2.071-.84 3.946-2.197 5.303l.708.707z"/>
+                                    <path d="M10.121 12.596A6.48 6.48 0 0 0 12.025 8a6.48 6.48 0 0 0-1.904-4.596l-.707.707A5.483 5.483 0 0 1 11.025 8a5.483 5.483 0 0 1-1.61 3.89l.706.706z"/>
+                                    <path d="M8.707 11.182A4.486 4.486 0 0 0 10.025 8a4.486 4.486 0 0 0-1.318-3.182L8 5.525A3.489 3.489 0 0 1 9.025 8 3.49 3.49 0 0 1 8 10.475l.707.707zM6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06z"/>
+                                </svg>
+                            </button>
+                        </span>
+                        <div class="action-buttons">
+                            <div class="copy-tooltip">
+                                <button id="copy-button" class="copy-button" disabled aria-label="Copy translated text">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+                                        <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
+                                    </svg>
+                                    Copy
+                                    <span class="keyboard-shortcut">Ctrl+C</span>
+                                </button>
+                                <span class="tooltip-text" id="copy-tooltip">Copy to clipboard</span>
+                            </div>
+                            <button id="download-button" class="copy-button" disabled aria-label="Download translation">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                                    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                                </svg>
+                                Download
+                            </button>
+                            <button id="clear-output-button" class="clear-button" disabled>Clear</button>
+                        </div>
+                    </div>
+                    <textarea id="output-text" placeholder="Translated Spanish text will appear here..." readonly aria-label="Spanish translation output"></textarea>
+                    <div class="progress-bar" id="output-progress">
+                        <div class="progress-bar-fill" id="output-progress-fill"></div>
+                    </div>
+                    <div class="text-box-footer">
+                        <div class="status-indicator">
+                            <span class="status-dot" id="output-status-dot"></span>
+                            <span id="output-status-text">Waiting for translation</span>
+                        </div>
+                        <div class="character-count" id="output-character-count">0 characters</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button id="translate-button" class="translate-button" disabled aria-label="Translate text">
+                    <span>Translate</span>
+                    <div class="loading-spinner" id="loading-spinner"></div>
+                </button>
+            </div>
+
+            <div class="message error-message" id="error-message" role="alert">
+                An error occurred during translation. Please try again.
+            </div>
+
+            <div class="message success-message" id="success-message" role="status">
+                Translation completed successfully!
+            </div>
+
+            <div class="shortcut-hint">
+                Keyboard shortcut: Press <span class="keyboard-shortcut">Ctrl+Enter</span> to translate
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const inputText = document.getElementById('input-text');
+            const outputText = document.getElementById('output-text');
+            const translateButton = document.getElementById('translate-button');
+            const copyButton = document.getElementById('copy-button');
+            const downloadButton = document.getElementById('download-button');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const errorMessage = document.getElementById('error-message');
+            const successMessage = document.getElementById('success-message');
+            const copyTooltip = document.getElementById('copy-tooltip');
+            const inputCharacterCount = document.getElementById('input-character-count');
+            const outputCharacterCount = document.getElementById('output-character-count');
+            const inputStatusDot = document.getElementById('input-status-dot');
+            const inputStatusText = document.getElementById('input-status-text');
+            const outputStatusDot = document.getElementById('output-status-dot');
+            const outputStatusText = document.getElementById('output-status-text');
+            const clearInputButton = document.getElementById('clear-input-button');
+            const clearOutputButton = document.getElementById('clear-output-button');
+            const pasteButton = document.getElementById('paste-button');
+            const fileInput = document.getElementById('file-input');
+            const switchLanguagesButton = document.getElementById('switch-languages');
+            const languageOptions = document.querySelectorAll('.language-option');
+            const pronunciationButton = document.getElementById('pronunciation-button');
+            const characterLimitWarning = document.getElementById('character-limit-warning');
+            const inputProgressBar = document.getElementById('input-progress');
+            const inputProgressFill = document.getElementById('input-progress-fill');
+            const outputProgressBar = document.getElementById('output-progress');
+            const outputProgressFill = document.getElementById('output-progress-fill');
+
+            // Constants
+            const CHARACTER_LIMIT = 5000;
+            const CHARACTER_WARNING_THRESHOLD = 0.8; // 80% of limit
+
+            // State variables
+            let sourceLanguage = 'en';
+            let targetLanguage = 'es';
+            let isTranslating = false;
+            let lastTranslationText = '';
+
+            // Update character count and input status
+            function updateInputStatus() {
+                const textLength = inputText.value.trim().length;
+                inputCharacterCount.textContent = `${textLength} characters`;
+                
+                // Update progress bar
+                const percentFilled = (textLength / CHARACTER_LIMIT) * 100;
+                inputProgressFill.style.width = `${Math.min(percentFilled, 100)}%`;
+                
+                if (textLength >= CHARACTER_LIMIT * CHARACTER_WARNING_THRESHOLD) {
+                    characterLimitWarning.style.display = 'block';
+                    inputProgressFill.style.backgroundColor = textLength >= CHARACTER_LIMIT ? 'var(--error-color)' : 'var(--warning-color)';
+                    inputProgressBar.style.display = 'block';
+                } else {
+                    characterLimitWarning.style.display = 'none';
+                    inputProgressFill.style.backgroundColor = 'var(--accent-color)';
+                    inputProgressBar.style.display = textLength > 0 ? 'block' : 'none';
+                }
+                
+                if (textLength === 0) {
+                    inputStatusDot.classList.remove('active');
+                    inputStatusText.textContent = 'Ready';
+                    translateButton.disabled = true;
+                } else if (textLength > CHARACTER_LIMIT) {
+                    inputStatusDot.classList.remove('active');
+                    inputStatusText.textContent = 'Character limit exceeded';
+                    translateButton.disabled = true;
+                } else {
+                    inputStatusDot.classList.add('active');
+                    inputStatusText.textContent = 'Ready to translate';
+                    translateButton.disabled = isTranslating || inputText.value.trim() === lastTranslationText;
+                }
+            }
+
+            // Update language display
+            function updateLanguageDisplay() {
+                const sourceIcon = document.querySelector('.language-icon:first-of-type');
+                const targetIcon = document.querySelector('.language-icon:last-of-type');
+                const sourceLabel = document.querySelector('.text-box-header:first-of-type .language-label');
+                const targetLabel = document.querySelector('.text-box-header:last-of-type .language-label');
+                
+                sourceIcon.textContent = sourceLanguage.toUpperCase();
+                targetIcon.textContent = targetLanguage.toUpperCase();
+                
+                if (sourceLanguage === 'en') {
+                    sourceLabel.childNodes[1].textContent = 'English Text';
+                } else if (sourceLanguage === 'es') {
+                    sourceLabel.childNodes[1].textContent = 'Spanish Text';
+                } else if (sourceLanguage === 'fr') {
+                    sourceLabel.childNodes[1].textContent = 'French Text';
+                } else if (sourceLanguage === 'de') {
+                    sourceLabel.childNodes[1].textContent = 'German Text';
+                }
+                
+                if (targetLanguage === 'en') {
+                    targetLabel.childNodes[1].textContent = 'English Translation';
+                } else if (targetLanguage === 'es') {
+                    targetLabel.childNodes[1].textContent = 'Spanish Translation';
+                } else if (targetLanguage === 'fr') {
+                    targetLabel.childNodes[1].textContent = 'French Translation';
+                } else if (targetLanguage === 'de') {
+                    targetLabel.childNodes[1].textContent = 'German Translation';
+                }
+                
+                // Update placeholders
+                if (sourceLanguage === 'en') {
+                    inputText.placeholder = 'Paste your English document here...';
+                } else if (sourceLanguage === 'es') {
+                    inputText.placeholder = 'Pegue su documento en español aquí...';
+                } else if (sourceLanguage === 'fr') {
+                    inputText.placeholder = 'Collez votre document en français ici...';
+                } else if (sourceLanguage === 'de') {
+                    inputText.placeholder = 'Fügen Sie Ihr deutsches Dokument hier ein...';
+                }
+                
+                if (targetLanguage === 'en') {
+                    outputText.placeholder = 'Translated English text will appear here...';
+                } else if (targetLanguage === 'es') {
+                    outputText.placeholder = 'El texto traducido al español aparecerá aquí...';
+                } else if (targetLanguage === 'fr') {
+                    outputText.placeholder = 'Le texte traduit en français apparaîtra ici...';
+                } else if (targetLanguage === 'de') {
+                    outputText.placeholder = 'Der übersetzte deutsche Text erscheint hier...';
+                }
+                
+                // Update active language in selector
+                languageOptions.forEach(option => {
+                    option.classList.remove('active');
+                    if (option.dataset.lang === sourceLanguage) {
+                        option.classList.add('active');
+                    }
+                });
+            }
+
+            // Enable translate button only when there's text to translate
+            inputText.addEventListener('input', function() {
+                updateInputStatus();
+                errorMessage.style.display = 'none';
+            });
+
+            // Handle translation
+            translateButton.addEventListener('click', function() {
+                translateText();
+            });
+
+            // Handle clear input button
+            clearInputButton.addEventListener('click', function() {
+                inputText.value = '';
+                updateInputStatus();
+                errorMessage.style.display = 'none';
+                successMessage.style.display = 'none';
+                inputProgressBar.style.display = 'none';
+            });
+
+            // Handle clear output button
+            clearOutputButton.addEventListener('click', function() {
+                outputText.value = '';
+                outputCharacterCount.textContent = '0 characters';
+                outputStatusDot.classList.remove('active');
+                outputStatusText.textContent = 'Waiting for translation';
+                copyButton.disabled = true;
+                downloadButton.disabled = true;
+                clearOutputButton.disabled = true;
+                pronunciationButton.disabled = true;
+                outputProgressBar.style.display = 'none';
+            });
+
+            // Handle paste button
+            pasteButton.addEventListener('click', async function() {
+                try {
+                    const text = await navigator.clipboard.readText();
+                    inputText.value = text;
+                    updateInputStatus();
+                } catch (error) {
+                    console.error('Failed to read clipboard contents: ', error);
+                    // Fallback for browsers that don't support clipboard API
+                    inputText.focus();
+                    document.execCommand('paste');
+                    setTimeout(updateInputStatus, 100);
+                }
+            });
+
+            // Handle file upload
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                // Show loading state
+                inputStatusText.textContent = 'Loading file...';
+                inputProgressBar.style.display = 'block';
+                inputProgressFill.style.width = '0%';
+                
+                const reader = new FileReader();
+                
+                reader.onprogress = function(e) {
+                    if (e.lengthComputable) {
+                        const percentLoaded = (e.loaded / e.total) * 100;
+                        inputProgressFill.style.width = `${percentLoaded}%`;
+                    }
+                };
+                
+                reader.onload = function(e) {
+                    inputText.value = e.target.result;
+                    updateInputStatus();
+                };
+                
+                reader.onerror = function() {
+                    inputStatusText.textContent = 'Error loading file';
+                    errorMessage.textContent = 'Failed to read the file. Please try again.';
+                    errorMessage.style.display = 'block';
+                };
+                
+                if (file.type === 'application/pdf') {
+                    // For PDF files we'd need a PDF.js library, but here we'll show a message
+                    inputText.value = "PDF files require additional processing. This demo supports text files only.\n\nPlease copy and paste the content directly.";
+                    updateInputStatus();
+                } else {
+                    reader.readAsText(file);
+                }
+                
+                // Reset the file input so the same file can be selected again
+                fileInput.value = '';
+            });
+
+            // Handle switch languages button
+            switchLanguagesButton.addEventListener('click', function() {
+                const temp = sourceLanguage;
+                sourceLanguage = targetLanguage;
+                targetLanguage = temp;
+                
+                // Swap text content if both fields have content
+                if (inputText.value && outputText.value) {
+                    const tempText = inputText.value;
+                    inputText.value = outputText.value;
+                    outputText.value = tempText;
+                    
+                    // Update character counts and status
+                    updateInputStatus();
+                    outputCharacterCount.textContent = `${outputText.value.length} characters`;
+                }
+                
+                updateLanguageDisplay();
+            });
+
+            // Handle language selection
+            languageOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    // Skip if it's a premium feature
+                    if (this.classList.contains('premium-feature')) {
+                        errorMessage.textContent = 'This language is only available in the premium version.';
+                        errorMessage.style.display = 'block';
+                        setTimeout(() => {
+                            errorMessage.style.display = 'none';
+                        }, 3000);
+                        return;
+                    }
+                    
+                    // Skip if already selected
+                    if (this.classList.contains('active')) return;
+                    
+                    sourceLanguage = this.dataset.lang;
+                    
+                    // If source and target are the same, swap them
+                    if (sourceLanguage === targetLanguage) {
+                        targetLanguage = 'en';
+                    }
+                    
+                    updateLanguageDisplay();
+                });
+            });
+
+            // Handle pronunciation button
+            pronunciationButton.addEventListener('click', function() {
+                // This would use the Web Speech API in a real implementation
+                if ('speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance(outputText.value);
+                    utterance.lang = targetLanguage === 'es' ? 'es-ES' : 
+                                    targetLanguage === 'fr' ? 'fr-FR' : 
+                                    targetLanguage === 'de' ? 'de-DE' : 'en-US';
+                    speechSynthesis.speak(utterance);
+                }
+            });
+
+            // Keyboard shortcut for translation (Ctrl+Enter)
+            document.addEventListener('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !translateButton.disabled) {
+                    translateText();
+                }
+            });
+
+            function translateText() {
+                const textToTranslate = inputText.value.trim();
+                lastTranslationText = textToTranslate;
+                
+                if (!textToTranslate) return;
+                
+                // Show loading state
+                isTranslating = true;
+                translateButton.disabled = true;
+                loadingSpinner.style.display = 'block';
+                errorMessage.style.display = 'none';
+                successMessage.style.display = 'none';
+                outputStatusDot.classList.remove('active');
+                outputStatusText.textContent = 'Translating...';
+                outputProgressBar.style.display = 'block';
+                outputProgressFill.style.width = '0%';
+                
+                // Simulate progress updates
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    progress += Math.random() * 15;
+                    if (progress > 90) progress = 90; // Cap at 90% until complete
+                    outputProgressFill.style.width = `${progress}%`;
+                }, 300);
+                
+                // Simulate API call with timeout
+                setTimeout(() => {
+                    try {
+                        // This is a mock translation - in a real app, you would call a translation API
+                        const translatedText = mockTranslate(textToTranslate, sourceLanguage, targetLanguage);
+                        outputText.value = translatedText;
+                        copyButton.disabled = false;
+                        downloadButton.disabled = false;
+                        clearOutputButton.disabled = false;
+                        pronunciationButton.disabled = false;
+                        
+                        // Update output status
+                        outputStatusDot.classList.add('active');
+                        outputStatusText.textContent = 'Translation complete';
+                        outputCharacterCount.textContent = `${translatedText.length} characters`;
+                        
+                        // Complete progress bar
+                        outputProgressFill.style.width = '100%';
+                        
+                        // Show success message
+                        successMessage.style.display = 'block';
+                        setTimeout(() => {
+                            successMessage.style.display = 'none';
+                        }, 3000);
+                    } catch (error) {
+                        errorMessage.style.display = 'block';
+                        outputStatusText.textContent = 'Translation failed';
+                        console.error('Translation error:', error);
+                    } finally {
+                        clearInterval(progressInterval);
+                        loadingSpinner.style.display = 'none';
+                        isTranslating = false;
+                        translateButton.disabled = false;
+                        updateInputStatus();
+                    }
+                }, 1500 + Math.random() * 1000); // Random delay for realism
+            }
+
+            // Handle copy functionality
+            copyButton.addEventListener('click', function() {
+                copyTranslatedText();
+            });
+
+            function copyTranslatedText() {
+                // Use modern clipboard API if available
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(outputText.value)
+                        .then(() => {
+                            // Show copied message
+                            copyTooltip.textContent = 'Copied!';
+                            
+                            // Reset tooltip text after 2 seconds
+                            setTimeout(() => {
+                                copyTooltip.textContent = 'Copy to clipboard';
+                            }, 2000);
+                        })
+                        .catch(err => {
+                            console.error('Failed to copy: ', err);
+                            // Fallback
+                            fallbackCopy();
+                        });
+                } else {
+                    // Fallback for older browsers
+                    fallbackCopy();
+                }
+            }
+
+            function fallbackCopy() {
+                outputText.select();
+                document.execCommand('copy');
+                
+                // Show copied message
+                copyTooltip.textContent = 'Copied!';
+                
+                // Reset tooltip text after 2 seconds
+                setTimeout(() => {
+                    copyTooltip.textContent = 'Copy to clipboard';
+                }, 2000);
+            }
+
+            // Handle download functionality
+            downloadButton.addEventListener('click', function() {
+                downloadTranslatedText();
+            });
+
+            function downloadTranslatedText() {
+                const text = outputText.value;
+                const blob = new Blob([text], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                
+                // Create filename based on languages
+                const sourcePrefix = sourceLanguage.toUpperCase();
+                const targetPrefix = targetLanguage.toUpperCase();
+                a.download = `${sourcePrefix}-to-${targetPrefix}-translation.txt`;
+                
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            // Mock translation function - replace with actual API call in production
+            function mockTranslate(text, from, to) {
+                // Common words dictionaries for different language pairs
+                const dictionaries = {
+                    'en-es': {
+                        'hello': 'hola',
+                        'world': 'mundo',
+                        'good': 'bueno',
+                        'morning': 'mañana',
+                        'afternoon': 'tarde',
+                        'evening': 'noche',
+                        'thank you': 'gracias',
+                        'please': 'por favor',
+                        'yes': 'sí',
+                        'no': 'no',
+                        'document': 'documento',
+                        'translate': 'traducir',
+                        'english': 'inglés',
+                        'spanish': 'español',
+                        'the': 'el',
+                        'a': 'un',
+                        'is': 'es',
+                        'and': 'y',
+                        'in': 'en',
+                        'to': 'a',
+                        'for': 'para',
+                        'from': 'de',
+                        'with': 'con',
+                        'this': 'este',
+                        'that': 'ese',
+                        'my': 'mi',
+                        'your': 'tu',
+                        'our': 'nuestro',
+                        'their': 'su',
+                        'he': 'él',
+                        'she': 'ella',
+                        'we': 'nosotros',
+                        'they': 'ellos',
+                        'i': 'yo',
+                        'you': 'tú',
+                        'welcome': 'bienvenido',
+                        'today': 'hoy',
+                        'tomorrow': 'mañana',
+                        'yesterday': 'ayer',
+                        'time': 'tiempo',
+                        'day': 'día',
+                        'night': 'noche',
+                        'book': 'libro',
+                        'car': 'coche',
+                        'house': 'casa',
+                        'work': 'trabajo',
+                        'school': 'escuela',
+                        'friend': 'amigo',
+                        'family': 'familia',
+                        'food': 'comida',
+                        'water': 'agua',
+                        'city': 'ciudad',
+                        'country': 'país',
+                        'language': 'idioma',
+                        'people': 'gente',
+                        'man': 'hombre',
+                        'woman': 'mujer',
+                        'child': 'niño',
+                        'children': 'niños',
+                        'name': 'nombre',
+                        'life': 'vida',
+                        'love': 'amor',
+                        'happy': 'feliz',
+                        'sad': 'triste',
+                        'big': 'grande',
+                        'small': 'pequeño',
+                        'old': 'viejo',
+                        'new': 'nuevo',
+                        'important': 'importante',
+                        'different': 'diferente',
+                        'same': 'mismo',
+                        'much': 'mucho',
+                        'many': 'muchos',
+                        'few': 'pocos',
+                        'little': 'poco',
+                        'other': 'otro',
+                        'first': 'primero',
+                        'last': 'último',
+                        'next': 'siguiente',
+                        'before': 'antes',
+                        'after': 'después',
+                        'now': 'ahora',
+                        'later': 'más tarde',
+                        'soon': 'pronto',
+                        'always': 'siempre',
+                        'never': 'nunca',
+                        'sometimes': 'a veces',
+                        'often': 'a menudo',
+                        'usually': 'normalmente',
+                        'very': 'muy',
+                        'too': 'demasiado'
+                    },
+                    'es-en': {
+                        'hola': 'hello',
+                        'mundo': 'world',
+                        'bueno': 'good',
+                        'mañana': 'morning',
+                        'tarde': 'afternoon',
+                        'noche': 'evening',
+                        'gracias': 'thank you',
+                        'por favor': 'please',
+                        'sí': 'yes',
+                        'no': 'no',
+                        'documento': 'document',
+                        'traducir': 'translate',
+                        'inglés': 'english',
+                        'español': 'spanish',
+                        'el': 'the',
+                        'un': 'a',
+                        'es': 'is',
+                        'y': 'and',
+                        'en': 'in',
+                        'a': 'to',
+                        'para': 'for',
+                        'de': 'from',
+                        'con': 'with',
+                        'este': 'this',
+                        'ese': 'that',
+                        'mi': 'my',
+                        'tu': 'your',
+                        'nuestro': 'our',
+                        'su': 'their',
+                        'él': 'he',
+                        'ella': 'she',
+                        'nosotros': 'we',
+                        'ellos': 'they',
+                        'yo': 'i',
+                        'tú': 'you',
+                        'bienvenido': 'welcome',
+                        'hoy': 'today',
+                        'mañana': 'tomorrow',
+                        'ayer': 'yesterday',
+                        'tiempo': 'time',
+                        'día': 'day',
+                        'noche': 'night',
+                        'libro': 'book',
+                        'coche': 'car',
+                        'casa': 'house',
+                        'trabajo': 'work',
+                        'escuela': 'school',
+                        'amigo': 'friend',
+                        'familia': 'family',
+                        'comida': 'food',
+                        'agua': 'water',
+                        'ciudad': 'city',
+                        'país': 'country',
+                        'idioma': 'language',
+                        'gente': 'people',
+                        'hombre': 'man',
+                        'mujer': 'woman',
+                        'niño': 'child',
+                        'niños': 'children',
+                        'nombre': 'name',
+                        'vida': 'life',
+                        'amor': 'love',
+                        'feliz': 'happy',
+                        'triste': 'sad',
+                        'grande': 'big',
+                        'pequeño': 'small',
+                        'viejo': 'old',
+                        'nuevo': 'new',
+                        'importante': 'important',
+                        'diferente': 'different',
+                        'mismo': 'same',
+                        'mucho': 'much',
+                        'muchos': 'many',
+                        'pocos': 'few',
+                        'poco': 'little',
+                        'otro': 'other',
+                        'primero': 'first',
+                        'último': 'last',
+                        'siguiente': 'next',
+                        'antes': 'before',
+                        'después': 'after',
+                        'ahora': 'now',
+                        'más tarde': 'later',
+                        'pronto': 'soon',
+                        'siempre': 'always',
+                        'nunca': 'never',
+                        'a veces': 'sometimes',
+                        'a menudo': 'often',
+                        'normalmente': 'usually',
+                        'muy': 'very',
+                        'demasiado': 'too'
+                    }
+                };
+                
+                // Get the appropriate dictionary based on language pair
+                const dictKey = `${from}-${to}`;
+                const dictionary = dictionaries[dictKey] || dictionaries['en-es']; // Default to en-es
+                
+                // Very simple word-by-word replacement
+                let translatedText = text.toLowerCase();
+                
+                Object.keys(dictionary).forEach(word => {
+                    const regex = new RegExp('\\b' + word + '\\b', 'gi');
+                    translatedText = translatedText.replace(regex, dictionary[word]);
+                });
+                
+                // Add a disclaimer
+                translatedText += '\n\n[This is a mock translation for demonstration purposes only]';
+                
+                return translatedText;
+            }
+
+            // Initialize
+            updateInputStatus();
+            updateLanguageDisplay();
+        });
+    </script>
+</body>
+</html>

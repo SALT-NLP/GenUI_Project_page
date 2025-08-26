@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Molecular Structures Explorer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4285f4;
+            --secondary-color: #34a853;
+            --tertiary-color: #ea4335;
+            --quaternary-color: #fbbc05;
+            --background-color: #f5f5f5;
+            --card-background: #ffffff;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --border-radius: 12px;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background-color: var(--card-background);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            z-index: 10;
+            overflow-y: auto;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .logo-icon {
+            font-size: 36px;
+            color: var(--primary-color);
+            margin-right: 10px;
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .nav-section {
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        .molecule-list {
+            list-style: none;
+            margin-bottom: 30px;
+        }
+
+        .molecule-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .molecule-item:hover {
+            background-color: rgba(66, 133, 244, 0.1);
+        }
+
+        .molecule-item.active {
+            background-color: rgba(66, 133, 244, 0.2);
+        }
+
+        .molecule-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .main-content {
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 500;
+        }
+
+        .mode-toggle {
+            display: flex;
+            background-color: var(--card-background);
+            border-radius: 30px;
+            padding: 5px;
+            box-shadow: var(--shadow);
+        }
+
+        .mode-option {
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .mode-option.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .viewer-card, .info-card, .full-card {
+            background-color: var(--card-background);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 20px;
+            position: relative;
+        }
+
+        .full-card {
+            grid-column: 1 / -1;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .viewer-container {
+            height: 400px;
+            background-color: #f0f0f0;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #molecule-viewer {
+            width: 100%;
+            height: 100%;
+            background-color: #f0f0f0;
+        }
+
+        .viewer-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+        }
+
+        .control-btn {
+            background-color: var(--card-background);
+            border: 1px solid #ddd;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .control-btn:hover {
+            background-color: #f0f0f0;
+        }
+
+        .view-selector {
+            display: flex;
+            background-color: #f0f0f0;
+            border-radius: 20px;
+            padding: 3px;
+        }
+
+        .view-option {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .view-option.active {
+            background-color: var(--card-background);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-tabs {
+            display: flex;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 20px;
+        }
+
+        .info-tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            position: relative;
+            transition: var(--transition);
+        }
+
+        .info-tab.active {
+            color: var(--primary-color);
+        }
+
+        .info-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--primary-color);
+        }
+
+        .info-content {
+            padding: 10px 0;
+        }
+
+        .property-list {
+            list-style: none;
+        }
+
+        .property-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .property-name {
+            color: var(--text-secondary);
+        }
+
+        .bond-angle-predictor {
+            margin-top: 20px;
+        }
+
+        .prediction-form {
+            margin-top: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #3367d6;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid #ddd;
+        }
+
+        .btn-outline:hover {
+            background-color: #f0f0f0;
+        }
+
+        .reaction-simulator {
+            margin-top: 30px;
+        }
+
+        .reaction-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .reactant, .product {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .reaction-arrow {
+            display: flex;
+            align-items: center;
+            margin: 0 20px;
+            font-size: 24px;
+            color: var(--text-secondary);
+        }
+
+        .reaction-molecule {
+            width: 120px;
+            height: 120px;
+            background-color: #f0f0f0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .molecule-name {
+            font-weight: 500;
+        }
+
+        .reaction-controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .reaction-controls .btn {
+            margin: 0 5px;
+        }
+
+        .macro-properties {
+            margin-top: 30px;
+        }
+
+        .property-card {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .property-card:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .property-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .property-card-title {
+            font-weight: 500;
+        }
+
+        .property-card-icon {
+            color: var(--text-secondary);
+        }
+
+        .property-card-content {
+            margin-top: 10px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            border-radius: var(--border-radius);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(66, 133, 244, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 1000;
+        }
+
+        @media (max-width: 1200px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .mode-toggle {
+                margin-top: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="logo">
+                <span class="logo-icon material-icons">science</span>
+                <div class="logo-text">MoleculeViz</div>
+            </div>
+
+            <div class="nav-section">
+                <h3 class="section-title">Simple Molecules</h3>
+                <ul class="molecule-list">
+                    <li class="molecule-item active" data-molecule="water">
+                        <div class="molecule-icon">H<sub>2</sub>O</div>
+                        <span>Water</span>
+                    </li>
+                    <li class="molecule-item" data-molecule="methane">
+                        <div class="molecule-icon">CH<sub>4</sub></div>
+                        <span>Methane</span>
+                    </li>
+                    <li class="molecule-item" data-molecule="ammonia">
+                        <div class="molecule-icon">NH<sub>3</sub></div>
+                        <span>Ammonia</span>
+                    </li>
+                    <li class="molecule-item" data-molecule="co2">
+                        <div class="molecule-icon">CO<sub>2</sub></div>
+                        <span>Carbon Dioxide</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="nav-section">
+                <h3 class="section-title">Organic Compounds</h3>
+                <ul class="molecule-list">
+                    <li class="molecule-item" data-molecule="ethanol">
+                        <div class="molecule-icon">C<sub>2</sub>H<sub>5</sub>OH</div>
+                        <span>Ethanol</span>
+                    </li>
+                    <li class="molecule-item" data-molecule="acetone">
+                        <div class="molecule-icon">C<sub>3</sub>H<sub>6</sub>O</div>
+                        <span>Acetone</span>
+                    </li>
+                    <li class="molecule-item" data-molecule="benzene">
+                        <div class="molecule-icon">C<sub>6</sub>H<sub>6</sub></div>
+                        <span>Benzene</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="nav-section">
+                <h3 class="section-title">Inorganic Compounds</h3>
+                <ul class="molecule-list">
+                    <li class="molecule-item" data-molecule="nacl">
+                        <div class="molecule-icon">NaCl</div>
+                        <span>Sodium Chloride</span>
+                    </li>
+                    <li class="molecule-item" data-molecule="h2so4">
+                        <div class="molecule-icon">H<sub>2</sub>SO<sub>4</sub></div>
+                        <span>Sulfuric Acid</span>
+                    </li>
+                    <li class="molecule-item" data-molecule="naoh">
+                        <div class="molecule-icon">NaOH</div>
+                        <span>Sodium Hydroxide</span>
+                    </li>
+                </ul>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="header">
+                <h1 class="page-title">Molecular Structure Explorer</h1>
+                <div class="mode-toggle">
+                    <div class="mode-option active">Explore</div>
+                    <div class="mode-option">Predict</div>
+                    <div class="mode-option">Simulate</div>
+                </div>
+            </div>
+
+            <div class="content-grid">
+                <div class="viewer-card">
+                    <div class="card-header">
+                        <h2 class="card-title">3D Molecule Viewer</h2>
+                        <div class="view-selector">
+                            <div class="view-option active">Ball & Stick</div>
+                            <div class="view-option">Space Filling</div>
+                            <div class="view-option">Wireframe</div>
+                        </div>
+                    </div>
+                    <div class="viewer-container">
+                        <div id="molecule-viewer"></div>
+                        <div class="loading-overlay">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                    <div class="viewer-controls">
+                        <div class="control-group">
+                            <div class="control-btn" id="rotate-left">
+                                <span class="material-icons">rotate_left</span>
+                            </div>
+                            <div class="control-btn" id="rotate-right">
+                                <span class="material-icons">rotate_right</span>
+                            </div>
+                            <div class="control-btn" id="zoom-in">
+                                <span class="material-icons">add</span>
+                            </div>
+                            <div class="control-btn" id="zoom-out">
+                                <span class="material-icons">remove</span>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <div class="control-btn" id="reset-view">
+                                <span class="material-icons">restart_alt</span>
+                            </div>
+                            <div class="control-btn" id="toggle-measure">
+                                <span class="material-icons">straighten</span>
+                            </div>
+                            <div class="control-btn" id="toggle-labels">
+                                <span class="material-icons">label</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-tabs">
+                        <div class="info-tab active">Properties</div>
+                        <div class="info-tab">Structure</div>
+                        <div class="info-tab">Bonding</div>
+                    </div>
+                    <div class="info-content">
+                        <h3>Water (H<sub>2</sub>O)</h3>
+                        <ul class="property-list">
+                            <li class="property-item">
+                                <span class="property-name">Molecular Weight</span>
+                                <span class="property-value">18.02 g/mol</span>
+                            </li>
+                            <li class="property-item">
+                                <span class="property-name">Density</span>
+                                <span class="property-value">1.0 g/cm³</span>
+                            </li>
+                            <li class="property-item">
+                                <span class="property-name">Boiling Point</span>
+                                <span class="property-value">100°C</span>
+                            </li>
+                            <li class="property-item">
+                                <span class="property-name">Melting Point</span>
+                                <span class="property-value">0°C</span>
+                            </li>
+                            <li class="property-item">
+                                <span class="property-name">Bond Angle</span>
+                                <span class="property-value">104.5°</span>
+                            </li>
+                            <li class="property-item">
+                                <span class="property-name">Bond Length</span>
+                                <span class="property-value">0.96 Å</span>
+                            </li>
+                            <li class="property-item">
+                                <span class="property-name">Electronegativity</span>
+                                <span class="property-value">H: 2.1, O: 3.5</span>
+                            </li>
+                        </ul>
+                        
+                        <div class="bond-angle-predictor">
+                            <h3>Predict Bond Angles</h3>
+                            <div class="prediction-form">
+                                <div class="form-group">
+                                    <label for="central-atom">Central Atom</label>
+                                    <select id="central-atom">
+                                        <option value="O">Oxygen (O)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="bond-angle">Predicted Angle</label>
+                                    <input type="number" id="bond-angle" placeholder="Enter angle in degrees">
+                                </div>
+                                <button class="btn btn-primary" id="check-prediction">Check Prediction</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="full-card reaction-simulator">
+                    <div class="card-header">
+                        <h2 class="card-title">Reaction Simulator</h2>
+                    </div>
+                    <div class="reaction-container">
+                        <div class="reactant">
+                            <div class="reaction-molecule">
+                                <span>H<sub>2</sub>O</span>
+                            </div>
+                            <div class="molecule-name">Water</div>
+                        </div>
+                        <div class="reaction-arrow">
+                            <span class="material-icons">arrow_forward</span>
+                        </div>
+                        <div class="reactant">
+                            <div class="reaction-molecule">
+                                <span>H<sup>+</sup></span>
+                            </div>
+                            <div class="molecule-name">Hydrogen Ion</div>
+                        </div>
+                        <div class="reaction-arrow">
+                            <span>+</span>
+                        </div>
+                        <div class="product">
+                            <div class="reaction-molecule">
+                                <span>OH<sup>-</sup></span>
+                            </div>
+                            <div class="molecule-name">Hydroxide Ion</div>
+                        </div>
+                    </div>
+                    <div class="reaction-controls">
+                        <button class="btn btn-outline" id="prev-step">
+                            <span class="material-icons">skip_previous</span> Previous
+                        </button>
+                        <button class="btn btn-primary" id="play-reaction">
+                            <span class="material-icons">play_arrow</span> Play
+                        </button>
+                        <button class="btn btn-outline" id="next-step">
+                            Next <span class="material-icons">skip_next</span>
+                        </button>
+                        <button class="btn btn-outline" id="reset-reaction">
+                            <span class="material-icons">restart_alt</span> Reset
+                        </button>
+                    </div>
+                </div>
+
+                <div class="full-card macro-properties">
+                    <div class="card-header">
+                        <h2 class="card-title">Macroscopic Properties</h2>
+                    </div>
+                    <div class="property-cards">
+                        <div class="property-card">
+                            <div class="property-card-header">
+                                <div class="property-card-title">Hydrogen Bonding</div>
+                                <div class="property-card-icon">
+                                    <span class="material-icons">water_drop</span>
+                                </div>
+                            </div>
+                            <div class="property-card-content">
+                                Water molecules form hydrogen bonds between the oxygen of one molecule and hydrogen of another. This gives water its unique properties like high boiling point, surface tension, and capillary action.
+                            </div>
+                        </div>
+                        <div class="property-card">
+                            <div class="property-card-header">
+                                <div class="property-card-title">Polarity and Solubility</div>
+                                <div class="property-card-icon">
+                                    <span class="material-icons">bolt</span>
+                                </div>
+                            </div>
+                            <div class="property-card-content">
+                                Water's bent molecular shape creates a polar molecule with partial charges. This makes water an excellent solvent for other polar compounds and ionic substances, explaining why it's often called the "universal solvent."
+                            </div>
+                        </div>
+                        <div class="property-card">
+                            <div class="property-card-header">
+                                <div class="property-card-title">Density Anomaly</div>
+                                <div class="property-card-icon">
+                                    <span class="material-icons">ac_unit</span>
+                                </div>
+                            </div>
+                            <div class="property-card-content">
+                                Unlike most substances, water's solid form (ice) is less dense than its liquid form. This is due to the hydrogen bonding network that forms in ice, creating a more open crystalline structure.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+
+    <script type="module">
+        import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.module.js';
+        import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.132.2/examples/jsm/controls/OrbitControls.js';
+
+        // Initialize the 3D scene
+        const container = document.getElementById('molecule-viewer');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xf0f0f0);
+
+        const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.z = 5;
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        container.appendChild(renderer.domElement);
+
+        // Add lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(1, 1, 1);
+        scene.add(directionalLight);
+
+        // Add orbit controls
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.25;
+
+        // Molecule models
+        const molecules = {
+            water: {
+                atoms: [
+                    { element: 'O', position: [0, 0, 0], color: 0xff0000 },
+                    { element: 'H', position: [-0.8, 0.6, 0], color: 0xffffff },
+                    { element: 'H', position: [0.8, 0.6, 0], color: 0xffffff }
+                ],
+                bonds: [
+                    { start: 0, end: 1 },
+                    { start: 0, end: 2 }
+                ],
+                properties: {
+                    name: 'Water',
+                    formula: 'H₂O',
+                    molecularWeight: '18.02 g/mol',
+                    density: '1.0 g/cm³',
+                    boilingPoint: '100°C',
+                    meltingPoint: '0°C',
+                    bondAngle: '104.5°',
+                    bondLength: '0.96 Å',
+                    electronegativity: 'H: 2.1, O: 3.5'
+                }
+            },
+            methane: {
+                atoms: [
+                    { element: 'C', position: [0, 0, 0], color: 0x808080 },
+                    { element: 'H', position: [0.8, 0.8, 0.8], color: 0xffffff },
+                    { element: 'H', position: [-0.8, -0.8, 0.8], color: 0xffffff },
+                    { element: 'H', position: [0.8, -0.8, -0.8], color: 0xffffff },
+                    { element: 'H', position: [-0.8, 0.8, -0.8], color: 0xffffff }
+                ],
+                bonds: [
+                    { start: 0, end: 1 },
+                    { start: 0, end: 2 },
+                    { start: 0, end: 3 },
+                    { start: 0, end: 4 }
+                ],
+                properties: {
+                    name: 'Methane',
+                    formula: 'CH₄',
+                    molecularWeight: '16.04 g/mol',
+                    density: '0.657 kg/m³ (gas)',
+                    boilingPoint: '-161.5°C',
+                    meltingPoint: '-182.5°C',
+                    bondAngle: '109.5°',
+                    bondLength: '1.09 Å',
+                    electronegativity: 'H: 2.1, C: 2.5'
+                }
+            },
+            ammonia: {
+                atoms: [
+                    { element: 'N', position: [0, 0, 0], color: 0x0000ff },
+                    { element: 'H', position: [0.8, 0.6, 0], color: 0xffffff },
+                    { element: 'H', position: [-0.4, 0.6, 0.7], color: 0xffffff },
+                    { element: 'H', position: [-0.4, 0.6, -0.7], color: 0xffffff }
+                ],
+                bonds: [
+                    { start: 0, end: 1 },
+                    { start: 0, end: 2 },
+                    { start: 0, end: 3 }
+                ],
+                properties: {
+                    name: 'Ammonia',
+                    formula: 'NH₃',
+                    molecularWeight: '17.03 g/mol',
+                    density: '0.73 kg/m³ (gas)',
+                    boilingPoint: '-33.3°C',
+                    meltingPoint: '-77.7°C',
+                    bondAngle: '107.3°',
+                    bondLength: '1.01 Å',
+                    electronegativity: 'H: 2.1, N: 3.0'
+                }
+            },
+            // Additional molecules can be defined here
+        };
+
+        // Current molecule and display mode
+        let currentMolecule = 'water';
+        let displayMode = 'ball-stick';
+        let measureMode = false;
+        let showLabels = true;
+        let moleculeGroup = new THREE.Group();
+        scene.add(moleculeGroup);
+
+        // Atom and bond geometries
+        const atomGeometries = {};
+        const bondGeometry = new THREE.CylinderGeometry(0.1, 0.1, 1, 8);
+        bondGeometry.rotateX(Math.PI / 2);
+
+        // Create atom geometries for different elements and display modes
+        function createAtomGeometries() {
+            const elements = ['H', 'C', 'N', 'O'];
+            const sizes = { 'H': 0.3, 'C': 0.7, 'N': 0.7, 'O': 0.7 };
+            
+            elements.forEach(element => {
+                atomGeometries[element] = {
+                    'ball-stick': new THREE.SphereGeometry(sizes[element], 32, 32),
+                    'space-filling': new THREE.SphereGeometry(sizes[element] * 2, 32, 32),
+                    'wireframe': new THREE.SphereGeometry(sizes[element], 8, 8)
+                };
+            });
+        }
+
+        createAtomGeometries();
+
+        // Load and display a molecule
+        function loadMolecule(moleculeName) {
+            showLoadingOverlay(true);
+            
+            // Clear current molecule
+            while(moleculeGroup.children.length > 0) {
+                moleculeGroup.remove(moleculeGroup.children[0]);
+            }
+            
+            const molecule = molecules[moleculeName];
+            if (!molecule) {
+                console.error(`Molecule ${moleculeName} not found`);
+                showLoadingOverlay(false);
+                return;
+            }
+            
+            // Create atoms
+            molecule.atoms.forEach((atom, index) => {
+                const geometry = atomGeometries[atom.element][displayMode];
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: atom.color,
+                    wireframe: displayMode === 'wireframe'
+                });
+                
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.set(...atom.position);
+                mesh.userData = { 
+                    type: 'atom', 
+                    element: atom.element, 
+                    index: index,
+                    position: atom.position
+                };
+                moleculeGroup.add(mesh);
+                
+                // Add label if enabled
+                if (showLabels) {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 64;
+                    canvas.height = 64;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = 'white';
+                    ctx.font = '40px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(atom.element, 32, 32);
+                    
+                    const texture = new THREE.CanvasTexture(canvas);
+                    const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+                    const sprite = new THREE.Sprite(spriteMaterial);
+                    sprite.position.set(...atom.position);
+                    sprite.position.y += 0.5;
+                    sprite.scale.set(0.5, 0.5, 0.5);
+                    sprite.userData = { type: 'label' };
+                    moleculeGroup.add(sprite);
+                }
+            });
+            
+            // Create bonds
+            molecule.bonds.forEach(bond => {
+                const start = new THREE.Vector3(...molecule.atoms[bond.start].position);
+                const end = new THREE.Vector3(...molecule.atoms[bond.end].position);
+                
+                const direction = new THREE.Vector3().subVectors(end, start);
+                const length = direction.length();
+                
+                const bondMesh = new THREE.Mesh(
+                    bondGeometry,
+                    new THREE.MeshPhongMaterial({ 
+                        color: 0xcccccc,
+                        wireframe: displayMode === 'wireframe'
+                    })
+                );
+                
+                bondMesh.position.copy(start);
+                bondMesh.position.add(direction.multiplyScalar(0.5));
+                bondMesh.scale.set(1, length, 1);
+                bondMesh.lookAt(end);
+                
+                bondMesh.userData = { 
+                    type: 'bond', 
+                    start: bond.start, 
+                    end: bond.end,
+                    length: length
+                };
+                
+                moleculeGroup.add(bondMesh);
+            });
+            
+            // Center molecule
+            const box = new THREE.Box3().setFromObject(moleculeGroup);
+            const center = box.getCenter(new THREE.Vector3());
+            moleculeGroup.position.sub(center);
+            
+            // Update molecule info in the UI
+            updateMoleculeInfo(molecule);
+            
+            // Hide loading overlay
+            setTimeout(() => showLoadingOverlay(false), 500);
+        }
+
+        function showLoadingOverlay(show) {
+            const overlay = document.querySelector('.loading-overlay');
+            if (show) {
+                overlay.classList.add('active');
+            } else {
+                overlay.classList.remove('active');
+            }
+        }
+
+        function updateMoleculeInfo(molecule) {
+            const infoContent = document.querySelector('.info-content');
+            const properties = molecule.properties;
+            
+            let html = `<h3>${properties.name} (${properties.formula})</h3>
+                <ul class="property-list">
+                    <li class="property-item">
+                        <span class="property-name">Molecular Weight</span>
+                        <span class="property-value">${properties.molecularWeight}</span>
+                    </li>
+                    <li class="property-item">
+                        <span class="property-name">Density</span>
+                        <span class="property-value">${properties.density}</span>
+                    </li>
+                    <li class="property-item">
+                        <span class="property-name">Boiling Point</span>
+                        <span class="property-value">${properties.boilingPoint}</span>
+                    </li>
+                    <li class="property-item">
+                        <span class="property-name">Melting Point</span>
+                        <span class="property-value">${properties.meltingPoint}</span>
+                    </li>
+                    <li class="property-item">
+                        <span class="property-name">Bond Angle</span>
+                        <span class="property-value">${properties.bondAngle}</span>
+                    </li>
+                    <li class="property-item">
+                        <span class="property-name">Bond Length</span>
+                        <span class="property-value">${properties.bondLength}</span>
+                    </li>
+                    <li class="property-item">
+                        <span class="property-name">Electronegativity</span>
+                        <span class="property-value">${properties.electronegativity}</span>
+                    </li>
+                </ul>
+                
+                <div class="bond-angle-predictor">
+                    <h3>Predict Bond Angles</h3>
+                    <div class="prediction-form">
+                        <div class="form-group">
+                            <label for="central-atom">Central Atom</label>
+                            <select id="central-atom">
+                                <option value="${molecule.atoms[0].element}">${molecule.atoms[0].element}</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="bond-angle">Predicted Angle</label>
+                            <input type="number" id="bond-angle" placeholder="Enter angle in degrees">
+                        </div>
+                        <button class="btn btn-primary" id="check-prediction">Check Prediction</button>
+                    </div>
+                </div>`;
+            
+            infoContent.innerHTML = html;
+            
+            // Add event listener for bond angle prediction
+            document.getElementById('check-prediction').addEventListener('click', checkBondAnglePrediction);
+        }
+
+        function checkBondAnglePrediction() {
+            const predictedAngle = parseFloat(document.getElementById('bond-angle').value);
+            const molecule = molecules[currentMolecule];
+            const actualAngle = parseFloat(molecule.properties.bondAngle);
+            
+            if (isNaN(predictedAngle)) {
+                showTooltip('Please enter a valid number', 'check-prediction');
+                return;
+            }
+            
+            const difference = Math.abs(predictedAngle - actualAngle);
+            let message;
+            
+            if (difference <= 2) {
+                message = `Excellent! The actual bond angle is ${actualAngle}°`;
+            } else if (difference <= 5) {
+                message = `Close! The actual bond angle is ${actualAngle}°`;
+            } else {
+                message = `Try again. The actual bond angle is ${actualAngle}°`;
+            }
+            
+            showTooltip(message, 'check-prediction');
+        }
+
+        function showTooltip(message, targetId) {
+            const tooltip = document.getElementById('tooltip');
+            const target = document.getElementById(targetId);
+            const rect = target.getBoundingClientRect();
+            
+            tooltip.textContent = message;
+            tooltip.style.left = `${rect.left + rect.width / 2 - tooltip.offsetWidth / 2}px`;
+            tooltip.style.top = `${rect.bottom + 5}px`;
+            tooltip.style.opacity = '1';
+            
+            setTimeout(() => {
+                tooltip.style.opacity = '0';
+            }, 3000);
+        }
+
+        // Handle molecule selection
+        document.querySelectorAll('.molecule-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.molecule-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                
+                currentMolecule = this.dataset.molecule;
+                loadMolecule(currentMolecule);
+            });
+        });
+
+        // Handle view mode selection
+        document.querySelectorAll('.view-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.view-option').forEach(o => o.classList.remove('active'));
+                this.classList.add('active');
+                
+                const mode = this.textContent.trim().toLowerCase().replace(/ & /g, '-');
+                displayMode = mode;
+                loadMolecule(currentMolecule);
+            });
+        });
+
+        // Handle viewer controls
+        document.getElementById('rotate-left').addEventListener('click', () => {
+            moleculeGroup.rotation.y -= Math.PI / 6;
+        });
+        
+        document.getElementById('rotate-right').addEventListener('click', () => {
+            moleculeGroup.rotation.y += Math.PI / 6;
+        });
+        
+        document.getElementById('zoom-in').addEventListener('click', () => {
+            camera.position.z *= 0.9;
+        });
+        
+        document.getElementById('zoom-out').addEventListener('click', () => {
+            camera.position.z *= 1.1;
+        });
+        
+        document.getElementById('reset-view').addEventListener('click', () => {
+            moleculeGroup.rotation.set(0, 0, 0);
+            camera.position.set(0, 0, 5);
+            controls.reset();
+        });
+        
+        document.getElementById('toggle-measure').addEventListener('click', () => {
+            measureMode = !measureMode;
+            document.getElementById('toggle-measure').classList.toggle('active');
+        });
+        
+        document.getElementById('toggle-labels').addEventListener('click', () => {
+            showLabels = !showLabels;
+            document.getElementById('toggle-labels').classList.toggle('active');
+            loadMolecule(currentMolecule);
+        });
+
+        // Handle mode toggle
+        document.querySelectorAll('.mode-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.mode-option').forEach(o => o.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Implement mode switching logic here
+            });
+        });
+
+        // Handle info tabs
+        document.querySelectorAll('.info-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.info-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Implement tab switching logic here
+            });
+        });
+
+        // Handle reaction controls
+        document.getElementById('play-reaction').addEventListener('click', function() {
+            const icon = this.querySelector('.material-icons');
+            if (icon.textContent === 'play_arrow') {
+                icon.textContent = 'pause';
+                // Start reaction animation
+            } else {
+                icon.textContent = 'play_arrow';
+                // Pause reaction animation
+            }
+        });
+        
+        document.getElementById('prev-step').addEventListener('click', () => {
+            // Previous reaction step
+        });
+        
+        document.getElementById('next-step').addEventListener('click', () => {
+            // Next reaction step
+        });
+        
+        document.getElementById('reset-reaction').addEventListener('click', () => {
+            // Reset reaction
+            document.getElementById('play-reaction').querySelector('.material-icons').textContent = 'play_arrow';
+        });
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+
+        // Initialize
+        loadMolecule(currentMolecule);
+        animate();
+    </script>
+</body>
+</html>

@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SWOT Analysis Tool</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --strength-color: #27ae60;
+            --weakness-color: #e74c3c;
+            --opportunity-color: #f39c12;
+            --threat-color: #9b59b6;
+            --text-color: #333;
+            --light-gray: #f5f5f5;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: #f9f9f9;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .intro {
+            background-color: white;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 30px;
+        }
+
+        .swot-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .swot-section {
+            background-color: white;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+        }
+
+        .swot-section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .swot-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid;
+        }
+
+        .swot-icon {
+            font-size: 1.5rem;
+            margin-right: 10px;
+        }
+
+        .swot-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        /* Section specific colors */
+        .strengths .swot-header {
+            color: var(--strength-color);
+            border-color: var(--strength-color);
+        }
+
+        .weaknesses .swot-header {
+            color: var(--weakness-color);
+            border-color: var(--weakness-color);
+        }
+
+        .opportunities .swot-header {
+            color: var(--opportunity-color);
+            border-color: var(--opportunity-color);
+        }
+
+        .threats .swot-header {
+            color: var(--threat-color);
+            border-color: var(--threat-color);
+        }
+
+        .input-group {
+            display: flex;
+            margin-bottom: 15px;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius) 0 0 var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .input-group button {
+            padding: 10px 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 0 var(--border-radius) var(--border-radius) 0;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .input-group button:hover {
+            background-color: #2980b9;
+        }
+
+        .swot-list {
+            list-style-type: none;
+        }
+
+        .swot-item {
+            background-color: var(--light-gray);
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: var(--border-radius);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
+        }
+
+        .swot-item:hover {
+            transform: translateX(5px);
+        }
+
+        .swot-item-text {
+            flex: 1;
+        }
+
+        .swot-item.editing .swot-item-text {
+            display: none;
+        }
+
+        .edit-input {
+            flex: 1;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            display: none;
+        }
+
+        .swot-item.editing .edit-input {
+            display: block;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 3px 5px;
+            border-radius: 3px;
+            transition: var(--transition);
+        }
+
+        .btn-edit {
+            color: #3498db;
+        }
+
+        .btn-delete {
+            color: #e74c3c;
+        }
+
+        .btn-save {
+            color: #27ae60;
+            display: none;
+        }
+
+        .btn-cancel {
+            color: #7f8c8d;
+            display: none;
+        }
+
+        .swot-item.editing .btn-edit,
+        .swot-item.editing .btn-delete {
+            display: none;
+        }
+
+        .swot-item.editing .btn-save,
+        .swot-item.editing .btn-cancel {
+            display: block;
+        }
+
+        .btn:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .export-section {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .export-btn {
+            padding: 12px 24px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .export-btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .swot-grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>SWOT Analysis Tool</h1>
+            <p>Create a comprehensive analysis for your business</p>
+        </header>
+
+        <section class="intro">
+            <h2>What is a SWOT Analysis?</h2>
+            <p>
+                SWOT Analysis is a strategic planning tool used to identify and analyze the Strengths, Weaknesses, Opportunities, and Threats of a business or project. 
+                It helps you identify internal and external factors that can impact your success.
+            </p>
+            <ul>
+                <li><strong>Strengths:</strong> Internal positive attributes that give you an advantage</li>
+                <li><strong>Weaknesses:</strong> Internal negative attributes that place you at a disadvantage</li>
+                <li><strong>Opportunities:</strong> External positive factors that you can capitalize on</li>
+                <li><strong>Threats:</strong> External negative factors that could cause trouble</li>
+            </ul>
+        </section>
+
+        <div class="swot-grid">
+            <!-- Strengths Section -->
+            <div class="swot-section strengths">
+                <div class="swot-header">
+                    <span class="swot-icon">💪</span>
+                    <h2 class="swot-title">Strengths</h2>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="strength-input" placeholder="Add a strength..." aria-label="Add a strength">
+                    <button id="add-strength-btn">Add</button>
+                </div>
+                <ul id="strengths-list" class="swot-list"></ul>
+            </div>
+
+            <!-- Weaknesses Section -->
+            <div class="swot-section weaknesses">
+                <div class="swot-header">
+                    <span class="swot-icon">⚠️</span>
+                    <h2 class="swot-title">Weaknesses</h2>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="weakness-input" placeholder="Add a weakness..." aria-label="Add a weakness">
+                    <button id="add-weakness-btn">Add</button>
+                </div>
+                <ul id="weaknesses-list" class="swot-list"></ul>
+            </div>
+
+            <!-- Opportunities Section -->
+            <div class="swot-section opportunities">
+                <div class="swot-header">
+                    <span class="swot-icon">🚀</span>
+                    <h2 class="swot-title">Opportunities</h2>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="opportunity-input" placeholder="Add an opportunity..." aria-label="Add an opportunity">
+                    <button id="add-opportunity-btn">Add</button>
+                </div>
+                <ul id="opportunities-list" class="swot-list"></ul>
+            </div>
+
+            <!-- Threats Section -->
+            <div class="swot-section threats">
+                <div class="swot-header">
+                    <span class="swot-icon">⛔</span>
+                    <h2 class="swot-title">Threats</h2>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="threat-input" placeholder="Add a threat..." aria-label="Add a threat">
+                    <button id="add-threat-btn">Add</button>
+                </div>
+                <ul id="threats-list" class="swot-list"></ul>
+            </div>
+        </div>
+
+        <div class="export-section">
+            <button id="export-btn" class="export-btn">Export SWOT Analysis</button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize SWOT data structure
+        const swotData = {
+            strengths: [],
+            weaknesses: [],
+            opportunities: [],
+            threats: []
+        };
+
+        // Check if there's saved data in localStorage
+        const savedData = localStorage.getItem('swotData');
+        if (savedData) {
+            const parsedData = JSON.parse(savedData);
+            Object.assign(swotData, parsedData);
+        }
+
+        // DOM elements
+        const elements = {
+            strengthInput: document.getElementById('strength-input'),
+            weaknessInput: document.getElementById('weakness-input'),
+            opportunityInput: document.getElementById('opportunity-input'),
+            threatInput: document.getElementById('threat-input'),
+            strengthsList: document.getElementById('strengths-list'),
+            weaknessesList: document.getElementById('weaknesses-list'),
+            opportunitiesList: document.getElementById('opportunities-list'),
+            threatsList: document.getElementById('threats-list'),
+            exportBtn: document.getElementById('export-btn')
+        };
+
+        // Add event listeners to buttons
+        document.getElementById('add-strength-btn').addEventListener('click', () => addItem('strengths'));
+        document.getElementById('add-weakness-btn').addEventListener('click', () => addItem('weaknesses'));
+        document.getElementById('add-opportunity-btn').addEventListener('click', () => addItem('opportunities'));
+        document.getElementById('add-threat-btn').addEventListener('click', () => addItem('threats'));
+
+        // Add event listeners to inputs for Enter key
+        elements.strengthInput.addEventListener('keypress', (e) => handleEnterKey(e, 'strengths'));
+        elements.weaknessInput.addEventListener('keypress', (e) => handleEnterKey(e, 'weaknesses'));
+        elements.opportunityInput.addEventListener('keypress', (e) => handleEnterKey(e, 'opportunities'));
+        elements.threatInput.addEventListener('keypress', (e) => handleEnterKey(e, 'threats'));
+
+        // Export button event listener
+        elements.exportBtn.addEventListener('click', exportSWOT);
+
+        // Handle Enter key press
+        function handleEnterKey(event, category) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                addItem(category);
+            }
+        }
+
+        // Add item to a category
+        function addItem(category) {
+            const inputElement = elements[`${category.slice(0, -1)}Input`];
+            const text = inputElement.value.trim();
+            
+            if (text) {
+                // Add to data structure
+                const newItem = { id: Date.now(), text };
+                swotData[category].push(newItem);
+                
+                // Update UI
+                renderList(category);
+                
+                // Clear input
+                inputElement.value = '';
+                
+                // Save to localStorage
+                saveToLocalStorage();
+                
+                // Add animation effect
+                const newItemElement = document.querySelector(`[data-id="${newItem.id}"]`);
+                if (newItemElement) {
+                    newItemElement.style.opacity = '0';
+                    newItemElement.style.transform = 'translateX(20px)';
+                    setTimeout(() => {
+                        newItemElement.style.opacity = '1';
+                        newItemElement.style.transform = 'translateX(0)';
+                    }, 10);
+                }
+            }
+            
+            // Focus back on input
+            inputElement.focus();
+        }
+
+        // Edit item
+        function editItem(category, id) {
+            const itemElement = document.querySelector(`[data-id="${id}"]`);
+            if (itemElement) {
+                itemElement.classList.add('editing');
+                const inputElement = itemElement.querySelector('.edit-input');
+                const item = swotData[category].find(item => item.id === id);
+                
+                if (inputElement && item) {
+                    inputElement.value = item.text;
+                    inputElement.focus();
+                }
+            }
+        }
+
+        // Save edited item
+        function saveEditedItem(category, id) {
+            const itemElement = document.querySelector(`[data-id="${id}"]`);
+            if (itemElement) {
+                const inputElement = itemElement.querySelector('.edit-input');
+                const newText = inputElement.value.trim();
+                
+                if (newText) {
+                    // Update data
+                    const itemIndex = swotData[category].findIndex(item => item.id === id);
+                    if (itemIndex !== -1) {
+                        swotData[category][itemIndex].text = newText;
+                        
+                        // Update UI
+                        itemElement.querySelector('.swot-item-text').textContent = newText;
+                        itemElement.classList.remove('editing');
+                        
+                        // Save to localStorage
+                        saveToLocalStorage();
+                    }
+                }
+            }
+        }
+
+        // Cancel edit
+        function cancelEdit(id) {
+            const itemElement = document.querySelector(`[data-id="${id}"]`);
+            if (itemElement) {
+                itemElement.classList.remove('editing');
+            }
+        }
+
+        // Delete item
+        function deleteItem(category, id) {
+            const itemElement = document.querySelector(`[data-id="${id}"]`);
+            
+            if (itemElement) {
+                // Add exit animation
+                itemElement.style.opacity = '0';
+                itemElement.style.transform = 'translateX(20px)';
+                
+                setTimeout(() => {
+                    // Remove from data structure
+                    swotData[category] = swotData[category].filter(item => item.id !== id);
+                    
+                    // Update UI
+                    renderList(category);
+                    
+                    // Save to localStorage
+                    saveToLocalStorage();
+                }, 300);
+            }
+        }
+
+        // Render list for a category
+        function renderList(category) {
+            const listElement = elements[`${category}List`];
+            listElement.innerHTML = '';
+            
+            swotData[category].forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'swot-item';
+                li.dataset.id = item.id;
+                
+                li.innerHTML = `
+                    <span class="swot-item-text">${item.text}</span>
+                    <input type="text" class="edit-input" value="${item.text}">
+                    <div class="item-actions">
+                        <button class="btn btn-edit" aria-label="Edit item">✏️</button>
+                        <button class="btn btn-delete" aria-label="Delete item">🗑️</button>
+                        <button class="btn btn-save" aria-label="Save changes">✅</button>
+                        <button class="btn btn-cancel" aria-label="Cancel editing">❌</button>
+                    </div>
+                `;
+                
+                // Add event listeners to buttons
+                li.querySelector('.btn-edit').addEventListener('click', () => editItem(category, item.id));
+                li.querySelector('.btn-delete').addEventListener('click', () => deleteItem(category, item.id));
+                li.querySelector('.btn-save').addEventListener('click', () => saveEditedItem(category, item.id));
+                li.querySelector('.btn-cancel').addEventListener('click', () => cancelEdit(item.id));
+                
+                // Add event listener for Enter key in edit input
+                li.querySelector('.edit-input').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        saveEditedItem(category, item.id);
+                    }
+                });
+                
+                listElement.appendChild(li);
+            });
+        }
+
+        // Save to localStorage
+        function saveToLocalStorage() {
+            localStorage.setItem('swotData', JSON.stringify(swotData));
+        }
+
+        // Export SWOT analysis
+        function exportSWOT() {
+            let exportText = "SWOT ANALYSIS\n\n";
+            
+            // Add each section
+            exportText += "STRENGTHS:\n";
+            swotData.strengths.forEach((item, index) => {
+                exportText += `${index + 1}. ${item.text}\n`;
+            });
+            
+            exportText += "\nWEAKNESSES:\n";
+            swotData.weaknesses.forEach((item, index) => {
+                exportText += `${index + 1}. ${item.text}\n`;
+            });
+            
+            exportText += "\nOPPORTUNITIES:\n";
+            swotData.opportunities.forEach((item, index) => {
+                exportText += `${index + 1}. ${item.text}\n`;
+            });
+            
+            exportText += "\nTHREATS:\n";
+            swotData.threats.forEach((item, index) => {
+                exportText += `${index + 1}. ${item.text}\n`;
+            });
+            
+            // Create a blob and download link
+            const blob = new Blob([exportText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'SWOT_Analysis.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Initial render of all lists
+        renderList('strengths');
+        renderList('weaknesses');
+        renderList('opportunities');
+        renderList('threats');
+    </script>
+</body>
+</html>

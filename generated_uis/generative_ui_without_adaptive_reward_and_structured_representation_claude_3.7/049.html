@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Dashboard</title>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --white-color: #ffffff;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-400: #ced4da;
+            --gray-500: #adb5bd;
+            --gray-600: #6c757d;
+            --gray-700: #495057;
+            --gray-800: #343a40;
+            --gray-900: #212529;
+
+            --background-color: var(--gray-100);
+            --surface-color: var(--white-color);
+            --text-color: var(--gray-900);
+            --border-color: var(--gray-300);
+
+            --spacing-unit: 8px;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+            /* Custom Colors for Charts - Ensure sufficient contrast */
+            --chart-color-1: #007bff; /* Primary Blue */
+            --chart-color-2: #28a745; /* Success Green */
+            --chart-color-3: #ffc107; /* Warning Yellow */
+            --chart-color-4: #dc3545; /* Danger Red */
+            --chart-color-5: #17a2b8; /* Info Cyan */
+            --chart-color-6: #6f42c1; /* Purple */
+            --chart-color-7: #e83e8c; /* Pink */
+            --chart-color-8: #fd7e14; /* Orange */
+            --chart-color-9: #20c997; /* Teal */
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: calc(var(--spacing-unit) * 4);
+            min-height: 100vh; /* Ensure body takes at least full viewport height */
+        }
+
+        h1 {
+             color: var(--dark-color);
+             margin-top: 0;
+             margin-bottom: calc(var(--spacing-unit) * 4);
+             text-align: center;
+        }
+
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 1fr 3fr;
+            gap: calc(var(--spacing-unit) * 4);
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .panel {
+            background-color: var(--surface-color);
+            padding: calc(var(--spacing-unit) * 3);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: calc(var(--spacing-unit) * 4); /* Add margin-bottom for stacked panels on smaller screens */
+        }
+
+        aside.filter-panel {
+            grid-column: 1 / 2;
+            display: flex;
+            flex-direction: column;
+            gap: calc(var(--spacing-unit) * 3);
+        }
+
+        section.main-content {
+            grid-column: 2 / 3;
+        }
+
+        h2, h3 {
+            color: var(--dark-color);
+            margin-top: 0;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-unit);
+        }
+
+        .filter-group label {
+            font-weight: bold;
+            font-size: 0.9em;
+            color: var(--gray-700);
+        }
+
+        .filter-group select,
+        .filter-group input[type="date"],
+        .filter-group input[type="text"] {
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+            border: 1px solid var(--border-color);
+            border-radius: calc(var(--border-radius) * 0.5);
+            font-size: 1em;
+            width: 100%;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+
+        .filter-group select:focus,
+        .filter-group input[type="date"]:focus,
+        .filter-group input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+         /* Accessibility: Focus styles for filters */
+        .filter-group select:focus-visible,
+        .filter-group input[type="date"]:focus-visible,
+        .filter-group input[type="text"]:focus-visible {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+
+        section.chart-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: calc(var(--spacing-unit) * 4);
+            margin-bottom: calc(var(--spacing-unit) * 4);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 350px;
+            cursor: pointer;
+            outline: none; /* Remove default outline */
+             /* Add a clear focus style */
+            transition: box-shadow 0.2s ease-in-out;
+        }
+
+         .chart-container:focus-visible {
+             outline: 2px dashed var(--primary-color);
+             outline-offset: 4px;
+             box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.1); /* Optional: add a subtle glow on focus */
+         }
+
+
+        .chart-container canvas {
+             width: 100% !important;
+             height: 100% !important;
+        }
+
+
+        section.data-table-section .panel {
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: calc(var(--spacing-unit) * 2);
+            font-size: 0.9em;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: calc(var(--spacing-unit) * 1.5);
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            background-color: var(--gray-200);
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+            outline: none; /* Remove default outline */
+        }
+
+        .data-table th:hover {
+            background-color: var(--gray-300);
+        }
+         /* Accessibility: Focus styles for table headers */
+         .data-table th:focus-visible {
+             outline: 2px solid var(--primary-color);
+             outline-offset: -2px;
+         }
+
+
+        .data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table tbody tr:hover {
+            background-color: var(--gray-100);
+        }
+
+        /* Sorting indicator */
+        .data-table th[aria-sort="ascending"]::after {
+            content: " ▲";
+            font-size: 0.8em;
+        }
+         .data-table th[aria-sort="descending"]::after {
+            content: " ▼";
+            font-size: 0.8em;
+        }
+
+
+        .loading-indicator {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+             /* Ensure loading indicator is not focusable when hidden */
+             visibility: hidden;
+        }
+         .loading-indicator.active {
+             opacity: 1;
+             pointer-events: all; /* Allow interaction blocking when active */
+             visibility: visible;
+         }
+
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--primary-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Floating Controls for Charts */
+        .floating-controls {
+            position: absolute;
+            top: calc(var(--spacing-unit) * 2);
+            right: calc(var(--spacing-unit) * 2);
+            background: rgba(255, 255, 255, 0.98);
+            padding: calc(var(--spacing-unit) * 2);
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 5;
+            min-width: 180px;
+             /* Ensure controls are not focusable when hidden */
+             visibility: hidden;
+        }
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+             visibility: visible;
+        }
+        .floating-control-group {
+            margin-bottom: calc(var(--spacing-unit) * 1.5);
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-unit);
+        }
+        .floating-control-group:last-child {
+             margin-bottom: 0;
+        }
+        .floating-control-group label {
+            font-size: 0.85em;
+            color: var(--gray-700);
+            font-weight: normal;
+        }
+        .floating-controls input[type="color"],
+        .floating-controls select,
+        .floating-controls input[type="number"] {
+             padding: var(--spacing-unit);
+             border: 1px solid var(--border-color);
+             border-radius: calc(var(--border-radius) * 0.5);
+             font-size: 0.9em;
+             width: 100%;
+             box-sizing: border-box;
+             transition: border-color 0.2s ease-in-out;
+             cursor: pointer;
+        }
+         .floating-controls input[type="color"] {
+             padding: calc(var(--spacing-unit) * 0.5);
+             height: 36px;
+         }
+         .floating-controls input[type="color"]:focus,
+         .floating-controls select:focus,
+         .floating-controls input[type="number"]:focus {
+             outline: none;
+             border-color: var(--primary-color);
+         }
+         /* Accessibility: Focus styles for floating controls */
+         .floating-controls input[type="color"]:focus-visible,
+         .floating-controls select:focus-visible,
+         .floating-controls input[type="number"]:focus-visible {
+             outline: 2px solid var(--primary-color);
+             outline-offset: 2px;
+         }
+
+         /* Responsive adjustments */
+         @media (max-width: 992px) {
+             .dashboard-container {
+                 grid-template-columns: 1fr;
+                 gap: calc(var(--spacing-unit) * 3);
+                 padding: calc(var(--spacing-unit) * 3);
+             }
+             aside.filter-panel {
+                 grid-column: 1 / -1;
+                 flex-direction: row;
+                 flex-wrap: wrap;
+                 gap: calc(var(--spacing-unit) * 2);
+             }
+             .filter-group {
+                 flex: 1 1 200px;
+             }
+             section.main-content {
+                 grid-column: 1 / -1;
+             }
+             section.chart-section {
+                 grid-template-columns: 1fr;
+                 gap: calc(var(--spacing-unit) * 3);
+             }
+             .panel {
+                 margin-bottom: calc(var(--spacing-unit) * 3);
+             }
+             body {
+                 padding: calc(var(--spacing-unit) * 3);
+             }
+         }
+          @media (max-width: 576px) {
+              body {
+                 padding: calc(var(--spacing-unit) * 2);
+             }
+             aside.filter-panel {
+                 flex-direction: column;
+             }
+             .filter-group {
+                 flex: none;
+                 width: 100%;
+             }
+             .panel {
+                 padding: calc(var(--spacing-unit) * 2);
+             }
+         }
+
+
+    </style>
+</head>
+<body>
+    <h1>Company Sales Dashboard</h1>
+
+    <main class="dashboard-container">
+        <aside class="filter-panel panel" aria-label="Data Filters">
+            <h2>Filters</h2>
+            <div class="filter-group">
+                <label for="dateRangeStart">Start Date:</label>
+                <input type="date" id="dateRangeStart" value="2023-01-01" aria-label="Start Date Filter">
+            </div>
+            <div class="filter-group">
+                <label for="dateRangeEnd">End Date:</label>
+                <input type="date" id="dateRangeEnd" value="2023-12-31" aria-label="End Date Filter">
+            </div>
+            <div class="filter-group">
+                <label for="productFilter">Product:</label>
+                <select id="productFilter" aria-label="Product Filter">
+                    <option value="all">All Products</option>
+                    <option value="product-a">Product A</option>
+                    <option value="product-b">Product B</option>
+                    <option value="product-c">Product C</option>
+                </select>
+            </div>
+             <div class="filter-group">
+                <label for="regionFilter">Region:</label>
+                <select id="regionFilter" aria-label="Region Filter">
+                    <option value="all">All Regions</option>
+                    <option value="north">North</option>
+                    <option value="south">South</option>
+                    <option value="east">East</option>
+                     <option value="west">West</option>
+                </select>
+            </div>
+             <div class="filter-group">
+                <label for="salespersonFilter">Salesperson:</label>
+                <select id="salespersonFilter" aria-label="Salesperson Filter">
+                    <option value="all">All Salespeople</option>
+                    <option value="john-doe">John Doe</option>
+                    <option value="jane-smith">Jane Smith</option>
+                    <option value="peter-jones">Peter Jones</option>
+                </select>
+            </div>
+            <!-- Add more filter controls as needed -->
+        </aside>
+
+        <section class="main-content">
+            <section class="chart-section" role="region" aria-label="Sales Data Charts">
+                <div class="panel">
+                    <h3>Sales Over Time</h3>
+                    <div class="chart-container" id="salesOverTimeContainer" tabindex="0" role="img" aria-label="Line chart showing sales over time. Click or press Enter/Space to open chart options." aria-expanded="false">
+                        <canvas id="salesOverTimeChart"></canvas>
+                         <div class="floating-controls" id="salesOverTimeControls" aria-hidden="true">
+                            <div class="floating-control-group">
+                                <label for="salesOverTimeChartType">Chart Type</label>
+                                <select id="salesOverTimeChartType" aria-label="Sales Over Time Chart Type">
+                                    <option value="line">Line</option>
+                                    <option value="bar">Bar</option>
+                                </select>
+                            </div>
+                             <div class="floating-control-group">
+                                <label for="salesOverTimeLineColor">Line Color</label>
+                                <input type="color" id="salesOverTimeLineColor" value="#007bff" aria-label="Sales Over Time Line Color">
+                            </div>
+                             <div class="floating-control-group">
+                                <label for="salesOverTimeFillColor">Fill Color</label>
+                                <input type="color" id="salesOverTimeFillColor" value="#007bff40" aria-label="Sales Over Time Fill Color">
+                            </div>
+                             <div class="floating-control-group">
+                                <label for="salesOverTimeFontSize">Font Size</label>
+                                <input type="number" id="salesOverTimeFontSize" value="12" min="8" max="20" aria-label="Sales Over Time Font Size">
+                            </div>
+                        </div>
+                         <div class="loading-indicator" role="status" aria-label="Loading chart data" aria-hidden="true"><div class="spinner"></div></div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>Sales by Product</h3>
+                    <div class="chart-container" id="salesByProductContainer" tabindex="0" role="img" aria-label="Bar chart showing sales by product. Click or press Enter/Space to open chart options." aria-expanded="false">
+                        <canvas id="salesByProductChart"></canvas>
+                         <div class="floating-controls" id="salesByProductControls" aria-hidden="true">
+                            <div class="floating-control-group">
+                                <label for="salesByProductChartType">Chart Type</label>
+                                <select id="salesByProductChartType" aria-label="Sales By Product Chart Type">
+                                    <option value="bar">Bar</option>
+                                    <option value="pie">Pie</option>
+                                    <option value="doughnut">Doughnut</option>
+                                </select>
+                            </div>
+                             <div class="floating-control-group">
+                                <label for="salesByProductFontSize">Font Size</label>
+                                <input type="number" id="salesByProductFontSize" value="12" min="8" max="20" aria-label="Sales By Product Font Size">
+                            </div>
+                            <!-- Color controls for pie/doughnut would be more complex, staying with palette -->
+                        </div>
+                         <div class="loading-indicator" role="status" aria-label="Loading chart data" aria-hidden="true"><div class="spinner"></div></div>
+                    </div>
+                </div>
+
+                 <div class="panel">
+                    <h3>Sales by Region</h3>
+                    <div class="chart-container" id="salesByRegionContainer" tabindex="0" role="img" aria-label="Bar chart showing sales by region. Click or press Enter/Space to open chart options." aria-expanded="false">
+                        <canvas id="salesByRegionChart"></canvas>
+                         <div class="floating-controls" id="salesByRegionControls" aria-hidden="true">
+                            <div class="floating-control-group">
+                                <label for="salesByRegionChartType">Chart Type</label>
+                                <select id="salesByRegionChartType" aria-label="Sales By Region Chart Type">
+                                     <option value="bar">Bar</option>
+                                    <option value="pie">Pie</option>
+                                    <option value="doughnut">Doughnut</option>
+                                </select>
+                            </div>
+                             <div class="floating-control-group">
+                                <label for="salesByRegionFontSize">Font Size</label>
+                                <input type="number" id="salesByRegionFontSize" value="12" min="8" max="20" aria-label="Sales By Region Font Size">
+                            </div>
+                        </div>
+                         <div class="loading-indicator" role="status" aria-label="Loading chart data" aria-hidden="true"><div class="spinner"></div></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="data-table-section panel" role="region" aria-label="Detailed Sales Data Table">
+                <h3>Detailed Sales Data</h3>
+                <table class="data-table" id="salesDataTable" role="table" aria-label="Sales Data">
+                    <thead>
+                        <tr>
+                            <th data-sort="date" role="columnheader" aria-sort="none" tabindex="0">Date</th>
+                            <th data-sort="product" role="columnheader" aria-sort="none" tabindex="0">Product</th>
+                            <th data-sort="region" role="columnheader" aria-sort="none" tabindex="0">Region</th>
+                            <th data-sort="salesperson" role="columnheader" aria-sort="none" tabindex="0">Salesperson</th>
+                            <th data-sort="amount" role="columnheader" aria-sort="none" tabindex="0">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data rows will be populated by JavaScript -->
+                        <tr><td colspan="5" style="text-align: center;">Loading data...</td></tr>
+                    </tbody>
+                </table>
+                 <div class="loading-indicator" role="status" aria-label="Loading table data" aria-hidden="true"><div class="spinner"></div></div>
+            </section>
+        </section>
+    </main>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        // --- Data Simulation ---
+        const generateSalesData = (startDate, endDate, numRecords = 500) => {
+            const data = [];
+            const products = ['Product A', 'Product B', 'Product C'];
+            const regions = ['North', 'South', 'East', 'West'];
+            const salespeople = ['John Doe', 'Jane Smith', 'Peter Jones'];
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const diffTime = Math.abs(end - start);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            for (let i = 0; i < numRecords; i++) {
+                const randomDay = Math.floor(Math.random() * diffDays);
+                const saleDate = new Date(start);
+                saleDate.setDate(start.getDate() + randomDay);
+
+                data.push({
+                    date: saleDate.toISOString().split('T')[0],
+                    product: products[Math.floor(Math.random() * products.length)],
+                    region: regions[Math.floor(Math.random() * regions.length)],
+                    salesperson: salespeople[Math.floor(Math.random() * salespeople.length)],
+                    amount: parseFloat((Math.random() * 1000 + 50).toFixed(2)) // Sales between 50 and 1050
+                });
+            }
+            return data;
+        };
+
+        let allSalesData = [];
+        let filteredSalesData = [];
+
+        // --- DOM Elements ---
+        const dateRangeStartInput = document.getElementById('dateRangeStart');
+        const dateRangeEndInput = document.getElementById('dateRangeEnd');
+        const productFilterSelect = document.getElementById('productFilter');
+        const regionFilterSelect = document.getElementById('regionFilter');
+        const salespersonFilterSelect = document.getElementById('salespersonFilter');
+        const salesDataTable = document.getElementById('salesDataTable');
+        const salesDataTableBody = salesDataTable.querySelector('tbody');
+        const salesDataTableHeaders = salesDataTable.querySelectorAll('th[data-sort]');
+
+
+        // Chart Instances
+        let salesOverTimeChart = null;
+        let salesByProductChart = null;
+        let salesByRegionChart = null;
+
+        // Chart Containers
+        const salesOverTimeContainer = document.getElementById('salesOverTimeContainer');
+        const salesByProductContainer = document.getElementById('salesByProductContainer');
+        const salesByRegionContainer = document.getElementById('salesByRegionContainer');
+
+        // Chart Controls
+        const salesOverTimeControls = document.getElementById('salesOverTimeControls');
+        const salesByProductControls = document.getElementById('salesByProductControls');
+        const salesByRegionControls = document.getElementById('salesByRegionControls');
+
+        // Loading Indicators
+        const loadingIndicators = document.querySelectorAll('.loading-indicator');
+
+        // --- Filtering and Data Processing ---
+        const applyFilters = () => {
+            showLoading();
+            const startDate = new Date(dateRangeStartInput.value);
+            const endDate = new Date(dateRangeEndInput.value);
+            const selectedProduct = productFilterSelect.value;
+            const selectedRegion = regionFilterSelect.value;
+            const selectedSalesperson = salespersonFilterSelect.value;
+
+            filteredSalesData = allSalesData.filter(sale => {
+                const saleDate = new Date(sale.date);
+                // Adjust end date to include the whole day
+                const adjustedEndDate = new Date(endDate);
+                adjustedEndDate.setDate(adjustedEndDate.getDate() + 1); // Include the end date itself
+
+                const dateMatch = saleDate >= startDate && saleDate < adjustedEndDate;
+                const productMatch = selectedProduct === 'all' || sale.product.replace(/\s+/g, '-').toLowerCase() === selectedProduct;
+                const regionMatch = selectedRegion === 'all' || sale.region.toLowerCase() === selectedRegion;
+                const salespersonMatch = selectedSalesperson === 'all' || sale.salesperson.replace(/\s+/g, '-').toLowerCase() === selectedSalesperson;
+
+                return dateMatch && productMatch && regionMatch && salespersonMatch;
+            });
+
+            // Simulate data loading delay
+            setTimeout(() => {
+                updateAllCharts(filteredSalesData);
+                updateDataTable(filteredSalesData);
+                hideLoading();
+            }, 300); // Simulate a 300ms loading time
+        };
+
+        const aggregateSalesOverTime = (data) => {
+            const salesByMonth = {};
+            data.forEach(sale => {
+                const [year, month] = sale.date.split('-');
+                const monthKey = `${year}-${month}`;
+                salesByMonth[monthKey] = (salesByMonth[monthKey] || 0) + sale.amount;
+            });
+            const sortedMonths = Object.keys(salesByMonth).sort();
+            return {
+                labels: sortedMonths,
+                data: sortedMonths.map(month => salesByMonth[month])
+            };
+        };
+
+        const aggregateSalesByCategory = (data, category) => {
+            const salesByCategory = {};
+            data.forEach(sale => {
+                salesByCategory[sale[category]] = (salesByCategory[sale[category]] || 0) + sale.amount;
+            });
+            return {
+                labels: Object.keys(salesByCategory),
+                data: Object.values(salesByCategory)
+            };
+        };
+
+        // --- Chart Rendering and Updating ---
+        const chartColors = [
+            "var(--chart-color-1)", "var(--chart-color-2)", "var(--chart-color-3)",
+            "var(--chart-color-4)", "var(--chart-color-5)", "var(--chart-color-6)",
+            "var(--chart-color-7)", "var(--chart-color-8)", "var(--chart-color-9)"
+        ];
+
+         const getCssVariable = (variableName) => {
+             // Helper to get CSS variable value from the root
+             return getComputedStyle(document.documentElement).getPropertyValue(variableName).trim();
+         };
+
+        const createOrUpdateChart = (chartId, type, data, options) => {
+            const ctx = document.getElementById(chartId).getContext('2d');
+            let chartInstance = Chart.getChart(chartId); // Get existing instance
+
+            if (chartInstance) {
+                // Update existing chart
+                chartInstance.data = data;
+                chartInstance.config.type = type; // Allow type change
+                // Deep merge options to preserve specific settings like tooltips, scales, etc.
+                // This is a simplified merge; a more robust solution might use a dedicated merge function or library
+                 chartInstance.options = Object.assign({}, chartInstance.options, options, {
+                     plugins: Object.assign({}, chartInstance.options.plugins, options.plugins),
+                     scales: options.scales ? Object.assign({}, chartInstance.options.scales, options.scales) : undefined, // Handle scales being optional
+                 });
+
+                chartInstance.update();
+            } else {
+                // Create new chart
+                chartInstance = new Chart(ctx, {
+                    type: type,
+                    data: data,
+                    options: options
+                });
+            }
+            return chartInstance;
+        };
+
+        const updateSalesOverTimeChart = (chartInstance, data) => {
+            const aggregatedData = aggregateSalesOverTime(data);
+            const chartType = document.getElementById('salesOverTimeChartType').value;
+            const lineColor = document.getElementById('salesOverTimeLineColor').value;
+            const fillColor = document.getElementById('salesOverTimeFillColor').value;
+            const fontSize = parseInt(document.getElementById('salesOverTimeFontSize').value) || 12;
+
+            const dataConfig = {
+                labels: aggregatedData.labels,
+                datasets: [{
+                    label: 'Total Sales',
+                    data: aggregatedData.data,
+                    borderColor: lineColor,
+                    backgroundColor: fillColor,
+                    tension: 0.1,
+                    fill: chartType === 'line',
+                    borderWidth: chartType === 'line' ? 2 : 1
+                }]
+            };
+            const optionsConfig = {
+                 responsive: true,
+                 maintainAspectRatio: false,
+                 plugins: {
+                     tooltip: { mode: 'index', intersect: false },
+                     legend: { labels: { font: { size: fontSize } } }
+                 },
+                 scales: {
+                     x: { title: { display: true, text: 'Month', font: { size: fontSize } }, ticks: { font: { size: fontSize } } },
+                     y: { title: { display: true, text: 'Sales Amount ($)', font: { size: fontSize } }, ticks: { font: { size: fontSize } } }
+                 },
+                 hover: { mode: 'nearest', intersect: true },
+                 onClick: (e, elements) => toggleControls('salesOverTimeControls', salesOverTimeContainer),
+                 animation: { duration: 800, easing: 'easeOutQuart' }
+            };
+
+             createOrUpdateChart('salesOverTimeChart', chartType, dataConfig, optionsConfig);
+        };
+
+         const updateSalesByProductChart = (chartInstance, data) => {
+            const aggregatedData = aggregateSalesByCategory(data, 'product');
+            const chartType = document.getElementById('salesByProductChartType').value;
+            const fontSize = parseInt(document.getElementById('salesByProductFontSize').value) || 12;
+
+            const dataConfig = {
+                labels: aggregatedData.labels,
+                datasets: [{
+                    label: 'Sales by Product',
+                    data: aggregatedData.data,
+                    backgroundColor: aggregatedData.labels.map((_, i) => getCssVariable(chartColors[i % chartColors.length])), // Use CSS variable values
+                    borderColor: getCssVariable("--white-color"), // Use CSS variable value
+                    borderWidth: 2
+                }]
+            };
+             const optionsConfig = {
+                responsive: true,
+                maintainAspectRatio: false,
+                 plugins: {
+                     tooltip: { mode: 'index', intersect: false },
+                     legend: { labels: { font: { size: fontSize } } }
+                 },
+                 onClick: (e, elements) => toggleControls('salesByProductControls', salesByProductContainer),
+                 animation: { duration: 800, easing: 'easeOutQuart' }
+            };
+
+            if (chartType === 'pie' || chartType === 'doughnut') {
+                 optionsConfig.scales = {};
+                 optionsConfig.plugins.tooltip = { callbacks: { label: (context) => `${context.label}: ${context.raw.toFixed(2)}` } };
+            } else {
+                 optionsConfig.scales = {
+                     x: { title: { display: true, text: 'Product', font: { size: fontSize } }, ticks: { font: { size: fontSize } } },
+                     y: { title: { display: true, text: 'Sales Amount ($)', font: { size: fontSize } }, ticks: { font: { size: fontSize } } }
+                 };
+                 optionsConfig.plugins.tooltip = { mode: 'index', intersect: false };
+            }
+
+            createOrUpdateChart('salesByProductChart', chartType, dataConfig, optionsConfig);
+         };
+
+         const updateSalesByRegionChart = (chartInstance, data) => {
+            const aggregatedData = aggregateSalesByCategory(data, 'region');
+            const chartType = document.getElementById('salesByRegionChartType').value;
+            const fontSize = parseInt(document.getElementById('salesByRegionFontSize').value) || 12;
+
+            const dataConfig = {
+                labels: aggregatedData.labels,
+                datasets: [{
+                    label: 'Sales by Region',
+                    data: aggregatedData.data,
+                    backgroundColor: aggregatedData.labels.map((_, i) => getCssVariable(chartColors[i % chartColors.length])), // Use CSS variable values
+                    borderColor: getCssVariable("--white-color"), // Use CSS variable value
+                    borderWidth: 2
+                }]
+            };
+             const optionsConfig = {
+                responsive: true,
+                maintainAspectRatio: false,
+                 plugins: {
+                     tooltip: { mode: 'index', intersect: false },
+                     legend: { labels: { font: { size: fontSize } } }
+                 },
+                 onClick: (e, elements) => toggleControls('salesByRegionControls', salesByRegionContainer),
+                 animation: { duration: 800, easing: 'easeOutQuart' }
+            };
+
+             if (chartType === 'pie' || chartType === 'doughnut') {
+                 optionsConfig.scales = {};
+                 optionsConfig.plugins.tooltip = { callbacks: { label: (context) => `${context.label}: ${context.raw.toFixed(2)}` } };
+            } else {
+                 optionsConfig.scales = {
+                     x: { title: { display: true, text: 'Region', font: { size: fontSize } }, ticks: { font: { size: fontSize } } },
+                     y: { title: { display: true, text: 'Sales Amount ($)', font: { size: fontSize } }, ticks: { font: { size: fontSize } } }
+                 };
+                 optionsConfig.plugins.tooltip = { mode: 'index', intersect: false };
+            }
+
+            createOrUpdateChart('salesByRegionChart', chartType, dataConfig, optionsConfig);
+         };
+
+
+        const updateAllCharts = (data) => {
+            // Get current chart instances (they might be null on first load)
+            const salesOverTimeChartInstance = Chart.getChart('salesOverTimeChart');
+            const salesByProductChartInstance = Chart.getChart('salesByProductChart');
+            const salesByRegionChartInstance = Chart.getChart('salesByRegionChart');
+
+            updateSalesOverTimeChart(salesOverTimeChartInstance, data);
+            updateSalesByProductChart(salesByProductChartInstance, data);
+            updateSalesByRegionChart(salesByRegionChartInstance, data);
+        };
+
+
+        // --- Data Table Rendering and Sorting ---
+        let currentSortColumn = null;
+        let currentSortDirection = 'asc';
+
+        const updateDataTable = (data) => {
+            salesDataTableBody.innerHTML = ''; // Clear existing rows
+
+            // Reset ARIA sort attributes on headers
+            salesDataTableHeaders.forEach(header => {
+                header.setAttribute('aria-sort', 'none');
+            });
+
+            // Sort data if needed
+            const sortedData = [...data]; // Create a copy to avoid modifying original array
+            if (currentSortColumn) {
+                 sortedData.sort((a, b) => {
+                    const valA = a[currentSortColumn];
+                    const valB = b[currentSortColumn];
+
+                    if (typeof valA === 'string') {
+                        return currentSortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                    } else if (currentSortColumn === 'date') {
+                         // Handle date sorting
+                         const dateA = new Date(valA);
+                         const dateB = new Date(valB);
+                         return currentSortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+                    }
+                    else { // Assume number
+                        return currentSortDirection === 'asc' ? valA - valB : valB - valA;
+                    }
+                });
+                 // Set ARIA sort attribute on the currently sorted header
+                 const currentHeader = salesDataTable.querySelector(`th[data-sort="${currentSortColumn}"]`);
+                 if (currentHeader) {
+                     currentHeader.setAttribute('aria-sort', currentSortDirection === 'asc' ? 'ascending' : 'descending');
+                 }
+            }
+
+            if (sortedData.length === 0) {
+                 const row = salesDataTableBody.insertRow();
+                 const cell = row.insertCell();
+                 cell.textContent = 'No data available for the selected filters.';
+                 cell.colSpan = 5; // Span across all columns
+                 cell.style.textAlign = 'center';
+                 cell.setAttribute('role', 'cell');
+            } else {
+                sortedData.forEach(sale => {
+                    const row = salesDataTableBody.insertRow();
+                    row.setAttribute('role', 'row');
+                    row.insertCell().textContent = sale.date;
+                    row.cells[0].setAttribute('role', 'cell');
+                    row.insertCell().textContent = sale.product;
+                     row.cells[1].setAttribute('role', 'cell');
+                    row.insertCell().textContent = sale.region;
+                     row.cells[2].setAttribute('role', 'cell');
+                    row.insertCell().textContent = `${sale.amount.toFixed(2)}`; // Format amount
+                     row.cells[3].setAttribute('role', 'cell');
+                     row.insertCell().textContent = sale.salesperson;
+                      row.cells[4].setAttribute('role', 'cell');
+                });
+            }
+        };
+
+        const handleSort = (column) => {
+            if (currentSortColumn === column) {
+                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSortColumn = column;
+                currentSortDirection = 'asc';
+            }
+            updateDataTable(filteredSalesData); // Re-render table with sorted data
+        };
+
+        // Add click and keyboard event listeners to table headers
+        salesDataTableHeaders.forEach(header => {
+            header.addEventListener('click', () => {
+                handleSort(header.getAttribute('data-sort'));
+            });
+            header.addEventListener('keydown', (event) => {
+                // Trigger sort on Enter or Space key press
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault(); // Prevent default space behavior (scrolling)
+                    handleSort(header.getAttribute('data-sort'));
+                }
+            });
+        });
+
+        // --- Loading Indicator ---
+        const showLoading = () => {
+            loadingIndicators.forEach(indicator => {
+                indicator.classList.add('active');
+                indicator.setAttribute('aria-hidden', 'false');
+            });
+        };
+
+        const hideLoading = () => {
+            loadingIndicators.forEach(indicator => {
+                indicator.classList.remove('active');
+                 indicator.setAttribute('aria-hidden', 'true');
+            });
+        };
+
+        // --- Floating Controls Logic ---
+         const toggleControls = (controlsId, container) => {
+            const controls = document.getElementById(controlsId);
+            const isActive = controls.classList.contains('active');
+
+            // Close any other active controls
+            document.querySelectorAll('.floating-controls.active').forEach(ctrl => {
+                if (ctrl.id !== controlsId) {
+                    ctrl.classList.remove('active');
+                    ctrl.setAttribute('aria-hidden', 'true');
+                     // Find the parent chart container and remove aria-expanded
+                    const parentContainer = ctrl.closest('.chart-container');
+                    if (parentContainer) {
+                        parentContainer.setAttribute('aria-expanded', 'false'); // Set to false when closing
+                    }
+                }
+            });
+
+            // Toggle the clicked controls
+            if (!isActive) {
+                 controls.classList.add('active');
+                 controls.setAttribute('aria-hidden', 'false');
+                 container.setAttribute('aria-expanded', 'true'); // Indicate controls are expanded
+                 // Focus the first interactive element in the controls for accessibility
+                 const firstControl = controls.querySelector('input, select, button');
+                 if(firstControl) {
+                     firstControl.focus();
+                 }
+            } else {
+                 controls.classList.remove('active');
+                 controls.setAttribute('aria-hidden', 'true');
+                 container.setAttribute('aria-expanded', 'false'); // Set to false when closing
+                 // Return focus to the container after closing
+                 container.focus();
+            }
+        };
+
+        // Close controls when clicking outside
+        document.addEventListener('click', (e) => {
+            // Check if the click is outside of any floating controls AND outside of any chart container
+            const clickedInsideControls = e.target.closest('.floating-controls');
+            const clickedInsideChartContainer = e.target.closest('.chart-container');
+
+            if (!clickedInsideControls && !clickedInsideChartContainer) {
+                 document.querySelectorAll('.floating-controls.active').forEach(ctrl => {
+                    ctrl.classList.remove('active');
+                    ctrl.setAttribute('aria-hidden', 'true');
+                     const parentContainer = ctrl.closest('.chart-container');
+                    if (parentContainer) {
+                        parentContainer.setAttribute('aria-expanded', 'false');
+                    }
+                });
+            }
+        });
+
+         // Close controls when pressing Escape key
+        document.addEventListener('keydown', (e) => {
+             if (e.key === 'Escape') {
+                 document.querySelectorAll('.floating-controls.active').forEach(ctrl => {
+                    ctrl.classList.remove('active');
+                    ctrl.setAttribute('aria-hidden', 'true');
+                     const parentContainer = ctrl.closest('.chart-container');
+                    if (parentContainer) {
+                        parentContainer.setAttribute('aria-expanded', 'false');
+                         parentContainer.focus(); // Return focus to the container
+                    }
+                });
+             }
+        });
+
+
+         // Update charts when floating controls change
+        document.querySelectorAll('.floating-controls input, .floating-controls select').forEach(element => {
+            element.addEventListener('change', () => {
+                const controls = element.closest('.floating-controls');
+                const chartId = controls.id.replace('Controls', 'Chart');
+                const chartInstance = Chart.getChart(chartId);
+
+                if (chartInstance) {
+                     // Find the parent chart container to identify which chart update function to call
+                    const chartContainer = controls.closest('.chart-container');
+
+                    // Call the specific update function for this chart
+                    if (chartContainer.id === 'salesOverTimeContainer') {
+                         updateSalesOverTimeChart(chartInstance, filteredSalesData);
+                    } else if (chartContainer.id === 'salesByProductContainer') {
+                         updateSalesByProductChart(chartInstance, filteredSalesData);
+                    } else if (chartContainer.id === 'salesByRegionContainer') {
+                         updateSalesByRegionChart(chartInstance, filteredSalesData);
+                    }
+                }
+            });
+        });
+
+
+        // --- Event Listeners ---
+        dateRangeStartInput.addEventListener('change', applyFilters);
+        dateRangeEndInput.addEventListener('change', applyFilters);
+        productFilterSelect.addEventListener('change', applyFilters);
+        regionFilterSelect.addEventListener('change', applyFilters);
+        salespersonFilterSelect.addEventListener('change', applyFilters);
+
+        // Add click and keyboard listeners to chart containers to toggle controls
+        salesOverTimeContainer.addEventListener('click', (e) => {
+             if (!e.target.closest('.floating-controls')) { // Only toggle if not clicking inside controls
+                 toggleControls('salesOverTimeControls', e.currentTarget);
+             }
+         });
+         salesOverTimeContainer.addEventListener('keydown', (e) => {
+             if ((e.key === 'Enter' || e.key === ' ') && !e.target.closest('.floating-controls')) {
+                 e.preventDefault();
+                 toggleControls('salesOverTimeControls', e.currentTarget);
+             }
+         });
+
+         salesByProductContainer.addEventListener('click', (e) => {
+             if (!e.target.closest('.floating-controls')) {
+                 toggleControls('salesByProductControls', e.currentTarget);
+             }
+         });
+         salesByProductContainer.addEventListener('keydown', (e) => {
+             if ((e.key === 'Enter' || e.key === ' ') && !e.target.closest('.floating-controls')) {
+                 e.preventDefault();
+                 toggleControls('salesByProductControls', e.currentTarget);
+             }
+         });
+
+         salesByRegionContainer.addEventListener('click', (e) => {
+             if (!e.target.closest('.floating-controls')) {
+                 toggleControls('salesByRegionControls', e.currentTarget);
+             }
+         });
+         salesByRegionContainer.addEventListener('keydown', (e) => {
+             if ((e.key === 'Enter' || e.key === ' ') && !e.target.closest('.floating-controls')) {
+                 e.preventDefault();
+                 toggleControls('salesByRegionControls', e.currentTarget);
+             }
+         });
+
+
+        // --- Initial Load ---
+        const initializeDashboard = () => {
+            // Generate initial data
+            allSalesData = generateSalesData(dateRangeStartInput.value, dateRangeEndInput.value);
+            // Apply initial filters and render
+            applyFilters();
+        };
+
+        initializeDashboard(); // Start the dashboard
+
+    </script>
+
+</body>
+</html>

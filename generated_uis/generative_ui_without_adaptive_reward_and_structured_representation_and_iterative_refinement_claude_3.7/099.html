@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REST vs GraphQL</title>
+    <style>
+        /* Global Styles */
+        :root {
+            --primary-color: #007acc; /* VSCode blue */
+            --secondary-color: #f0f0f0; /* Light grey */
+            --text-color: #333; /* Dark grey */
+            --background-color: #ffffff; /* White */
+            --code-background: #252526; /* Dark grey for code */
+            --code-text: #d4d4d4; /* Light grey for code */
+            --border-color: #ddd;
+            --spacing-unit: 20px;
+            --border-radius: 8px;
+            --shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+            scroll-behavior: smooth;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 var(--spacing-unit);
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: var(--spacing-unit) 0;
+            text-align: center;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2em;
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+            margin-top: 10px;
+        }
+
+        nav ul li {
+            display: inline-block;
+            margin: 0 15px;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 8px 15px; /* Larger click target */
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+            outline: none; /* Remove default outline */
+        }
+
+        nav a:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        nav a:focus {
+            background-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5); /* Visible focus indicator */
+        }
+
+
+        section {
+            padding: var(--spacing-unit) 0;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        section:last-child {
+            border-bottom: none;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-bottom: var(--spacing-unit);
+            font-size: 1.8em;
+        }
+
+         h3 {
+            color: var(--primary-color);
+            margin-top: var(--spacing-unit);
+            margin-bottom: 10px;
+            font-size: 1.4em;
+        }
+
+        h4 {
+            color: var(--text-color);
+            margin-top: var(--spacing-unit);
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+
+        p {
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .code-block {
+            background-color: var(--code-background);
+            color: var(--code-text);
+            padding: var(--spacing-unit);
+            border-radius: var(--border-radius);
+            overflow-x: auto;
+            margin: var(--spacing-unit) 0;
+            font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+            font-size: 0.9em;
+            white-space: pre-wrap; /* Allow wrapping */
+            word-wrap: break-word; /* Break long words */
+        }
+
+        .code-block pre {
+            margin: 0;
+        }
+
+        /* Basic Syntax Highlighting Classes */
+        .code-comment { color: #6a9955; } /* VSCode green for comments */
+        .code-keyword { color: #569cd6; } /* VSCode blue for keywords */
+        .code-string { color: #ce9178; } /* VSCode orange for strings */
+        .code-property { color: #9cdcb8; } /* VSCode light blue for properties */
+        .code-number { color: #b5cea8; } /* VSCode light green for numbers */
+        .code-punctuation { color: #d4d4d4; } /* VSCode light grey for punctuation */
+
+
+        .button {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 25px; /* Larger click target */
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
+            margin-top: var(--spacing-unit);
+            outline: none; /* Remove default outline */
+        }
+
+        .button:hover {
+            background-color: #005fa3;
+            box-shadow: var(--shadow);
+        }
+
+        .button:focus {
+             background-color: #005fa3;
+             box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.5); /* Visible focus indicator */
+        }
+
+        .button:active {
+            transform: scale(0.98);
+             background-color: #004c80;
+        }
+
+        .simulation-area {
+            background-color: var(--secondary-color);
+            padding: var(--spacing-unit);
+            border-radius: var(--border-radius);
+            margin-top: var(--spacing-unit);
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-unit);
+            border: 1px solid var(--border-color);
+        }
+
+        .simulation-step {
+            background-color: var(--background-color);
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .simulation-step.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .simulation-step strong {
+            color: var(--primary-color);
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-unit);
+            margin-top: var(--spacing-unit);
+        }
+
+        .comparison-item {
+            background-color: var(--secondary-color);
+            padding: var(--spacing-unit);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+         .comparison-item:hover {
+             transform: translateY(-5px);
+             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+         }
+
+        .comparison-item h3 {
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.5em;
+        }
+
+        .comparison-item p {
+            flex-grow: 1;
+            margin-bottom: 0; /* Remove bottom margin if it's the last element */
+        }
+
+        /* Basic Responsiveness */
+        @media (max-width: 768px) {
+            nav ul li {
+                display: block;
+                margin: 5px 0;
+            }
+
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 { font-size: 1.8em; }
+            h2 { font-size: 1.6em; }
+            h3 { font-size: 1.3em; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>REST vs GraphQL APIs</h1>
+            <nav aria-label="Main navigation">
+                <ul>
+                    <li><a href="#intro">Intro</a></li>
+                    <li><a href="#rest">REST</a></li>
+                    <li><a href="#graphql">GraphQL</a></li>
+                    <li><a href="#comparison">Comparison</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <section id="intro" aria-labelledby="intro-heading">
+            <h2 id="intro-heading">Introduction to Web APIs</h2>
+            <p>Web APIs (Application Programming Interfaces) are sets of rules and protocols that allow different software applications to communicate with each other over the internet. They define how clients (like web browsers or mobile apps) can request data or functionality from servers, and how servers respond. Two popular architectures for building web APIs are REST and GraphQL.</p>
+        </section>
+
+        <section id="rest" aria-labelledby="rest-heading">
+            <h2 id="rest-heading">REST (Representational State Transfer)</h2>
+            <p>REST is an architectural style that uses standard HTTP methods (GET, POST, PUT, DELETE) to interact with resources. Resources are identified by URLs (Uniform Resource Locators), and the server responds with representations of these resources, typically in JSON or XML format.</p>
+            <p>Key principles of REST include statelessness, client-server separation, cacheability, and a uniform interface (using standard HTTP methods). Data fetching in REST often involves accessing specific endpoints for different resources or collections of resources.</p>
+
+            <h3>REST Data Fetching Example: Fetching User and Posts</h3>
+            <p>In a typical REST API, fetching related data like a user and their posts often requires multiple requests to different endpoints.</p>
+
+            <h4>Request 1: Get User Details</h4>
+            <div class="code-block">
+                <pre><span class="code-keyword">GET</span> /api/users/123</pre>
+            </div>
+            <h4>Response 1 (User Data - potentially over-fetching):</h4>
+            <div class="code-block">
+                <pre>{
+    <span class="code-property">"id"</span><span class="code-punctuation">:</span> <span class="code-number">123</span><span class="code-punctuation">,</span>
+    <span class="code-property">"name"</span><span class="code-punctuation">:</span> <span class="code-string">"Alice"</span><span class="code-punctuation">,</span>
+    <span class="code-property">"email"</span><span class="code-punctuation">:</span> <span class="code-string">"alice@example.com"</span><span class="code-punctuation">,</span>
+    <span class="code-property">"registrationDate"</span><span class="code-punctuation">:</span> <span class="code-string">"2023-01-15"</span><span class="code-punctuation">,</span>
+    <span class="code-property">"lastLogin"</span><span class="code-punctuation">:</span> <span class="code-string">"2024-07-20"</span><span class="code-punctuation">,</span>
+    <span class="code-property">"address"</span><span class="code-punctuation">:</span> {
+        <span class="code-property">"street"</span><span class="code-punctuation">:</span> <span class="code-string">"123 Main St"</span><span class="code-punctuation">,</span>
+        <span class="code-property">"city"</span><span class="code-punctuation">:</span> <span class="code-string">"Anytown"</span><span class="code-punctuation">,</span>
+        <span class="code-property">"zip"</span><span class="code-punctuation">:</span> <span class="code-string">"12345"</span>
+    }
+}</pre>
+            </div>
+
+            <h4>Request 2: Get User's Posts</h4>
+            <div class="code-block">
+                <pre><span class="code-keyword">GET</span> /api/users/123/posts</pre>
+            </div>
+            <h4>Response 2 (Posts Data - potentially over-fetching):</h4>
+            <div class="code-block">
+                <pre>[
+    {
+        <span class="code-property">"id"</span><span class="code-punctuation">:</span> <span class="code-number">101</span><span class="code-punctuation">,</span>
+        <span class="code-property">"userId"</span><span class="code-punctuation">:</span> <span class="code-number">123</span><span class="code-punctuation">,</span>
+        <span class="code-property">"title"</span><span class="code-punctuation">:</span> <span class="code-string">"My First Post"</span><span class="code-punctuation">,</span>
+        <span class="code-property">"content"</span><span class="code-punctuation">:</span> <span class="code-string">"This is the content..."</span><span class="code-punctuation">,</span>
+        <span class="code-property">"createdAt"</span><span class="code-punctuation">:</span> <span class="code-string">"2023-02-01"</span><span class="code-punctuation">,</span>
+        <span class="code-property">"updatedAt"</span><span class="code-punctuation">:</span> <span class="code-string">"2023-02-01"</span><span class="code-punctuation">,</span>
+        <span class="code-property">"likes"</span><span class="code-punctuation">:</span> <span class="code-number">5</span>
+    }<span class="code-punctuation">,</span>
+    {
+        <span class="code-property">"id"</span><span class="code-punctuation">:</span> <span class="code-number">102</span><span class="code-punctuation">,</span>
+        <span class="code-property">"userId"</span><span class="code-punctuation">:</span> <span class="code-number">123</span><span class="code-punctuation">,</span>
+        <span class="code-property">"title"</span><span class="code-punctuation">:</span> <span class="code-string">"Another Post"</span><span class="code-punctuation">,</span>
+        <span class="code-property">"content"</span><span class="code-punctuation">:</span> <span class="code-string">"More content here..."</span><span class="code-punctuation">,</span>
+        <span class="code-property">"createdAt"</span><span class="code-punctuation">:</span> <span class="code-string">"2023-03-10"</span><span class="code-punctuation">,</span>
+        <span class="code-property">"updatedAt"</span><span class="code-punctuation">:</span> <span class="code-string">"2023-03-10"</span><span class="code-punctuation">,</span>
+        <span class="code-property">"likes"</span><span class="code-punctuation">:</span> <span class="code-number">12</span>
+    }
+]</pre>
+            </div>
+            <p>This "multiple requests" pattern is common in REST and can lead to over-fetching (receiving more data than needed) or under-fetching (needing multiple requests for related data).</p>
+
+            <button class="button" onclick="simulateRestFetch()" aria-controls="rest-simulation">Simulate REST Fetch</button>
+            <div id="rest-simulation" class="simulation-area" aria-live="polite">
+                <p>Click the button to see the simulation.</p>
+            </div>
+        </section>
+
+        <section id="graphql" aria-labelledby="graphql-heading">
+            <h2 id="graphql-heading">GraphQL</h2>
+            <p>GraphQL is a query language for APIs and a runtime for fulfilling those queries with your existing data. It was developed by Facebook and is designed to give clients the power to ask for exactly what they need and nothing more.</p>
+            <p>Instead of multiple endpoints that return fixed data structures, a GraphQL API typically exposes a single endpoint. Clients send queries to this endpoint specifying the data they require, and the server responds with a JSON object that mirrors the structure of the query.</p>
+
+            <h3>GraphQL Data Fetching Example: Fetching User and Posts</h3>
+            <p>With GraphQL, you can fetch the user details and their posts in a single request, specifying exactly which fields you need.</p>
+
+            <h4>Single Request (Query):</h4>
+            <div class="code-block">
+                <pre><span class="code-keyword">query</span> {
+    <span class="code-property">user</span><span class="code-punctuation">(</span><span class="code-property">id</span><span class="code-punctuation">:</span> <span class="code-string">"123"</span><span class="code-punctuation">)</span> {
+        <span class="code-property">id</span>
+        <span class="code-property">name</span>
+        <span class="code-property">posts</span> {
+            <span class="code-property">id</span>
+            <span class="code-property">title</span>
+            <span class="code-property">likes</span>
+        }
+    }
+}</pre>
+            </div>
+            <h4>Single Response (Precise Data):</h4>
+            <div class="code-block">
+                <pre>{
+    <span class="code-property">"data"</span><span class="code-punctuation">:</span> {
+        <span class="code-property">"user"</span><span class="code-punctuation">:</span> {
+            <span class="code-property">"id"</span><span class="code-punctuation">:</span> <span class="code-number">123</span><span class="code-punctuation">,</span>
+            <span class="code-property">"name"</span><span class="code-punctuation">:</span> <span class="code-string">"Alice"</span><span class="code-punctuation">,</span>
+            <span class="code-property">"posts"</span><span class="code-punctuation">:</span> [
+                {
+                    <span class="code-property">"id"</span><span class="code-punctuation">:</span> <span class="code-number">101</span><span class="code-punctuation">,</span>
+                    <span class="code-property">"title"</span><span class="code-punctuation">:</span> <span class="code-string">"My First Post"</span><span class="code-punctuation">,</span>
+                    <span class="code-property">"likes"</span><span class="code-punctuation">:</span> <span class="code-number">5</span>
+                }<span class="code-punctuation">,</span>
+                {
+                    <span class="code-property">"id"</span><span class="code-punctuation">:</span> <span class="code-number">102</span><span class="code-punctuation">,</span>
+                    <span class="code-property">"title"</span><span class="code-punctuation">:</span> <span class="code-string">"Another Post"</span><span class="code-punctuation">,</span>
+                    <span class="code-property">"likes"</span><span class="code-punctuation">:</span> <span class="code-number">12</span>
+                }
+            ]
+        }
+    }
+}</pre>
+            </div>
+            <p>Notice how the response only includes the fields requested in the query, avoiding over-fetching.</p>
+
+            <button class="button" onclick="simulateGraphqlFetch()" aria-controls="graphql-simulation">Simulate GraphQL Fetch</button>
+            <div id="graphql-simulation" class="simulation-area" aria-live="polite">
+                <p>Click the button to see the simulation.</p>
+            </div>
+        </section>
+
+        <section id="comparison" aria-labelledby="comparison-heading">
+            <h2 id="comparison-heading">Key Differences</h2>
+            <div class="comparison-grid">
+                <div class="comparison-item">
+                    <h3>Endpoints</h3>
+                    <p><strong>REST:</strong> Multiple endpoints, each representing a resource or collection (e.g., <code>/users</code>, <code>/users/123</code>, <code>/users/123/posts</code>).</p>
+                    <p><strong>GraphQL:</strong> Typically a single endpoint (e.g., <code>/graphql</code>) where all requests are sent.</p>
+                </div>
+                <div class="comparison-item">
+                    <h3>Data Fetching</h3>
+                    <p><strong>REST:</strong> Client fetches data by accessing specific endpoints. Often requires multiple requests for related data (under-fetching) or receives more data than needed (over-fetching).</p>
+                    <p><strong>GraphQL:</strong> Client sends a query specifying exactly what data is needed from a single endpoint. Server responds with precisely the requested data, avoiding over- and under-fetching.</p>
+                </div>
+                <div class="comparison-item">
+                    <h3>Flexibility</h3>
+                    <p><strong>REST:</strong> Less flexible for clients. Server defines the response structure for each endpoint. Changes to data requirements often require server-side modifications or new endpoints.</p>
+                    <p><strong>GraphQL:</strong> More flexible for clients. Clients define the structure of the data they need in the query. Allows clients to evolve data requirements without server changes (as long as the data is available in the schema).</p>
+                </div>
+                 <div class="comparison-item">
+                    <h3>Versioning</h3>
+                    <p><strong>REST:</strong> Common to version APIs (e.g., <code>/v1/users</code>, <code>/v2/users</code>) to avoid breaking existing clients when making changes.</p>
+                    <p><strong>GraphQL:</strong> Schema evolution is often handled by adding new fields or types, marking old fields as deprecated, rather than versioning the entire API endpoint.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Smooth scrolling for navigation
+        document.querySelectorAll('nav a').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                     targetElement.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                     // Update focus for accessibility after scrolling
+                    targetElement.setAttribute('tabindex', '-1'); // Make target focusable
+                    targetElement.focus();
+                    targetElement.removeAttribute('tabindex'); // Remove tabindex after focus
+                }
+            });
+        });
+
+        // Simulation functions
+        function simulateRestFetch() {
+            const simulationArea = document.getElementById('rest-simulation');
+            simulationArea.innerHTML = ''; // Clear previous simulation
+
+            const steps = [
+                '<strong>Step 1:</strong> Client sends GET request to <code>/api/users/123</code>',
+                '<strong>Step 2:</strong> Server responds with full user data (including potentially unused fields).',
+                '<strong>Step 3:</strong> Client sends GET request to <code>/api/users/123/posts</code>',
+                '<strong>Step 4:</strong> Server responds with full posts data.',
+                '<strong>Result:</strong> Multiple requests made, potentially more data received than needed.'
+            ];
+
+            steps.forEach((stepHtml, index) => {
+                const stepDiv = document.createElement('div');
+                stepDiv.classList.add('simulation-step');
+                stepDiv.innerHTML = stepHtml;
+                simulationArea.appendChild(stepDiv);
+                setTimeout(() => { stepDiv.classList.add('visible'); }, index * 1000 + 100); // Stagger animation
+            });
+        }
+
+         function simulateGraphqlFetch() {
+            const simulationArea = document.getElementById('graphql-simulation');
+            simulationArea.innerHTML = ''; // Clear previous simulation
+
+            const steps = [
+                '<strong>Step 1:</strong> Client sends POST request with a GraphQL query to <code>/graphql</code>',
+                '<strong>Step 2:</strong> Server parses query, fetches only the requested data (user ID, name, posts with ID, title, likes).',
+                '<strong>Step 3:</strong> Server responds with a single JSON object containing only the requested data.',
+                '<strong>Result:</strong> Single request made, precise data received.'
+            ];
+
+             steps.forEach((stepHtml, index) => {
+                const stepDiv = document.createElement('div');
+                stepDiv.classList.add('simulation-step');
+                stepDiv.innerHTML = stepHtml;
+                simulationArea.appendChild(stepDiv);
+                setTimeout(() => { stepDiv.classList.add('visible'); }, index * 1000 + 100); // Stagger animation
+            });
+        }
+
+        // Basic syntax highlighting (manual for embedded code blocks)
+        // This is a simplified approach. A real library would be more robust.
+        function applySyntaxHighlighting() {
+            document.querySelectorAll('.code-block pre').forEach(pre => {
+                let html = pre.innerHTML;
+
+                // Protect HTML entities like &lt;, &gt;
+                const entityMap = {
+                    '&amp;': '&',
+                    '&lt;': '<',
+                    '&gt;': '>',
+                    '&quot;': '"',
+                    '&#39;': "'",
+                    '&#x2F;': '/',
+                    '`': '`'
+                };
+                 function escapeHtml(string) {
+                    return String(string).replace(/[&<>"'`/]/g, function (s) {
+                        return '&#' + s.charCodeAt(0) + ';';
+                    });
+                }
+
+                // Revert entities temporarily to process raw text
+                let text = html.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"'); // Minimal unescape for processing
+
+                // Apply highlighting - order matters
+                text = text.replace(/\/\/.*/g, '<span class="code-comment">$&</span>'); // Comments
+                text = text.replace(/"([^"]*)"/g, '<span class="code-string">"$&quot;</span>'); // Strings (handle escaped quotes if necessary, simple version here)
+                text = text.replace(/\b(GET|POST|PUT|DELETE|query|mutation|fragment|schema|type|input|enum|interface|union)\b/g, '<span class="code-keyword">$&</span>'); // Keywords
+                text = text.replace(/\b\d+(\.\d+)?\b/g, '<span class="code-number">$&</span>'); // Numbers
+                text = text.replace(/([\{\}\[\]\(\):,])/g, '<span class="code-punctuation">$&</span>'); // Punctuation
+                 // Simple property highlighting - target keys before colon
+                 text = text.replace(/<span class="code-string">"([^"]+)"<\/span><span class="code-punctuation">:/g, '<span class="code-property">"$1"</span><span class="code-punctuation">:</span');
+
+
+                pre.innerHTML = text; // Set the highlighted HTML
+            });
+        }
+
+        // Apply highlighting on load
+        document.addEventListener('DOMContentLoaded', applySyntaxHighlighting);
+
+    </script>
+</body>
+</html>

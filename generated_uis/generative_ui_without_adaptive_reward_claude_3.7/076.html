@@ -1,0 +1,1981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speech ML for Neurodegenerative Disease Detection</title>
+    <style>
+        :root {
+            --primary: #4a6fa5;
+            --primary-light: #6389c5;
+            --primary-dark: #345888;
+            --secondary: #61b15a;
+            --secondary-light: #76c970;
+            --secondary-dark: #4e9a48;
+            --accent: #ffce6d;
+            --text-dark: #333333;
+            --text-light: #ffffff;
+            --background: #f5f7fa;
+            --card-bg: #ffffff;
+            --border: #e1e5eb;
+            --danger: #e74c3c;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --info: #3498db;
+            --shadow: rgba(0, 0, 0, 0.05);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            background-color: var(--card-bg);
+            border-right: 1px solid var(--border);
+            padding: 1.5rem 0;
+            box-shadow: 2px 0 5px var(--shadow);
+            z-index: 10;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 2rem;
+            padding: 0 1.5rem;
+        }
+
+        .logo-img {
+            width: 40px;
+            height: 40px;
+            background-color: var(--primary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-light);
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .logo-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .nav-list {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            color: var(--text-dark);
+            text-decoration: none;
+            transition: var(--transition);
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(74, 111, 165, 0.1);
+            color: var(--primary);
+        }
+
+        .nav-link.active {
+            background-color: rgba(74, 111, 165, 0.1);
+            color: var(--primary);
+            border-left: 3px solid var(--primary);
+        }
+
+        .nav-icon {
+            margin-right: 0.75rem;
+            width: 20px;
+            height: 20px;
+        }
+
+        .progress-container {
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .progress-title {
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+        }
+
+        .progress-bar {
+            height: 8px;
+            background-color: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary);
+            border-radius: 4px;
+            width: 20%;
+            transition: var(--transition);
+        }
+
+        /* Main Content Styles */
+        .main-content {
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+        }
+
+        .page-description {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: 0 4px 6px var(--shadow);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 15px var(--shadow);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .info-icon {
+            color: var(--primary);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .tooltip {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            width: 300px;
+            background-color: var(--card-bg);
+            color: var(--text-dark);
+            padding: 1rem;
+            border-radius: 6px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            font-size: 0.875rem;
+            display: none;
+        }
+
+        .info-icon:hover .tooltip {
+            display: block;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.2);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 1rem;
+            background-color: var(--card-bg);
+            transition: var(--transition);
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.2);
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+        }
+
+        .button-primary {
+            background-color: var(--primary);
+            color: var(--text-light);
+        }
+
+        .button-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .button-secondary {
+            background-color: var(--secondary);
+            color: var(--text-light);
+        }
+
+        .button-secondary:hover {
+            background-color: var(--secondary-dark);
+        }
+
+        .button-outline {
+            background-color: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .button-outline:hover {
+            background-color: rgba(74, 111, 165, 0.1);
+        }
+
+        .button-icon {
+            margin-right: 0.5rem;
+        }
+
+        /* Upload Area */
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--primary);
+            background-color: rgba(74, 111, 165, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            margin-bottom: 1rem;
+        }
+
+        .upload-input {
+            display: none;
+        }
+
+        .file-list {
+            list-style: none;
+            margin-top: 1rem;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem;
+            background-color: var(--background);
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .file-icon {
+            margin-right: 0.75rem;
+            color: var(--primary);
+        }
+
+        .file-name {
+            font-weight: 500;
+        }
+
+        .file-size {
+            color: #666;
+            font-size: 0.875rem;
+            margin-left: 0.5rem;
+        }
+
+        .file-actions {
+            display: flex;
+            align-items: center;
+        }
+
+        .file-action {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            margin-left: 0.5rem;
+            transition: var(--transition);
+        }
+
+        .file-action:hover {
+            color: var(--primary);
+        }
+
+        /* Feature Selection */
+        .feature-list {
+            list-style: none;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-item {
+            padding: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            margin-bottom: 0.75rem;
+            transition: var(--transition);
+        }
+
+        .feature-item:hover {
+            border-color: var(--primary-light);
+        }
+
+        .feature-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+        }
+
+        .feature-title {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+        }
+
+        .feature-checkbox {
+            margin-right: 0.75rem;
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+        }
+
+        .feature-toggle {
+            color: var(--primary);
+            transition: var(--transition);
+            transform: rotate(0deg);
+        }
+
+        .feature-toggle.open {
+            transform: rotate(180deg);
+        }
+
+        .feature-details {
+            padding-top: 1rem;
+            margin-top: 1rem;
+            border-top: 1px solid var(--border);
+            display: none;
+        }
+
+        .feature-details.open {
+            display: block;
+        }
+
+        .parameter-group {
+            margin-bottom: 1rem;
+        }
+
+        .parameter-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: #666;
+        }
+
+        .parameter-input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .parameter-range {
+            width: 100%;
+            accent-color: var(--primary);
+        }
+
+        .parameter-value {
+            display: inline-block;
+            margin-left: 0.5rem;
+            font-size: 0.875rem;
+            color: #666;
+        }
+
+        /* Model Selection */
+        .model-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .model-card {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .model-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 10px var(--shadow);
+        }
+
+        .model-card.selected {
+            border-color: var(--primary);
+            background-color: rgba(74, 111, 165, 0.05);
+        }
+
+        .model-card.selected::before {
+            content: '✓';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 24px;
+            height: 24px;
+            background-color: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .model-icon {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .model-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .model-description {
+            font-size: 0.875rem;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+
+        .model-tag {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            background-color: rgba(74, 111, 165, 0.1);
+            color: var(--primary);
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Training Section */
+        .training-progress {
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-label {
+            font-weight: 500;
+        }
+
+        .progress-value {
+            font-weight: 500;
+            color: var(--primary);
+        }
+
+        .training-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .metric-card {
+            background-color: var(--background);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: #666;
+        }
+
+        .chart-container {
+            height: 300px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .chart-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 6px;
+            padding: 0.5rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .chart-container:hover .chart-controls {
+            display: block;
+        }
+
+        .chart-control {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            margin-left: 0.5rem;
+        }
+
+        /* Evaluation Section */
+        .evaluation-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .confusion-matrix {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2px;
+            width: 200px;
+            margin: 0 auto;
+        }
+
+        .matrix-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            font-weight: 500;
+            position: relative;
+        }
+
+        .matrix-cell.tp {
+            background-color: rgba(46, 204, 113, 0.2);
+        }
+
+        .matrix-cell.fp {
+            background-color: rgba(231, 76, 60, 0.2);
+        }
+
+        .matrix-cell.fn {
+            background-color: rgba(241, 196, 15, 0.2);
+        }
+
+        .matrix-cell.tn {
+            background-color: rgba(52, 152, 219, 0.2);
+        }
+
+        .matrix-label {
+            position: absolute;
+            font-size: 0.75rem;
+            color: #666;
+        }
+
+        .matrix-label.top {
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .matrix-label.left {
+            left: -60px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .evaluation-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Hidden by default */
+        #featuresPanel, #modelPanel, #trainingPanel, #evaluationPanel {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="logo-img">ML</div>
+                <div class="logo-text">SpeechML</div>
+            </div>
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a href="#" class="nav-link active" data-panel="dataPanel">
+                        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"></path>
+                        </svg>
+                        Data
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-panel="featuresPanel">
+                        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                        Features
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-panel="modelPanel">
+                        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
+                        </svg>
+                        Model
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-panel="trainingPanel">
+                        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        Train
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-panel="evaluationPanel">
+                        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        Evaluate
+                    </a>
+                </li>
+            </ul>
+            <div class="progress-container">
+                <div class="progress-title">Workflow Progress</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressBar"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Data Panel -->
+            <div id="dataPanel">
+                <div class="page-header">
+                    <h1 class="page-title">Data Management</h1>
+                    <p class="page-description">Upload and manage your speech data for neurodegenerative disease detection.</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Upload Speech Data</h2>
+                        <div class="info-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+                            </svg>
+                            <div class="tooltip">
+                                Upload audio files (.wav, .mp3) or a CSV file containing metadata and paths to audio files. For best results, ensure recordings are consistent in quality and duration.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                                <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
+                            </svg>
+                        </div>
+                        <div class="upload-text">
+                            <p>Drag and drop files here or <strong>click to browse</strong></p>
+                            <p style="font-size: 0.875rem; color: #666;">Supported formats: .wav, .mp3, .csv</p>
+                        </div>
+                        <input type="file" id="fileInput" class="upload-input" multiple accept=".wav,.mp3,.csv">
+                    </div>
+
+                    <ul class="file-list" id="fileList">
+                        <!-- Files will be added here -->
+                    </ul>
+
+                    <div class="form-group">
+                        <label class="form-label">Data Split Configuration</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                            <div>
+                                <label class="parameter-label">Training Set (%)</label>
+                                <input type="range" class="parameter-range" min="50" max="90" value="70" id="trainSplit">
+                                <span class="parameter-value" id="trainSplitValue">70%</span>
+                            </div>
+                            <div>
+                                <label class="parameter-label">Validation Set (%)</label>
+                                <input type="range" class="parameter-range" min="5" max="30" value="15" id="valSplit">
+                                <span class="parameter-value" id="valSplitValue">15%</span>
+                            </div>
+                            <div>
+                                <label class="parameter-label">Test Set (%)</label>
+                                <input type="range" class="parameter-range" min="5" max="30" value="15" id="testSplit" disabled>
+                                <span class="parameter-value" id="testSplitValue">15%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Stratification Options</label>
+                        <select class="form-select" id="stratifySelect">
+                            <option value="diagnosis">Stratify by Diagnosis (Recommended)</option>
+                            <option value="age">Stratify by Age Groups</option>
+                            <option value="gender">Stratify by Gender</option>
+                            <option value="accent">Stratify by Accent/Region</option>
+                            <option value="none">No Stratification</option>
+                        </select>
+                    </div>
+
+                    <button class="button button-primary" id="loadDataBtn">
+                        <span class="button-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                                <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
+                            </svg>
+                        </span>
+                        Load Data
+                    </button>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Small Data Techniques</h2>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                        <div>
+                            <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem; color: var(--primary);">Data Augmentation</h3>
+                            <p style="margin-bottom: 1rem; font-size: 0.95rem;">For small datasets (like your 200 subjects), data augmentation is crucial. Consider:</p>
+                            <ul style="margin-left: 1.5rem; font-size: 0.95rem;">
+                                <li>Adding background noise at different SNR levels</li>
+                                <li>Pitch shifting (±10%)</li>
+                                <li>Time stretching/compression (±10%)</li>
+                                <li>Room impulse response simulation</li>
+                                <li>Frequency masking</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem; color: var(--primary);">Cross-Validation Strategies</h3>
+                            <p style="margin-bottom: 1rem; font-size: 0.95rem;">With limited data, robust validation is essential:</p>
+                            <ul style="margin-left: 1.5rem; font-size: 0.95rem;">
+                                <li>K-fold cross-validation (k=5 or k=10)</li>
+                                <li>Leave-one-subject-out for ultimate robustness</li>
+                                <li>Stratified sampling to maintain class distribution</li>
+                                <li>Group k-fold to keep recordings from same subject together</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Features Panel -->
+            <div id="featuresPanel">
+                <div class="page-header">
+                    <h1 class="page-title">Feature Extraction</h1>
+                    <p class="page-description">Select and configure audio features for neurodegenerative disease detection.</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Audio Feature Selection</h2>
+                        <div class="info-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+                            </svg>
+                            <div class="tooltip">
+                                Select features that capture different aspects of speech. For neurodegenerative diseases, both acoustic (MFCC, prosody) and linguistic features can be valuable. Consider combining multiple feature types for better performance.
+                            </div>
+                        </div>
+                    </div>
+
+                    <ul class="feature-list">
+                        <li class="feature-item">
+                            <div class="feature-header" data-feature="mfcc">
+                                <div class="feature-title">
+                                    <input type="checkbox" class="feature-checkbox" checked>
+                                    Mel-Frequency Cepstral Coefficients (MFCC)
+                                </div>
+                                <div class="feature-toggle">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M7.646 4.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 5.707l-5.646 5.647a.5.5 0 0 1-.708-.708l6-6z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="feature-details">
+                                <p style="margin-bottom: 1rem; font-size: 0.95rem;">MFCCs capture the spectral envelope of speech and are excellent for detecting subtle changes in articulation that occur in neurodegenerative conditions.</p>
+                                <div class="parameter-group">
+                                    <label class="parameter-label">Number of Coefficients</label>
+                                    <input type="range" class="parameter-range" min="12" max="40" value="13" id="mfccCoefficients">
+                                    <span class="parameter-value" id="mfccCoefficientsValue">13</span>
+                                </div>
+                                <div class="parameter-group">
+                                    <label class="parameter-label">Include Deltas</label>
+                                    <select class="form-select" id="mfccDeltas">
+                                        <option value="both">First & Second Derivatives (Recommended)</option>
+                                        <option value="first">First Derivatives Only</option>
+                                        <option value="none">No Derivatives</option>
+                                    </select>
+                                </div>
+                                <div class="parameter-group">
+                                    <label class="parameter-label">Frame Length (ms)</label>
+                                    <input type="range" class="parameter-range" min="10" max="50" value="25" id="mfccFrameLength">
+                                    <span class="parameter-value" id="mfccFrameLengthValue">25 ms</span>
+                                </div>
+                            </div>
+                        </li>
+
+                        <li class="feature-item">
+                            <div class="feature-header" data-feature="prosody">
+                                <div class="feature-title">
+                                    <input type="checkbox" class="feature-checkbox" checked>
+                                    Prosodic Features
+                                </div>
+                                <div class="feature-toggle">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M7.646 4.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 5.707l-5.646 5.647a.5.5 0 0 1-.708-.708l6-6z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="feature-details">
+                                <p style="margin-bottom: 1rem; font-size: 0.95rem;">Prosodic features capture rhythm, stress, and intonation patterns in speech, which often change with neurodegenerative diseases.</p>
+                                <div class="parameter-group">
+                                    <label class="parameter-label">Include Features</label>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                                        <div>
+                                            <input type="checkbox" id="pitchFeature" checked>
+                                            <label for="pitchFeature">Pitch (F0) Statistics</label>
+                                        </div>
+                                        <div>
+                                            <input type="checkbox" id="energyFeature" checked>
+                                            <label for="energyFeature">Energy/Intensity</label>
+                                        </div>
+                                        <div>
+                                            <input type="checkbox" id="jitterFeature" checked>
+                                            <label for="jitterFeature">Jitter (Pitch Perturbation)</label>
+                                        </div>
+                                        <div>
+                                            <input type="checkbox" id="shimmerFeature" checked>
+                                            <label for="shimmerFeature">Shimmer (Amplitude Perturbation)</label>
+                                        </div>
+                                        <div>
+                                            <input type="checkbox" id="hnrFeature">
+                                            <label for="hnrFeature">Harmonics-to-Noise Ratio</label>
+                                        </div>
+                                        <div>
+                                            <input type="checkbox" id="speakingRateFeature" checked>
+                                            <label for="speakingRateFeature">Speaking Rate</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="parameter-group">
+                                    <label class="parameter-label">Statistical Functionals</label>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                                        <div>
+                                            <input type="checkbox" id="meanStat" checked>
+                                            <label for="meanStat">Mean</label>
+                                        </div>
+                                        <div>
+                                            <input type="checkbox" id="stdStat" checked>
+                                            <label for="stdStat">Standard Deviation</label>
+                                        </div>
+                                        <div>
+                                            <input type="checkbox" id="minmaxStat">
+                                            <label for="minmaxStat">Min/Max</label>
+                                        </div>
+                                        <div>
+                                            <input type="checkbox" id="quartilesStat">
+                                            <label for="quartilesStat">Quartiles</label>
+                                        </div>
+                                        <div>
+                                            <input type="checkbox" id="slopeStat" checked>
+                                            <label for="slopeStat">Slope</label>
+                                        </div>
+                                        <div>
+                                            <input type="checkbox" id="rangeStat">
+                                            <label for="rangeStat">Range</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+
+                        <li class="feature-item">
+                            <div class="feature-header" data-feature="voice">
+                                <div class="feature-title">
+                                    <input type="checkbox" class="feature-checkbox">
+                                    Voice Quality Features
+                                </div>
+                                <div class="feature-toggle">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M7.646 4.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 5.707l-5.646 5.647a.5.5 0 0 1-.708-.708l6-6z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="feature-details">
+                                <p style="margin-bottom: 1rem; font-size: 0.95rem;">Voice quality features capture changes in vocal fold function and phonation, which can be affected in conditions like Parkinson's disease.</p>
+                                <div class="parameter-group">
+                                    <label class="parameter-label">Include Features</label>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                                        <div>
+                                            <input type="checkbox" id="cepstralPeakFeature" checked>
+                                            <label for="cepstralPeakFeature">Cepstral Peak Prominence</label>
+                                        </div>
+                                        <div>
+                                            <input type="checkbox" id="glottalFeature">
+                                            <label for="glottalFeature">Glottal Features</label>
+                                        </div>
+                                        <div>
+                                            <input type="checkbox" id="formantFeature" checked>
+                                            <label for="formantFeature">Formant Frequencies</label>
+                                        </div>
+                                        <div>
+                                            <input type="checkbox" id="breathinessFeature">
+                                            <label for="breathinessFeature">Breathiness Measures</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+
+                        <li class="feature-item">
+                            <div class="feature-header" data-feature="spectral">
+                                <div class="feature-title">
+                                    <input type="checkbox" class="feature-checkbox" checked>
+                                    Spectral Features
+                                </div>
+                                <div class="feature-toggle">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M7.646 4.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 5.707l-5.646 5.647a.5.5 0 0 1-.708-.708l6-6z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="feature-details">
+                                <p style="margin-bottom: 1rem; font-size: 0.95rem;">Spectral features provide information about the frequency distribution of the speech signal, capturing articulation changes.</p>
+                                <div class="parameter-group">
+                                    <label class="parameter-label">Include Features</label>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                                        <div>
+                                            <input type="checkbox" id="spectralCentroidFeature" checked>
+                                            <label for="spectralCentroidFeature">Spectral Centroid</label>
+                                        </div>
+                                        <div>
+                                            <input type="checkbox" id="spectralFluxFeature" checked>
+                                            <label for="spectralFluxFeature">Spectral Flux</label>
+                                        </div>
+                                        <div>
+                                            <input type="checkbox" id="spectralRolloffFeature">
+                                            <label for="spectralRolloffFeature">Spectral Rolloff</label>
+                                        </div>
+                                        <div>
+                                            <input type="checkbox" id="spectralEntropyFeature">
+                                            <label for="spectralEntropyFeature">Spectral Entropy</label>
+                                        </div>
+                                        <div>
+                                            <input type="checkbox" id="spectralFlatnessFeature">
+                                            <label for="spectralFlatnessFeature">Spectral Flatness</label>
+                                        </div>
+                                        <div>
+                                            <input type="checkbox" id="spectralBandwidthFeature">
+                                            <label for="spectralBandwidthFeature">Spectral Bandwidth</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+
+                        <li class="feature-item">
+                            <div class="feature-header" data-feature="linguistic">
+                                <div class="feature-title">
+                                    <input type="checkbox" class="feature-checkbox">
+                                    Linguistic Features
+                                </div>
+                                <div class="feature-toggle">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M7.646 4.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 5.707l-5.646 5.647a.5.5 0 0 1-.708-.708l6-6z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="feature-details">
+                                <p style="margin-bottom: 1rem; font-size: 0.95rem;">Linguistic features capture changes in language use, complexity, and content, which can be affected in conditions like Alzheimer's disease.</p>
+                                <div class="parameter-group">
+                                    <label class="parameter-label">Speech-to-Text Engine</label>
+                                    <select class="form-select" id="sttEngine">
+                                        <option value="whisper">OpenAI Whisper (Recommended)</option>
+                                        <option value="google">Google Speech-to-Text</option>
+                                        <option value="azure">Microsoft Azure Speech</option>
+                                        <option value="manual">Manual Transcription</option>
+                                    </select>
+                                </div>
+                                <div class="parameter-group">
+                                    <label class="parameter-label">Include Features</label>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                                        <div>
+                                            <input type="checkbox" id="lexicalDiversityFeature" checked>
+                                            <label for="lexicalDiversityFeature">Lexical Diversity</label>
+                                        </div>
+                                        <div>
+                                            <input type="checkbox" id="syntacticComplexityFeature" checked>
+                                            <label for="syntacticComplexityFeature">Syntactic Complexity</label>
+                                        </div>
+                                        <div>
+                                            <input type="checkbox" id="pausePatternFeature" checked>
+                                            <label for="pausePatternFeature">Pause Patterns</label>
+                                        </div>
+                                        <div>
+                                            <input type="checkbox" id="wordFrequencyFeature">
+                                            <label for="wordFrequencyFeature">Word Frequency</label>
+                                        </div>
+                                        <div>
+                                            <input type="checkbox" id="sentimentFeature">
+                                            <label for="sentimentFeature">Sentiment Analysis</label>
+                                        </div>
+                                        <div>
+                                            <input type="checkbox" id="embeddingFeature" checked>
+                                            <label for="embeddingFeature">Word/Sentence Embeddings</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+
+                    <div class="form-group">
+                        <label class="form-label">Feature Normalization</label>
+                        <select class="form-select" id="normalizationMethod">
+                            <option value="speaker">Speaker-level Normalization (Recommended)</option>
+                            <option value="global">Global Normalization</option>
+                            <option value="none">No Normalization</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Feature Reduction</label>
+                        <select class="form-select" id="featureReduction">
+                            <option value="none">No Reduction</option>
+                            <option value="pca">Principal Component Analysis (PCA)</option>
+                            <option value="lda">Linear Discriminant Analysis (LDA)</option>
+                            <option value="select">Feature Selection (Statistical)</option>
+                        </select>
+                    </div>
+
+                    <button class="button button-primary" id="extractFeaturesBtn">
+                        <span class="button-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M9.293 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.707A1 1 0 0 0 13.707 4L10 .293A1 1 0 0 0 9.293 0zM9.5 3.5v-2l3 3h-2a1 1 0 0 1-1-1zM4.5 9a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1h-7zM4 10.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm.5 2.5a.5.5 0 0 1 0-1h4a.5.5 0 0 1 0 1h-4z"/>
+                            </svg>
+                        </span>
+                        Extract Features
+                    </button>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Feature Extraction for Small Data</h2>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                        <div>
+                            <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem; color: var(--primary);">Feature Engineering Tips</h3>
+                            <p style="margin-bottom: 0.5rem; font-size: 0.95rem;">For neurodegenerative disease detection with limited data:</p>
+                            <ul style="margin-left: 1.5rem; font-size: 0.95rem;">
+                                <li>Combine acoustic and linguistic features for higher accuracy</li>
+                                <li>Use speaker-level normalization to account for individual differences</li>
+                                <li>Extract temporal dynamics (not just static features)</li>
+                                <li>Consider functionals over raw features to reduce dimensionality</li>
+                                <li>Use domain knowledge to select features known to be affected by specific conditions</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem; color: var(--primary);">Dimensionality Reduction</h3>
+                            <p style="margin-bottom: 0.5rem; font-size: 0.95rem;">With small datasets, avoiding the curse of dimensionality is crucial:</p>
+                            <ul style="margin-left: 1.5rem; font-size: 0.95rem;">
+                                <li>Start with feature selection based on statistical tests</li>
+                                <li>Consider PCA for unsupervised dimensionality reduction</li>
+                                <li>Use LDA when class labels are available</li>
+                                <li>Consider feature aggregation methods (e.g., functionals over time)</li>
+                                <li>Employ regularization in your models to handle high-dimensional features</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Model Panel -->
+            <div id="modelPanel">
+                <div class="page-header">
+                    <h1 class="page-title">Model Selection</h1>
+                    <p class="page-description">Choose and configure a machine learning model for neurodegenerative disease detection.</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Select Model Type</h2>
+                        <div class="info-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+                            </svg>
+                            <div class="tooltip">
+                                For small datasets (200 subjects), simpler models with regularization often perform better than complex deep learning models. Consider ensemble methods and transfer learning approaches to maximize performance.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="model-grid">
+                        <div class="model-card" data-model="svm">
+                            <div class="model-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                    <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+                                </svg>
+                            </div>
+                            <h3 class="model-title">Support Vector Machine</h3>
+                            <p class="model-description">Effective for high-dimensional data with clear decision boundaries.</p>
+                            <div class="model-tags">
+                                <span class="model-tag">Small Data</span>
+                                <span class="model-tag">High Dimension</span>
+                                <span class="model-tag">Regularization</span>
+                            </div>
+                        </div>
+
+                        <div class="model-card selected" data-model="rf">
+                            <div class="model-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                    <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
+                                </svg>
+                            </div>
+                            <h3 class="model-title">Random Forest</h3>
+                            <p class="model-description">Ensemble method robust to overfitting with built-in feature selection.</p>
+                            <div class="model-tags">
+                                <span class="model-tag">Recommended</span>
+                                <span class="model-tag">Ensemble</span>
+                                <span class="model-tag">Feature Importance</span>
+                            </div>
+                        </div>
+
+                        <div class="model-card" data-model="xgb">
+                            <div class="model-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M6 12.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5ZM3 8.062C3 6.76 4.235 5.765 5.53 5.886a26.58 26.58 0 0 0 4.94 0C11.765 5.765 13 6.76 13 8.062v1.157a.933.933 0 0 1-.765.935c-.845.147-2.34.346-4.235.346-1.895 0-3.39-.2-4.235-.346A.933.933 0 0 1 3 9.219V8.062Zm4.542-.827a.25.25 0 0 0-.217.068l-.92.9a24.767 24.767 0 0 1-1.871-.183.25.25 0 0 0-.068.495c.55.076 1.232.149 2.02.193a.25.25 0 0 0 .189-.071l.754-.736.847 1.71a.25.25 0 0 0 .404.062l.932-.97a25.286 25.286 0 0 0 1.922-.188.25.25 0 0 0-.068-.495c-.538.074-1.207.145-1.98.189a.25.25 0 0 0-.166.076l-.754.785-.842-1.7a.25.25 0 0 0-.182-.135Z"/>
+                                    <path d="M8.5 1.866a1 1 0 1 0-1 0V3h-2A4.5 4.5 0 0 0 1 7.5V8a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1v1a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-1a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1v-.5A4.5 4.5 0 0 0 10.5 3h-2V1.866ZM14 7.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7.5A3.5 3.5 0 0 1 5.5 4h5A3.5 3.5 0 0 1 14 7.5Z"/>
+                                </svg>
+                            </div>
+                            <h3 class="model-title">XGBoost</h3>
+                            <p class="model-description">Gradient boosting framework with regularization for controlling overfitting.</p>
+                            <div class="model-tags">
+                                <span class="model-tag">Boosting</span>
+                                <span class="model-tag">Regularization</span>
+                                <span class="model-tag">High Performance</span>
+                            </div>
+                        </div>
+
+                        <div class="model-card" data-model="lgbm">
+                            <div class="model-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M12.136.326A1.5 1.5 0 0 1 14 1.78V3h.5A1.5 1.5 0 0 1 16 4.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 13.5v-9a1.5 1.5 0 0 1 1.432-1.499L12.136.326zM5.562 3H13V1.78a.5.5 0 0 0-.621-.484L5.562 3zM1.5 4a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/>
+                                </svg>
+                            </div>
+                            <h3 class="model-title">LightGBM</h3>
+                            <p class="model-description">Gradient boosting framework optimized for efficiency and performance.</p>
+                            <div class="model-tags">
+                                <span class="model-tag">Fast Training</span>
+                                <span class="model-tag">Leaf-wise Growth</span>
+                                <span class="model-tag">Efficient</span>
+                            </div>
+                        </div>
+
+                        <div class="model-card" data-model="ensemble">
+                            <div class="model-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811V2.828zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492V2.687zM8 1.783C7.015.936 5.587.81 4.287.94c-1.514.153-3.042.672-3.994 1.105A.5.5 0 0 0 0 2.5v11a.5.5 0 0 0 .707.455c.882-.4 2.303-.881 3.68-1.02 1.409-.142 2.59.087 3.223.877a.5.5 0 0 0 .78 0c.633-.79 1.814-1.019 3.222-.877 1.378.139 2.8.62 3.681 1.02A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.293-.455c-.952-.433-2.48-.952-3.994-1.105C10.413.809 8.985.936 8 1.783z"/>
+                                </svg>
+                            </div>
+                            <h3 class="model-title">Stacked Ensemble</h3>
+                            <p class="model-description">Combines multiple models for improved performance and robustness.</p>
+                            <div class="model-tags">
+                                <span class="model-tag">Meta-learning</span>
+                                <span class="model-tag">Diversity</span>
+                                <span class="model-tag">Advanced</span>
+                            </div>
+                        </div>
+
+                        <div class="model-card" data-model="transfer">
+                            <div class="model-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
+                                </svg>
+                            </div>
+                            <h3 class="model-title">Transfer Learning</h3>
+                            <p class="model-description">Leverages pre-trained models on larger speech datasets, fine-tuned to your task.</p>
+                            <div class="model-tags">
+                                <span class="model-tag">Pre-trained</span>
+                                <span class="model-tag">Fine-tuning</span>
+                                <span class="model-tag">Small Data</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="modelConfig" class="form-group">
+                        <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--primary);">Random Forest Configuration</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="parameter-group">
+                                <label class="parameter-label">Number of Trees</label>
+                                <input type="range" class="parameter-range" min="50" max="500" value="100" id="rfTrees">
+                                <span class="parameter-value" id="rfTreesValue">100 trees</span>
+                            </div>
+                            <div class="parameter-group">
+                                <label class="parameter-label">Max Depth</label>
+                                <input type="range" class="parameter-range" min="3" max="20" value="10" id="rfDepth">
+                                <span class="parameter-value" id="rfDepthValue">10 levels</span>
+                            </div>
+                            <div class="parameter-group">
+                                <label class="parameter-label">Min Samples Split</label>
+                                <input type="range" class="parameter-range" min="2" max="20" value="5" id="rfMinSplit">
+                                <span class="parameter-value" id="rfMinSplitValue">5 samples</span>
+                            </div>
+                            <div class="parameter-group">
+                                <label class="parameter-label">Min Samples Leaf</label>
+                                <input type="range" class="parameter-range" min="1" max="10" value="2" id="rfMinLeaf">
+                                <span class="parameter-value" id="rfMinLeafValue">2 samples</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Cross-Validation Strategy</label>
+                        <select class="form-select" id="cvStrategy">
+                            <option value="kfold">K-Fold Cross-Validation (k=5)</option>
+                            <option value="stratified" selected>Stratified K-Fold (Recommended)</option>
+                            <option value="leave-one-out">Leave-One-Subject-Out</option>
+                            <option value="group">Group K-Fold (by Subject)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Hyperparameter Optimization</label>
+                        <select class="form-select" id="hyperparamOpt">
+                            <option value="none">Manual Configuration</option>
+                            <option value="grid">Grid Search</option>
+                            <option value="random" selected>Random Search (Recommended)</option>
+                            <option value="bayesian">Bayesian Optimization</option>
+                        </select>
+                    </div>
+
+                    <button class="button button-primary" id="configureModelBtn">
+                        <span class="button-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>
+                            </svg>
+                        </span>
+                        Configure Model
+                    </button>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Small Data Model Techniques</h2>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                        <div>
+                            <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem; color: var(--primary);">Regularization Techniques</h3>
+                            <p style="margin-bottom: 0.5rem; font-size: 0.95rem;">For small datasets, preventing overfitting is critical:</p>
+                            <ul style="margin-left: 1.5rem; font-size: 0.95rem;">
+                                <li>L1/L2 regularization in linear models and neural networks</li>
+                                <li>Early stopping based on validation performance</li>
+                                <li>Dropout for neural networks</li>
+                                <li>Reduced model complexity (fewer parameters)</li>
+                                <li>Ensemble methods with bagging to reduce variance</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem; color: var(--primary);">Transfer Learning Approaches</h3>
+                            <p style="margin-bottom: 0.5rem; font-size: 0.95rem;">Leverage knowledge from larger datasets:</p>
+                            <ul style="margin-left: 1.5rem; font-size: 0.95rem;">
+                                <li>Fine-tune pre-trained audio models (e.g., wav2vec, VGGish)</li>
+                                <li>Extract embeddings from pre-trained models as features</li>
+                                <li>Use models pre-trained on related speech tasks</li>
+                                <li>Domain adaptation techniques for different demographics</li>
+                                <li>Self-supervised learning on unlabeled speech data</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Training Panel -->
+            <div id="trainingPanel">
+                <div class="page-header">
+                    <h1 class="page-title">Model Training</h1>
+                    <p class="page-description">Train your machine learning model for neurodegenerative disease detection.</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Training Configuration</h2>
+                        <div class="info-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+                            </svg>
+                            <div class="tooltip">
+                                With small datasets, careful training configuration is essential. Use cross-validation to get reliable performance estimates and consider data augmentation to artificially increase your training data.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Class Balancing</label>
+                        <select class="form-select" id="classBalancing">
+                            <option value="none">No Balancing</option>
+                            <option value="weight" selected>Class Weights (Recommended)</option>
+                            <option value="oversample">Random Oversampling</option>
+                            <option value="smote">SMOTE (Synthetic Minority Oversampling)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Data Augmentation</label>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+                            <div style="flex: 1; min-width: 200px;">
+                                <div style="margin-bottom: 0.5rem;">
+                                    <input type="checkbox" id="augNoise" checked>
+                                    <label for="augNoise">Add Background Noise</label>
+                                </div>
+                                <div style="margin-bottom: 0.5rem;">
+                                    <input type="checkbox" id="augPitch" checked>
+                                    <label for="augPitch">Pitch Shifting</label>
+                                </div>
+                                <div style="margin-bottom: 0.5rem;">
+                                    <input type="checkbox" id="augSpeed">
+                                    <label for="augSpeed">Speed Perturbation</label>
+                                </div>
+                            </div>
+                            <div style="flex: 1; min-width: 200px;">
+                                <div style="margin-bottom: 0.5rem;">
+                                    <input type="checkbox" id="augMask">
+                                    <label for="augMask">Time/Frequency Masking</label>
+                                </div>
+                                <div style="margin-bottom: 0.5rem;">
+                                    <input type="checkbox" id="augRoom" checked>
+                                    <label for="augRoom">Room Simulation</label>
+                                </div>
+                                <div style="margin-bottom: 0.5rem;">
+                                    <input type="checkbox" id="augMixup">
+                                    <label for="augMixup">Mixup</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Augmentation Factor</label>
+                        <input type="range" class="parameter-range" min="1" max="10" value="3" id="augFactor">
+                        <span class="parameter-value" id="augFactorValue">3x original data</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Early Stopping</label>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" id="earlyStoppingToggle" checked>
+                            <label for="earlyStoppingToggle">Enable Early Stopping</label>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.5rem;">
+                            <div class="parameter-group">
+                                <label class="parameter-label">Patience (epochs)</label>
+                                <input type="range" class="parameter-range" min="5" max="50" value="10" id="patienceValue">
+                                <span class="parameter-value" id="patienceValueText">10 epochs</span>
+                            </div>
+                            <div class="parameter-group">
+                                <label class="parameter-label">Min Improvement</label>
+                                <input type="range" class="parameter-range" min="1" max="10" value="1" id="minImprovementValue">
+                                <span class="parameter-value" id="minImprovementValueText">0.001</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="button button-primary" id="startTrainingBtn">
+                        <span class="button-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
+                            </svg>
+                        </span>
+                        Start Training
+                    </button>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Training Progress</h2>
+                    </div>
+
+                    <div class="training-progress">
+                        <div class="progress-header">
+                            <div class="progress-label">Overall Progress</div>
+                            <div class="progress-value" id="trainingProgressValue">0%</div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="trainingProgressBar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="training-metrics">
+                        <div class="metric-card">
+                            <div class="metric-value" id="currentFold">-</div>
+                            <div class="metric-label">Current Fold</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="currentEpoch">-</div>
+                            <div class="metric-label">Current Epoch</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="trainingLoss">-</div>
+                            <div class="metric-label">Training Loss</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="validationLoss">-</div>
+                            <div class="metric-label">Validation Loss</div>
+                        </div>
+                    </div>
+
+                    <div class="chart-container" id="lossChartContainer">
+                        <canvas id="lossChart"></canvas>
+                        <div class="chart-controls">
+                            <button class="chart-control" id="toggleTrainingLoss">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                    <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
+                                </svg>
+                                Training
+                            </button>
+                            <button class="chart-control" id="toggleValidationLoss">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                    <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
+                                </svg>
+                                Validation
+                            </button>
+                            <button class="chart-control" id="resetZoom">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                                    <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                                </svg>
+                                Reset
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="chart-container" id="metricChartContainer">
+                        <canvas id="metricChart"></canvas>
+                        <div class="chart-controls">
+                            <button class="chart-control" id="toggleAccuracy">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                    <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
+                                </svg>
+                                Accuracy
+                            </button>
+                            <button class="chart-control" id="toggleF1">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                    <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
+                                </svg>
+                                F1 Score
+                            </button>
+                            <button class="chart-control" id="resetMetricZoom">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                                    <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                                </svg>
+                                Reset
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Training Tips for Small Datasets</h2>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                        <div>
+                            <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem; color: var(--primary);">Monitoring Strategies</h3>
+                            <p style="margin-bottom: 0.5rem; font-size: 0.95rem;">For small datasets, carefully monitor:</p>
+                            <ul style="margin-left: 1.5rem; font-size: 0.95rem;">
+                                <li>Validation loss for early signs of overfitting</li>
+                                <li>Learning curves to identify bias vs. variance issues</li>
+                                <li>Cross-validation scores across folds for stability</li>
+                                <li>Performance on different demographic subgroups</li>
+                                <li>Feature importance to identify potential data leakage</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem; color: var(--primary);">Ensemble Strategies</h3>
+                            <p style="margin-bottom: 0.5rem; font-size: 0.95rem;">Improve robustness with ensemble approaches:</p>
+                            <ul style="margin-left: 1.5rem; font-size: 0.95rem;">
+                                <li>Train models on different cross-validation folds</li>
+                                <li>Combine models trained on different feature subsets</li>
+                                <li>Use different model architectures in your ensemble</li>
+                                <li>Weight models based on validation performance</li>
+                                <li>Consider diversity metrics when building ensembles</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Evaluation Panel -->
+            <div id="evaluationPanel">
+                <div class="page-header">
+                    <h1 class="page-title">Model Evaluation</h1>
+                    <p class="page-description">Evaluate your model's performance and generalization capabilities.</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Performance Metrics</h2>
+                        <div class="info-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+                            </svg>
+                            <div class="tooltip">
+                                Consider the clinical context when interpreting metrics. For screening tools, high sensitivity may be more important, while for confirmatory tests, high specificity may be preferred.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="training-metrics">
+                        <div class="metric-card">
+                            <div class="metric-value">87.5%</div>
+                            <div class="metric-label">Accuracy</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">0.91</div>
+                            <div class="metric-label">AUC-ROC</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">85.2%</div>
+                            <div class="metric-label">Sensitivity</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">89.7%</div>
+                            <div class="metric-label">Specificity</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">0.86</div>
+                            <div class="metric-label">F1 Score</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">0.83</div>
+                            <div class="metric-label">Kappa</div>
+                        </div>
+                    </div>
+
+                    <div class="evaluation-grid">
+                        <div>
+                            <h3 style="font-size: 1.1rem; margin-bottom: 1rem; text-align: center; color: var(--primary);">Confusion Matrix</h3>
+                            <div class="confusion-matrix">
+                                <div class="matrix-cell tp">
+                                    46
+                                    <span class="matrix-label top">Predicted Positive</span>
+                                    <span class="matrix-label left">Actual Positive</span>
+                                </div>
+                                <div class="matrix-cell fp">
+                                    5
+                                    <span class="matrix-label top">Predicted Negative</span>
+                                </div>
+                                <div class="matrix-cell fn">
+                                    8
+                                    <span class="matrix-label left">Actual Negative</span>
+                                </div>
+                                <div class="matrix-cell tn">
+                                    44
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chart-container" style="height: 250px;">
+                            <canvas id="rocChart"></canvas>
+                            <div class="chart-controls">
+                                <button class="chart-control" id="toggleBaseline">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                        <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
+                                    </svg>
+                                    Baseline
+                                </button>
+                                <button class="chart-control" id="downloadROC">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                                        <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                                    </svg>
+                                    Download
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 1.5rem;">
+                        <label class="form-label">Cross-Validation Results</label>
+                        <div class="chart-container" style="height: 250px;">
+                            <canvas id="cvChart"></canvas>
+                            <div class="chart-controls">
+                                <button class="chart-control" id="toggleAccuracyCV">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                        <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
+                                    </svg>
+                                    Accuracy
+                                </button>
+                                <button class="chart-control" id="toggleF1CV">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                        <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
+                                    </svg>
+                                    F1 Score
+                                </button>
+                                <button class="chart-control" id="toggleAUCCV">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                        <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
+                                    </svg>
+                                    AUC
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Feature Importance</h2>
+                    </div>
+
+                    <div class="chart-container">
+                        <canvas id="featureImportanceChart"></canvas>
+                        <div class="chart-controls">
+                            <button class="chart-control" id="sortFeatures">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M3.5 3.5a.5.5 0 0 0-1 0v8.793l-1.146-1.147a.5.5 0 0 0-.708.708l2 1.999.007.007a.497.497 0 0 0 .7-.006l2-2a.5.5 0 0 0-.707-.708L3.5 12.293V3.5zm4 .5a.5.5 0 0 1 0-1h1a.5.5 0 0 1 0 1h-1zm0 3a.5.5 0 0 1 0-1h3a.5.5 0 0 1 0 1h-3zm0 3a.5.5 0 0 1 0-1h5a.5.5 0 0 1 0 1h-5zM7 12.5a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 0-1h-7a.5.5 0 0 0-.5.5z"/>
+                                </svg>
+                                Sort
+                            </button>
+                            <button class="chart-control" id="filterFeatures">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M6 10.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"/>
+                                </svg>
+                                Top 10
+                            </button>
+                            <button class="chart-control" id="groupFeatures">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M3 2v4.586l7 7L14.586 9l-7-7H3zM2 2a1 1 0 0 1 1-1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 2 6.586V2z"/>
+                                    <path d="M5.5 5a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1zm0 1a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM1 7.086a1 1 0 0 0 .293.707L8.75 15.25l-.043.043a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 0 7.586V3a1 1 0 0 1 1-1v5.086z"/>
+                                </svg>
+                                Group
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Generalization Analysis</h2>
+                        <div class="info-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+                            </svg>
+                            <div class="tooltip">
+                                Understanding how your model performs across different subgroups is crucial for ensuring it will generalize to diverse populations. Pay special attention to any demographic groups where performance is significantly lower.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Subgroup Analysis</label>
+                        <select class="form-select" id="subgroupSelect">
+                            <option value="gender">Gender</option>
+                            <option value="age">Age Groups</option>
+                            <option value="accent">Accent/Region</option>
+                            <option value="education">Education Level</option>
+                            <option value="severity">Disease Severity</option>
+                        </select>
+                    </div>
+
+                    <div class="chart-container">
+                        <canvas id="subgroupChart"></canvas>
+                        <div class="chart-controls">
+                            <button class="chart-control" id="toggleAccuracySubgroup">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                    <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
+                                </svg>
+                                Accuracy
+                            </button>
+                            <button class="chart-control" id="toggleF1Subgroup">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                    <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
+                                </svg>
+                                F1 Score
+                            </button>
+                            <button class="chart-control" id="toggleCountSubgroup">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                    <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
+                                </svg>
+                                Sample Count
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="chart-container" style="margin-top: 1.5rem;">
+                        <canvas id="tsneChart"></canvas>
+                        <div class="chart-controls">
+                            <button class="chart-control" id="colorByClass">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M12.354 4.354a.5.5 0 0 0-.708-.708L5 10.293 1.854 7.146a.5.5 0 1 0-.708.708l3.5 3.5a.5.5 0 0 0 .708 0l7-7zm-4.208 7-.896-.897.707-.707.543.543 6.646-6.647a.5.5 0 0 1 .708.708l-7 7a.5.5 0 0 1-.708 0z"/>
+                                    <path d="m5.354 7.146.896.897-.707.707-.897-.896a.5.5 0 1 1 .708-.708z"/>
+                                </svg>
+                                By Class
+                            </button>
+                            <button class="chart-control" id="colorBySubgroup">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                    <path d="M7 6.5C7 5.672 6.552 5 6 5s-1 .672-1 1.5S5.448 8 6 8s1-.672 1-1.5zm4 0c0-.828-.448-1.5-1-1.5s-1 .672-1 1.5S9.448 8 10 8s1-.672 1-1.5z"/>
+                                    <path d="M4.285 9.567a.5.5 0 0 1 .683.183A3.498 3.498 0 0 0 8 11.5a3.498 3.498 0 0 0 3.032-1.75.5.5 0 1 1 .866.5A4.498 4.498 0 0 1 8 12.5a4.498 4.498 0 0 1-3.898-2.25.5.5 0 0 1 .183-.683zM7 6.5C7 7.328 7.448 8 8 8s1-.672 1-1.5S8.552 5 8 5s-1 .672-1 1.5z"/>
+                                </svg>
+                                By Subgroup
+                            </button>
+                            <button class="chart-control" id="colorByError">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                    <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+                                </svg>
+                                By Errors
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Generalization Strategies for Small Datasets</h2>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                        <div>
+                            <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem; color: var(--primary);">Handling Demographic Diversity</h3>
+                            <p style="margin-bottom: 0.5rem; font-size: 0.95rem;">Strategies for improving generalization across diverse populations:</p>
+                            <ul style="margin-left: 1.5rem; font-size: 0.95rem;">
+                                <li>Stratified sampling to ensure representation</li>
+                                <li>Group-aware cross-validation (e.g., leave-one-demographic-out)</li>
+                                <li>Balanced accuracy metrics across subgroups</li>
+                                <li>Data augmentation targeting underrepresented groups</li>
+                                <li>Fairness constraints during model training</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem; color: var(--primary);">Robust Error Analysis</h3>
+                            <p style="margin-bottom: 0.5rem; font-size: 0.95rem;">Understanding and addressing model failures:</p>
+                            <ul style="margin-left: 1.5rem; font-size: 0.95rem;">
+                                <li>Analyze error patterns across different subgroups</li>
+                                <li>Identify specific speech characteristics leading to errors</li>
+                                <li>Use confusion matrices for each demographic group</li>
+                                <li>Examine feature importance across subgroups</li>
+                                <li>Consider multi-task learning to improve generalization</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        // Navigation functionality
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Update active state
+                document.querySelectorAll('.nav-link').forEach(item => {
+                    item.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                // Show the corresponding panel
+                const panelId = this.getAttribute('data-panel');
+                document.querySelectorAll('#dataPanel, #featuresPanel, #modelPanel, #trainingPanel, #evaluationPanel').forEach(panel => {
+                    panel.style.display = 'none';
+                });
+                document.getElementById(panelId).style.display = 'block';
+                
+                // Update progress bar
+                updateProgress();
+            });
+        });
+
+        // Update progress based on current step
+        function updateProgress() {
+            const steps = document.querySelectorAll('.nav-link');
+            let activeIndex = 0;
+            
+            steps.forEach((step, index) => {
+                if (step.classList.contains('active')) {
+                    activeIndex = index;
+                }
+            });
+            
+            const progressPercentage = (activeIndex / (steps.length - 1)) * 100;
+            document.getElementById('progressBar').style.width = `${progressPercentage}%`;
+        }
+
+        // File upload functionality
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            if (e.dataTransfer.files.length) {
+                handleFiles(e.dataTransfer.files);
+            }
+        });
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length) {
+                handleFiles(fileInput.files);
+            }
+        });
+
+        function handleFiles(files) {
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                addFileToList(file);
+            }
+        }
+
+        function addFileToList(file) {
+            const fileItem = document.createElement('li');
+            fileItem.className =

@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Curriculum Designer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+        :root {
+            --color-primary: #4DD0E1; /* Cyan */
+            --color-primary-dark: #00BCD4;
+            --color-secondary: #81C784; /* Green */
+            --color-secondary-dark: #66BB6A;
+            --color-accent: #FFEB3B; /* Yellow */
+            --color-accent-dark: #FBC02D;
+            --color-background-light: #E0F7FA; /* Light Blue */
+            --color-background-medium: #E8F5E9; /* Light Green */
+            --color-text-dark: #263238; /* Dark Gray */
+            --color-text-medium: #546E7A; /* Medium Gray */
+            --color-text-light: #ECEFF1; /* Light Gray */
+            --color-white: #FFFFFF;
+            --color-error: #E57373; /* Red */
+            --spacing-unit: 8px;
+            --border-radius: 8px;
+            --box-shadow-subtle: 0 2px 4px rgba(0, 0, 0, 0.1);
+            --box-shadow-medium: 0 4px 8px rgba(0, 0, 0, 0.15);
+            --focus-outline-color: rgba(77, 208, 225, 0.6); /* Primary color with transparency */
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--color-background-light);
+            color: var(--color-text-dark);
+            line-height: 1.6;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+        }
+
+        .container {
+            display: grid;
+            grid-template-areas:
+                "header header"
+                "main-content sidebar-right";
+            grid-template-columns: 1fr 350px; /* Main content | Sidebar */
+            grid-template-rows: auto 1fr;
+            min-height: 100vh;
+        }
+
+        header {
+            grid-area: header;
+            background-color: var(--color-primary);
+            color: var(--color-text-light);
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 3);
+            box-shadow: var(--box-shadow-medium);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+            position: relative; /* Needed for potential dropdowns */
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8em;
+            font-weight: 500;
+        }
+
+        .nav-links a {
+            color: var(--color-text-light);
+            text-decoration: none;
+            margin-left: calc(var(--spacing-unit) * 3);
+            font-weight: 400;
+            transition: color 0.3s ease;
+            outline: none; /* Remove default outline */
+        }
+
+        .nav-links a:hover {
+            color: var(--color-accent);
+        }
+         .nav-links a:focus {
+             color: var(--color-accent);
+             outline: 2px solid var(--color-accent);
+             outline-offset: 2px;
+         }
+
+
+        main {
+            grid-area: main-content;
+            padding: calc(var(--spacing-unit) * 3);
+            overflow-y: auto; /* Allow scrolling in main content */
+            background-color: var(--color-background-light); /* Match body background */
+        }
+
+        .sidebar-right {
+            grid-area: sidebar-right;
+            background-color: var(--color-white);
+            box-shadow: var(--box-shadow-medium);
+            padding: calc(var(--spacing-unit) * 3);
+            overflow-y: auto; /* Allow scrolling in sidebar */
+            display: flex;
+            flex-direction: column;
+            gap: calc(var(--spacing-unit) * 4);
+        }
+
+        h2, h3 {
+            color: var(--color-text-dark);
+            margin-top: 0;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+        }
+
+        .section {
+            background-color: var(--color-white);
+            padding: calc(var(--spacing-unit) * 3);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow-subtle);
+            margin-bottom: calc(var(--spacing-unit) * 4);
+        }
+
+        .section-title {
+            font-size: 1.4em;
+            font-weight: 500;
+            border-bottom: 2px solid var(--color-background-light);
+            padding-bottom: var(--spacing-unit);
+            margin-bottom: calc(var(--spacing-unit) * 2);
+        }
+
+        /* Curriculum Builder */
+        .curriculum-builder {
+            display: flex;
+            flex-direction: column;
+            gap: calc(var(--spacing-unit) * 3);
+        }
+
+        .unit {
+            background-color: var(--color-background-medium);
+            border: 1px dashed var(--color-secondary);
+            padding: calc(var(--spacing-unit) * 2);
+            border-radius: var(--border-radius);
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-unit);
+        }
+
+        .unit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .unit-header h3 {
+            margin: 0;
+            color: var(--color-text-dark);
+        }
+
+        .lessons-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-unit);
+            min-height: 50px; /* Allow dropping into empty units */
+            padding: var(--spacing-unit); /* Add padding to make drop target visible */
+            border-radius: var(--border-radius);
+            transition: background-color 0.3s ease;
+        }
+
+         .lessons-container.drag-over {
+             background-color: rgba(129, 199, 132, 0.2); /* Subtle green tint */
+             border: 1px dashed var(--color-secondary-dark);
+         }
+
+
+        .lesson-block {
+            background-color: var(--color-white);
+            border: 1px solid var(--color-background-light);
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            border-radius: var(--border-radius);
+            cursor: grab;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            box-shadow: var(--box-shadow-subtle);
+            font-size: 0.9em;
+            color: var(--color-text-medium);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: var(--spacing-unit);
+            outline: none; /* Remove default outline */
+        }
+
+        .lesson-block:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--box-shadow-medium);
+            border-color: var(--color-primary);
+        }
+         .lesson-block:focus {
+             transform: translateY(-2px);
+             box-shadow: var(--box-shadow-medium);
+             border-color: var(--color-primary);
+             outline: 2px solid var(--focus-outline-color);
+         }
+
+        .lesson-block:active {
+            cursor: grabbing;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            transform: translateY(0);
+        }
+
+        .lesson-block.dragging {
+            opacity: 0.5;
+            border: 2px dashed var(--color-primary);
+            box-shadow: none;
+        }
+
+        .add-unit-button, .add-lesson-button {
+            background-color: var(--color-secondary);
+            color: var(--color-white);
+            border: none;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease, opacity 0.3s ease;
+            outline: none; /* Remove default outline */
+        }
+
+        .add-unit-button:hover, .add-lesson-button:hover {
+            background-color: var(--color-secondary-dark);
+        }
+         .add-unit-button:focus, .add-lesson-button:focus {
+             background-color: var(--color-secondary-dark);
+             outline: 2px solid var(--focus-outline-color);
+             outline-offset: 2px;
+         }
+
+
+        /* Detail Panel/Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .lesson-detail-panel {
+            background-color: var(--color-white);
+            padding: calc(var(--spacing-unit) * 4);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow-medium);
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+            outline: none; /* Remove default outline */
+        }
+
+        .modal-overlay.visible .lesson-detail-panel {
+             transform: translateY(0);
+        }
+
+        .detail-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            border-bottom: 2px solid var(--color-background-light);
+            padding-bottom: var(--spacing-unit)
+        }
+
+        .detail-panel-header h3 {
+            margin: 0;
+            font-size: 1.6em;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: var(--color-text-medium);
+            transition: color 0.3s ease;
+            outline: none; /* Remove default outline */
+        }
+
+        .close-button:hover {
+            color: var(--color-error);
+        }
+         .close-button:focus {
+             color: var(--color-error);
+             outline: 2px solid var(--focus-outline-color);
+             outline-offset: 2px;
+         }
+
+
+        .detail-section {
+            margin-bottom: calc(var(--spacing-unit) * 3);
+        }
+
+        .detail-section label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: var(--spacing-unit);
+            color: var(--color-text-dark);
+        }
+
+        .detail-section input[type="text"],
+        .detail-section textarea {
+            width: 100%;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+            border: 1px solid var(--color-background-light);
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            color: var(--color-text-dark);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            box-sizing: border-box; /* Include padding in width */
+            outline: none; /* Remove default outline */
+        }
+
+        .detail-section input[type="text"]:focus,
+        .detail-section textarea:focus {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 4px var(--focus-outline-color); /* Subtle focus glow */
+        }
+
+         .detail-section input[type="text"].error,
+         .detail-section textarea.error {
+             border-color: var(--color-error);
+             box-shadow: 0 0 4px rgba(229, 115, 115, 0.6);
+         }
+
+
+        .detail-section textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .detail-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: var(--spacing-unit);
+            margin-top: calc(var(--spacing-unit) * 3);
+        }
+
+        .button {
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 3);
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease, opacity 0.3s ease;
+            outline: none; /* Remove default outline */
+        }
+
+        .button-primary {
+            background-color: var(--color-primary);
+            color: var(--color-white);
+        }
+
+        .button-primary:hover {
+            background-color: var(--color-primary-dark);
+        }
+         .button-primary:focus {
+             background-color: var(--color-primary-dark);
+             outline: 2px solid var(--focus-outline-color);
+             outline-offset: 2px;
+         }
+
+
+        .button-secondary {
+            background-color: var(--color-background-light);
+            color: var(--color-text-dark);
+            border: 1px solid var(--color-primary);
+        }
+
+        .button-secondary:hover {
+             background-color: var(--color-background-medium);
+        }
+         .button-secondary:focus {
+             background-color: var(--color-background-medium);
+             outline: 2px solid var(--focus-outline-color);
+             outline-offset: 2px;
+         }
+
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+
+        /* Resource Library */
+        .resource-library {
+            /* Styles for the sidebar section */
+        }
+
+        .search-bar {
+            display: flex;
+            gap: var(--spacing-unit);
+            margin-bottom: calc(var(--spacing-unit) * 2);
+        }
+
+        .search-bar input[type="text"],
+        .search-bar select {
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+            border: 1px solid var(--color-background-light);
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            color: var(--color-text-dark);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            outline: none; /* Remove default outline */
+        }
+
+         .search-bar input[type="text"] {
+             flex-grow: 1;
+         }
+
+         .search-bar input[type="text"]:focus,
+         .search-bar select:focus {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 4px var(--focus-outline-color); /* Subtle focus glow */
+        }
+
+        .resource-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-unit);
+        }
+
+        .resource-item {
+            background-color: var(--color-white);
+            border: 1px solid var(--color-background-light);
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            border-radius: var(--border-radius);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--box-shadow-subtle);
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+            cursor: pointer; /* Indicate clickable/addable */
+            outline: none; /* Remove default outline */
+        }
+
+         .resource-item:hover {
+            background-color: var(--color-background-light);
+            border-color: var(--color-primary);
+         }
+         .resource-item:focus {
+             background-color: var(--color-background-light);
+             border-color: var(--color-primary);
+             outline: 2px solid var(--focus-outline-color);
+         }
+
+
+        .resource-item span {
+            font-size: 0.9em;
+            color: var(--color-text-medium);
+        }
+
+        .resource-item .add-icon {
+            color: var(--color-secondary);
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .resource-item .add-icon:hover {
+            color: var(--color-secondary-dark);
+        }
+
+        /* Methodology Guide */
+        .methodology-guide .accordion-item {
+            border: 1px solid var(--color-background-light);
+            border-radius: var(--border-radius);
+            margin-bottom: var(--spacing-unit);
+            overflow: hidden;
+        }
+
+        .methodology-guide .accordion-header {
+            background-color: var(--color-background-medium);
+            padding: calc(var(--spacing-unit) * 2);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+            color: var(--color-text-dark);
+            transition: background-color 0.3s ease;
+            outline: none; /* Remove default outline */
+        }
+
+        .methodology-guide .accordion-header:hover {
+            background-color: var(--color-background-medium);
+        }
+         .methodology-guide .accordion-header:focus {
+             background-color: var(--color-background-medium);
+             outline: 2px solid var(--focus-outline-color);
+             outline-offset: 2px;
+         }
+
+
+        .methodology-guide .accordion-content {
+            padding: calc(var(--spacing-unit) * 2);
+            border-top: 1px solid var(--color-background-light);
+            display: none; /* Hidden by default */
+            /* animation handled by JS class 'active' */
+        }
+
+        .methodology-guide .accordion-content.active {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Simulated Dashboard */
+        .dashboard-insights {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: calc(var(--spacing-unit) * 3);
+            margin-bottom: calc(var(--spacing-unit) * 4); /* Space below cards */
+        }
+
+        .insight-card {
+            background-color: var(--color-white);
+            padding: calc(var(--spacing-unit) * 3);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow-subtle);
+        }
+
+        .insight-card h4 {
+            margin-top: 0;
+            color: var(--color-text-dark);
+        }
+
+        .insight-card p {
+            color: var(--color-text-medium);
+            margin-bottom: 0;
+        }
+
+        /* Chart Styling (using example structure) */
+        .chart-container {
+            height: 300px; /* Fixed height for chart */
+            position: relative;
+            cursor: pointer;
+            background-color: var(--color-white); /* Chart background */
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow-subtle);
+            padding: calc(var(--spacing-unit) * 2);
+        }
+
+        .floating-controls {
+            position: absolute;
+            top: calc(var(--spacing-unit) * 2);
+            right: calc(var(--spacing-unit) * 2);
+            background: rgba(255, 255, 255, 0.95);
+            padding: calc(var(--spacing-unit) * 2);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow-medium);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 50; /* Above chart, below modal */
+             min-width: 200px; /* Give controls some space */
+        }
+
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .control-group {
+            margin-bottom: var(--spacing-unit);
+            display: flex;
+            align-items: flex-start;
+            gap: var(--spacing-unit);
+            flex-direction: column;
+        }
+        .control-group label {
+            font-family: inherit;
+            color: var(--color-text-medium);
+            font-size: 0.9em;
+            font-weight: 400;
+        }
+        .control-group input[type="color"],
+        .control-group input[type="number"],
+        .control-group select {
+            padding: var(--spacing-unit);
+            border: 1px solid var(--color-background-light);
+            border-radius: var(--border-radius);
+            width: 100%;
+            font-size: 0.9em;
+             box-sizing: border-box;
+             transition: border-color 0.3s ease, box-shadow 0.3s ease;
+             outline: none;
+        }
+         .control-group input[type="color"]:focus,
+         .control-group input[type="number"]:focus,
+         .control-group select:focus {
+             border-color: var(--color-primary);
+             box-shadow: 0 0 4px var(--focus-outline-color);
+         }
+
+
+        /* Icons (using Material Symbols - self-contained via font link) */
+        .material-symbols-rounded {
+            font-variation-settings:
+            'FILL' 0,
+            'wght' 400,
+            'GRAD' 0,
+            'opsz' 24;
+            vertical-align: middle;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-areas:
+                    "header header"
+                    "main-content main-content"
+                    "sidebar-right sidebar-right";
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr auto;
+            }
+
+            .sidebar-right {
+                padding: calc(var(--spacing-unit) * 2);
+            }
+
+            main {
+                 padding: calc(var(--spacing-unit) * 2);
+            }
+            header {
+                 padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            }
+        }
+
+         @media (max-width: 768px) {
+             header h1 {
+                 font-size: 1.5em;
+             }
+             .nav-links {
+                 display: none; /* Hide nav links on smaller screens */
+             }
+             .lesson-detail-panel {
+                 padding: calc(var(--spacing-unit) * 3);
+             }
+             .chart-container {
+                 height: 250px; /* Adjust chart height */
+             }
+             .floating-controls {
+                 min-width: 180px;
+                 padding: var(--spacing-unit);
+             }
+             .control-group {
+                 gap: var(--spacing-unit) / 2;
+             }
+         }
+
+         @media (max-width: 480px) {
+             .lesson-block {
+                 flex-direction: column;
+                 align-items: flex-start;
+             }
+             .lesson-block .material-symbols-rounded {
+                 margin-top: var(--spacing-unit);
+             }
+             .search-bar {
+                 flex-direction: column;
+             }
+             .detail-panel-header h3 {
+                 font-size: 1.4em;
+             }
+             .lesson-detail-panel {
+                 padding: calc(var(--spacing-unit) * 2);
+             }
+             .detail-section {
+                 margin-bottom: calc(var(--spacing-unit) * 2);
+             }
+             .detail-actions {
+                 flex-direction: column;
+                 align-items: stretch;
+             }
+             .button {
+                 text-align: center;
+             }
+         }
+
+    </style>
+
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Math Anxiety Curriculum Designer</h1>
+            <nav class="nav-links">
+                <a href="#" aria-label="Dashboard">Dashboard</a>
+                <a href="#" aria-label="Curriculum">Curriculum</a>
+                <a href="#" aria-label="Resources">Resources</a>
+                <a href="#" aria-label="Assessments">Assessments</a>
+            </nav>
+        </header>
+
+        <main>
+            <section class="section curriculum-builder-section">
+                <h2 class="section-title">Curriculum Builder</h2>
+                <div id="curriculum-builder" class="curriculum-builder" role="list">
+                    <!-- Units will be added here by JS -->
+                </div>
+                <button class="add-unit-button" id="add-unit-button">Add New Unit</button>
+            </section>
+
+             <section class="section simulated-dashboard-section">
+                <h2 class="section-title">Simulated Student Progress Insights</h2>
+                <div class="dashboard-insights">
+                    <div class="insight-card">
+                        <h4>Common Knowledge Gap</h4>
+                        <p>Fractions & Ratios</p>
+                    </div>
+                     <div class="insight-card">
+                        <h4>Area Causing Most Anxiety</h4>
+                        <p>Algebraic Equations</p>
+                    </div>
+                     <div class="insight-card">
+                        <h4>Concepts Needing Reinforcement</h4>
+                        <p>Geometry Proofs, Probability Basics</p>
+                    </div>
+                </div>
+                 <div class="chart-container" id="gap-chart-container">
+                     <canvas id="gapChart"></canvas>
+                    <div class="floating-controls" id="gapChartControls">
+                        <div class="control-group">
+                            <label for="gapChartBgColor">Bar Color</label>
+                            <input type="color" id="gapChartBgColor" value="#81C784">
+                        </div>
+                        <div class="control-group">
+                            <label for="gapChartBorderColor">Border Color</label>
+                            <input type="color" id="gapChartBorderColor" value="#404040">
+                        </div>
+                        <div class="control-group">
+                            <label for="gapChartFontSize">Font Size</label>
+                            <input type="number" id="gapChartFontSize" value="12" min="8" max="20" step="1">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section methodology-guide-section">
+                <h2 class="section-title">Anxiety Management & Teaching Strategies</h2>
+                <div class="methodology-guide">
+                    <div class="accordion-item">
+                        <div class="accordion-header" tabindex="0" role="button" aria-expanded="false" aria-controls="strategy1-content">
+                            <span>Breaking Down Complex Problems</span>
+                            <span class="material-symbols-rounded" aria-hidden="true">expand_more</span>
+                        </div>
+                        <div id="strategy1-content" class="accordion-content" aria-hidden="true">
+                            <p>Teach students to break down large problems into smaller, manageable steps. Focus on understanding each step before moving to the next. Use visual aids and flowcharts.</p>
+                        </div>
+                    </div>
+                     <div class="accordion-item">
+                        <div class="accordion-header" tabindex="0" role="button" aria-expanded="false" aria-controls="strategy2-content">
+                            <span>Creating a Safe Learning Environment</span>
+                             <span class="material-symbols-rounded" aria-hidden="true">expand_more</span>
+                        </div>
+                        <div id="strategy2-content" class="accordion-content" aria-hidden="true">
+                            <p>Emphasize that mistakes are part of learning. Encourage questions and peer support. Avoid timed tests initially. Celebrate effort and progress, not just correct answers.</p>
+                        </div>
+                    </div>
+                     <div class="accordion-item">
+                        <div class="accordion-header" tabindex="0" role="button" aria-expanded="false" aria-controls="strategy3-content">
+                            <span>Connecting Math to Real Life</span>
+                             <span class="material-symbols-rounded" aria-hidden="true">expand_more</span>
+                        </div>
+                        <div id="strategy3-content" class="accordion-content" aria-hidden="true">
+                            <p>Show students how math concepts are used in everyday situations, careers, and their interests. This can make abstract ideas more concrete and relevant.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <aside class="sidebar-right">
+            <section class="resource-library">
+                <h3 class="section-title">Resource Library</h3>
+                <div class="search-bar">
+                    <label for="resource-search" class="visually-hidden">Search resources</label>
+                    <input type="text" id="resource-search" placeholder="Search resources...">
+                     <label for="resource-filter" class="visually-hidden">Filter resources by type</label>
+                    <select id="resource-filter">
+                        <option value="all">All Types</option>
+                        <option value="concept">Concept Explanations</option>
+                        <option value="problem">Practice Problems</option>
+                        <option value="methodology">Methodologies</option>
+                    </select>
+                </div>
+                <ul id="resource-list" class="resource-list" role="list">
+                    <!-- Resource items will be added here by JS -->
+                </ul>
+            </section>
+        </aside>
+    </div>
+
+    <!-- Lesson Detail Modal -->
+    <div id="lesson-detail-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="lesson-detail-title" aria-hidden="true" tabindex="-1">
+        <div class="lesson-detail-panel" tabindex="0">
+            <div class="detail-panel-header">
+                <h3 id="lesson-detail-title">Lesson Title</h3>
+                <button class="close-button" aria-label="Close lesson details">&times;</button>
+            </div>
+
+            <div class="detail-section">
+                <label for="lesson-title-input">Lesson Title <span style="color: var(--color-error);">*</span></label>
+                <input type="text" id="lesson-title-input" required aria-required="true">
+            </div>
+
+            <div class="detail-section">
+                <label for="lesson-concepts-input">Concepts Covered</label>
+                <textarea id="lesson-concepts-input" placeholder="List key concepts..."></textarea>
+            </div>
+
+             <div class="detail-section">
+                <label for="lesson-activities-input">Activities/Examples</label>
+                <textarea id="lesson-activities-input" placeholder="Describe activities and examples..."></textarea>
+            </div>
+
+             <div class="detail-section">
+                <label for="lesson-assessments-input">Assessment Ideas</label>
+                <textarea id="lesson-assessments-input" placeholder="Suggest ways to assess understanding..."></textarea>
+            </div>
+
+             <div class="detail-section">
+                <label for="lesson-anxiety-notes-input">Notes for Anxious Students</label>
+                <textarea id="lesson-anxiety-notes-input" placeholder="Tips and strategies for students with anxiety..."></textarea>
+            </div>
+
+             <div class="detail-section">
+                <label for="lesson-gaps-input">Addressing Knowledge Gaps</label>
+                <textarea id="lesson-gaps-input" placeholder="How this lesson addresses common gaps..."></textarea>
+            </div>
+
+            <div class="detail-actions">
+                <button class="button button-secondary close-button">Cancel</button>
+                <button class="button button-primary" id="save-lesson-button">Save Lesson</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        // --- Data Simulation ---
+        let curriculumData = [
+            {
+                id: 'unit-1',
+                title: 'Unit 1: Foundations',
+                lessons: [
+                    { id: 'lesson-1-1', title: 'Lesson 1.1: Number Systems & Properties', concepts: '', activities: '', assessments: '', anxietyNotes: '', gaps: '' },
+                    { id: 'lesson-1-2', title: 'Lesson 1.2: Basic Algebra Review', concepts: '', activities: '', assessments: '', anxietyNotes: '', gaps: '' },
+                ]
+            },
+            {
+                id: 'unit-2',
+                title: 'Unit 2: Linear Equations',
+                lessons: [
+                     { id: 'lesson-2-1', title: 'Lesson 2.1: Solving Single Variable Equations', concepts: '', activities: '', assessments: '', anxietyNotes: '', gaps: '' },
+                ]
+            }
+        ];
+
+        let resourceData = [
+            { id: 'res-1', title: 'Concept: Order of Operations', type: 'concept' },
+            { id: 'res-2', title: 'Problem Set: Basic Equations', type: 'problem' },
+            { id: 'res-3', title: 'Methodology: Think-Aloud Strategy', type: 'methodology' },
+            { id: 'res-4', title: 'Concept: Factoring Quadratics', type: 'concept' },
+             { id: 'res-5', title: 'Problem Set: Word Problems (Linear)', type: 'problem' },
+        ];
+
+        let simulatedGapData = {
+             labels: ['Fractions', 'Algebra Basics', 'Geometry Proofs', 'Probability', 'Functions'],
+             data: [60, 55, 40, 35, 30], // Percentage of students showing gaps
+             backgroundColor: "var(--color-secondary)", // Use CSS variable string
+             borderColor: "var(--color-text-dark)" // Use CSS variable string
+        };
+
+
+        // --- DOM Elements ---
+        const curriculumBuilderEl = document.getElementById('curriculum-builder');
+        const addUnitButton = document.getElementById('add-unit-button');
+        const lessonDetailModal = document.getElementById('lesson-detail-modal');
+        const closeButtons = lessonDetailModal.querySelectorAll('.close-button');
+        const lessonTitleInput = document.getElementById('lesson-title-input');
+        const lessonConceptsInput = document.getElementById('lesson-concepts-input');
+        const lessonActivitiesInput = document.getElementById('lesson-activities-input');
+        const lessonAssessmentsInput = document.getElementById('lesson-assessments-input');
+        const lessonAnxietyNotesInput = document.getElementById('lesson-anxiety-notes-input');
+        const lessonGapsInput = document.getElementById('lesson-gaps-input');
+        const saveLessonButton = document.getElementById('save-lesson-button');
+        const resourceListEl = document.getElementById('resource-list');
+        const resourceSearchInput = document.getElementById('resource-search');
+        const resourceFilterSelect = document.getElementById('resource-filter');
+        const accordionHeaders = document.querySelectorAll('.methodology-guide .accordion-header');
+        const gapChartCanvas = document.getElementById('gapChart');
+        const gapChartControls = document.getElementById('gapChartControls');
+        const gapChartBgColorInput = document.getElementById('gapChartBgColor');
+        const gapChartBorderColorInput = document.getElementById('gapChartBorderColor');
+        const gapChartFontSizeInput = document.getElementById('gapChartFontSize');
+
+
+        let currentLessonId = null; // To track which lesson is being edited
+        let windowGapChartInstance = null; // Hold Chart.js instance
+
+        // --- Rendering Functions ---
+
+        function renderCurriculum() {
+             // Use the version with add lesson buttons
+             renderCurriculumWithAddButtons();
+        }
+
+         // Modified render function to include Add Lesson buttons
+         function renderCurriculumWithAddButtons() {
+             curriculumBuilderEl.innerHTML = '';
+             curriculumData.forEach(unit => {
+                 const unitEl = document.createElement('div');
+                 unitEl.classList.add('unit');
+                 unitEl.dataset.unitId = unit.id;
+                 unitEl.setAttribute('aria-label', `Unit: ${unit.title}`);
+                 unitEl.setAttribute('role', 'listitem'); // Each unit is a list item in the curriculum list
+
+                 const unitHeaderEl = document.createElement('div');
+                 unitHeaderEl.classList.add('unit-header');
+                 unitHeaderEl.innerHTML = `<h3>${unit.title}</h3>`;
+                 unitHeaderEl.appendChild(createAddLessonButton(unit.id)); // Add button here
+                 unitEl.appendChild(unitHeaderEl);
+
+                 const lessonsContainerEl = document.createElement('div');
+                 lessonsContainerEl.classList.add('lessons-container');
+                 lessonsContainerEl.dataset.unitId = unit.id; // For drag/drop
+                 lessonsContainerEl.setAttribute('role', 'listbox'); // Container for draggable items
+
+                 // Add drag/drop event listeners to the lessons container
+                 lessonsContainerEl.addEventListener('dragover', handleDragOver);
+                 lessonsContainerEl.addEventListener('dragleave', handleDragLeave);
+                 lessonsContainerEl.addEventListener('drop', handleDrop);
+
+
+                 unit.lessons.forEach(lesson => {
+                     lessonsContainerEl.appendChild(createLessonBlock(lesson));
+                 });
+
+                 unitEl.appendChild(lessonsContainerEl);
+                 curriculumBuilderEl.appendChild(unitEl);
+             });
+         }
+
+
+        function createLessonBlock(lesson) {
+            const lessonEl = document.createElement('div');
+            lessonEl.classList.add('lesson-block');
+            lessonEl.dataset.lessonId = lesson.id;
+            lessonEl.setAttribute('draggable', true);
+            lessonEl.setAttribute('role', 'option'); // Draggable item in a listbox
+            lessonEl.setAttribute('aria-label', `Lesson: ${lesson.title}`);
+            lessonEl.setAttribute('tabindex', '0'); // Make draggable items focusable
+
+            lessonEl.innerHTML = `
+                <span>${lesson.title}</span>
+                <span class="material-symbols-rounded" aria-hidden="true">edit</span>
+            `;
+
+            lessonEl.addEventListener('click', (e) => {
+                 // Prevent click event from firing immediately after drop
+                 if (e.detail === 0) return; // Check for synthetic click after drag/drop
+                 openLessonDetail(lesson.id);
+            });
+             // Add keyboard activation for lesson blocks
+            lessonEl.addEventListener('keypress', (event) => {
+                 if (event.key === 'Enter' || event.key === ' ') {
+                     event.preventDefault();
+                     openLessonDetail(lesson.id);
+                 }
+            });
+
+            lessonEl.addEventListener('dragstart', handleDragStart);
+            // Add dragend listener to clean up
+            lessonEl.addEventListener('dragend', handleDragEnd);
+
+
+            return lessonEl;
+        }
+
+         function createAddLessonButton(unitId) {
+             const button = document.createElement('button');
+             button.classList.add('add-lesson-button');
+             button.textContent = 'Add Lesson';
+             button.setAttribute('aria-label', `Add new lesson to Unit ${unitId.split('-')[1]}`);
+             button.addEventListener('click', () => {
+                 const unit = curriculumData.find(u => u.id === unitId);
+                 if (unit) {
+                     const newLessonId = generateUniqueId('lesson');
+                     const newLesson = {
+                         id: newLessonId,
+                         title: `New Lesson ${unit.lessons.length + 1}`,
+                         concepts: '', activities: '', assessments: '', anxietyNotes: '', gaps: ''
+                     };
+                     unit.lessons.push(newLesson);
+                     renderCurriculumWithAddButtons(); // Re-render to show new lesson
+                 }
+             });
+             return button;
+         }
+
+
+        function renderResourceLibrary(resources) {
+            resourceListEl.innerHTML = '';
+            if (resources.length === 0) {
+                 resourceListEl.innerHTML = '<li>No resources found.</li>';
+                 return;
+            }
+            resources.forEach(resource => {
+                const resourceItemEl = document.createElement('li');
+                resourceItemEl.classList.add('resource-item');
+                resourceItemEl.dataset.resourceId = resource.id;
+                 resourceItemEl.setAttribute('role', 'button'); // It acts like a button to add
+                 resourceItemEl.setAttribute('aria-label', `Add resource: ${resource.title} (${resource.type})`);
+                 resourceItemEl.setAttribute('tabindex', '0'); // Make resource items focusable
+
+
+                resourceItemEl.innerHTML = `
+                    <span>${resource.title} (${resource.type.charAt(0).toUpperCase() + resource.type.slice(1)})</span>
+                    <span class="material-symbols-rounded add-icon" aria-hidden="true">add_circle</span>
+                `;
+                 // Simulate adding resource to the currently open lesson
+                resourceItemEl.addEventListener('click', () => addResourceToLesson(resource.id));
+                // Add keyboard activation for resource items
+                resourceItemEl.addEventListener('keypress', (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        addResourceToLesson(resource.id);
+                    }
+                });
+
+
+                resourceListEl.appendChild(resourceItemEl);
+            });
+        }
+
+        function renderGapChart() {
+             const ctx = gapChartCanvas.getContext('2d');
+             if (windowGapChartInstance) {
+                windowGapChartInstance.destroy(); // Destroy previous instance
+             }
+
+             const config = {
+                type: 'bar',
+                data: {
+                    labels: simulatedGapData.labels,
+                    datasets: [{
+                        label: 'Percentage of Students with Gap',
+                        data: simulatedGapData.data,
+                        backgroundColor: simulatedGapData.backgroundColor,
+                        borderColor: simulatedGapData.borderColor,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onClick: (e) => toggleChartControls(e),
+                    plugins: {
+                        legend: {
+                            display: true,
+                             labels: {
+                                font: {
+                                    size: parseInt(gapChartFontSizeInput.value) || 12,
+                                    family: "var('--font-family-roboto')", // Use CSS variable string
+                                    weight: '400'
+                                }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Simulated Common Knowledge Gaps',
+                            font: {
+                                size: 16,
+                                family: "var('--font-family-roboto')", // Use CSS variable string
+                                weight: '500'
+                                }
+                        },
+                         tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y + '%';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) { return value + '%'; },
+                                font: {
+                                    size: parseInt(gapChartFontSizeInput.value) || 12,
+                                     family: "var('--font-family-roboto')" // Use CSS variable string
+                                }
+                            },
+                             grid: {
+                                 color: "var('--color-background-light')" // Use CSS variable string
+                             }
+                        },
+                         x: {
+                            ticks: {
+                                font: {
+                                    size: parseInt(gapChartFontSizeInput.value) || 12,
+                                     family: "var('--font-family-roboto')" // Use CSS variable string
+                                }
+                            },
+                             grid: {
+                                 color: "var('--color-background-light')" // Use CSS variable string
+                             }
+                         }
+                    }
+                }
+            };
+
+            windowGapChartInstance = new Chart(ctx, config);
+
+             // Add event listeners to chart controls (ensure they are only added once)
+             if (!gapChartControls.dataset.listenersAdded) {
+                gapChartBgColorInput.addEventListener('input', updateGapChart);
+                gapChartBorderColorInput.addEventListener('input', updateGapChart);
+                gapChartFontSizeInput.addEventListener('input', updateGapChart);
+                gapChartControls.dataset.listenersAdded = 'true';
+             }
+        }
+
+        function updateGapChart() {
+            const newBgColor = gapChartBgColorInput.value;
+            const newBorderColor = gapChartBorderColorInput.value;
+            const newFontSize = parseInt(gapChartFontSizeInput.value);
+
+            // Update simulated data object (optional, but good practice if data is persisted)
+            simulatedGapData.backgroundColor = newBgColor;
+            simulatedGapData.borderColor = newBorderColor;
+
+            // Update chart instance directly
+            if (windowGapChartInstance) {
+                 windowGapChartInstance.config.data.datasets[0].backgroundColor = newBgColor;
+                 windowGapChartInstance.config.data.datasets[0].borderColor = newBorderColor;
+
+                 const updateFont = (obj) => obj?.font && (obj.font.size = newFontSize);
+                 updateFont(windowGapChartInstance.options.plugins.legend.labels);
+                 updateFont(windowGapChartInstance.options.plugins.title.font);
+                 updateFont(windowGapChartInstance.options.scales?.y?.ticks);
+                 updateFont(windowGapChartInstance.options.scales?.x?.ticks);
+
+                 windowGapChartInstance.update();
+            }
+        }
+
+         function toggleChartControls(event) {
+             // Check if the click was inside the chart canvas
+             const rect = gapChartCanvas.getBoundingClientRect();
+             const x = event.clientX - rect.left;
+             const y = event.clientY - rect.top;
+
+             if (x >= 0 && x <= rect.width && y >= 0 && y <= rect.height) {
+                 gapChartControls.classList.toggle('active');
+             } else {
+                 // If click is outside chart and controls, close controls
+                 if (!event.target.closest('.floating-controls') && !event.target.closest('.chart-container')) {
+                     gapChartControls.classList.remove('active');
+                 }
+             }
+         }
+
+
+        // --- Curriculum Builder Logic (Simulated Drag & Drop) ---
+        let draggingLesson = null;
+
+        function handleDragStart(event) {
+            draggingLesson = event.target;
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', draggingLesson.dataset.lessonId);
+            setTimeout(() => {
+                draggingLesson.classList.add('dragging');
+            }, 0); // Add class after drag data is set
+        }
+
+        function handleDragEnd() {
+             // Clean up dragging class from all elements
+             document.querySelectorAll('.lesson-block.dragging').forEach(el => el.classList.remove('dragging'));
+             document.querySelectorAll('.lessons-container.drag-over').forEach(el => el.classList.remove('drag-over'));
+             draggingLesson = null;
+        }
+
+
+        function handleDragOver(event) {
+            event.preventDefault(); // Necessary to allow dropping
+            event.dataTransfer.dropEffect = 'move';
+
+            const target = event.target.closest('.lessons-container, .lesson-block');
+            // Add visual indicator for drop target container
+            document.querySelectorAll('.lessons-container.drag-over').forEach(el => el.classList.remove('drag-over'));
+            if (target) {
+                 const container = target.classList.contains('lessons-container') ? target : target.closest('.lessons-container');
+                 container?.classList.add('drag-over');
+            }
+        }
+
+        function handleDragLeave(event) {
+             const target = event.target.closest('.lessons-container');
+             if (target) {
+                 // Check if the mouse is actually leaving the container, not just entering a child
+                 const rect = target.getBoundingClientRect();
+                 if (event.clientX < rect.left || event.clientX >= rect.right || event.clientY < rect.top || event.clientY >= rect.bottom) {
+                     target.classList.remove('drag-over');
+                 }
+             }
+        }
+
+
+        function handleDrop(event) {
+            event.preventDefault();
+            const lessonId = event.dataTransfer.getData('text/plain');
+            const droppedLessonEl = document.querySelector(`[data-lesson-id="${lessonId}"]`);
+            const target = event.target.closest('.lessons-container, .lesson-block');
+
+            // Clean up drag-over class
+            document.querySelectorAll('.lessons-container.drag-over').forEach(el => el.classList.remove('drag-over'));
+
+
+            if (!droppedLessonEl || !target || droppedLessonEl === target) {
+                droppedLessonEl?.classList.remove('dragging');
+                draggingLesson = null;
+                return;
+            }
+
+            const targetLessonsContainer = target.classList.contains('lessons-container') ? target : target.closest('.lessons-container');
+
+            if (targetLessonsContainer) {
+                 const targetUnitId = targetLessonsContainer.dataset.unitId;
+
+                 // Find and remove the lesson from its original unit
+                 let originalUnitIndex = -1;
+                 let lessonIndex = -1;
+                 let movedLesson = null;
+                 curriculumData.forEach((unit, uIdx) => {
+                     const lIdx = unit.lessons.findIndex(lesson => lesson.id === lessonId);
+                     if (lIdx !== -1) {
+                         originalUnitIndex = uIdx;
+                         lessonIndex = lIdx;
+                         movedLesson = unit.lessons[lIdx];
+                     }
+                 });
+
+                 if (originalUnitIndex !== -1 && lessonIndex !== -1 && movedLesson) {
+                     curriculumData[originalUnitIndex].lessons.splice(lessonIndex, 1);
+
+                     // Find the target unit
+                     const targetUnit = curriculumData.find(unit => unit.id === targetUnitId);
+
+                     if (targetUnit) {
+                         let insertIndex = targetUnit.lessons.length; // Default to end of container
+
+                         if (target.classList.contains('lesson-block')) {
+                             // Dropped onto another lesson block, insert before/after
+                             const targetLessonId = target.dataset.lessonId;
+                             const targetLessonIndex = targetUnit.lessons.findIndex(lesson => lesson.id === targetLessonId);
+
+                             if (targetLessonIndex !== -1) {
+                                  // Determine if dropping before or after based on pointer position
+                                  const targetRect = target.getBoundingClientRect();
+                                  const dropY = event.clientY;
+                                  if (dropY < targetRect.top + targetRect.height / 2) {
+                                       // Drop before
+                                       insertIndex = targetLessonIndex;
+                                  } else {
+                                       // Drop after
+                                       insertIndex = targetLessonIndex + 1;
+                                  }
+                             }
+                         }
+                         // Insert the lesson into the new unit at the determined index
+                         targetUnit.lessons.splice(insertIndex, 0, movedLesson);
+
+                         renderCurriculumWithAddButtons(); // Re-render the curriculum
+                     } else {
+                          // If target unit not found (shouldn't happen with current logic), put lesson back
+                          curriculumData[originalUnitIndex].lessons.splice(lessonIndex, 0, movedLesson);
+                     }
+                 }
+            }
+
+            droppedLessonEl?.classList.remove('dragging');
+            draggingLesson = null;
+
+             // Prevent click event from firing on the dropped element immediately after drop
+             // This is a common issue with drag/drop and click listeners on the same element
+             // A simple way is to check event.detail in the click handler (detail is 0 for synthetic clicks)
+        }
+
+
+        // --- Modal Logic ---
+        function openLessonDetail(lessonId) {
+            currentLessonId = lessonId;
+            const lesson = findLessonById(lessonId);
+            if (lesson) {
+                document.getElementById('lesson-detail-title').textContent = lesson.title;
+                lessonTitleInput.value = lesson.title;
+                lessonConceptsInput.value = lesson.concepts;
+                lessonActivitiesInput.value = lesson.activities;
+                lessonAssessmentsInput.value = lesson.assessments;
+                lessonAnxietyNotesInput.value = lesson.anxietyNotes;
+                lessonGapsInput.value = lesson.gaps;
+
+                // Clear validation errors
+                lessonTitleInput.classList.remove('error');
+
+
+                lessonDetailModal.classList.add('visible');
+                 lessonDetailModal.setAttribute('aria-hidden', 'false');
+                 // Set focus to the modal or the first interactive element
+                 lessonDetailModal.querySelector('.lesson-detail-panel').focus();
+            }
+        }
+
+        function closeLessonDetail() {
+            lessonDetailModal.classList.remove('visible');
+            lessonDetailModal.setAttribute('aria-hidden', 'true');
+            currentLessonId = null;
+             // Clear inputs and validation errors
+            lessonTitleInput.value = '';
+            lessonConceptsInput.value = '';
+            lessonActivitiesInput.value = '';
+            lessonAssessmentsInput.value = '';
+            lessonAnxietyNotesInput.value = '';
+            lessonGapsInput.value = '';
+            lessonTitleInput.classList.remove('error');
+
+             // Return focus to the element that opened the modal (if possible)
+             // In a more complex app, you'd track the element that triggered the modal.
+             // For this example, we'll just return focus to the body or a main element.
+             document.querySelector('main').focus();
+        }
+
+        closeButtons.forEach(button => button.addEventListener('click', closeLessonDetail));
+
+        lessonDetailModal.addEventListener('click', (event) => {
+            // Close if clicking on the overlay itself, not the panel
+            if (event.target === lessonDetailModal) {
+                closeLessonDetail();
+            }
+        });
+
+         // Close modal with Escape key
+         document.addEventListener('keydown', (event) => {
+             if (event.key === 'Escape' && lessonDetailModal.classList.contains('visible')) {
+                 closeLessonDetail();
+             }
+         });
+
+
+        function saveLessonDetail() {
+            if (!currentLessonId) return;
+
+            // Basic validation
+            if (lessonTitleInput.value.trim() === '') {
+                lessonTitleInput.classList.add('error');
+                alert('Lesson Title is required.');
+                lessonTitleInput.focus();
+                return;
+            } else {
+                 lessonTitleInput.classList.remove('error');
+            }
+
+
+            const lesson = findLessonById(currentLessonId);
+            if (lesson) {
+                lesson.title = lessonTitleInput.value.trim();
+                lesson.concepts = lessonConceptsInput.value.trim();
+                lesson.activities = lessonActivitiesInput.value.trim();
+                lesson.assessments = lessonAssessmentsInput.value.trim();
+                lesson.anxietyNotes = lessonAnxietyNotesInput.value.trim();
+                lesson.gaps = lessonGapsInput.value.trim();
+
+                // Update the lesson block title in the UI
+                const lessonBlockEl = document.querySelector(`[data-lesson-id="${currentLessonId}"] span:first-child`);
+                if (lessonBlockEl) {
+                     lessonBlockEl.textContent = lesson.title;
+                }
+
+                console.log('Lesson saved:', lesson); // Simulate save
+                closeLessonDetail();
+            }
+        }
+
+        saveLessonButton.addEventListener('click', saveLessonDetail);
+
+        // --- Resource Library Logic ---
+        function filterResources() {
+            const searchTerm = resourceSearchInput.value.toLowerCase();
+            const filterType = resourceFilterSelect.value;
+
+            const filtered = resourceData.filter(resource => {
+                const matchesSearch = resource.title.toLowerCase().includes(searchTerm);
+                const matchesType = filterType === 'all' || resource.type === filterType;
+                return matchesSearch && matchesType;
+            });
+
+            renderResourceLibrary(filtered);
+        }
+
+        resourceSearchInput.addEventListener('input', filterResources);
+        resourceFilterSelect.addEventListener('change', filterResources);
+
+        function addResourceToLesson(resourceId) {
+            if (!currentLessonId) {
+                // If modal is not open, open it with a new lesson or prompt user
+                alert('Please open or create a lesson first.');
+                return;
+            }
+            const lesson = findLessonById(currentLessonId);
+            const resource = resourceData.find(res => res.id === resourceId);
+
+            if (lesson && resource) {
+                // Simulate adding resource text to the Concepts/Activities/etc. based on type
+                let targetInput;
+                switch (resource.type) {
+                    case 'concept':
+                        targetInput = lessonConceptsInput;
+                        break;
+                    case 'problem':
+                        targetInput = lessonActivitiesInput; // Problems can be examples/activities
+                        break;
+                    case 'methodology':
+                         targetInput = lessonAnxietyNotesInput; // Example: add methodology tips here
+                        break;
+                    default:
+                        targetInput = lessonConceptsInput; // Fallback
+                }
+
+                if (targetInput) {
+                    const resourceText = `[Resource: ${resource.title} (${resource.type})]`;
+                    // Add resource text to the input, ensuring a newline if content already exists
+                    if (targetInput.value.length > 0 && !targetInput.value.endsWith('\n')) {
+                         targetInput.value += '\n';
+                    }
+                    targetInput.value += resourceText + '\n';
+                     console.log(`Added resource "${resource.title}" to lesson "${lesson.title}"`);
+
+                     // Provide visual feedback (optional, could be a toast or temporary highlight)
+                     // For this example, just a console log and the text appearing is the feedback.
+                }
+            }
+        }
+
+
+        // --- Methodology Guide (Accordion) Logic ---
+        accordionHeaders.forEach(header => {
+            header.addEventListener('click', () => {
+                const content = document.getElementById(header.getAttribute('aria-controls'));
+                const isExpanded = header.getAttribute('aria-expanded') === 'true';
+
+                // Close all other accordions
+                accordionHeaders.forEach(otherHeader => {
+                    if (otherHeader !== header) {
+                        otherHeader.setAttribute('aria-expanded', 'false');
+                        const otherContent = document.getElementById(otherHeader.getAttribute('aria-controls'));
+                        otherContent.classList.remove('active');
+                        otherContent.setAttribute('aria-hidden', 'true');
+                    }
+                });
+
+                // Toggle clicked accordion
+                header.setAttribute('aria-expanded', !isExpanded);
+                content.classList.toggle('active');
+                 content.setAttribute('aria-hidden', isExpanded);
+            });
+
+             // Add keyboard support for accordion headers
+             header.addEventListener('keypress', (event) => {
+                 if (event.key === 'Enter' || event.key === ' ') {
+                     event.preventDefault();
+                     header.click(); // Trigger click event
+                 }
+             });
+        });
+
+
+        // --- Utility Functions ---
+        function findLessonById(lessonId) {
+            for (const unit of curriculumData) {
+                const lesson = unit.lessons.find(l => l.id === lessonId);
+                if (lesson) return lesson;
+            }
+            return null;
+        }
+
+        function generateUniqueId(prefix) {
+            return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        }
+
+         // Helper for visually hidden elements (for accessibility)
+         const styleSheet = document.createElement("style");
+         styleSheet.type = "text/css";
+         styleSheet.innerText = `.visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0; }`;
+         document.head.appendChild(styleSheet);
+
+
+        // --- Initial Render ---
+        renderCurriculumWithAddButtons(); // Use the function that includes add lesson buttons
+        renderResourceLibrary(resourceData); // Render all initially
+        renderGapChart();
+
+        // --- Event Listeners for root elements ---
+
+        // Add Unit Button listener (already present, just ensure it uses the correct render function)
+        addUnitButton.addEventListener('click', () => {
+            const newUnitId = generateUniqueId('unit');
+            const newUnit = {
+                id: newUnitId,
+                title: `New Unit ${curriculumData.length + 1}`,
+                lessons: []
+            };
+            curriculumData.push(newUnit);
+            renderCurriculumWithAddButtons(); // Use the new render function
+        });
+
+
+         // Close chart controls when clicking anywhere else (except the chart or controls)
+         document.addEventListener('click', (e) => {
+             if (!e.target.closest('.chart-container') && !e.target.closest('.floating-controls')) {
+                 gapChartControls.classList.remove('active');
+             }
+         });
+
+
+    </script>
+
+</body>
+</html>

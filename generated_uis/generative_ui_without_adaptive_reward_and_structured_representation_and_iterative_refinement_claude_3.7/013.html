@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEO Analyzer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #007bff;
+            --primary-blue-dark: #0056b3;
+            --light-grey: #f8f9fa;
+            --dark-text: #212529;
+            --white: #ffffff;
+            --border-color: #ced4da;
+            --success-green: #28a745;
+            --warning-yellow: #ffc107;
+            --danger-red: #dc3545;
+            --info-cyan: #17a2b8;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: var(--light-grey);
+            color: var(--dark-text);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--white);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .site-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+
+        main {
+            flex-grow: 1;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .card {
+            background-color: var(--white);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .input-section h2 {
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            color: var(--dark-text);
+            font-size: 1.5rem;
+            text-align: center;
+        }
+
+        .url-form {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .url-input-container {
+            flex-grow: 1;
+            max-width: 600px;
+        }
+
+        .url-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .url-input:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            outline: none;
+        }
+
+        .analyze-button {
+            padding: 0.75rem 2rem;
+            font-size: 1rem;
+            color: var(--white);
+            background-color: var(--primary-blue);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, opacity 0.3s ease;
+            font-weight: 500;
+        }
+
+        .analyze-button:hover:not(:disabled) {
+            background-color: var(--primary-blue-dark);
+        }
+
+        .analyze-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .error-message {
+            color: var(--danger-red);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            min-height: 1em; /* Reserve space */
+        }
+
+        .results-section {
+            display: none; /* Initially hidden */
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .results-section.visible {
+            display: block;
+            opacity: 1;
+        }
+
+        .results-section h2 {
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            color: var(--dark-text);
+            font-size: 1.5rem;
+        }
+
+        .loading-spinner {
+            display: none; /* Initially hidden */
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--primary-blue);
+            border-top: 4px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 2rem auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .dashboard-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .metric-card {
+            background-color: var(--light-grey);
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: left;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .metric-card h3 {
+            margin-top: 0;
+            font-size: 1.1rem;
+            color: var(--dark-text);
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+
+        .metric-description {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 0.5rem;
+        }
+
+        .metric-value.score { color: var(--success-green); }
+        .metric-value.traffic { color: var(--info-cyan); }
+        .metric-value.keywords { color: var(--warning-yellow); }
+
+        footer {
+            background-color: var(--dark-text);
+            color: var(--white);
+            text-align: center;
+            padding: 1rem 2rem;
+            margin-top: auto;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .url-form {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .url-input-container {
+                max-width: none;
+            }
+            .analyze-button {
+                width: 100%;
+            }
+            .dashboard-summary {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="site-title">SEO Analyzer</div>
+        <!-- Basic Nav Placeholder -->
+        <nav>
+            <!-- Add navigation links here later -->
+        </nav>
+    </header>
+
+    <main>
+        <section class="card input-section">
+            <h2>Analyze Your Website's SEO</h2>
+            <div class="url-form">
+                <div class="url-input-container">
+                    <input type="text" id="websiteUrl" class="url-input" placeholder="Enter your website URL (e.g., https://example.com)">
+                    <div id="urlError" class="error-message"></div>
+                </div>
+                <button id="analyzeButton" class="analyze-button">Analyze</button>
+            </div>
+        </section>
+
+        <div id="loadingSpinner" class="loading-spinner"></div>
+
+        <section id="resultsSection" class="card results-section">
+            <h2>SEO Dashboard</h2>
+            <div class="dashboard-summary">
+                <div class="metric-card">
+                    <h3>Overall Score</h3>
+                    <div class="metric-value score" id="overallScore">-</div>
+                    <div class="metric-description">Based on key SEO factors.</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Estimated Traffic</h3>
+                    <div class="metric-value traffic" id="estimatedTraffic">-</div>
+                    <div class="metric-description">Monthly visits estimate.</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Ranking Keywords</h3>
+                    <div class="metric-value keywords" id="rankingKeywords">-</div>
+                    <div class="metric-description">Number of keywords in top 100.</div>
+                </div>
+                <!-- More metric cards can be added here -->
+            </div>
+            <!-- Detailed reports link/button can go here -->
+        </section>
+    </main>
+
+    <footer>
+        &copy; 2023 SEO Analyzer. All rights reserved.
+    </footer>
+
+    <script>
+        const urlInput = document.getElementById('websiteUrl');
+        const analyzeButton = document.getElementById('analyzeButton');
+        const urlError = document.getElementById('urlError');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const resultsSection = document.getElementById('resultsSection');
+        const overallScore = document.getElementById('overallScore');
+        const estimatedTraffic = document.getElementById('estimatedTraffic');
+        const rankingKeywords = document.getElementById('rankingKeywords');
+
+        // Basic URL validation
+        function isValidUrl(string) {
+            try {
+                new URL(string);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        analyzeButton.addEventListener('click', () => {
+            const url = urlInput.value.trim();
+
+            // Clear previous error and results
+            urlError.textContent = '';
+            resultsSection.classList.remove('visible');
+            overallScore.textContent = '-';
+            estimatedTraffic.textContent = '-';
+            rankingKeywords.textContent = '-';
+
+            if (!url) {
+                urlError.textContent = 'Please enter a website URL.';
+                return;
+            }
+
+            if (!isValidUrl(url)) {
+                 urlError.textContent = 'Please enter a valid URL (e.g., https://example.com).';
+                 return;
+            }
+
+            // Simulate analysis process
+            analyzeButton.disabled = true;
+            analyzeButton.textContent = 'Analyzing...';
+            loadingSpinner.style.display = 'block';
+
+            // Simulate a network request delay
+            setTimeout(() => {
+                // Simulate results
+                const simulatedScore = Math.floor(Math.random() * (100 - 50 + 1)) + 50; // Score between 50-100
+                const simulatedTraffic = Math.floor(Math.random() * 100000).toLocaleString(); // Up to 100k traffic
+                const simulatedKeywords = Math.floor(Math.random() * 500).toLocaleString(); // Up to 500 keywords
+
+                overallScore.textContent = simulatedScore;
+                estimatedTraffic.textContent = simulatedTraffic;
+                rankingKeywords.textContent = simulatedKeywords;
+
+                // Show results section with fade-in
+                resultsSection.style.display = 'block'; // Make it block before transition
+                requestAnimationFrame(() => { // Use requestAnimationFrame to ensure display: block is applied before transition
+                     resultsSection.classList.add('visible');
+                });
+
+
+                loadingSpinner.style.display = 'none';
+                analyzeButton.disabled = false;
+                analyzeButton.textContent = 'Analyze';
+
+            }, 2000); // Simulate 2-second analysis time
+        });
+
+        // Allow pressing Enter key in the input field
+        urlInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Prevent default form submission if it were a form
+                analyzeButton.click();
+            }
+        });
+
+    </script>
+</body>
+</html>

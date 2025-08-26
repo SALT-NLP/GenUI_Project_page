@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding Neural Networks</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --info-color: #17a2b8;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --white-color: #ffffff;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-400: #ced4da;
+            --gray-500: #adb5bd;
+            --gray-600: #6c757d;
+            --gray-700: #495057;
+            --gray-800: #343a40;
+            --gray-900: #212529;
+
+            --background-color: var(--gray-100);
+            --text-color: var(--dark-color);
+            --card-background: var(--white-color);
+            --border-color: var(--gray-300);
+            --shadow-color: rgba(0, 0, 0, 0.1);
+
+            --spacing-unit: 8px;
+            --border-radius: 8px;
+            --node-size: 40px;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: var(--white-color);
+            padding: calc(var(--spacing-unit) * 3) 0;
+            text-align: center;
+            width: 100%;
+            box-shadow: 0 2px 4px var(--shadow-color);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.5em;
+        }
+
+        main {
+            max-width: 1200px;
+            width: 100%;
+            padding: calc(var(--spacing-unit) * 4);
+            box-sizing: border-box;
+        }
+
+        section {
+            background-color: var(--card-background);
+            padding: calc(var(--spacing-unit) * 4);
+            margin-bottom: calc(var(--spacing-unit) * 4);
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 8px var(--shadow-color);
+        }
+
+        h2 {
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            border-bottom: 2px solid var(--gray-200);
+            padding-bottom: var(--spacing-unit);
+        }
+
+        .intro p {
+            font-size: 1.1em;
+            margin-bottom: calc(var(--spacing-unit) * 3);
+        }
+
+        .network-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: calc(var(--spacing-unit) * 4);
+        }
+
+        #network-diagram {
+            flex-grow: 1;
+            min-width: 400px;
+            height: 400px; /* Fixed height for the SVG container */
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: var(--white-color);
+            position: relative; /* Needed for absolute positioning of labels */
+        }
+
+        #controls-panel {
+            flex-basis: 300px;
+            flex-shrink: 0;
+            background-color: var(--gray-100);
+            padding: calc(var(--spacing-unit) * 3);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+        }
+
+        .control-group {
+            margin-bottom: calc(var(--spacing-unit) * 3);
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: var(--spacing-unit);
+            font-weight: bold;
+            color: var(--dark-color);
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 8px;
+            background: var(--gray-300);
+            outline: none;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            border-radius: 4px;
+        }
+
+        .control-group input[type="range"]:hover {
+            opacity: 1;
+        }
+
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--primary-color);
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid var(--white-color);
+            box-shadow: 0 2px 4px var(--shadow-color);
+        }
+
+        .control-group input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: var(--primary-color);
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid var(--white-color);
+            box-shadow: 0 2px 4px var(--shadow-color);
+        }
+
+        .control-group input[type="number"] {
+            width: calc(100% - var(--spacing-unit) * 2);
+            padding: var(--spacing-unit);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            box-sizing: border-box;
+            font-size: 1em;
+        }
+
+        button {
+            display: block;
+            width: 100%;
+            padding: calc(var(--spacing-unit) * 2);
+            background-color: var(--success-color);
+            color: var(--white-color);
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+
+        button:hover {
+            background-color: #218838; /* Darker green */
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        details {
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: var(--white-color);
+        }
+
+        summary {
+            padding: calc(var(--spacing-unit) * 2);
+            font-weight: bold;
+            cursor: pointer;
+            outline: none;
+            user-select: none;
+            background-color: var(--gray-200);
+            border-radius: var(--border-radius);
+            transition: background-color 0.2s ease;
+        }
+
+        summary:hover {
+            background-color: var(--gray-300);
+        }
+
+        details[open] summary {
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        .explanation-content {
+            padding: calc(var(--spacing-unit) * 2);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .explanation-content p {
+            margin-top: 0;
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .diagram-labels {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Allow clicks/hovers on SVG elements underneath */
+        }
+
+        .layer-label {
+            position: absolute;
+            font-weight: bold;
+            color: var(--dark-color);
+            text-align: center;
+            transform: translateX(-50%); /* Center horizontally relative to position */
+            pointer-events: none;
+            font-size: 1.1em;
+        }
+
+        .node-label {
+             position: absolute;
+             font-size: 0.9em;
+             color: var(--dark-color);
+             text-align: center;
+             transform: translate(-50%, -50%); /* Center relative to node */
+             pointer-events: none;
+             z-index: 1; /* Ensure label is above SVG */
+        }
+
+        .node-bias-label {
+             position: absolute;
+             font-size: 0.8em;
+             color: var(--gray-700);
+             text-align: center;
+             transform: translate(-50%, calc(var(--node-size) / 2 + var(--spacing-unit))); /* Position below node */
+             pointer-events: none;
+             z-index: 1;
+        }
+
+        .weight-label {
+            position: absolute;
+            font-size: 0.8em;
+            color: var(--gray-700);
+            background: var(--white-color);
+            padding: 2px 4px;
+            border-radius: 4px;
+            pointer-events: none;
+            transform: translate(-50%, -50%); /* Center relative to position */
+            z-index: 1;
+        }
+
+        /* SVG Styles */
+        svg circle {
+            transition: fill 0.3s ease, r 0.3s ease;
+            cursor: pointer;
+        }
+
+        svg line {
+            stroke: var(--gray-500);
+            stroke-width: 1.5;
+            transition: stroke 0.3s ease;
+        }
+
+        svg circle.input-node { fill: var(--info-color); }
+        svg circle.hidden-node { fill: var(--primary-color); }
+        svg circle.output-node { fill: var(--success-color); }
+
+        svg circle.active {
+            fill: var(--warning-color);
+            r: calc(var(--node-size) / 2 + 2px); /* Slightly larger when active */
+        }
+
+        .data-dot {
+            fill: var(--danger-color);
+            r: 5px;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background-color: var(--dark-color);
+            color: var(--white-color);
+            padding: var(--spacing-unit) var(--spacing-unit) * 1.5;
+            border-radius: var(--border-radius);
+            font-size: 0.9em;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 10;
+            transform: translate(-50%, -10px);
+            white-space: nowrap;
+        }
+
+        .tooltip.visible {
+            opacity: 1;
+        }
+
+        .example-area {
+            display: flex;
+            gap: calc(var(--spacing-unit) * 4);
+            align-items: flex-start;
+        }
+
+        .example-input, .example-output {
+            flex: 1;
+            padding: calc(var(--spacing-unit) * 3);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: var(--gray-100);
+        }
+
+        .example-input h3, .example-output h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+            margin-bottom: calc(var(--spacing-unit) * 2);
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 40px);
+            gap: var(--spacing-unit);
+        }
+
+        .input-pixel {
+            width: 40px;
+            height: 40px;
+            background-color: var(--gray-400);
+            border: 1px solid var(--gray-500);
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.9em;
+            color: var(--dark-color);
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .input-pixel.active {
+            background-color: var(--primary-color);
+            color: var(--white-color);
+        }
+
+        #output-display {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--success-color);
+            min-height: 1.5em; /* Prevent layout shift */
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .network-container {
+                flex-direction: column;
+            }
+
+            #controls-panel {
+                flex-basis: auto;
+                width: 100%;
+            }
+
+            .example-area {
+                flex-direction: column;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Understanding Neural Networks</h1>
+    </header>
+
+    <main>
+        <section class="intro">
+            <h2>What are Neural Networks?</h2>
+            <p>
+                Neural networks are a set of algorithms, modeled loosely after the human brain, that are designed to recognize patterns. They are used in a wide variety of applications, such as image recognition, speech recognition, and natural language processing.
+            </p>
+            <p>
+                Think of a neural network as a system of interconnected "neurons" that process information. Data enters the network, flows through these connections, and produces an output. Let's explore a simple network visually.
+            </p>
+        </section>
+
+        <section>
+            <h2>Interactive Network Diagram</h2>
+            <div class="network-container">
+                <div id="network-diagram">
+                    <svg id="network-svg" width="100%" height="100%" viewBox="0 0 800 400"></svg>
+                    <div class="diagram-labels" id="diagram-labels">
+                        <!-- Layer labels -->
+                        <div class="layer-label" style="left: 15%; top: 50%;">Input Layer</div>
+                        <div class="layer-label" style="left: 50%; top: 50%;">Hidden Layer</div>
+                        <div class="layer-label" style="left: 85%; top: 50%;">Output Layer</div>
+                        <!-- Node, Bias, Weight Labels will be added by JS -->
+                    </div>
+                     <div class="tooltip" id="tooltip"></div>
+                </div>
+                <div id="controls-panel">
+                    <h3>Controls</h3>
+                    <div id="input-controls">
+                        <!-- Input sliders will be added by JS -->
+                    </div>
+                    <!-- Optional: Weight/Bias controls could go here -->
+                    <button id="simulate-button">Simulate Data Flow</button>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Key Concepts Explained</h2>
+            <details>
+                <summary>What is a Neuron?</summary>
+                <div class="explanation-content">
+                    <p>A neuron (or node) is the basic unit of a neural network. It receives input from other neurons, processes it, and then passes the result along to other neurons.</p>
+                    <p>Each input to a neuron has an associated "weight" that determines how much influence it has on the neuron's output. The neuron also has a "bias," which is an additional value added to the weighted sum of inputs.</p>
+                    <p>The neuron then applies an "activation function" to this sum to determine its final output. This output is then sent as input to the neurons in the next layer.</p>
+                </div>
+            </details>
+            <details>
+                <summary>What are Weights and Biases?</summary>
+                <div class="explanation-content">
+                    <p><strong>Weights:</strong> These are numerical values that represent the strength of the connection between two neurons. A higher weight means the input from that connection has a stronger influence on the receiving neuron. Weights are adjusted during the training process to learn patterns from data.</p>
+                    <p><strong>Biases:</strong> A bias is a constant value added to the weighted sum of inputs before the activation function is applied. It allows the neuron to shift the activation function's output independently of the inputs, helping the network learn more complex patterns.</p>
+                </div>
+            </details>
+            <details>
+                <summary>Activation Functions</summary>
+                <div class="explanation-content">
+                    <p>An activation function is a mathematical function applied by a neuron to its weighted sum of inputs plus bias. It introduces non-linearity into the network, allowing it to learn complex relationships in the data.</p>
+                    <p>Common activation functions include:</p>
+                    <ul>
+                        <li><strong>Sigmoid:</strong> Squashes the output to a range between 0 and 1.</li>
+                        <li><strong>ReLU (Rectified Linear Unit):</strong> Outputs the input directly if it's positive, otherwise outputs zero. Simple and widely used.</li>
+                        <li><strong>Tanh (Hyperbolic Tangent):</strong> Squashes the output to a range between -1 and 1.</li>
+                    </ul>
+                    <p>The choice of activation function depends on the type of problem being solved.</p>
+                </div>
+            </details>
+             <details>
+                <summary>Layers</summary>
+                <div class="explanation-content">
+                    <p>Neural networks are typically organized into layers:</p>
+                    <ul>
+                        <li><strong>Input Layer:</strong> Receives the initial data (features). The number of neurons in this layer equals the number of input features.</li>
+                        <li><strong>Hidden Layers:</strong> One or more layers between the input and output layers. These layers perform the bulk of the computation and pattern recognition. The network can have any number of hidden layers, each with any number of neurons.</li>
+                        <li><strong>Output Layer:</strong> Produces the final result of the network. The number of neurons here depends on the task (e.g., one neuron for binary classification, multiple for multi-class classification or regression).</li>
+                    </ul>
+                    <p>Information flows forward from the input layer, through the hidden layers, to the output layer.</p>
+                </div>
+            </details>
+        </section>
+
+        <section>
+            <h2>Simple Example: Recognizing a Pattern</h2>
+            <div class="example-area">
+                 <div class="example-input">
+                    <h3>Input Pattern (3x3 Grid)</h3>
+                    <p>Click pixels to turn them on/off. This will be the input to the network.</p>
+                    <div class="input-grid" id="input-grid">
+                        <!-- Pixels will be added by JS -->
+                    </div>
+                 </div>
+                 <div class="example-output">
+                    <h3>Network Output</h3>
+                    <p>Based on the input pattern, the network's output neuron value is:</p>
+                    <div id="output-display">-</div>
+                 </div>
+            </div>
+             <button id="run-example-button" style="margin-top: calc(var(--spacing-unit) * 3);">Run Example Through Network</button>
+        </section>
+    </main>
+
+    <script>
+        // --- Configuration ---
+        const NODE_SIZE = 40; // Corresponds to --node-size CSS variable
+        const HORIZONTAL_SPACING = 200;
+        const VERTICAL_SPACING = 60;
+        const ANIMATION_DURATION = 1500; // milliseconds
+        const DOT_SIZE = 5;
+
+        // Simple network structure: 9 inputs (3x3 grid), 3 hidden, 1 output
+        const networkStructure = [9, 3, 1];
+        let network = {
+            layers: [], // Array of layers, each layer is an array of neurons
+            connections: [] // Array of connections
+        };
+
+        // Simplified fixed weights and biases for demonstration
+        // In a real network, these would be learned during training.
+        // These values are arbitrary and designed to show flow, not solve a real problem.
+        const fixedWeights = [
+            // Input to Hidden (9x3) - Example: Detect simple lines/corners
+            [1, 0, 0, 0, 1, 0, 0, 0, 1], // Diagonal 1
+            [0, 0, 1, 0, 1, 0, 1, 0, 0], // Diagonal 2
+            [1, 1, 1, 0, 0, 0, 0, 0, 0], // Top row
+            [0, 0, 0, 1, 1, 1, 0, 0, 0], // Middle row
+            [0, 0, 0, 0, 0, 0, 1, 1, 1], // Bottom row
+            [1, 0, 0, 1, 0, 0, 1, 0, 0], // Left col
+            [0, 1, 0, 0, 1, 0, 0, 1, 0], // Middle col
+            [0, 0, 1, 0, 0, 1, 0, 0, 1], // Right col
+            [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5] // General pattern
+        ].map(row => row.slice(0, networkStructure[0])); // Ensure correct size
+
+        // Transpose weights to match neuron structure (input_neurons x hidden_neurons)
+        const weightsInputHidden = [];
+        for (let j = 0; j < networkStructure[1]; j++) { // Hidden neurons
+            weightsInputHidden[j] = [];
+            for (let i = 0; i < networkStructure[0]; i++) { // Input neurons
+                 // Use arbitrary values for now, structure is more important for visualization
+                 weightsInputHidden[j][i] = Math.random() * 2 - 1; // Random weights between -1 and 1
+            }
+        }
+
+        const weightsHiddenOutput = [];
+         for (let j = 0; j < networkStructure[2]; j++) { // Output neurons
+            weightsHiddenOutput[j] = [];
+            for (let i = 0; i < networkStructure[1]; i++) { // Hidden neurons
+                 weightsHiddenOutput[j][i] = Math.random() * 2 - 1; // Random weights between -1 and 1
+            }
+        }
+
+
+        const fixedBiases = [
+            // Hidden layer biases (3)
+            [Math.random() * 0.5 - 0.25, Math.random() * 0.5 - 0.25, Math.random() * 0.5 - 0.25],
+            // Output layer biases (1)
+            [Math.random() * 0.5 - 0.25]
+        ];
+
+
+        // --- DOM Elements ---
+        const svg = document.getElementById('network-svg');
+        const diagramLabelsDiv = document.getElementById('diagram-labels');
+        const controlsPanel = document.getElementById('controls-panel');
+        const inputControlsDiv = document.getElementById('input-controls');
+        const simulateButton = document.getElementById('simulate-button');
+        const tooltip = document.getElementById('tooltip');
+        const inputGridDiv = document.getElementById('input-grid');
+        const outputDisplay = document.getElementById('output-display');
+        const runExampleButton = document.getElementById('run-example-button');
+
+        // --- Network Drawing ---
+
+        function createNetworkStructure() {
+            const svgWidth = svg.clientWidth || 800; // Use clientWidth if available, fallback to viewBox
+            const svgHeight = svg.clientHeight || 400; // Use clientHeight if available, fallback to viewBox
+
+            network.layers = networkStructure.map((numNeurons, layerIndex) => {
+                const layer = [];
+                const layerHeight = numNeurons * VERTICAL_SPACING + (numNeurons - 1) * VERTICAL_SPACING / 2;
+                const startY = (svgHeight - layerHeight) / 2;
+                const x = (layerIndex + 1) * (svgWidth / (networkStructure.length + 1));
+
+                for (let i = 0; i < numNeurons; i++) {
+                    const y = startY + i * (VERTICAL_SPACING * 1.5);
+                    layer.push({
+                        id: `node-${layerIndex}-${i}`,
+                        layer: layerIndex,
+                        index: i,
+                        x: x,
+                        y: y,
+                        value: 0, // Current activation value
+                        bias: fixedBiases[layerIndex - 1]?.[i] || 0 // Bias for hidden/output layers
+                    });
+                }
+                return layer;
+            });
+
+            network.connections = [];
+            for (let i = 0; i < network.layers.length - 1; i++) {
+                const currentLayer = network.layers[i];
+                const nextLayer = network.layers[i + 1];
+                currentLayer.forEach(sourceNode => {
+                    nextLayer.forEach(targetNode => {
+                        const weight = i === 0 ?
+                                       weightsInputHidden[targetNode.index][sourceNode.index] : // Input to Hidden
+                                       weightsHiddenOutput[targetNode.index][sourceNode.index]; // Hidden to Output
+                        network.connections.push({
+                            id: `conn-${sourceNode.id}-${targetNode.id}`,
+                            source: sourceNode,
+                            target: targetNode,
+                            weight: weight
+                        });
+                    });
+                });
+            }
+        }
+
+        function drawNetwork() {
+            // Clear previous drawings
+            svg.innerHTML = '';
+            // Clear previous labels (except layer labels)
+            diagramLabelsDiv.querySelectorAll('.node-label, .node-bias-label, .weight-label').forEach(label => label.remove());
+
+            // Draw connections first (so nodes are on top)
+            network.connections.forEach(conn => {
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', conn.source.x);
+                line.setAttribute('y1', conn.source.y);
+                line.setAttribute('x2', conn.target.x);
+                line.setAttribute('y2', conn.target.y);
+                line.setAttribute('stroke', 'var(--gray-500)');
+                line.setAttribute('stroke-width', 1.5);
+                line.dataset.sourceId = conn.source.id;
+                line.dataset.targetId = conn.target.id;
+                line.dataset.weight = conn.weight.toFixed(2);
+                svg.appendChild(line);
+
+                 // Add weight label
+                const weightLabel = document.createElement('div');
+                weightLabel.classList.add('weight-label');
+                const midX = (conn.source.x + conn.target.x) / 2;
+                const midY = (conn.source.y + conn.target.y) / 2;
+                weightLabel.style.left = `${midX}px`;
+                weightLabel.style.top = `${midY}px`;
+                weightLabel.textContent = `W: ${conn.weight.toFixed(2)}`;
+                diagramLabelsDiv.appendChild(weightLabel);
+
+                 // Add tooltip listeners to line
+                 line.addEventListener('mouseover', (e) => showTooltip(e, `Weight: ${conn.weight.toFixed(4)}`));
+                 line.addEventListener('mousemove', (e) => moveTooltip(e));
+                 line.addEventListener('mouseout', hideTooltip);
+            });
+
+            // Draw nodes
+            network.layers.forEach((layer, layerIndex) => {
+                layer.forEach(node => {
+                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle.setAttribute('id', node.id);
+                    circle.setAttribute('cx', node.x);
+                    circle.setAttribute('cy', node.y);
+                    circle.setAttribute('r', NODE_SIZE / 2);
+                    circle.classList.add('node');
+                    if (layerIndex === 0) circle.classList.add('input-node');
+                    else if (layerIndex === network.layers.length - 1) circle.classList.add('output-node');
+                    else circle.classList.add('hidden-node');
+                    svg.appendChild(circle);
+
+                    // Add node label
+                    const nodeLabel = document.createElement('div');
+                    nodeLabel.classList.add('node-label');
+                    nodeLabel.style.left = `${node.x}px`;
+                    nodeLabel.style.top = `${node.y}px`;
+                    nodeLabel.textContent = `N${node.index + 1}`;
+                    diagramLabelsDiv.appendChild(nodeLabel);
+
+                     // Add bias label (for hidden and output layers)
+                    if (layerIndex > 0) {
+                         const biasLabel = document.createElement('div');
+                         biasLabel.classList.add('node-bias-label');
+                         biasLabel.style.left = `${node.x}px`;
+                         biasLabel.style.top = `${node.y}px`;
+                         biasLabel.textContent = `Bias: ${node.bias.toFixed(2)}`;
+                         diagramLabelsDiv.appendChild(biasLabel);
+                    }
+
+
+                    // Add tooltip listeners to circle
+                    circle.addEventListener('mouseover', (e) => showTooltip(e, `Layer ${layerIndex + 1}, Neuron ${node.index + 1}<br>Value: ${node.value.toFixed(4)}<br>${layerIndex > 0 ? `Bias: ${node.bias.toFixed(4)}` : ''}`));
+                    circle.addEventListener('mousemove', (e) => moveTooltip(e));
+                    circle.addEventListener('mouseout', hideTooltip);
+                });
+            });
+        }
+
+        // --- Controls Panel ---
+
+        function createInputControls() {
+            inputControlsDiv.innerHTML = ''; // Clear existing controls
+            const inputLayer = network.layers[0];
+            inputLayer.forEach(node => {
+                const controlGroup = document.createElement('div');
+                controlGroup.classList.add('control-group');
+
+                const label = document.createElement('label');
+                label.setAttribute('for', `input-${node.index}`);
+                label.textContent = `Input ${node.index + 1} Value:`;
+
+                const inputRange = document.createElement('input');
+                inputRange.setAttribute('type', 'range');
+                inputRange.setAttribute('id', `input-${node.index}`);
+                inputRange.setAttribute('min', '0');
+                inputRange.setAttribute('max', '1');
+                inputRange.setAttribute('step', '0.01');
+                inputRange.setAttribute('value', node.value);
+                inputRange.setAttribute('aria-label', `Input ${node.index + 1} value`);
+
+                const inputNumber = document.createElement('input');
+                inputNumber.setAttribute('type', 'number');
+                inputNumber.setAttribute('min', '0');
+                inputNumber.setAttribute('max', '1');
+                inputNumber.setAttribute('step', '0.01');
+                inputNumber.setAttribute('value', node.value);
+                inputNumber.setAttribute('aria-label', `Input ${node.index + 1} value number`);
+                 inputNumber.style.marginTop = 'var(--spacing-unit)';
+
+
+                // Sync range and number inputs
+                inputRange.addEventListener('input', (e) => {
+                    node.value = parseFloat(e.target.value);
+                    inputNumber.value = node.value;
+                     // Update node tooltip value immediately
+                     updateNodeTooltip(node);
+                });
+                 inputNumber.addEventListener('input', (e) => {
+                    let val = parseFloat(e.target.value);
+                    if (isNaN(val)) val = 0;
+                    val = Math.max(0, Math.min(1, val)); // Clamp between 0 and 1
+                    node.value = val;
+                    inputRange.value = val;
+                    e.target.value = val; // Update number input to clamped value
+                     // Update node tooltip value immediately
+                     updateNodeTooltip(node);
+                });
+
+
+                controlGroup.appendChild(label);
+                controlGroup.appendChild(inputRange);
+                 controlGroup.appendChild(inputNumber);
+                inputControlsDiv.appendChild(controlGroup);
+            });
+        }
+
+        // --- Simulation Logic ---
+
+        // Simple Sigmoid Activation Function
+        function sigmoid(x) {
+            return 1 / (1 + Math.exp(-x));
+        }
+
+        // Simple ReLU Activation Function
+        function relu(x) {
+            return Math.max(0, x);
+        }
+
+        // Use ReLU for this example
+        const activationFunction = relu;
+
+        async function runSimulation() {
+            // Disable button during simulation
+            simulateButton.disabled = true;
+            runExampleButton.disabled = true;
+            simulateButton.textContent = 'Simulating...';
+
+            // Reset node values (except input layer) and visual states
+            network.layers.forEach((layer, layerIndex) => {
+                layer.forEach(node => {
+                    if (layerIndex > 0) {
+                        node.value = 0;
+                    }
+                    const nodeCircle = svg.getElementById(node.id);
+                    if (nodeCircle) {
+                         nodeCircle.classList.remove('active');
+                         nodeCircle.style.fill = layerIndex === 0 ? 'var(--info-color)' : (layerIndex === network.layers.length - 1 ? 'var(--success-color)' : 'var(--primary-color)');
+                    }
+                    // Update node tooltip value
+                    updateNodeTooltip(node);
+                });
+            });
+
+            // Clear previous dots
+            svg.querySelectorAll('.data-dot').forEach(dot => dot.remove());
+
+            // Animate input layer activation
+            network.layers[0].forEach(node => {
+                 const nodeCircle = svg.getElementById(node.id);
+                 if (nodeCircle) {
+                     // Scale color based on input value (0-1)
+                     const baseColor = getComputedStyle(document.documentElement).getPropertyValue('--info-color').trim();
+                     const grayColor = getComputedStyle(document.documentElement).getPropertyValue('--gray-400').trim();
+                     const interpolatedColor = interpolateColor(grayColor, baseColor, node.value);
+                     nodeCircle.style.fill = interpolatedColor;
+                     if (node.value > 0) {
+                         nodeCircle.classList.add('active'); // Indicate activation
+                     }
+                 }
+                  // Update node tooltip value
+                  updateNodeTooltip(node);
+            });
+
+            await new Promise(resolve => setTimeout(resolve, 500)); // Pause after input activation
+
+            // Process layers sequentially (feedforward)
+            for (let i = 0; i < network.layers.length - 1; i++) {
+                const currentLayer = network.layers[i];
+                const nextLayer = network.layers[i + 1];
+                const connectionsToNextLayer = network.connections.filter(conn => conn.source.layer === i);
+
+                // Calculate values for the next layer first
+                nextLayer.forEach(targetNode => {
+                    let sum = 0;
+                    connectionsToNextLayer.filter(conn => conn.target.id === targetNode.id).forEach(conn => {
+                        sum += conn.source.value * conn.weight;
+                    });
+                    targetNode.rawSum = sum; // Store raw sum before bias/activation
+                    targetNode.value = activationFunction(sum + targetNode.bias);
+                });
+
+                // Animate data flow for the current layer's outputs
+                const animationPromises = connectionsToNextLayer.map(conn => {
+                    return animateDataFlow(conn);
+                });
+
+                await Promise.all(animationPromises); // Wait for all dots to reach the next layer
+
+                // Animate next layer activation after receiving data
+                nextLayer.forEach(node => {
+                    const nodeCircle = svg.getElementById(node.id);
+                    if (nodeCircle) {
+                         const baseColor = getComputedStyle(document.documentElement).getPropertyValue(
+                            node.layer === network.layers.length - 1 ? '--success-color' : '--primary-color'
+                         ).trim();
+                         const grayColor = getComputedStyle(document.documentElement).getPropertyValue('--gray-400').trim();
+                         // Scale color based on activation value (0-1 range for ReLU output > 0)
+                         const activationValue = Math.max(0, Math.min(1, node.value)); // Clamp for color scaling
+                         const interpolatedColor = interpolateColor(grayColor, baseColor, activationValue);
+                         nodeCircle.style.fill = interpolatedColor;
+
+                         if (node.value > 0) {
+                             nodeCircle.classList.add('active'); // Indicate activation
+                         } else {
+                             nodeCircle.classList.remove('active');
+                         }
+                    }
+                     // Update node tooltip value
+                     updateNodeTooltip(node);
+                });
+
+                await new Promise(resolve => setTimeout(resolve, 300)); // Pause between layers
+            }
+
+            // Simulation finished
+            simulateButton.disabled = false;
+             runExampleButton.disabled = false;
+            simulateButton.textContent = 'Simulate Data Flow';
+
+            // Update example output display if this was triggered by the example button
+            if (lastSimulationTrigger === 'example') {
+                 outputDisplay.textContent = network.layers[network.layers.length - 1][0].value.toFixed(4);
+            }
+        }
+
+        function animateDataFlow(connection) {
+            return new Promise(resolve => {
+                const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                dot.classList.add('data-dot');
+                dot.setAttribute('r', DOT_SIZE);
+                dot.setAttribute('cx', connection.source.x);
+                dot.setAttribute('cy', connection.source.y);
+                svg.appendChild(dot);
+
+                const animation = dot.animate(
+                    [
+                        { cx: connection.source.x, cy: connection.source.y },
+                        { cx: connection.target.x, cy: connection.target.y }
+                    ],
+                    {
+                        duration: ANIMATION_DURATION,
+                        easing: 'linear',
+                        fill: 'both'
+                    }
+                );
+
+                animation.onfinish = () => {
+                    dot.remove();
+                    resolve();
+                };
+            });
+        }
+
+        // Helper to interpolate colors for activation visualization
+        function interpolateColor(color1, color2, factor) {
+            const c1 = parseColor(color1);
+            const c2 = parseColor(color2);
+            const result = c1.map((c, i) => Math.round(c + factor * (c2[i] - c)));
+            return `rgb(${result.join(',')})`;
+        }
+
+        function parseColor(color) {
+            if (color.startsWith('#')) {
+                return [
+                    parseInt(color.substring(1, 3), 16),
+                    parseInt(color.substring(3, 5), 16),
+                    parseInt(color.substring(5, 7), 16)
+                ];
+            } else if (color.startsWith('rgb')) {
+                 const parts = color.match(/\d+/g).map(Number);
+                 return parts.slice(0, 3); // Handle rgba by taking only first 3
+            }
+            // Fallback for named colors or other formats - very basic
+            console.warn("Could not parse color:", color);
+            return [0, 0, 0]; // Default to black
+        }
+
+
+        // --- Tooltip Logic ---
+        let tooltipTimeout;
+
+        function showTooltip(event, text) {
+            clearTimeout(tooltipTimeout);
+            tooltip.innerHTML = text;
+            tooltip.classList.add('visible');
+            moveTooltip(event); // Set initial position
+        }
+
+        function moveTooltip(event) {
+             // Get the SVG element's position and scale
+             const svgRect = svg.getBoundingClientRect();
+             const svgViewBox = svg.getAttribute('viewBox').split(' ').map(Number);
+             const scaleX = svgRect.width / svgViewBox[2];
+             const scaleY = svgRect.height / svgViewBox[3];
+
+             // Get mouse position relative to the SVG element
+             const mouseX = event.clientX - svgRect.left;
+             const mouseY = event.clientY - svgRect.top;
+
+             // Convert mouse position to SVG coordinate system
+             const svgX = mouseX / scaleX + svgViewBox[0];
+             const svgY = mouseY / scaleY + svgViewBox[1];
+
+             // Position the tooltip relative to the diagramLabelsDiv (which overlays the SVG)
+             const labelsRect = diagramLabelsDiv.getBoundingClientRect();
+             const tooltipLeft = labelsRect.left + (svgX - svgViewBox[0]) * scaleX;
+             const tooltipTop = labelsRect.top + (svgY - svgViewBox[1]) * scaleY;
+
+             tooltip.style.left = `${tooltipLeft}px`;
+             tooltip.style.top = `${tooltipTop}px`;
+        }
+
+        function hideTooltip() {
+            tooltipTimeout = setTimeout(() => {
+                tooltip.classList.remove('visible');
+            }, 100); // Small delay before hiding
+        }
+
+        // Function to update tooltip content for a specific node
+        function updateNodeTooltip(node) {
+             const nodeCircle = svg.getElementById(node.id);
+             if (nodeCircle && tooltip.classList.contains('visible') && tooltip.innerHTML.includes(`Node ${node.index + 1}`)) {
+                 // If the tooltip is currently showing for this node, update its content
+                 const layerIndex = node.layer;
+                 tooltip.innerHTML = `Layer ${layerIndex + 1}, Neuron ${node.index + 1}<br>Value: ${node.value.toFixed(4)}<br>${layerIndex > 0 ? `Bias: ${node.bias.toFixed(4)}` : ''}`;
+             }
+        }
+
+
+        // --- Example Area Logic ---
+        let inputPattern = Array(networkStructure[0]).fill(0); // Initialize 3x3 grid (9 inputs)
+
+        function createInputGrid() {
+            inputGridDiv.innerHTML = '';
+            for (let i = 0; i < networkStructure[0]; i++) {
+                const pixel = document.createElement('div');
+                pixel.classList.add('input-pixel');
+                pixel.dataset.index = i;
+                pixel.textContent = i + 1; // Optional: show index
+                pixel.addEventListener('click', togglePixel);
+                inputGridDiv.appendChild(pixel);
+            }
+        }
+
+        function togglePixel(event) {
+            const pixel = event.target;
+            const index = parseInt(pixel.dataset.index);
+            const isActive = pixel.classList.toggle('active');
+            inputPattern[index] = isActive ? 1 : 0;
+
+            // Update the corresponding input slider/number value
+            const inputRange = document.getElementById(`input-${index}`);
+            const inputNumber = inputRange.nextElementSibling; // Assuming number input is next
+            if (inputRange && inputNumber) {
+                 inputRange.value = inputPattern[index];
+                 inputNumber.value = inputPattern[index];
+                 // Update the network node value directly
+                 network.layers[0][index].value = inputPattern[index];
+                 // Update node tooltip value immediately
+                 updateNodeTooltip(network.layers[0][index]);
+            }
+        }
+
+        let lastSimulationTrigger = null; // To know if simulation was triggered by example
+
+        function runExample() {
+             // Set input layer values based on the example grid
+             network.layers[0].forEach((node, index) => {
+                 node.value = inputPattern[index];
+                 // Also sync the controls
+                 const inputRange = document.getElementById(`input-${index}`);
+                 const inputNumber = inputRange.nextElementSibling;
+                 if (inputRange && inputNumber) {
+                     inputRange.value = node.value;
+                     inputNumber.value = node.value;
+                 }
+             });
+
+             lastSimulationTrigger = 'example';
+             runSimulation();
+        }
+
+
+        // --- Initialization ---
+
+        function init() {
+            createNetworkStructure();
+            drawNetwork();
+            createInputControls();
+            createInputGrid();
+
+            // Set initial input values from controls to network state
+            network.layers[0].forEach(node => {
+                const inputRange = document.getElementById(`input-${node.index}`);
+                if (inputRange) {
+                    node.value = parseFloat(inputRange.value);
+                }
+            });
+
+            // Add event listener for the simulate button
+            simulateButton.addEventListener('click', () => {
+                 lastSimulationTrigger = 'simulate';
+                 runSimulation();
+            });
+
+            // Add event listener for the run example button
+            runExampleButton.addEventListener('click', runExample);
+
+            // Initial draw to show the network structure
+            drawNetwork();
+        }
+
+        // Run initialization when the DOM is ready
+        document.addEventListener('DOMContentLoaded', init);
+
+         // Handle window resize to redraw network if needed (basic)
+         // Note: Redrawing SVG on every resize can be performance heavy for complex SVGs.
+         // For this simple network, it's likely fine.
+         let resizeTimer;
+         window.addEventListener('resize', () => {
+             clearTimeout(resizeTimer);
+             resizeTimer = setTimeout(() => {
+                 createNetworkStructure(); // Recalculate positions
+                 drawNetwork(); // Redraw SVG and labels
+                 // No need to recreate controls or grid, just redraw diagram
+             }, 250); // Debounce resize
+         });
+
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding CI/CD Pipelines</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007acc; /* VSCode blue */
+            --secondary-color: #252526; /* VSCode sidebar */
+            --background-color: #ffffff; /* Pure white */
+            --text-color: #333;
+            --text-light-color: #666;
+            --border-color: #ddd;
+            --highlight-color: #007acc;
+            --success-color: #4CAF50;
+            --info-color: #2196F3;
+            --warning-color: #ff9800;
+            --error-color: #f44336;
+
+            --spacing-small: 8px;
+            --spacing-medium: 16px;
+            --spacing-large: 24px;
+            --spacing-xlarge: 40px;
+
+            --border-radius: 8px;
+            --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+            --panel-width: 400px;
+            --panel-transition-duration: 0.3s;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: var(--spacing-medium) var(--spacing-xlarge);
+            box-shadow: var(--box-shadow);
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2em;
+            font-weight: 700;
+        }
+
+        main {
+            flex-grow: 1;
+            padding: var(--spacing-xlarge);
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-xlarge);
+        }
+
+        section {
+            background-color: var(--background-color);
+            padding: var(--spacing-large);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+
+        h2 {
+            color: var(--primary-color);
+            margin-top: 0;
+            font-size: 1.8em;
+            font-weight: 600;
+            margin-bottom: var(--spacing-large);
+        }
+
+        .introduction p {
+            margin-bottom: var(--spacing-medium);
+        }
+
+        .pipeline-area {
+            display: flex;
+            gap: var(--spacing-large);
+            position: relative; /* Needed for panel positioning */
+        }
+
+        .pipeline-visualization {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--spacing-large);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            position: relative;
+            overflow-x: auto; /* Allow horizontal scroll on smaller screens */
+            min-height: 200px; /* Ensure visibility even with hidden panel */
+        }
+
+        .pipeline-stage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            cursor: pointer;
+            padding: var(--spacing-medium);
+            border-radius: var(--border-radius);
+            background-color: #f9f9f9;
+            border: 2px solid transparent;
+            transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+            min-width: 120px; /* Ensure stages have a minimum width */
+        }
+
+        .pipeline-stage:hover {
+            transform: translateY(-5px);
+            background-color: #eee;
+        }
+
+        .pipeline-stage.active {
+            border-color: var(--highlight-color);
+            background-color: #eef;
+        }
+
+        .stage-icon {
+            font-size: 2em;
+            margin-bottom: var(--spacing-small);
+            color: var(--primary-color);
+        }
+
+        .stage-label {
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .connector {
+            flex-grow: 1;
+            height: 2px;
+            background-color: var(--border-color);
+            margin: 0 var(--spacing-small);
+            position: relative;
+        }
+
+        .connector::after {
+            content: '→';
+            position: absolute;
+            right: -8px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--border-color);
+            font-size: 1.2em;
+        }
+
+        .connector:last-child::after {
+            content: none; /* No arrow after the last connector */
+        }
+
+        /* Tooltip for stages */
+        .pipeline-stage[data-tooltip]:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-5px);
+            background-color: var(--secondary-color);
+            color: white;
+            padding: var(--spacing-small);
+            border-radius: var(--border-radius);
+            font-size: 0.9em;
+            white-space: nowrap;
+            z-index: 10;
+        }
+
+        .explanation-panel {
+            position: fixed; /* Use fixed to overlay content */
+            top: 0;
+            right: 0;
+            width: var(--panel-width);
+            height: 100%;
+            background-color: var(--background-color);
+            box-shadow: -4px 0 10px rgba(0, 0, 0, 0.1);
+            transform: translateX(var(--panel-width));
+            transition: transform var(--panel-transition-duration) ease-in-out;
+            z-index: 100;
+            overflow-y: auto;
+            padding: var(--spacing-large);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .explanation-panel.visible {
+            transform: translateX(0);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-medium);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: var(--spacing-medium);
+        }
+
+        .panel-header h3 {
+            margin: 0;
+            font-size: 1.5em;
+            color: var(--primary-color);
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: var(--text-light-color);
+            transition: color 0.2s ease;
+        }
+
+        .close-button:hover {
+            color: var(--text-color);
+        }
+
+        .panel-content {
+            flex-grow: 1;
+        }
+
+        .panel-content p {
+            margin-bottom: var(--spacing-medium);
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-large);
+        }
+
+        .benefit-item {
+            background-color: #f9f9f9;
+            padding: var(--spacing-medium);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: flex-start;
+            gap: var(--spacing-medium);
+        }
+
+        .benefit-icon {
+            font-size: 1.8em;
+            color: var(--success-color);
+            flex-shrink: 0;
+        }
+
+        .benefit-text h4 {
+            margin-top: 0;
+            margin-bottom: var(--spacing-small);
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .benefit-text p {
+            margin: 0;
+            font-size: 0.95em;
+            color: var(--text-light-color);
+        }
+
+        /* Overlay to click outside panel */
+        .panel-overlay {
+            position: fixed;
+            top: 0;
+left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 99;
+            display: none; /* Hidden by default */
+        }
+
+        .panel-overlay.visible {
+            display: block;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            main {
+                padding: var(--spacing-medium);
+            }
+
+            header {
+                padding: var(--spacing-medium);
+            }
+
+            .pipeline-area {
+                flex-direction: column;
+            }
+
+            .pipeline-visualization {
+                flex-direction: row; /* Keep horizontal flow for stages */
+                justify-content: flex-start;
+                padding: var(--spacing-medium);
+            }
+
+            .pipeline-stage {
+                 min-width: 100px;
+                 padding: var(--spacing-small);
+            }
+
+            .connector {
+                min-width: 20px; /* Ensure connector has space */
+                margin: 0 var(--spacing-small);
+            }
+
+            .connector::after {
+                 right: -6px;
+            }
+
+            .explanation-panel {
+                width: 100%; /* Full width on smaller screens */
+                transform: translateX(100%);
+            }
+
+            .explanation-panel.visible {
+                transform: translateX(0);
+            }
+
+            .benefits-grid {
+                grid-template-columns: 1fr; /* Stack benefits */
+            }
+        }
+
+        /* Material Icons (using a subset for common icons) */
+        @font-face {
+          font-family: 'Material Symbols Rounded';
+          font-style: normal;
+          font-weight: 400;
+          src: url(https://fonts.gstatic.com/s/materialsymbolsrounded/v161/s/rounded/outlined/wght400/Sincever-VlBHG7xPj_sHPQ.woff2) format('woff2');
+        }
+
+        .material-symbols-rounded {
+          font-family: 'Material Symbols Rounded';
+          font-weight: normal;
+          font-style: normal;
+          font-size: 24px;
+          line-height: 1;
+          letter-spacing: normal;
+          text-transform: none;
+          display: inline-block;
+          white-space: nowrap;
+          word-wrap: normal;
+          direction: ltr;
+          -webkit-font-feature-settings: 'liga';
+          -webkit-font-smoothing: antialiased;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Understanding CI/CD Pipelines</h1>
+    </header>
+
+    <main>
+        <section class="introduction">
+            <h2>What is CI/CD?</h2>
+            <p>CI/CD stands for Continuous Integration and Continuous Delivery/Deployment. It's a methodology and a set of practices that enable development teams to deliver code changes more frequently and reliably by automating the build, test, and deployment processes.</p>
+            <p>A CI/CD pipeline is the automated workflow that takes code from version control through various stages (like building, testing, and deploying) until it reaches production environments. It reduces manual errors, provides faster feedback loops, and allows for quicker iterations.</p>
+        </section>
+
+        <section class="pipeline-area">
+            <div class="pipeline-visualization">
+                <div class="pipeline-stage" data-stage="code" data-tooltip="Code Stage" tabindex="0" role="button" aria-label="Code Stage">
+                    <span class="material-symbols-rounded stage-icon">code</span>
+                    <div class="stage-label">Code</div>
+                </div>
+                <div class="connector"></div>
+                <div class="pipeline-stage" data-stage="build" data-tooltip="Build Stage" tabindex="0" role="button" aria-label="Build Stage">
+                    <span class="material-symbols-rounded stage-icon">build</span>
+                    <div class="stage-label">Build</div>
+                </div>
+                <div class="connector"></div>
+                <div class="pipeline-stage" data-stage="test" data-tooltip="Test Stage" tabindex="0" role="button" aria-label="Test Stage">
+                    <span class="material-symbols-rounded stage-icon">check_circle</span>
+                    <div class="stage-label">Test</div>
+                </div>
+                <div class="connector"></div>
+                <div class="pipeline-stage" data-stage="deploy" data-tooltip="Deploy Stage" tabindex="0" role="button" aria-label="Deploy Stage">
+                    <span class="material-symbols-rounded stage-icon">cloud_upload</span>
+                    <div class="stage-label">Deploy</div>
+                </div>
+                 <div class="connector"></div>
+                <div class="pipeline-stage" data-stage="monitor" data-tooltip="Monitor Stage" tabindex="0" role="button" aria-label="Monitor Stage">
+                    <span class="material-symbols-rounded stage-icon">monitoring</span>
+                    <div class="stage-label">Monitor</div>
+                </div>
+            </div>
+
+            <div class="panel-overlay" aria-hidden="true"></div>
+
+            <div class="explanation-panel" role="dialog" aria-modal="true" aria-labelledby="panel-title">
+                <div class="panel-header">
+                    <h3 id="panel-title">Stage Explanation</h3>
+                    <button class="close-button" aria-label="Close explanation panel">
+                        <span class="material-symbols-rounded">close</span>
+                    </button>
+                </div>
+                <div class="panel-content">
+                    <p id="panel-description">Select a stage from the pipeline to see its details here.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="benefits">
+            <h2>Benefits of CI/CD</h2>
+            <div class="benefits-grid">
+                <div class="benefit-item">
+                    <span class="material-symbols-rounded benefit-icon">speed</span>
+                    <div class="benefit-text">
+                        <h4>Faster Release Cycle</h4>
+                        <p>Automating the pipeline allows for quicker iterations and more frequent releases of new features and bug fixes.</p>
+                    </div>
+                </div>
+                <div class="benefit-item">
+                    <span class="material-symbols-rounded benefit-icon">bug_report</span>
+                    <div class="benefit-text">
+                        <h4>Reduced Risk</h4>
+                        <p>Smaller, more frequent changes are easier to test and debug, reducing the risk associated with large deployments.</p>
+                    </div>
+                </div>
+                <div class="benefit-item">
+                    <span class="material-symbols-rounded benefit-icon">verified</span>
+                    <div class="benefit-text">
+                        <h4>Improved Quality</h4>
+                        <p>Automated testing catches issues early in the development cycle, leading to higher quality software.</p>
+                    </div>
+                </div>
+                <div class="benefit-item">
+                    <span class="material-symbols-rounded benefit-icon">group</span>
+                    <div class="benefit-text">
+                        <h4>Better Collaboration</h4>
+                        <p>Shared visibility into the pipeline and automated processes improve communication and collaboration between development and operations teams.</p>
+                    </div>
+                </div>
+                 <div class="benefit-item">
+                    <span class="material-symbols-rounded benefit-icon">security</span>
+                    <div class="benefit-text">
+                        <h4>Enhanced Security</h4>
+                        <p>Security checks can be integrated early into the pipeline (DevSecOps), identifying vulnerabilities sooner.</p>
+                    </div>
+                </div>
+                 <div class="benefit-item">
+                    <span class="material-symbols-rounded benefit-icon">savings</span>
+                    <div class="benefit-text">
+                        <h4>Cost Savings</h4>
+                        <p>Automation reduces manual effort and the cost associated with finding and fixing defects later in the cycle.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const stages = {
+            code: {
+                title: "Code Stage",
+                description: "Developers write code, commit changes to a version control system (like Git), and collaborate on features. This stage includes practices like branching, merging, and code reviews. Continuous Integration starts here with frequent commits."
+            },
+            build: {
+                title: "Build Stage",
+                description: "The committed code is compiled (if necessary), dependencies are fetched, and the application is packaged into an executable artifact (e.g., JAR, WAR, Docker image). Automated tests (unit tests, static code analysis) are often run during or immediately after the build."
+            },
+            test: {
+                title: "Test Stage",
+                description: "Automated tests are run against the built artifact in an environment similar to production. This includes integration tests, end-to-end tests, performance tests, and security scans. Passing all tests is crucial before moving to deployment."
+            },
+            deploy: {
+                title: "Deploy Stage",
+                description: "The validated artifact is automatically deployed to a staging or production environment. Continuous Delivery means the artifact is ready for deployment at any time, while Continuous Deployment means every change that passes all stages is automatically deployed to production."
+            },
+             monitor: {
+                title: "Monitor Stage",
+                description: "After deployment, the application is monitored in the production environment. This involves collecting metrics, logs, and user feedback to identify issues, track performance, and inform future development cycles, completing the feedback loop."
+            }
+        };
+
+        const pipelineStages = document.querySelectorAll('.pipeline-stage');
+        const explanationPanel = document.querySelector('.explanation-panel');
+        const panelOverlay = document.querySelector('.panel-overlay');
+        const panelTitle = document.getElementById('panel-title');
+        const panelDescription = document.getElementById('panel-description');
+        const closeButton = document.querySelector('.close-button');
+
+        function showPanel(stageKey) {
+            const stageData = stages[stageKey];
+            if (stageData) {
+                panelTitle.textContent = stageData.title;
+                panelDescription.textContent = stageData.description;
+                explanationPanel.classList.add('visible');
+                panelOverlay.classList.add('visible');
+                explanationPanel.setAttribute('aria-hidden', 'false');
+                panelOverlay.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden'; // Prevent scrolling body when panel is open
+            }
+        }
+
+        function hidePanel() {
+            explanationPanel.classList.remove('visible');
+            panelOverlay.classList.remove('visible');
+             explanationPanel.setAttribute('aria-hidden', 'true');
+             panelOverlay.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = ''; // Restore scrolling
+             // Remove active class from all stages
+            pipelineStages.forEach(stage => stage.classList.remove('active'));
+        }
+
+        pipelineStages.forEach(stage => {
+            stage.addEventListener('click', () => {
+                const stageKey = stage.dataset.stage;
+                 // Remove active class from all stages
+                pipelineStages.forEach(s => s.classList.remove('active'));
+                // Add active class to the clicked stage
+                stage.classList.add('active');
+                showPanel(stageKey);
+            });
+
+             // Add keyboard support (Enter key)
+            stage.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault(); // Prevent default space/enter behavior
+                    const stageKey = stage.dataset.stage;
+                    pipelineStages.forEach(s => s.classList.remove('active'));
+                    stage.classList.add('active');
+                    showPanel(stageKey);
+                }
+            });
+        });
+
+        closeButton.addEventListener('click', hidePanel);
+
+        // Close panel when clicking outside the panel
+        panelOverlay.addEventListener('click', hidePanel);
+
+        // Close panel with Escape key
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && explanationPanel.classList.contains('visible')) {
+                hidePanel();
+            }
+        });
+
+         // Initial state: panel is hidden
+         explanationPanel.setAttribute('aria-hidden', 'true');
+         panelOverlay.setAttribute('aria-hidden', 'true');
+
+    </script>
+</body>
+</html>

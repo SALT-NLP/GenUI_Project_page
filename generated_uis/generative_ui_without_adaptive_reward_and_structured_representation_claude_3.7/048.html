@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Physics Explorer</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+        :root {
+            --color-primary: #007acc; /* VSCode blue */
+            --color-secondary: #673ab7; /* Purple */
+            --color-background: #f4f7f6; /* Light grey/blue */
+            --color-surface: #ffffff; /* White */
+            --color-text-dark: #333333; /* Dark grey */
+            --color-text-light: #555555; /* Medium grey */
+            --color-border: #dddddd; /* Light grey */
+            --color-success: #4CAF50; /* Green */
+            --color-error: #f44336; /* Red */
+            --color-progress: #00bcd4; /* Cyan */
+            --color-hover: rgba(0, 122, 204, 0.1); /* Primary with transparency */
+            --spacing-unit: 8px;
+            --border-radius: 8px;
+            --header-height: 60px;
+            --sidebar-width: 280px;
+            --transition-duration: 0.3s;
+            --transition-timing: ease-in-out;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--color-background);
+            color: var(--color-text-dark);
+            line-height: 1.6;
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+            /* Allow content shift on mobile nav open */
+            transition: transform var(--transition-duration) var(--transition-timing);
+        }
+
+        body.nav-open main {
+             transform: translateX(var(--sidebar-width)); /* Push content when nav is open */
+        }
+
+
+        header {
+            grid-area: header;
+            background-color: var(--color-surface);
+            color: var(--color-text-dark);
+            padding: 0 calc(var(--spacing-unit) * 3);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            z-index: 100;
+            height: var(--header-height);
+            box-sizing: border-box;
+        }
+
+        .site-title {
+            font-size: 1.5em;
+            font-weight: 500;
+            color: var(--color-primary);
+        }
+
+        .menu-toggle {
+            display: none; /* Hidden on desktop */
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: var(--spacing-unit);
+            color: var(--color-text-dark);
+            transition: color 0.2s ease;
+        }
+
+        .menu-toggle:hover,
+        .menu-toggle:focus {
+            color: var(--color-primary);
+            outline: none;
+        }
+
+        main {
+            display: flex;
+            flex: 1;
+            margin-top: var(--header-height); /* Space for fixed header */
+            transition: transform var(--transition-duration) var(--transition-timing);
+        }
+
+        nav {
+            grid-area: nav;
+            width: var(--sidebar-width);
+            background-color: var(--color-surface);
+            box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+            padding: calc(var(--spacing-unit) * 2);
+            overflow-y: auto;
+            flex-shrink: 0;
+            transition: transform var(--transition-duration) var(--transition-timing), visibility var(--transition-duration) var(--transition-timing);
+        }
+
+        nav.collapsed {
+             transform: translateX(-100%);
+             visibility: hidden;
+        }
+
+        .nav-title {
+            font-size: 1.2em;
+            font-weight: 500;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            padding: 0 var(--spacing-unit);
+            color: var(--color-text-dark);
+        }
+
+        .nav-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .nav-item {
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .nav-link {
+            display: block;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            text-decoration: none;
+            color: var(--color-text-light);
+            border-radius: var(--border-radius);
+            transition: background-color 0.2s ease, color 0.2s ease;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 44px; /* Ensure sufficient click target size */
+        }
+
+        .nav-link:hover {
+            background-color: var(--color-hover);
+            color: var(--color-text-dark);
+        }
+
+         .nav-link:focus {
+             outline: 2px solid var(--color-primary);
+             outline-offset: 2px;
+         }
+
+        .nav-link.active {
+            background-color: var(--color-primary);
+            color: var(--color-surface);
+            font-weight: 500;
+        }
+
+        .nav-link.active .progress-indicator {
+             background-color: var(--color-surface); /* Indicator color contrasts with active background */
+        }
+
+        .progress-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: var(--color-border);
+            flex-shrink: 0;
+            margin-left: var(--spacing-unit);
+        }
+
+        .progress-indicator.completed {
+            background-color: var(--color-success);
+        }
+
+        article {
+            grid-area: content;
+            flex-grow: 1;
+            padding: calc(var(--spacing-unit) * 3);
+            overflow-y: auto;
+            /* Add transition for potential layout shifts */
+            transition: margin-left var(--transition-duration) var(--transition-timing);
+        }
+
+        .content-section {
+            background-color: var(--color-surface);
+            padding: calc(var(--spacing-unit) * 3);
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            border-radius: var(--border-radius);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            opacity: 1; /* Initial state for transition */
+            transform: translateY(0); /* Initial state for transition */
+            transition: opacity var(--transition-duration) var(--transition-timing), transform var(--transition-duration) var(--transition-timing);
+        }
+
+         .content-loading .content-section {
+             opacity: 0;
+             transform: translateY(20px);
+         }
+
+
+        h2, h3 {
+            color: var(--color-text-dark);
+            margin-top: 0;
+            margin-bottom: calc(var(--spacing-unit) * 1.5);
+        }
+
+        p {
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            color: var(--color-text-light);
+        }
+
+        .diagram-container, .simulation-container {
+            margin: calc(var(--spacing-unit) * 3) 0;
+            text-align: center;
+            background-color: var(--color-background);
+            padding: calc(var(--spacing-unit) * 2);
+            border-radius: var(--border-radius);
+            overflow: hidden; /* Ensure rounded corners apply to content */
+        }
+
+        .diagram-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: var(--border-radius);
+            display: block; /* Remove extra space below image */
+            margin: 0 auto;
+        }
+
+         .simulation-container iframe, .simulation-container canvas {
+            display: block;
+            margin: 0 auto;
+            width: 100%; /* Make iframe responsive */
+            max-width: 800px; /* Optional: limit max width */
+            height: 400px; /* Default height, can be adjusted */
+            border: none; /* Remove iframe default border */
+         }
+
+
+        .simulation-controls {
+            margin-top: calc(var(--spacing-unit) * 2);
+            display: flex;
+            justify-content: center;
+            gap: calc(var(--spacing-unit) * 2);
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            background-color: var(--color-primary);
+            color: var(--color-surface);
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.2s ease, transform 0.1s ease, opacity 0.2s ease;
+            min-width: 100px;
+            text-align: center;
+            min-height: 44px; /* Ensure sufficient click target size */
+        }
+
+        button:hover {
+            background-color: #005f99; /* Darker primary */
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+         button:focus {
+             outline: 2px solid var(--color-primary);
+             outline-offset: 2px;
+         }
+
+        button.secondary {
+            background-color: var(--color-surface);
+            color: var(--color-primary);
+            border: 1px solid var(--color-primary);
+        }
+
+        button.secondary:hover {
+            background-color: var(--color-hover);
+            color: var(--color-primary);
+        }
+
+         button:disabled {
+             opacity: 0.6;
+             cursor: not-allowed;
+         }
+
+
+        .quiz-section {
+            margin-top: calc(var(--spacing-unit) * 3);
+        }
+
+        .question {
+            font-weight: 500;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+        }
+
+        .answer-options {
+            display: grid;
+            gap: var(--spacing-unit);
+        }
+
+        .answer-button {
+            width: 100%;
+            text-align: left;
+            background-color: var(--color-background);
+            color: var(--color-text-dark);
+            border: 1px solid var(--color-border);
+            padding: calc(var(--spacing-unit) * 1.5);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+             min-height: 44px; /* Ensure sufficient click target size */
+        }
+
+        .answer-button:hover:not(:disabled) {
+            background-color: var(--color-hover);
+            border-color: var(--color-primary);
+        }
+
+         .answer-button:focus:not(:disabled) {
+             outline: 2px solid var(--color-primary);
+             outline-offset: 2px;
+         }
+
+        .answer-button:active:not(:disabled) {
+             transform: scale(0.98);
+        }
+
+        .answer-button.selected {
+            border-color: var(--color-primary);
+            background-color: var(--color-hover);
+        }
+
+        .answer-button.correct {
+            background-color: var(--color-success);
+            color: var(--color-surface);
+            border-color: var(--color-success);
+        }
+
+        .answer-button.incorrect {
+            background-color: var(--color-error);
+            color: var(--color-surface);
+            border-color: var(--color-error);
+        }
+
+        .feedback {
+            margin-top: var(--spacing-unit);
+            font-size: 0.9em;
+            padding: var(--spacing-unit);
+            border-radius: var(--border-radius);
+            min-height: 1.2em; /* Reserve space */
+        }
+
+        .feedback.correct {
+            color: var(--color-success);
+             background-color: rgba(76, 175, 80, 0.1);
+        }
+
+        .feedback.incorrect {
+            color: var(--color-error);
+             background-color: rgba(244, 67, 54, 0.1);
+        }
+
+        .glossary-modal {
+            display: flex; /* Use flex for centering */
+            visibility: hidden; /* Hide initially */
+            opacity: 0; /* Start transparent */
+            position: fixed;
+            z-index: 200;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+            justify-content: center;
+            align-items: center;
+            padding: calc(var(--spacing-unit) * 3);
+            transition: opacity var(--transition-duration) var(--transition-timing), visibility var(--transition-duration) var(--transition-timing);
+        }
+
+         .glossary-modal.visible {
+             visibility: visible;
+             opacity: 1;
+         }
+
+
+        .modal-content {
+            background-color: var(--color-surface);
+            padding: calc(var(--spacing-unit) * 3);
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 100%;
+            position: relative;
+            transform: translateY(-20px); /* Start slightly above */
+            opacity: 0; /* Start transparent */
+            transition: transform var(--transition-duration) var(--transition-timing), opacity var(--transition-duration) var(--transition-timing);
+        }
+
+        .glossary-modal.visible .modal-content {
+            transform: translateY(0); /* Slide into place */
+            opacity: 1;
+        }
+
+
+        .close-button {
+            position: absolute;
+            top: var(--spacing-unit);
+            right: var(--spacing-unit);
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--color-text-light);
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: var(--spacing-unit);
+             transition: color 0.2s ease;
+        }
+
+        .close-button:hover {
+            color: var(--color-text-dark);
+        }
+
+         .close-button:focus {
+             outline: 2px solid var(--color-primary);
+             outline-offset: 2px;
+             border-radius: var(--border-radius); /* Add focus style */
+         }
+
+
+        .glossary-term {
+            font-weight: 500;
+            margin-bottom: var(--spacing-unit);
+            color: var(--color-primary); /* Highlight term */
+        }
+
+        .glossary-definition {
+            color: var(--color-text-light);
+        }
+
+        /* Tooltip styles */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+            border-bottom: 1px dotted var(--color-text-light); /* Optional: visual cue */
+            outline: none; /* Remove default outline */
+        }
+
+         .tooltip:focus {
+             outline: 2px solid var(--color-primary);
+             outline-offset: 2px;
+         }
+
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--color-text-dark);
+            color: var(--color-surface);
+            text-align: center;
+            border-radius: var(--border-radius);
+            padding: var(--spacing-unit);
+            position: absolute;
+            z-index: 1;
+            bottom: 125%; /* Position above the text */
+            left: 50%;
+            margin-left: -100px; /* Center the tooltip */
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.9em;
+            pointer-events: none; /* Allow clicking through tooltip to the element below */
+        }
+
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%; /* At the bottom of the tooltip */
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--color-text-dark) transparent transparent transparent;
+        }
+
+        .tooltip:hover .tooltiptext,
+        .tooltip:focus .tooltiptext { /* Show tooltip on focus too */
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            main {
+                flex-direction: column;
+            }
+
+            nav {
+                width: var(--sidebar-width); /* Maintain width for mobile slide-out */
+                height: calc(100vh - var(--header-height)); /* Full height below header */
+                box-shadow: 2px 0 4px rgba(0, 0, 0, 0.15);
+                position: fixed;
+                top: var(--header-height);
+                left: 0;
+                z-index: 50;
+                transform: translateX(-100%); /* Start collapsed */
+                visibility: hidden;
+            }
+
+             nav.collapsed {
+                 transform: translateX(-100%);
+                 visibility: hidden;
+             }
+
+             body.nav-open nav {
+                 transform: translateX(0);
+                 visibility: visible;
+             }
+
+
+            .menu-toggle {
+                display: block; /* Show on smaller screens */
+            }
+
+            article {
+                margin-top: 0; /* No extra space needed, nav is fixed */
+                width: 100%;
+                box-sizing: border-box;
+                padding-top: calc(var(--spacing-unit) * 3); /* Add padding top */
+            }
+
+             body.nav-open article {
+                 /* No transform needed on article itself, body transform handles it */
+             }
+
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <button class="menu-toggle" aria-label="Toggle Navigation Menu" aria-expanded="false">
+            <span class="material-symbols-rounded">menu</span>
+        </button>
+        <div class="site-title">Quantum Physics Explorer</div>
+        <div></div> <!-- Placeholder for right-aligned items if needed -->
+    </header>
+
+    <main>
+        <nav id="sidebar" role="navigation">
+            <h2 class="nav-title">Modules</h2>
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a href="#intro" class="nav-link" data-module="intro">
+                        <span>1. Introduction</span>
+                        <span class="progress-indicator" data-progress="intro" aria-label="Module Not Completed"></span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#duality" class="nav-link" data-module="duality">
+                        <span>2. Wave-Particle Duality</span>
+                        <span class="progress-indicator" data-progress="duality" aria-label="Module Not Completed"></span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#uncertainty" class="nav-link" data-module="uncertainty">
+                        <span>3. Uncertainty Principle</span>
+                        <span class="progress-indicator" data-progress="uncertainty" aria-label="Module Not Completed"></span>
+                    </a>
+                </li>
+                 <li class="nav-item">
+                    <a href="#superposition" class="nav-link" data-module="superposition">
+                        <span>4. Superposition & Entanglement</span>
+                        <span class="progress-indicator" data-progress="superposition" aria-label="Module Not Completed"></span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#tunneling" class="nav-link" data-module="tunneling">
+                        <span>5. Quantum Tunneling</span>
+                        <span class="progress-indicator" data-progress="tunneling" aria-label="Module Not Completed"></span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#applications" class="nav-link" data-module="applications">
+                        <span>6. Applications</span>
+                        <span class="progress-indicator" data-progress="applications" aria-label="Module Not Completed"></span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <article id="content-area" role="main">
+            <!-- Content will be loaded here -->
+            <section class="content-section welcome-section">
+                <h2>Welcome to the Quantum Physics Explorer!</h2>
+                <p>Embark on a journey into the fascinating world of quantum mechanics. This interactive guide will help you understand the fundamental principles that govern the universe at its smallest scales.</p>
+                <p>Use the navigation menu on the left to explore different modules. Each module contains explanations, diagrams, simulations, and quizzes to test your understanding.</p>
+                <p>Let's begin your exploration!</p>
+                <button onclick="loadModule('intro')">Start Learning</button>
+            </section>
+        </article>
+    </main>
+
+    <aside id="glossary-modal" class="glossary-modal" aria-modal="true" role="dialog" aria-hidden="true" tabindex="-1">
+        <div class="modal-content">
+            <button class="close-button" aria-label="Close Glossary">&times;</button>
+            <h3>Glossary Term</h3>
+            <div id="glossary-term" class="glossary-term"></div>
+            <div id="glossary-definition" class="glossary-definition"></div>
+        </div>
+    </aside>
+
+    <script>
+        const contentArea = document.getElementById('content-area');
+        const sidebar = document.getElementById('sidebar');
+        const menuToggle = document.querySelector('.menu-toggle');
+        const glossaryModal = document.getElementById('glossary-modal');
+        const glossaryTermDiv = document.getElementById('glossary-term');
+        const glossaryDefinitionDiv = document.getElementById('glossary-definition');
+        const closeGlossaryButton = glossaryModal.querySelector('.close-button');
+
+        const modules = {
+            intro: {
+                title: "Introduction to Quantum Mechanics",
+                content: `
+                    <section class="content-section">
+                        <h2>What is Quantum Mechanics?</h2>
+                        <p>Quantum mechanics is a fundamental theory in physics that provides a description of the physical properties of nature at the scale of atoms and subatomic particles. It is the foundation of all quantum physics including quantum chemistry, quantum field theory, quantum technology, and quantum information science.</p>
+                        <p>Unlike classical physics, which describes macroscopic objects and phenomena, quantum mechanics deals with the bizarre behavior of particles where concepts like position, momentum, energy, and angular momentum are quantized – meaning they can only take on discrete values.</p>
+                        <p>Key concepts you will learn include <span class="tooltip" data-term="Wave-Particle Duality" tabindex="0" role="button" aria-expanded="false" aria-controls="glossary-modal">Wave-Particle Duality<span class="tooltiptext">The concept that every elementary particle or quantum entity may be described as either a particle or a wave.</span></span>, the <span class="tooltip" data-term="Uncertainty Principle" tabindex="0" role="button" aria-expanded="false" aria-controls="glossary-modal">Uncertainty Principle<span class="tooltiptext">A fundamental limit on the precision with which certain pairs of physical properties of a particle, known as complementary variables, can be known simultaneously.</span></span>, <span class="tooltip" data-term="Superposition" tabindex="0" role="button" aria-expanded="false" aria-controls="glossary-modal">Superposition<span class="tooltiptext">A principle stating that, much like waves in classical physics, any two (or more) quantum states can be added together ("superposed") and the result will be another valid quantum state.</span></span>, and <span class="tooltip" data-term="Entanglement" tabindex="0" role="button" aria-expanded="false" aria-controls="glossary-modal">Entanglement<span class="tooltiptext">A quantum mechanical phenomenon in which the quantum states of two or more objects are linked together so that they must be described with reference to each other, even though the individual objects may be spatially separated.</span></span>.</p>
+                    </section>
+                    <section class="content-section">
+                        <h3>Why is it Important?</h3>
+                        <p>Quantum mechanics is essential for understanding the behavior of matter and energy at the atomic and subatomic levels. It has led to numerous technological advancements, including lasers, transistors, magnetic resonance imaging (MRI), and is the basis for emerging fields like quantum computing.</p>
+                    </section>
+                `,
+                quiz: null // No quiz for intro
+            },
+            duality: {
+                title: "Wave-Particle Duality",
+                content: `
+                    <section class="content-section">
+                        <h2>Wave-Particle Duality</h2>
+                        <p>One of the most counter-intuitive concepts in quantum mechanics is wave-particle duality. It states that every particle, such as an electron or a photon, exhibits both wave-like and particle-like properties depending on the experiment being performed.</p>
+                        <p>For example, light can behave as a wave (demonstrated by interference and diffraction) or as a stream of particles called <span class="tooltip" data-term="Photon" tabindex="0" role="button" aria-expanded="false" aria-controls="glossary-modal">Photons<span class="tooltiptext">A quantum of the electromagnetic field, the basic unit of light and all other forms of electromagnetic radiation.</span></span> (demonstrated by the photoelectric effect).</p>
+                        <p>Similarly, particles like electrons, which we typically think of as tiny balls, can also exhibit wave-like behavior, such as diffracting through a crystal lattice.</p>
+                    </section>
+                    <section class="content-section">
+                        <h3>The Double-Slit Experiment</h3>
+                        <p>The double-slit experiment is a classic demonstration of wave-particle duality. When particles like electrons are fired at a barrier with two slits, they create an interference pattern on a screen behind the barrier, just like waves would. This happens even if electrons are sent one at a time, suggesting each electron interferes with itself, acting as a wave.</p>
+                        <div class="diagram-container">
+                            <img src="https://placehold.co/600x300?text=Double-Slit+Experiment+Diagram" alt="Diagram of the double-slit experiment showing interference pattern">
+                            <p>Diagram illustrating the double-slit experiment.</p>
+                        </div>
+                    </section>
+                `,
+                quiz: {
+                    question: "Which phenomenon demonstrates the wave nature of light?",
+                    options: ["Photoelectric effect", "Reflection", "Interference", "Refraction"],
+                    correctAnswer: 2, // Index of "Interference"
+                    explanation: "Interference patterns, like those in the double-slit experiment, are characteristic of waves. The photoelectric effect demonstrates the particle (photon) nature of light."
+                }
+            },
+            uncertainty: {
+                 title: "The Uncertainty Principle",
+                content: `
+                    <section class="content-section">
+                        <h2>Heisenberg's Uncertainty Principle</h2>
+                        <p>Formulated by Werner Heisenberg, the Uncertainty Principle states that there is a fundamental limit to the precision with which certain pairs of physical properties of a particle, such as position (<span class="tooltip" data-term="Position" tabindex="0" role="button" aria-expanded="false" aria-controls="glossary-modal">Position<span class="tooltiptext">The location of an object in space.</span></span>) and momentum (<span class="tooltip" data-term="Momentum" tabindex="0" role="button" aria-expanded="false" aria-controls="glossary-modal">Momentum<span class="tooltiptext">A measure of mass in motion, calculated as mass times velocity.</span></span>), can be known simultaneously.</p>
+                        <p style="text-align:center;">Δx * Δp ≥ ħ/2</p>
+                        <p>where ħ (h-bar) is the reduced <span class="tooltip" data-term="Planck's Constant" tabindex="0" role="button" aria-expanded="false" aria-controls="glossary-modal">Planck's Constant<span class="tooltiptext">A fundamental physical constant that relates the energy of a photon to its frequency. Reduced Planck's constant (ħ) is h divided by 2π.</span></span>. This inequality means that the more precisely you know a particle's position (smaller Δx), the less precisely you can know its momentum (larger Δp), and vice versa.</p>
+                    </section>
+                     <section class="content-section">
+                        <h3>Implications</h3>
+                        <p>This isn't a limitation of our measuring instruments, but a fundamental property of nature at the quantum level. It means that particles don't have definite, simultaneous values for these paired properties in the classical sense.</p>
+                        <p>The principle also applies to other pairs of properties, such as energy and time.</p>
+                    </section>
+                `,
+                quiz: {
+                    question: "According to the Uncertainty Principle, which pair of properties cannot be known precisely at the same time?",
+                    options: ["Mass and Velocity", "Energy and Momentum", "Position and Momentum", "Position and Energy"],
+                    correctAnswer: 2, // Index of "Position and Momentum"
+                    explanation: "Heisenberg's Uncertainty Principle primarily states the fundamental limit on knowing position and momentum (or energy and time) simultaneously."
+                }
+            },
+             superposition: {
+                title: "Superposition and Entanglement",
+                content: `
+                    <section class="content-section">
+                        <h2>Superposition</h2>
+                        <p><span class="tooltip" data-term="Superposition" tabindex="0" role="button" aria-expanded="false" aria-controls="glossary-modal">Superposition<span class="tooltiptext">A principle stating that, much like waves in classical physics, any two (or more) quantum states can be added together ("superposed") and the result will be another valid quantum state.</span></span> is a fundamental principle of quantum mechanics. It states that a quantum system, such as an electron or a photon, can exist in multiple states simultaneously until it is measured.</p>
+                        <p>A common analogy is a coin spinning in the air – it's neither heads nor tails until it lands. A quantum particle can be in a superposition of states like "spin up" and "spin down" at the same time.</p>
+                        <p>The act of measurement "collapses" the superposition, forcing the system into one definite state.</p>
+                    </section>
+                    <section class="content-section">
+                        <h2>Entanglement</h2>
+                        <p><span class="tooltip" data-term="Entanglement" tabindex="0" role="button" aria-expanded="false" aria-controls="glossary-modal">Entanglement<span class="tooltiptext">A quantum mechanical phenomenon in which the quantum states of two or more objects are linked together so that they must be described with reference to each other, even though the individual objects may be spatially separated.</span></span> occurs when two or more particles become linked in such a way that their fates are correlated, no matter how far apart they are. If you measure the state of one entangled particle, you instantly know something about the state of the other, even if it's on the other side of the universe.</p>
+                        <p>This spooky connection baffled Einstein, who called it "spooky action at a distance." However, numerous experiments have confirmed that entanglement is a real phenomenon.</p>
+                         <div class="diagram-container">
+                            <img src="https://placehold.co/600x300?text=Entangled+Particles+Diagram" alt="Diagram showing two entangled particles with linked states">
+                            <p>Diagram illustrating two entangled particles.</p>
+                        </div>
+                    </section>
+                     <section class="content-section">
+                        <h3>Quantum Computing</h3>
+                        <p>Superposition and entanglement are the key resources that power <span class="tooltip" data-term="Quantum Computing" tabindex="0" role="button" aria-expanded="false" aria-controls="glossary-modal">Quantum Computing<span class="tooltiptext">A type of computation that uses quantum-mechanical phenomena, such as superposition and entanglement, to perform calculations.</span></span>. Quantum bits (qubits) can exist in superposition, allowing a quantum computer to represent and process vast amounts of information simultaneously. Entanglement allows qubits to be linked, enabling complex calculations.</p>
+                    </section>
+                `,
+                quiz: {
+                    question: "What happens to a quantum system in superposition when it is measured?",
+                    options: ["It becomes entangled", "It splits into multiple systems", "It collapses into a single definite state", "It gains energy"],
+                    correctAnswer: 2, // Index of "It collapses into a single definite state"
+                    explanation: "Measurement causes the superposition to collapse, resulting in the system being found in one specific state."
+                }
+            },
+             tunneling: {
+                 title: "Quantum Tunneling",
+                content: `
+                    <section class="content-section">
+                        <h2>Quantum Tunneling</h2>
+                        <p><span class="tooltip" data-term="Quantum Tunneling" tabindex="0" role="button" aria-expanded="false" aria-controls="glossary-modal">Quantum Tunneling<span class="tooltiptext">A quantum mechanical phenomenon where a particle can pass through a potential energy barrier that, according to classical physics, it would not have enough energy to overcome.</span></span> is a quantum phenomenon where a particle can pass through a potential energy barrier, even if it doesn't have enough classical energy to overcome it. Imagine rolling a ball up a hill – classically, it needs enough energy to get over the top. Quantum mechanically, there's a non-zero probability that the ball could appear on the other side of the hill without going over.</p>
+                        <p>This is possible because particles are described by wave functions (<span class="tooltip" data-term="Wave Function" tabindex="0" role="button" aria-expanded="false" aria-controls="glossary-modal">Wave Function<span class="tooltiptext">A mathematical description of the quantum state of an isolated quantum system. It is a complex-valued probability amplitude.</span></span>), and the wave function can have a non-zero amplitude (probability) on the other side of the barrier, even if the energy is insufficient classically.</p>
+                    </section>
+                    <section class="content-section">
+                        <h3>Simulation</h3>
+                        <p>This simulation shows a particle approaching a potential barrier. Observe the probability of the particle appearing on the other side.</p>
+                         <div class="simulation-container">
+                            <!-- Placeholder for a simple tunneling simulation -->
+                            <iframe src="https://phet.colorado.edu/sims/html/quantum-tunneling/latest/quantum-tunneling_en.html" title="Quantum Tunneling Simulation" width="600" height="400" allowfullscreen></iframe>
+                            <div class="simulation-controls">
+                                <!-- Add controls here if the simulation supports external control -->
+                                <p>Interact with the simulation above.</p>
+                            </div>
+                        </div>
+                    </section>
+                `,
+                quiz: {
+                    question: "In quantum tunneling, a particle can pass through a barrier even if...",
+                    options: ["It has sufficient classical energy", "It is entangled with another particle", "It does not have sufficient classical energy", "Its wave function is zero"],
+                    correctAnswer: 2, // Index of "It does not have sufficient classical energy"
+                    explanation: "Quantum tunneling allows particles to pass through barriers that would be impenetrable according to classical physics."
+                }
+            },
+            applications: {
+                 title: "Applications of Quantum Physics",
+                content: `
+                    <section class="content-section">
+                        <h2>Applications of Quantum Physics</h2>
+                        <p>Quantum mechanics, once a purely theoretical field, now underpins many modern technologies and is driving innovation in new areas.</p>
+                    </section>
+                    <section class="content-section">
+                        <h3>Lasers</h3>
+                        <p>Lasers rely on the quantum principle of stimulated emission, where photons are used to stimulate excited atoms to emit more photons of the same wavelength and phase, creating coherent light.</p>
+                        <div class="diagram-container">
+                            <img src="https://placehold.co/600x300?text=Laser+Diagram" alt="Diagram showing the principle of a laser">
+                            <p>Diagram illustrating stimulated emission in a laser.</p>
+                        </div>
+                    </section>
+                     <section class="content-section">
+                        <h3>Transistors and Semiconductors</h3>
+                        <p>The behavior of electrons in semiconductor materials, which are the building blocks of transistors and microchips, is described by quantum mechanics. Understanding quantum effects is crucial for designing and miniaturizing electronic devices.</p>
+                    </section>
+                     <section class="content-section">
+                        <h3>Quantum Computing</h3>
+                        <p>As discussed earlier, <span class="tooltip" data-term="Quantum Computing" tabindex="0" role="button" aria-expanded="false" aria-controls="glossary-modal">Quantum Computing<span class="tooltiptext">A type of computation that uses quantum-mechanical phenomena, such as superposition and entanglement, to perform calculations.</span></span> promises to solve certain problems that are intractable for even the most powerful classical computers, with potential applications in drug discovery, materials science, and cryptography.</p>
+                    </section>
+                     <section class="content-section">
+                        <h3>Medical Imaging (MRI)</h3>
+                        <p>Magnetic Resonance Imaging (MRI) uses the quantum property of nuclear spin. Atomic nuclei align in a magnetic field and can be excited by radio waves, emitting signals that reveal information about the tissues they are in.</p>
+                    </section>
+                `,
+                quiz: {
+                    question: "Which of the following technologies is NOT directly based on quantum mechanics?",
+                    options: ["Lasers", "Quantum Computers", "Incandescent Light Bulbs", "MRI Scanners"],
+                    correctAnswer: 2, // Index of "Incandescent Light Bulbs"
+                    explanation: "Incandescent light bulbs work based on heating a filament until it glows, a classical thermodynamics phenomenon. Lasers, Quantum Computers, and MRI scanners utilize quantum mechanical principles."
+                }
+            }
+        };
+
+        const glossary = {
+            "Wave-Particle Duality": "The concept that every elementary particle or quantum entity may be described as either a particle or a wave.",
+            "Uncertainty Principle": "A fundamental limit on the precision with which certain pairs of physical properties of a particle, known as complementary variables, can be known simultaneously.",
+            "Superposition": "A principle stating that, much like waves in classical physics, any two (or more) quantum states can be added together (\"superposed\") and the result will be another valid quantum state.",
+            "Entanglement": "A quantum mechanical phenomenon in which the quantum states of two or more objects are linked together so that they must be described with reference to each other, even though the individual objects may be spatially separated.",
+            "Photon": "A quantum of the electromagnetic field, the basic unit of light and all other forms of electromagnetic radiation.",
+            "Planck's Constant": "A fundamental physical constant that relates the energy of a photon to its frequency. Reduced Planck's constant (ħ) is h divided by 2π.",
+            "Position": "The location of an object in space.",
+            "Momentum": "A measure of mass in motion, calculated as mass times velocity.",
+            "Quantum Tunneling": "A quantum mechanical phenomenon where a particle can pass through a potential energy barrier that, according to classical physics, it would not have enough energy to overcome.",
+            "Wave Function": "A mathematical description of the quantum state of an isolated quantum system. It is a complex-valued probability amplitude.",
+            "Quantum Computing": "A type of computation that uses quantum-mechanical phenomena, such as superposition and entanglement, to perform calculations."
+        };
+
+        // Use localStorage for basic persistence
+        let userProgress = JSON.parse(localStorage.getItem('quantumProgress')) || {
+            intro: false,
+            duality: false,
+            uncertainty: false,
+            superposition: false,
+            tunneling: false,
+            applications: false
+        };
+
+        let currentModule = null;
+        let lastActiveElement = null; // To store element that opened the modal
+
+        // --- Navigation and Content Loading ---
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const moduleId = link.dataset.module;
+                // Update URL hash without page reload
+                history.pushState(null, '', `#${moduleId}`);
+                loadModule(moduleId);
+                // Close sidebar on mobile after selection
+                if (window.innerWidth <= 768) {
+                    toggleSidebar(true);
+                }
+            });
+             // Add keyboard navigation for nav links
+             link.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    link.click();
+                }
+            });
+        });
+
+        // Handle browser back/forward for hash changes
+        window.addEventListener('popstate', () => {
+             const moduleId = window.location.hash ? window.location.hash.substring(1) : 'intro';
+             if (modules[moduleId]) {
+                 loadModule(moduleId, false); // Don't push state again
+             } else {
+                 loadModule('intro', false);
+             }
+        });
+
+
+        function loadModule(moduleId, pushState = true) {
+            if (!modules[moduleId]) {
+                console.error("Module not found:", moduleId);
+                // Optionally load an error or default page
+                loadModule('intro'); // Fallback to intro
+                return;
+            }
+
+            currentModule = moduleId;
+
+            // Add class for content transition
+            contentArea.classList.add('content-loading');
+
+            // Use a small delay to allow transition to start
+            setTimeout(() => {
+                // Update active nav link
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.classList.remove('active');
+                    link.setAttribute('aria-current', 'false');
+                    if (link.dataset.module === moduleId) {
+                        link.classList.add('active');
+                        link.setAttribute('aria-current', 'page');
+                    }
+                });
+
+                // Load content
+                contentArea.innerHTML = modules[moduleId].content;
+
+                // Add quiz if exists
+                if (modules[moduleId].quiz) {
+                    addQuiz(modules[moduleId].quiz, moduleId);
+                }
+
+                // Add glossary tooltips
+                addGlossaryTooltips();
+
+                // Mark module as started (basic progress)
+                // We mark as completed only after quiz success
+                // userProgress[moduleId] = true; // Keep this only for quiz completion
+                updateProgressIndicators();
+                saveProgress();
+
+                // Remove loading class to start transition in
+                contentArea.classList.remove('content-loading');
+
+                 // Scroll to top of content after content is loaded
+                contentArea.scrollTo({ top: 0, behavior: 'smooth' });
+
+            }, 100); // Adjust delay as needed for transition duration
+
+             if (pushState) {
+                 history.pushState(null, '', `#${moduleId}`);
+             }
+        }
+
+        // --- Quiz Functionality ---
+        function addQuiz(quizData, moduleId) {
+            const quizSection = document.createElement('section');
+            quizSection.classList.add('content-section', 'quiz-section');
+            quizSection.innerHTML = `<h3>Quick Quiz</h3><p class="question">${quizData.question}</p><div class="answer-options" role="group" aria-label="Quiz Answer Options"></div><div class="feedback" aria-live="polite"></div>`; // Add ARIA live region for feedback
+            contentArea.appendChild(quizSection);
+
+            const optionsContainer = quizSection.querySelector('.answer-options');
+            const feedbackDiv = quizSection.querySelector('.feedback');
+
+            quizData.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.classList.add('answer-button');
+                button.textContent = option;
+                button.setAttribute('aria-label', `Answer: ${option}`);
+                button.setAttribute('role', 'radio'); // Treat as radio buttons conceptually
+                button.setAttribute('aria-checked', 'false');
+                button.addEventListener('click', () => handleAnswer(button, index, quizData, feedbackDiv, moduleId));
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function handleAnswer(selectedButton, selectedIndex, quizData, feedbackDiv, moduleId) {
+             // Check if already answered
+             if (selectedButton.parentElement.querySelector('.answer-button[aria-checked="true"]')) {
+                 return;
+             }
+
+             // Disable all buttons for this quiz and set aria-checked
+            selectedButton.parentElement.querySelectorAll('.answer-button').forEach(btn => {
+                btn.disabled = true;
+                btn.classList.remove('selected', 'correct', 'incorrect');
+                btn.setAttribute('aria-checked', 'false');
+            });
+
+            selectedButton.classList.add('selected');
+            selectedButton.setAttribute('aria-checked', 'true');
+
+            if (selectedIndex === quizData.correctAnswer) {
+                selectedButton.classList.add('correct');
+                feedbackDiv.textContent = "Correct! " + quizData.explanation;
+                feedbackDiv.classList.remove('incorrect');
+                feedbackDiv.classList.add('correct');
+                // Mark module as completed if quiz is correct
+                 userProgress[moduleId] = true;
+                 updateProgressIndicators();
+                 saveProgress();
+            } else {
+                selectedButton.classList.add('incorrect');
+                 // Highlight the correct answer
+                 const correctAnswerButton = selectedButton.parentElement.querySelectorAll('.answer-button')[quizData.correctAnswer];
+                 correctAnswerButton.classList.add('correct'); // Highlight correct one
+                 correctAnswerButton.setAttribute('aria-checked', 'true'); // Mark correct one as checked conceptually for screen readers
+                 correctAnswerButton.disabled = true; // Also disable correct one
+
+                feedbackDiv.textContent = "Incorrect. " + quizData.explanation;
+                feedbackDiv.classList.remove('correct');
+                feedbackDiv.classList.add('incorrect');
+            }
+        }
+
+        // --- Progress Tracking ---
+        function updateProgressIndicators() {
+            document.querySelectorAll('.progress-indicator').forEach(indicator => {
+                const moduleId = indicator.dataset.progress;
+                if (userProgress[moduleId]) {
+                    indicator.classList.add('completed');
+                    indicator.setAttribute('aria-label', 'Module Completed');
+                } else {
+                     indicator.classList.remove('completed');
+                     indicator.setAttribute('aria-label', 'Module Not Completed');
+                }
+            });
+        }
+
+        function saveProgress() {
+            localStorage.setItem('quantumProgress', JSON.stringify(userProgress));
+        }
+
+        // --- Glossary Functionality ---
+        function addGlossaryTooltips() {
+            contentArea.querySelectorAll('.tooltip').forEach(span => {
+                const term = span.dataset.term;
+                if (glossary[term]) {
+                    // Tooltip text is already in HTML, just need to ensure it's there
+                    // Add click event to open modal for more detail/accessibility
+                    span.addEventListener('click', (e) => {
+                        e.stopPropagation(); // Prevent click from closing modal immediately if body listener is active
+                        openGlossaryModal(term, span);
+                    });
+                    // Add keyboard listener for accessibility
+                     span.addEventListener('keydown', (e) => {
+                         if (e.key === 'Enter' || e.key === ' ') {
+                             e.preventDefault();
+                             openGlossaryModal(term, span);
+                         }
+                     });
+                } else {
+                    console.warn(`Glossary term "${term}" not found.`);
+                    span.classList.remove('tooltip'); // Remove tooltip class if term isn't defined
+                }
+            });
+        }
+
+        function openGlossaryModal(term, triggerElement) {
+            const definition = glossary[term];
+            if (definition) {
+                glossaryTermDiv.textContent = term;
+                glossaryDefinitionDiv.textContent = definition;
+                glossaryModal.classList.add('visible');
+                glossaryModal.setAttribute('aria-hidden', 'false');
+                 // Set focus to the close button when modal opens
+                 closeGlossaryButton.focus();
+                 // Store the element that triggered the modal
+                 lastActiveElement = triggerElement;
+
+                 // Update aria-expanded for the clicked tooltip
+                 if(triggerElement) triggerElement.setAttribute('aria-expanded', 'true');
+
+                 // Trap focus within the modal
+                 trapFocus(glossaryModal);
+            }
+        }
+
+        function closeGlossaryModal() {
+            glossaryModal.classList.remove('visible');
+            // Add a small delay before hiding completely to allow transition
+            setTimeout(() => {
+                glossaryModal.setAttribute('aria-hidden', 'true');
+                // Return focus to the element that opened the modal
+                if (lastActiveElement) {
+                    lastActiveElement.focus();
+                    lastActiveElement = null; // Clear stored element
+                }
+            }, parseInt(getComputedStyle(glossaryModal).transitionDuration) * 1000); // Match CSS transition duration
+
+             // Find the tooltip that opened the modal and reset aria-expanded
+             const activeTooltip = contentArea.querySelector('.tooltip[aria-expanded="true"]');
+             if(activeTooltip) activeTooltip.setAttribute('aria-expanded', 'false');
+        }
+
+        closeGlossaryButton.addEventListener('click', closeGlossaryModal);
+
+        // Close modal if clicking outside the content
+        glossaryModal.addEventListener('click', (e) => {
+            if (e.target === glossaryModal) {
+                closeGlossaryModal();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && glossaryModal.classList.contains('visible')) {
+                closeGlossaryModal();
+            }
+        });
+
+        // Function to trap focus within a given element (e.g., modal)
+        function trapFocus(element) {
+            const focusableEls = element.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+            const firstFocusableEl = focusableEls[0];
+            const lastFocusableEl = focusableEls[focusableEls.length - 1];
+
+            element.addEventListener('keydown', function(e) {
+                const isTabPressed = (e.key === 'Tab');
+
+                if (!isTabPressed) {
+                    return;
+                }
+
+                if (e.shiftKey) { /* shift + tab */
+                    if (document.activeElement === firstFocusableEl) {
+                        lastFocusableEl.focus();
+                        e.preventDefault();
+                    }
+                } else { /* tab */
+                    if (document.activeElement === lastFocusableEl) {
+                        firstFocusableEl.focus();
+                        e.preventDefault();
+                    }
+                }
+            });
+        }
+
+
+        // --- Sidebar Toggle (for smaller screens) ---
+        function toggleSidebar(forceState = null) {
+            const isCollapsed = sidebar.classList.contains('collapsed');
+            const newState = forceState !== null ? forceState : !isCollapsed;
+
+            if (newState) {
+                sidebar.classList.add('collapsed');
+                document.body.classList.remove('nav-open');
+                menuToggle.setAttribute('aria-expanded', 'false');
+            } else {
+                sidebar.classList.remove('collapsed');
+                 document.body.classList.add('nav-open');
+                 menuToggle.setAttribute('aria-expanded', 'true');
+            }
+        }
+
+        menuToggle.addEventListener('click', () => toggleSidebar());
+
+        // Initial setup
+        updateProgressIndicators();
+
+        // On page load, check if a module is specified in the hash, otherwise load intro
+        const initialModuleId = window.location.hash ? window.location.hash.substring(1) : 'intro';
+        loadModule(initialModuleId, false); // Don't push state on initial load
+
+         // Set initial state of sidebar toggle based on screen size
+        if (window.innerWidth <= 768) {
+            toggleSidebar(true); // Start collapsed on mobile
+        } else {
+             toggleSidebar(false); // Start open on desktop
+        }
+
+        // Adjust sidebar state on window resize
+        window.addEventListener('resize', () => {
+             if (window.innerWidth <= 768) {
+                // Only collapse if it's currently open
+                if (!sidebar.classList.contains('collapsed')) {
+                     toggleSidebar(true);
+                }
+            } else {
+                 // Only open if it's currently collapsed
+                 if (sidebar.classList.contains('collapsed')) {
+                     toggleSidebar(false);
+                 }
+            }
+        });
+
+    </script>
+
+</body>
+</html>

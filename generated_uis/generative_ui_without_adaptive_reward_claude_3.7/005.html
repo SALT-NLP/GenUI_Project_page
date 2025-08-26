@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding P-values in Statistics</title>
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #6c8cbf;
+            --accent-color: #f3776b;
+            --text-color: #333;
+            --light-gray: #f5f7fa;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: #f9fafc;
+            padding: 0;
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        @media (min-width: 768px) {
+            .main-content {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+        
+        section {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        h1, h2, h3 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+        }
+        
+        h2 {
+            font-size: 1.8rem;
+            border-bottom: 2px solid var(--light-gray);
+            padding-bottom: 0.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        h3 {
+            font-size: 1.3rem;
+            margin-top: 1.2rem;
+        }
+        
+        p {
+            margin-bottom: 1rem;
+        }
+        
+        .highlight {
+            background-color: rgba(243, 119, 107, 0.1);
+            border-left: 4px solid var(--accent-color);
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            border-bottom: 1px dotted var(--primary-color);
+            cursor: help;
+        }
+        
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 250px;
+            background-color: #333;
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -125px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .tooltip .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #333 transparent transparent transparent;
+        }
+        
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .visualization {
+            margin: 2rem 0;
+            position: relative;
+        }
+        
+        .interactive-controls {
+            background-color: var(--light-gray);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .slider-container {
+            margin-bottom: 1rem;
+        }
+        
+        .slider-container label {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+        
+        .slider-value {
+            display: inline-block;
+            width: 50px;
+            text-align: center;
+            background-color: white;
+            padding: 0.3rem;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: bold;
+            transition: var(--transition);
+        }
+        
+        button:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .result-display {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            box-shadow: var(--box-shadow);
+        }
+        
+        .result-display p {
+            margin-bottom: 0.5rem;
+        }
+        
+        .result-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .interpretation {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            background-color: var(--light-gray);
+        }
+        
+        .floating-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+        
+        .chart-container {
+            height: 400px;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .collapsible {
+            background-color: var(--light-gray);
+            color: var(--primary-color);
+            cursor: pointer;
+            padding: 1rem;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 1.1rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+        
+        .collapsible:after {
+            content: '\002B';
+            color: var(--primary-color);
+            font-weight: bold;
+            float: right;
+        }
+        
+        .active:after {
+            content: "\2212";
+        }
+        
+        .content {
+            padding: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            background-color: white;
+            border-radius: var(--border-radius);
+        }
+        
+        .content-inner {
+            padding: 1rem;
+        }
+        
+        .example-card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-top: 4px solid var(--secondary-color);
+        }
+        
+        .example-card h3 {
+            color: var(--secondary-color);
+        }
+        
+        .step-container {
+            counter-reset: step;
+            margin: 1.5rem 0;
+        }
+        
+        .step {
+            position: relative;
+            padding-left: 3rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .step:before {
+            counter-increment: step;
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 0;
+            background-color: var(--primary-color);
+            color: white;
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Understanding P-values in Statistics</h1>
+            <p>A clear guide to one of the most important concepts in statistical hypothesis testing</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="main-content">
+            <div class="content-area">
+                <section id="introduction">
+                    <h2>Introduction to P-values</h2>
+                    <p>The p-value is one of the most widely used—and often misinterpreted—concepts in statistical hypothesis testing. Understanding p-values is crucial for anyone working with statistical analyses, from scientific research to business analytics.</p>
+                    
+                    <div class="highlight">
+                        <p>A <strong>p-value</strong> is the probability of obtaining results at least as extreme as the observed results, assuming that the null hypothesis is correct.</p>
+                    </div>
+                    
+                    <p>In simpler terms, the p-value helps us determine whether the evidence against a null hypothesis is strong enough to reject it in favor of an alternative hypothesis.</p>
+                </section>
+
+                <section id="definition">
+                    <h2>What Exactly is a P-value?</h2>
+                    
+                    <p>To understand p-values, we need to place them in the context of hypothesis testing:</p>
+                    
+                    <div class="step-container">
+                        <div class="step">
+                            <h3>Start with Hypotheses</h3>
+                            <p>In hypothesis testing, we begin with two competing claims:</p>
+                            <ul>
+                                <li><strong>Null Hypothesis (H<sub>0</sub>)</strong>: A statement of no effect, no difference, or no relationship</li>
+                                <li><strong>Alternative Hypothesis (H<sub>a</sub> or H<sub>1</sub>)</strong>: A statement contradicting the null hypothesis</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="step">
+                            <h3>Collect and Analyze Data</h3>
+                            <p>We collect data and calculate a <span class="tooltip">test statistic<span class="tooltip-text">A numerical value calculated from sample data that is used to decide whether to reject the null hypothesis</span></span> that measures how far our observed results deviate from what we would expect if the null hypothesis were true.</p>
+                        </div>
+                        
+                        <div class="step">
+                            <h3>Calculate the P-value</h3>
+                            <p>The p-value answers this question: <em>"If the null hypothesis is true, what is the probability of observing a test statistic at least as extreme as the one we actually observed?"</em></p>
+                        </div>
+                        
+                        <div class="step">
+                            <h3>Make a Decision</h3>
+                            <p>Based on the p-value and a pre-determined <span class="tooltip">significance level (α)<span class="tooltip-text">The threshold probability for rejecting the null hypothesis, commonly set at 0.05</span></span>, we either reject or fail to reject the null hypothesis.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="interpretation">
+                    <h2>Interpreting P-values Correctly</h2>
+                    
+                    <p>The interpretation of p-values is where many people go wrong. Here's how to interpret them correctly:</p>
+                    
+                    <div class="example-card">
+                        <h3>What a P-value IS:</h3>
+                        <ul>
+                            <li>A measure of the compatibility between the observed data and the null hypothesis</li>
+                            <li>The probability of obtaining the observed results (or more extreme) if the null hypothesis is true</li>
+                            <li>A continuous measure of evidence against the null hypothesis</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="example-card">
+                        <h3>What a P-value is NOT:</h3>
+                        <ul>
+                            <li>The probability that the null hypothesis is true</li>
+                            <li>The probability that the alternative hypothesis is true</li>
+                            <li>A measure of the importance or size of an effect</li>
+                            <li>A direct indication of replicability of results</li>
+                        </ul>
+                    </div>
+                    
+                    <h3>Decision Rules</h3>
+                    <p>Typically, we use these decision rules:</p>
+                    <ul>
+                        <li>If p ≤ α (commonly 0.05): <strong>Reject the null hypothesis</strong>. The result is considered "statistically significant."</li>
+                        <li>If p > α: <strong>Fail to reject the null hypothesis</strong>. We don't have enough evidence to reject the null hypothesis.</li>
+                    </ul>
+                    
+                    <div class="highlight">
+                        <p>Remember: Failing to reject the null hypothesis is not the same as proving it true. It simply means we don't have enough evidence against it.</p>
+                    </div>
+                </section>
+
+                <section id="misconceptions">
+                    <h2>Common Misconceptions About P-values</h2>
+                    
+                    <button class="collapsible">Misconception #1: Small p-values mean large or important effects</button>
+                    <div class="content">
+                        <div class="content-inner">
+                            <p>A small p-value indicates statistical significance, but not necessarily practical significance. A tiny effect can have a very small p-value if the sample size is large enough.</p>
+                            <p>For practical importance, look at effect sizes and confidence intervals, not just p-values.</p>
+                        </div>
+                    </div>
+                    
+                    <button class="collapsible">Misconception #2: P-values measure the probability that the null hypothesis is true</button>
+                    <div class="content">
+                        <div class="content-inner">
+                            <p>This is perhaps the most common misinterpretation. The p-value is calculated assuming the null hypothesis is true. It cannot tell you the probability that the null hypothesis is true.</p>
+                            <p>For that kind of probability statement, you would need a Bayesian approach.</p>
+                        </div>
+                    </div>
+                    
+                    <button class="collapsible">Misconception #3: P = 0.05 is a magical threshold</button>
+                    <div class="content">
+                        <div class="content-inner">
+                            <p>There's nothing special about 0.05. It's a conventional threshold, but the difference between p = 0.049 and p = 0.051 is negligible.</p>
+                            <p>P-values should be interpreted as continuous measures of evidence, not binary indicators.</p>
+                        </div>
+                    </div>
+                    
+                    <button class="collapsible">Misconception #4: Non-significant results mean "no effect"</button>
+                    <div class="content">
+                        <div class="content-inner">
+                            <p>A non-significant result (p > 0.05) doesn't mean there's no effect. It means we failed to detect an effect at our chosen significance level.</p>
+                            <p>This could be due to a small sample size, high variability, or because there truly is no effect.</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="sidebar">
+                <section id="visualization" class="visualization">
+                    <h2>Interactive P-value Visualization</h2>
+                    <p>Visualize how p-values work with this interactive normal distribution. Adjust the test statistic to see how the p-value changes.</p>
+                    
+                    <div class="interactive-controls">
+                        <div class="slider-container">
+                            <label for="test-statistic">Test Statistic (z-score):</label>
+                            <input type="range" id="test-statistic" min="-4" max="4" step="0.1" value="1.96">
+                            <span class="slider-value" id="test-statistic-value">1.96</span>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="significance">Significance Level (α):</label>
+                            <input type="range" id="significance" min="0.01" max="0.1" step="0.01" value="0.05">
+                            <span class="slider-value" id="significance-value">0.05</span>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="tail-type">Test Type:</label>
+                            <select id="tail-type">
+                                <option value="two-tailed">Two-tailed</option>
+                                <option value="right-tailed">Right-tailed</option>
+                                <option value="left-tailed">Left-tailed</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <canvas id="pValueChart"></canvas>
+                        <div class="floating-controls" id="chartControls">
+                            <div class="control-group">
+                                <label>Chart Type</label>
+                                <select id="chartType">
+                                    <option value="line">Line</option>
+                                    <option value="bar">Bar</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>Curve Color</label>
+                                <input type="color" id="curveColor" value="#4a6fa5">
+                            </div>
+                            <div class="control-group">
+                                <label>Shaded Area Color</label>
+                                <input type="color" id="shadedColor" value="#f3776b">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="result-display">
+                        <p>P-value: <span class="result-value" id="p-value-result">0.05</span></p>
+                        <div class="interpretation" id="interpretation-text">
+                            <p>At α = 0.05, this result is statistically significant. We would reject the null hypothesis.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="example">
+                    <h2>Practical Example</h2>
+                    <div class="example-card">
+                        <h3>Drug Effectiveness Study</h3>
+                        <p>A pharmaceutical company tests a new drug against a placebo. They want to know if the drug is effective at reducing symptoms.</p>
+                        <ul>
+                            <li><strong>Null Hypothesis (H<sub>0</sub>):</strong> The drug has no effect (mean symptom reduction = 0)</li>
+                            <li><strong>Alternative Hypothesis (H<sub>a</sub>):</strong> The drug reduces symptoms (mean symptom reduction > 0)</li>
+                        </ul>
+                        <p>After collecting data from 100 patients, they calculate a p-value of 0.03.</p>
+                        <p><strong>Interpretation:</strong> If the drug truly had no effect, there would be only a 3% chance of observing a symptom reduction at least as large as what was actually observed. Since 0.03 < 0.05, they reject the null hypothesis and conclude that the drug is effective.</p>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+        
+        // Initialize chart
+        const ctx = document.getElementById('pValueChart').getContext('2d');
+        let pValueChart;
+        
+        // Normal distribution function
+        function normalPDF(x, mean = 0, std = 1) {
+            const constant = 1 / (std * Math.sqrt(2 * Math.PI));
+            const exponent = -0.5 * Math.pow((x - mean) / std, 2);
+            return constant * Math.exp(exponent);
+        }
+        
+        // Cumulative normal distribution function (approximation)
+        function normalCDF(x, mean = 0, std = 1) {
+            const z = (x - mean) / std;
+            const t = 1 / (1 + 0.2316419 * Math.abs(z));
+            const d = 0.3989423 * Math.exp(-z * z / 2);
+            const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+            if (z > 0) return 1 - p;
+            return p;
+        }
+        
+        // Calculate p-value based on test statistic and test type
+        function calculatePValue(testStat, testType) {
+            if (testType === 'two-tailed') {
+                return 2 * (1 - normalCDF(Math.abs(testStat)));
+            } else if (testType === 'right-tailed') {
+                return 1 - normalCDF(testStat);
+            } else if (testType === 'left-tailed') {
+                return normalCDF(testStat);
+            }
+        }
+        
+        // Generate data for normal distribution curve
+        function generateNormalDistData() {
+            const data = [];
+            for (let x = -4; x <= 4; x += 0.1) {
+                data.push({
+                    x: parseFloat(x.toFixed(1)),
+                    y: normalPDF(x)
+                });
+            }
+            return data;
+        }
+        
+        // Create chart
+        function createChart() {
+            const normalDistData = generateNormalDistData();
+            const xValues = normalDistData.map(point => point.x);
+            const yValues = normalDistData.map(point => point.y);
+            
+            const testStat = parseFloat(document.getElementById('test-statistic').value);
+            const testType = document.getElementById('tail-type').value;
+            
+            // Determine which regions to shade based on test type
+            let criticalRegionData = [];
+            if (testType === 'two-tailed') {
+                criticalRegionData = normalDistData.filter(point => 
+                    Math.abs(point.x) >= Math.abs(testStat)
+                );
+            } else if (testType === 'right-tailed') {
+                criticalRegionData = normalDistData.filter(point => 
+                    point.x >= testStat
+                );
+            } else if (testType === 'left-tailed') {
+                criticalRegionData = normalDistData.filter(point => 
+                    point.x <= testStat
+                );
+            }
+            
+            const chartConfig = {
+                type: 'line',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Normal Distribution',
+                            data: normalDistData,
+                            borderColor: '#4a6fa5',
+                            backgroundColor: 'rgba(74, 111, 165, 0.1)',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            fill: false
+                        },
+                        {
+                            label: 'P-value Region',
+                            data: criticalRegionData,
+                            borderColor: 'rgba(243, 119, 107, 0.8)',
+                            backgroundColor: 'rgba(243, 119, 107, 0.3)',
+                            borderWidth: 0,
+                            pointRadius: 0,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onClick: (e) => {
+                        const controls = document.getElementById('chartControls');
+                        controls.classList.toggle('active');
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            title: {
+                                display: true,
+                                text: 'Test Statistic (z-score)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Probability Density'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `z = ${context.parsed.x.toFixed(2)}, density = ${context.parsed.y.toFixed(4)}`;
+                                }
+                            }
+                        },
+                        annotation: {
+                            annotations: {
+                                testStatLine: {
+                                    type: 'line',
+                                    xMin: testStat,
+                                    xMax: testStat,
+                                    yMin: 0,
+                                    yMax: normalPDF(0),
+                                    borderColor: 'rgba(0, 0, 0, 0.7)',
+                                    borderWidth: 2,
+                                    borderDash: [5, 5],
+                                    label: {
+                                        content: `z = ${testStat.toFixed(2)}`,
+                                        enabled: true,
+                                        position: 'top'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+            
+            if (pValueChart) {
+                pValueChart.destroy();
+            }
+            
+            pValueChart = new Chart(ctx, chartConfig);
+        }
+        
+        // Update displays and chart based on inputs
+        function updateDisplay() {
+            const testStat = parseFloat(document.getElementById('test-statistic').value);
+            const alpha = parseFloat(document.getElementById('significance').value);
+            const testType = document.getElementById('tail-type').value;
+            
+            // Update displayed values
+            document.getElementById('test-statistic-value').textContent = testStat.toFixed(2);
+            document.getElementById('significance-value').textContent = alpha.toFixed(2);
+            
+            // Calculate p-value
+            const pValue = calculatePValue(testStat, testType);
+            document.getElementById('p-value-result').textContent = pValue.toFixed(4);
+            
+            // Update interpretation
+            const interpretationText = document.getElementById('interpretation-text');
+            if (pValue <= alpha) {
+                interpretationText.innerHTML = `<p>At α = ${alpha.toFixed(2)}, this result is <strong>statistically significant</strong>. We would <strong>reject the null hypothesis</strong>.</p>`;
+            } else {
+                interpretationText.innerHTML = `<p>At α = ${alpha.toFixed(2)}, this result is <strong>not statistically significant</strong>. We would <strong>fail to reject the null hypothesis</strong>.</p>`;
+            }
+            
+            // Update chart
+            createChart();
+        }
+        
+        // Initialize chart and controls
+        document.addEventListener('DOMContentLoaded', function() {
+            createChart();
+            updateDisplay();
+            
+            // Add event listeners to controls
+            document.getElementById('test-statistic').addEventListener('input', updateDisplay);
+            document.getElementById('significance').addEventListener('input', updateDisplay);
+            document.getElementById('tail-type').addEventListener('change', updateDisplay);
+            
+            // Floating chart controls
+            document.getElementById('chartType').addEventListener('change', function() {
+                pValueChart.config.type = this.value;
+                pValueChart.update();
+            });
+            
+            document.getElementById('curveColor').addEventListener('change', function() {
+                pValueChart.data.datasets[0].borderColor = this.value;
+                pValueChart.data.datasets[0].backgroundColor = `${this.value}20`;
+                pValueChart.update();
+            });
+            
+            document.getElementById('shadedColor').addEventListener('change', function() {
+                pValueChart.data.datasets[1].borderColor = `${this.value}80`;
+                pValueChart.data.datasets[1].backgroundColor = `${this.value}50`;
+                pValueChart.update();
+            });
+            
+            // Close floating controls when clicking outside
+            document.addEventListener('click', function(e) {
+                const controls = document.getElementById('chartControls');
+                if (!e.target.closest('.floating-controls') && !e.target.closest('canvas')) {
+                    controls.classList.remove('active');
+                }
+            });
+            
+            // Collapsible sections
+            const coll = document.getElementsByClassName("collapsible");
+            for (let i = 0; i < coll.length; i++) {
+                coll[i].addEventListener("click", function() {
+                    this.classList.toggle("active");
+                    const content = this.nextElementSibling;
+                    if (content.style.maxHeight) {
+                        content.style.maxHeight = null;
+                    } else {
+                        content.style.maxHeight = content.scrollHeight + "px";
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

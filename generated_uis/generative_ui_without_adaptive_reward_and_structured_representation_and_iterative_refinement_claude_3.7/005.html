@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding P-values</title>
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --white-color: #ffffff;
+            --border-color: #dee2e6;
+            --card-background: var(--white-color);
+            --text-color: var(--dark-color);
+            --heading-color: var(--dark-color);
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: var(--light-color);
+            color: var(--text-color);
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: var(--white-color);
+            padding: 20px 0;
+            text-align: center;
+            box-shadow: 0 2px 4px var(--shadow-color);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 700;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+
+        @media (min-width: 768px) {
+            main {
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            }
+        }
+
+        @media (min-width: 1024px) {
+            main {
+                grid-template-columns: 2fr 1fr;
+            }
+            .simulation-section {
+                grid-column: 1 / span 2;
+            }
+        }
+
+        section {
+            background-color: var(--card-background);
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px var(--shadow-color);
+        }
+
+        h2, h3 {
+            color: var(--heading-color);
+            margin-top: 0;
+        }
+
+        h2 {
+            font-size: 1.8em;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 5px;
+        }
+
+        h3 {
+            font-size: 1.4em;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+
+        .explanation-section p:last-child {
+            margin-bottom: 0;
+        }
+
+        .simulation-section {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+             .simulation-section {
+                grid-template-columns: 1fr 2fr;
+            }
+        }
+
+        .controls-card {
+             background-color: var(--light-color);
+             padding: 20px;
+             border-radius: 8px;
+             box-shadow: inset 0 1px 3px var(--shadow-color);
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: var(--dark-color);
+        }
+
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 1em;
+            box-sizing: border-box;
+        }
+
+        button {
+            display: inline-block;
+            background-color: var(--success-color);
+            color: var(--white-color);
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        #simulation-output {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: var(--white-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 4px;
+            min-height: 50px;
+        }
+
+        #simulation-output p {
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .visualization-card {
+            position: relative;
+             background-color: var(--white-color);
+             padding: 20px;
+             border-radius: 8px;
+             box-shadow: inset 0 1px 3px var(--shadow-color);
+        }
+
+        .chart-container {
+            height: 300px; /* Adjust height as needed */
+            width: 100%;
+            position: relative;
+        }
+
+         .floating-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px var(--shadow-color);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .floating-controls.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+        .floating-controls .control-group {
+            margin: 5px 0;
+        }
+         .floating-controls label {
+             font-size: 0.9em;
+         }
+         .floating-controls input[type="color"] {
+             padding: 4px;
+             height: 30px;
+         }
+         .floating-controls select,
+         .floating-controls input[type="number"] {
+             padding: 4px;
+             font-size: 0.9em;
+             width: auto; /* Override width: 100% */
+         }
+
+
+        .glossary-section ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .glossary-section li {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .glossary-section li:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .glossary-term {
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .glossary-definition {
+            font-size: 0.95em;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Understanding P-values</h1>
+    </header>
+
+    <main>
+        <section class="explanation-section">
+            <h2>What is a P-value?</h2>
+            <p>
+                In statistical hypothesis testing, the p-value (probability value) is a measure of the evidence against a null hypothesis.
+                It quantifies the probability of observing a test statistic as extreme as, or more extreme than, the one calculated from the sample data,
+                assuming that the null hypothesis is true.
+            </p>
+
+            <h3>Key Concepts</h3>
+            <p>
+                A smaller p-value suggests that your observed data is unlikely under the assumption that the null hypothesis is true.
+                Therefore, a small p-value provides stronger evidence against the null hypothesis.
+            </p>
+            <p>
+                Conversely, a large p-value suggests that your observed data is likely under the null hypothesis.
+                A large p-value does not necessarily mean the null hypothesis is true, but rather that the data do not provide sufficient evidence to reject it.
+            </p>
+
+            <h3>Interpretation</h3>
+            <p>
+                The p-value is often compared to a pre-determined significance level, denoted by α (alpha).
+                Commonly used alpha levels are 0.05, 0.01, or 0.10.
+            </p>
+            <ul>
+                <li>If p-value ≤ α: The result is considered statistically significant. You reject the null hypothesis.</li>
+                <li>If p-value > α: The result is not considered statistically significant. You fail to reject the null hypothesis.</li>
+            </ul>
+            <p>
+                It's crucial to understand that failing to reject the null hypothesis does not prove it is true. It simply means the data do not provide enough evidence to conclude it is false at the chosen significance level.
+            </p>
+             <p>
+                P-values should be interpreted in the context of the study design, data quality, and other relevant information. They are not a standalone measure of the importance or truth of a finding.
+            </p>
+
+        </section>
+
+        <section class="simulation-section">
+            <h2>P-value Simulation (Standard Normal Distribution)</h2>
+            <div class="controls-card">
+                <h3>Calculate & Visualize P-value</h3>
+                <div class="control-group">
+                    <label for="testStatistic">Enter Test Statistic (Z-score):</label>
+                    <input type="number" id="testStatistic" value="1.96" step="0.01">
+                </div>
+                 <div class="control-group">
+                    <label for="testType">Select Test Type:</label>
+                    <select id="testType">
+                        <option value="two-tailed">Two-tailed</option>
+                        <option value="one-tailed-right">One-tailed (Right)</option>
+                        <option value="one-tailed-left">One-tailed (Left)</option>
+                    </select>
+                </div>
+                 <div class="control-group">
+                    <label for="alphaLevel">Significance Level (α):</label>
+                    <input type="number" id="alphaLevel" value="0.05" step="0.01" min="0.01" max="0.5">
+                </div>
+                <button id="calculatePValue">Calculate P-value</button>
+
+                <div id="simulation-output">
+                    <p>Enter values and click 'Calculate P-value'.</p>
+                </div>
+            </div>
+
+            <div class="visualization-card">
+                 <h3>Standard Normal Distribution</h3>
+                <div class="chart-container" id="chart-container-1">
+                    <canvas id="pValueChart"></canvas>
+                     <!-- Floating control panel -->
+                    <div class="floating-controls" id="chart-controls-1">
+                        <div class="control-group">
+                            <label>Curve Color</label>
+                            <input type="color" id="curveColor1" value="#007bff">
+                        </div>
+                        <div class="control-group">
+                            <label>P-value Area Color</label>
+                            <input type="color" id="areaColor1" value="#28a745">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="glossary-section">
+            <h2>Glossary</h2>
+            <ul>
+                <li>
+                    <span class="glossary-term">Null Hypothesis (H₀)</span>
+                    <span class="glossary-definition">A statement of no effect or no difference. It is the hypothesis that the researcher is trying to disprove.</span>
+                </li>
+                 <li>
+                    <span class="glossary-term">Alternative Hypothesis (H₁)</span>
+                    <span class="glossary-definition">A statement that contradicts the null hypothesis. It represents the effect or difference the researcher is trying to find evidence for.</span>
+                </li>
+                <li>
+                    <span class="glossary-term">Test Statistic</span>
+                    <span class="glossary-definition">A value calculated from sample data during a hypothesis test. Its value indicates how far the sample results deviate from what is expected under the null hypothesis. Examples include Z-scores, T-scores, F-statistics, Chi-squared statistics.</span>
+                </li>
+                <li>
+                    <span class="glossary-term">Significance Level (α)</span>
+                    <span class="glossary-definition">The probability of rejecting the null hypothesis when it is actually true (Type I error). It is a threshold set by the researcher before conducting the test, commonly 0.05.</span>
+                </li>
+                 <li>
+                    <span class="glossary-term">Statistical Significance</span>
+                    <span class="glossary-definition">A result is statistically significant if the p-value is less than or equal to the significance level (α). This suggests sufficient evidence to reject the null hypothesis.</span>
+                </li>
+                 <li>
+                    <span class="glossary-term">Type I Error</span>
+                    <span class="glossary-definition">Rejecting the null hypothesis when it is true (False Positive). The probability of a Type I error is equal to the significance level (α).</span>
+                </li>
+                 <li>
+                    <span class="glossary-term">Type II Error</span>
+                    <span class="glossary-definition">Failing to reject the null hypothesis when it is false (False Negative). The probability of a Type II error is denoted by β.</span>
+                </li>
+            </ul>
+        </section>
+    </main>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+        import annotationPlugin from 'https://esm.sh/chartjs-plugin-annotation';
+
+        Chart.register(annotationPlugin);
+
+        const testStatisticInput = document.getElementById('testStatistic');
+        const testTypeSelect = document.getElementById('testType');
+        const alphaLevelInput = document.getElementById('alphaLevel');
+        const calculateButton = document.getElementById('calculatePValue');
+        const outputDiv = document.getElementById('simulation-output');
+        const chartCanvas = document.getElementById('pValueChart');
+        const chartControls = document.getElementById('chart-controls-1');
+        const chartContainer = document.getElementById('chart-container-1');
+
+        let pValueChart;
+
+        // Function to approximate p-value for a Z-score (using standard normal CDF)
+        // This is a simplified approximation for demonstration
+        function normalCDF(z) {
+            // This is a common approximation (Abramowitz and Stegun, 7.1.26)
+            const b1 = 0.319381530;
+            const b2 = -0.356563782;
+            const b3 = 1.781477937;
+            const b4 = -1.821255978;
+            const b5 = 1.330274429;
+            const p = 0.2316419;
+            const c = 0.39894228;
+
+            if (z >= 0.0) {
+                const t = 1.0 / (1.0 + p * z);
+                return (1.0 - c * Math.exp(-z * z / 2.0) * (((b5 * t + b4) * t + b3) * t + b2) * t + b1 * t);
+            } else {
+                const t = 1.0 / (1.0 - p * z);
+                return (c * Math.exp(-z * z / 2.0) * (((b5 * t + b4) * t + b3) * t + b2) * t + b1 * t);
+            }
+        }
+
+        function calculatePValue(z, type) {
+            const absZ = Math.abs(z);
+            let p;
+            if (type === 'two-tailed') {
+                // Probability of being more extreme than abs(z) in either tail
+                p = 2 * (1 - normalCDF(absZ));
+            } else if (type === 'one-tailed-right') {
+                 // Probability of being greater than z
+                p = 1 - normalCDF(z);
+            } else { // one-tailed-left
+                 // Probability of being less than z
+                p = normalCDF(z);
+            }
+            return p;
+        }
+
+        // Function to generate points for the standard normal PDF
+        function generateNormalPDF(min, max, steps) {
+            const data = [];
+            const stepSize = (max - min) / steps;
+            const sqrt2Pi = Math.sqrt(2 * Math.PI);
+            for (let i = 0; i <= steps; i++) {
+                const x = min + i * stepSize;
+                const y = Math.exp(-x * x / 2) / sqrt2Pi;
+                data.push({ x: x, y: y });
+            }
+            return data;
+        }
+
+        function updateChart(z, pValue, testType, alpha, curveColor, areaColor) {
+             const absZ = Math.abs(z);
+             const annotations = [];
+             const rejectionColor = areaColor || "var('--success-color')"; // Default green
+             const nonRejectionColor = "rgba(0, 0, 0, 0)"; // Transparent
+
+            // Add annotation for the p-value area(s)
+            if (testType === 'two-tailed') {
+                annotations.push({
+                    type: 'box',
+                    xMin: -5, // Start from left extreme
+                    xMax: -absZ,
+                    yMin: 0,
+                    yMax: 'max',
+                    backgroundColor: rejectionColor,
+                    borderColor: rejectionColor,
+                    borderWidth: 1,
+                    drawTime: 'beforeDatasetsDraw'
+                },
+                {
+                    type: 'box',
+                    xMin: absZ,
+                    xMax: 5, // End at right extreme
+                    yMin: 0,
+                    yMax: 'max',
+                    backgroundColor: rejectionColor,
+                    borderColor: rejectionColor,
+                    borderWidth: 1,
+                    drawTime: 'beforeDatasetsDraw'
+                });
+            } else if (testType === 'one-tailed-right') {
+                 annotations.push({
+                    type: 'box',
+                    xMin: z,
+                    xMax: 5, // End at right extreme
+                    yMin: 0,
+                    yMax: 'max',
+                    backgroundColor: rejectionColor,
+                    borderColor: rejectionColor,
+                    borderWidth: 1,
+                    drawTime: 'beforeDatasetsDraw'
+                });
+            } else { // one-tailed-left
+                 annotations.push({
+                    type: 'box',
+                    xMin: -5, // Start from left extreme
+                    xMax: z,
+                    yMin: 0,
+                    yMax: 'max',
+                    backgroundColor: rejectionColor,
+                    borderColor: rejectionColor,
+                    borderWidth: 1,
+                    drawTime: 'beforeDatasetsDraw'
+                });
+            }
+
+            // Add line annotation for the test statistic(s)
+             if (testType === 'two-tailed') {
+                 annotations.push({
+                    type: 'line',
+                    xMin: -absZ,
+                    xMax: -absZ,
+                    yMin: 0,
+                    yMax: 'max',
+                    borderColor: "var('--dark-color')",
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    label: {
+                        content: `Z = -${absZ.toFixed(2)}`,
+                        enabled: true,
+                        position: 'start'
+                    },
+                    drawTime: 'afterDatasetsDraw'
+                 },
+                 {
+                    type: 'line',
+                    xMin: absZ,
+                    xMax: absZ,
+                    yMin: 0,
+                    yMax: 'max',
+                    borderColor: "var('--dark-color')",
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                     label: {
+                        content: `Z = ${absZ.toFixed(2)}`,
+                        enabled: true,
+                        position: 'start'
+                    },
+                    drawTime: 'afterDatasetsDraw'
+                 });
+             } else {
+                  annotations.push({
+                    type: 'line',
+                    xMin: z,
+                    xMax: z,
+                    yMin: 0,
+                    yMax: 'max',
+                    borderColor: "var('--dark-color')",
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                     label: {
+                        content: `Z = ${z.toFixed(2)}`,
+                        enabled: true,
+                        position: 'start'
+                    },
+                    drawTime: 'afterDatasetsDraw'
+                 });
+             }
+
+
+            // Add line annotation for alpha level critical value(s) (optional but helpful)
+            // Requires calculating critical Z-values based on alpha and test type
+            // For simplicity, let's skip critical value lines for now, focus on p-value area
+
+            if (pValueChart) {
+                pValueChart.destroy();
+            }
+
+            const normalData = generateNormalPDF(-4, 4, 200); // Generate points from -4 to 4
+
+            pValueChart = new Chart(chartCanvas, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: 'Standard Normal Distribution',
+                        data: normalData,
+                        borderColor: curveColor || "var('--primary-color')",
+                        borderWidth: 2,
+                        fill: false,
+                        pointRadius: 0,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onClick: (e) => toggleControls(),
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Standard Normal Distribution with P-value Area',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            },
+                             color: "var('--heading-color')"
+                        },
+                        annotation: {
+                             annotations: annotations
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            title: {
+                                display: true,
+                                text: 'Z-score',
+                                font: {
+                                    size: 14
+                                },
+                                color: "var('--text-color')"
+                            },
+                            grid: {
+                                borderColor: "var('--border-color')",
+                                color: "var('--border-color')"
+                            },
+                             ticks: {
+                                color: "var('--text-color')"
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Probability Density',
+                                font: {
+                                    size: 14
+                                },
+                                color: "var('--text-color')"
+                            },
+                            grid: {
+                                borderColor: "var('--border-color')",
+                                color: "var('--border-color')"
+                            },
+                             ticks: {
+                                color: "var('--text-color')"
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateSimulation() {
+            const z = parseFloat(testStatisticInput.value);
+            const testType = testTypeSelect.value;
+            const alpha = parseFloat(alphaLevelInput.value);
+
+            if (isNaN(z) || isNaN(alpha) || alpha <= 0 || alpha > 0.5) {
+                outputDiv.innerHTML = '<p style="color: var(--danger-color);">Please enter valid numbers for Z-score and Alpha (between 0.01 and 0.5).</p>';
+                // Optionally clear chart or show an error state
+                if (pValueChart) {
+                    pValueChart.destroy();
+                    pValueChart = null;
+                }
+                return;
+            }
+
+            const pValue = calculatePValue(z, testType);
+            const pValueFormatted = pValue.toFixed(4);
+            const alphaFormatted = alpha.toFixed(2);
+
+            let interpretation = `The calculated p-value is ${pValueFormatted}.<br>`;
+
+            if (pValue <= alpha) {
+                interpretation += `<span style="color: var(--success-color);">Since the p-value (${pValueFormatted}) is less than or equal to the significance level (${alphaFormatted}), we reject the null hypothesis.</span>`;
+            } else {
+                interpretation += `<span style="color: var('--danger-color);">Since the p-value (${pValueFormatted}) is greater than the significance level (${alphaFormatted}), we fail to reject the null hypothesis.</span>`;
+            }
+
+            outputDiv.innerHTML = `<p>${interpretation}</p>`;
+
+            const curveColor = document.getElementById('curveColor1').value;
+            const areaColor = document.getElementById('areaColor1').value;
+
+            updateChart(z, pValue, testType, alpha, curveColor, areaColor);
+        }
+
+        // Initial chart render on page load
+        document.addEventListener('DOMContentLoaded', () => {
+             const initialZ = parseFloat(testStatisticInput.value);
+             const initialType = testTypeSelect.value;
+             const initialAlpha = parseFloat(alphaLevelInput.value);
+             const initialP = calculatePValue(initialZ, initialType);
+
+             const curveColor = document.getElementById('curveColor1').value;
+             const areaColor = document.getElementById('areaColor1').value;
+
+             updateChart(initialZ, initialP, initialType, initialAlpha, curveColor, areaColor);
+             updateSimulation(); // Also update output text initially
+        });
+
+
+        calculateButton.addEventListener('click', updateSimulation);
+
+        // Event listeners for floating chart controls
+        document.getElementById('curveColor1').addEventListener('input', (e) => {
+            if (pValueChart && pValueChart.data.datasets.length > 0) {
+                pValueChart.data.datasets[0].borderColor = e.target.value;
+                pValueChart.update();
+            }
+        });
+         document.getElementById('areaColor1').addEventListener('input', (e) => {
+            if (pValueChart) {
+                 // Re-render chart to apply new annotation color
+                 const z = parseFloat(testStatisticInput.value);
+                 const testType = testTypeSelect.value;
+                 const alpha = parseFloat(alphaLevelInput.value);
+                 const pValue = calculatePValue(z, testType);
+                 updateChart(z, pValue, testType, alpha, document.getElementById('curveColor1').value, e.target.value);
+            }
+        });
+
+        // Toggle chart controls visibility
+        function toggleControls() {
+            chartControls.classList.toggle('active');
+        }
+
+        // Close controls when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.floating-controls') &&
+                !e.target.closest('.chart-container')) {
+                chartControls.classList.remove('active');
+            }
+        });
+
+
+    </script>
+</body>
+</html>

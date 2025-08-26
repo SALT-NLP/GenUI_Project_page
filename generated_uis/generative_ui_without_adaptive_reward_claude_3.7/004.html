@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding Neural Networks</title>
+    <style>
+        :root {
+            --primary-color: #4a6bff;
+            --secondary-color: #ff6b6b;
+            --accent-color: #6bffb8;
+            --text-color: #333333;
+            --background-color: #ffffff;
+            --light-gray: #f5f7fa;
+            --medium-gray: #e9ecef;
+            --dark-gray: #495057;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--light-gray);
+            padding: 0;
+            margin: 0;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            padding: 2rem 1rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            margin: 1.5rem 0 1rem;
+            color: var(--primary-color);
+        }
+
+        h3 {
+            font-size: 1.4rem;
+            margin: 1.2rem 0 0.8rem;
+            color: var(--dark-gray);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        nav {
+            background-color: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--box-shadow);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+        }
+
+        .nav-link {
+            display: inline-block;
+            padding: 1rem 1.5rem;
+            text-decoration: none;
+            color: var(--dark-gray);
+            font-weight: 500;
+            transition: var(--transition);
+            border-bottom: 3px solid transparent;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--primary-color);
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        section {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--box-shadow);
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        .card-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+            transition: var(--transition);
+            border: 1px solid var(--medium-gray);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .network-diagram {
+            width: 100%;
+            height: 400px;
+            background-color: var(--light-gray);
+            border-radius: var(--border-radius);
+            margin: 2rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        button:hover {
+            background-color: #3a5bef;
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.secondary {
+            background-color: var(--dark-gray);
+        }
+
+        button.secondary:hover {
+            background-color: #3d4349;
+        }
+
+        .glossary-term {
+            font-weight: 600;
+            color: var(--primary-color);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .glossary-term:hover {
+            text-decoration: underline;
+        }
+
+        .glossary-definition {
+            display: none;
+            background-color: var(--light-gray);
+            padding: 1rem;
+            margin-top: 0.5rem;
+            margin-bottom: 1rem;
+            border-radius: var(--border-radius);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .glossary-term.active + .glossary-definition {
+            display: block;
+        }
+
+        .activation-graph {
+            width: 100%;
+            height: 200px;
+            background-color: var(--light-gray);
+            border-radius: var(--border-radius);
+            margin: 1rem 0;
+            position: relative;
+        }
+
+        footer {
+            background-color: var(--dark-gray);
+            color: white;
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .nav-container {
+                flex-wrap: wrap;
+            }
+            
+            .nav-link {
+                padding: 0.8rem 1rem;
+            }
+            
+            .card-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Understanding Neural Networks</h1>
+        <p class="subtitle">A simple, visual guide to how neural networks work</p>
+    </header>
+
+    <nav>
+        <div class="nav-container">
+            <a href="#introduction" class="nav-link active">Introduction</a>
+            <a href="#components" class="nav-link">Components</a>
+            <a href="#how-they-work" class="nav-link">How They Work</a>
+            <a href="#learning" class="nav-link">Learning</a>
+            <a href="#glossary" class="nav-link">Glossary</a>
+        </div>
+    </nav>
+
+    <main>
+        <section id="introduction">
+            <h2>Introduction to Neural Networks</h2>
+            <p>Neural networks are computing systems inspired by the biological neural networks in animal brains. They're the foundation of many modern artificial intelligence systems, from voice assistants to self-driving cars.</p>
+            <p>Think of a neural network as a team of simple workers (neurons) that pass information to each other and collectively solve complex problems that would be difficult for any single worker to solve alone.</p>
+        </section>
+
+        <section id="components">
+            <h2>Key Components</h2>
+            <p>Neural networks consist of several basic building blocks working together:</p>
+            
+            <div class="card-container">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Neurons</h3>
+                    </div>
+                    <div class="card-body">
+                        <p>The basic processing units that receive inputs, apply a transformation, and produce outputs. Just like brain cells, they connect to other neurons to form a network.</p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Layers</h3>
+                    </div>
+                    <div class="card-body">
+                        <p>Neurons are organized into layers: input layer (receives data), hidden layers (process data), and output layer (provides results). More layers allow the network to learn more complex patterns.</p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Weights & Biases</h3>
+                    </div>
+                    <div class="card-body">
+                        <p>Each connection between neurons has a weight that determines its importance. Biases are additional values that help the network make better predictions even when all inputs are zero.</p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Activation Functions</h3>
+                    </div>
+                    <div class="card-body">
+                        <p>Mathematical functions that determine whether a neuron should be activated based on its inputs. They introduce non-linearity, allowing networks to learn complex patterns.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="how-they-work">
+            <h2>How Neural Networks Work</h2>
+            <p>Neural networks process information through a series of transformations:</p>
+            
+            <div class="network-diagram" id="networkDiagram">
+                <!-- Interactive diagram will be rendered here by JavaScript -->
+            </div>
+            
+            <div class="controls">
+                <button id="resetBtn">Reset</button>
+                <button id="forwardBtn">Forward Pass</button>
+                <button id="activateBtn">Activate Input</button>
+                <button id="toggleWeightsBtn">Show/Hide Weights</button>
+            </div>
+            
+            <h3>Forward Propagation</h3>
+            <p>Information flows from the input layer through the hidden layers to the output layer:</p>
+            <ol>
+                <li>Input data enters the network through the input layer</li>
+                <li>Each neuron multiplies incoming values by weights, adds a bias, and applies an activation function</li>
+                <li>The result is passed to the next layer of neurons</li>
+                <li>The process repeats until reaching the output layer, which provides the final result</li>
+            </ol>
+            
+            <h3>Activation Functions</h3>
+            <p>These functions determine when neurons "fire" based on their inputs:</p>
+            
+            <div class="activation-graph" id="activationGraph">
+                <!-- Graph will be rendered here by JavaScript -->
+            </div>
+            
+            <div class="controls">
+                <button id="reluBtn" class="secondary">ReLU</button>
+                <button id="sigmoidBtn" class="secondary">Sigmoid</button>
+                <button id="tanhBtn" class="secondary">Tanh</button>
+            </div>
+        </section>
+
+        <section id="learning">
+            <h2>How Neural Networks Learn</h2>
+            <p>Neural networks learn by adjusting their weights and biases through a process called backpropagation:</p>
+            
+            <ol>
+                <li><strong>Training data</strong>: The network is shown examples with known answers</li>
+                <li><strong>Prediction</strong>: For each example, the network makes a prediction</li>
+                <li><strong>Error calculation</strong>: The difference between the prediction and the correct answer is calculated</li>
+                <li><strong>Backpropagation</strong>: The error is propagated backward through the network</li>
+                <li><strong>Weight adjustment</strong>: Weights and biases are adjusted to reduce the error</li>
+                <li><strong>Repeat</strong>: The process continues with more examples until the network makes accurate predictions</li>
+            </ol>
+            
+            <p>This is similar to learning a new skill through practice and feedback - the network improves by learning from its mistakes!</p>
+        </section>
+
+        <section id="glossary">
+            <h2>Glossary of Terms</h2>
+            
+            <div class="glossary-term">Neural Network</div>
+            <div class="glossary-definition">A computing system inspired by biological neural networks that can learn to perform tasks by analyzing examples, without being explicitly programmed for the task.</div>
+            
+            <div class="glossary-term">Neuron</div>
+            <div class="glossary-definition">The basic computational unit of a neural network that receives inputs, applies a transformation, and produces an output.</div>
+            
+            <div class="glossary-term">Weight</div>
+            <div class="glossary-definition">A parameter that determines the strength of the connection between neurons. Larger weights indicate stronger connections.</div>
+            
+            <div class="glossary-term">Bias</div>
+            <div class="glossary-definition">An additional parameter that allows the activation function to be shifted, helping the network make better predictions even when all inputs are zero.</div>
+            
+            <div class="glossary-term">Activation Function</div>
+            <div class="glossary-definition">A mathematical function that determines the output of a neuron based on its inputs, introducing non-linearity to the network.</div>
+            
+            <div class="glossary-term">Backpropagation</div>
+            <div class="glossary-definition">The primary algorithm for training neural networks, which calculates the gradient of the error function with respect to the weights and adjusts them to minimize error.</div>
+            
+            <div class="glossary-term">Epoch</div>
+            <div class="glossary-definition">One complete pass through the entire training dataset during the learning process.</div>
+            
+            <div class="glossary-term">Gradient Descent</div>
+            <div class="glossary-definition">An optimization algorithm used to minimize the error by iteratively moving in the direction of steepest descent.</div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2023 Neural Networks Simplified. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Navigation active state
+        const navLinks = document.querySelectorAll('.nav-link');
+        const sections = document.querySelectorAll('section');
+        
+        window.addEventListener('scroll', () => {
+            let current = '';
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                
+                if (pageYOffset >= sectionTop - 200) {
+                    current = section.getAttribute('id');
+                }
+            });
+            
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href').slice(1) === current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+        
+        // Smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                
+                window.scrollTo({
+                    top: targetElement.offsetTop - 70,
+                    behavior: 'smooth'
+                });
+                
+                // Update active state
+                navLinks.forEach(link => link.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+        
+        // Glossary terms toggle
+        const glossaryTerms = document.querySelectorAll('.glossary-term');
+        
+        glossaryTerms.forEach(term => {
+            term.addEventListener('click', () => {
+                term.classList.toggle('active');
+            });
+        });
+        
+        // Neural Network Diagram
+        class NeuralNetworkDiagram {
+            constructor(containerId) {
+                this.container = document.getElementById(containerId);
+                this.canvas = document.createElement('canvas');
+                this.canvas.width = this.container.clientWidth;
+                this.canvas.height = this.container.clientHeight;
+                this.container.appendChild(this.canvas);
+                this.ctx = this.canvas.getContext('2d');
+                
+                this.layers = [
+                    { name: 'Input', neurons: 4 },
+                    { name: 'Hidden 1', neurons: 6 },
+                    { name: 'Hidden 2', neurons: 5 },
+                    { name: 'Output', neurons: 3 }
+                ];
+                
+                this.neuronRadius = 15;
+                this.neuronSpacing = 50;
+                this.layerSpacing = this.canvas.width / (this.layers.length + 1);
+                this.neuronPositions = [];
+                this.activeNeurons = [];
+                this.activeConnections = [];
+                this.showWeights = false;
+                
+                this.weights = this.generateRandomWeights();
+                
+                window.addEventListener('resize', () => this.handleResize());
+                this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+                
+                this.initializePositions();
+                this.render();
+            }
+            
+            handleResize() {
+                this.canvas.width = this.container.clientWidth;
+                this.canvas.height = this.container.clientHeight;
+                this.layerSpacing = this.canvas.width / (this.layers.length + 1);
+                this.initializePositions();
+                this.render();
+            }
+            
+            handleMouseMove(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                
+                let tooltipShown = false;
+                
+                // Check if mouse is over any neuron
+                for (let layerIndex = 0; layerIndex < this.neuronPositions.length; layerIndex++) {
+                    for (let neuronIndex = 0; neuronIndex < this.neuronPositions[layerIndex].length; neuronIndex++) {
+                        const neuron = this.neuronPositions[layerIndex][neuronIndex];
+                        const distance = Math.sqrt(Math.pow(mouseX - neuron.x, 2) + Math.pow(mouseY - neuron.y, 2));
+                        
+                        if (distance <= this.neuronRadius) {
+                            this.showTooltip(mouseX, mouseY, `Layer: ${this.layers[layerIndex].name}, Neuron: ${neuronIndex + 1}`);
+                            tooltipShown = true;
+                            break;
+                        }
+                    }
+                    if (tooltipShown) break;
+                }
+                
+                if (!tooltipShown) {
+                    this.hideTooltip();
+                }
+            }
+            
+            showTooltip(x, y, text) {
+                let tooltip = document.getElementById('nn-tooltip');
+                if (!tooltip) {
+                    tooltip = document.createElement('div');
+                    tooltip.id = 'nn-tooltip';
+                    tooltip.style.position = 'absolute';
+                    tooltip.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+                    tooltip.style.color = 'white';
+                    tooltip.style.padding = '5px 10px';
+                    tooltip.style.borderRadius = '4px';
+                    tooltip.style.fontSize = '12px';
+                    tooltip.style.pointerEvents = 'none';
+                    tooltip.style.zIndex = '1000';
+                    document.body.appendChild(tooltip);
+                }
+                
+                tooltip.textContent = text;
+                tooltip.style.left = `${x + this.container.getBoundingClientRect().left}px`;
+                tooltip.style.top = `${y + this.container.getBoundingClientRect().top - 30}px`;
+                tooltip.style.display = 'block';
+            }
+            
+            hideTooltip() {
+                const tooltip = document.getElementById('nn-tooltip');
+                if (tooltip) {
+                    tooltip.style.display = 'none';
+                }
+            }
+            
+            initializePositions() {
+                this.neuronPositions = [];
+                
+                for (let layerIndex = 0; layerIndex < this.layers.length; layerIndex++) {
+                    const layer = this.layers[layerIndex];
+                    const positions = [];
+                    
+                    const layerHeight = (layer.neurons - 1) * this.neuronSpacing;
+                    const startY = (this.canvas.height - layerHeight) / 2;
+                    
+                    for (let neuronIndex = 0; neuronIndex < layer.neurons; neuronIndex++) {
+                        positions.push({
+                            x: (layerIndex + 1) * this.layerSpacing,
+                            y: startY + neuronIndex * this.neuronSpacing
+                        });
+                    }
+                    
+                    this.neuronPositions.push(positions);
+                }
+            }
+            
+            generateRandomWeights() {
+                const weights = [];
+                
+                for (let layerIndex = 0; layerIndex < this.layers.length - 1; layerIndex++) {
+                    const layerWeights = [];
+                    
+                    for (let fromNeuron = 0; fromNeuron < this.layers[layerIndex].neurons; fromNeuron++) {
+                        const neuronWeights = [];
+                        
+                        for (let toNeuron = 0; toNeuron < this.layers[layerIndex + 1].neurons; toNeuron++) {
+                            neuronWeights.push((Math.random() * 2 - 1).toFixed(2));
+                        }
+                        
+                        layerWeights.push(neuronWeights);
+                    }
+                    
+                    weights.push(layerWeights);
+                }
+                
+                return weights;
+            }
+            
+            reset() {
+                this.activeNeurons = [];
+                this.activeConnections = [];
+                this.render();
+            }
+            
+            activateInput() {
+                this.reset();
+                // Activate random input neurons
+                const inputLayer = [];
+                for (let i = 0; i < this.layers[0].neurons; i++) {
+                    inputLayer.push(Math.random() > 0.5);
+                }
+                this.activeNeurons.push(inputLayer);
+                this.render();
+            }
+            
+            forwardPass() {
+                if (this.activeNeurons.length === 0) {
+                    this.activateInput();
+                    return;
+                }
+                
+                if (this.activeNeurons.length >= this.layers.length) {
+                    return; // Already completed forward pass
+                }
+                
+                const currentLayerIndex = this.activeNeurons.length - 1;
+                const nextLayerIndex = currentLayerIndex + 1;
+                
+                // Calculate activations for the next layer
+                const nextLayer = [];
+                const connections = [];
+                
+                for (let toNeuron = 0; toNeuron < this.layers[nextLayerIndex].neurons; toNeuron++) {
+                    let activation = false;
+                    
+                    // Check connections from previous layer
+                    for (let fromNeuron = 0; fromNeuron < this.layers[currentLayerIndex].neurons; fromNeuron++) {
+                        if (this.activeNeurons[currentLayerIndex][fromNeuron]) {
+                            // This connection is active
+                            connections.push({
+                                from: { layer: currentLayerIndex, neuron: fromNeuron },
+                                to: { layer: nextLayerIndex, neuron: toNeuron },
+                                weight: this.weights[currentLayerIndex][fromNeuron][toNeuron]
+                            });
+                            
+                            // Simplified activation: any active input activates the neuron
+                            activation = true;
+                        }
+                    }
+                    
+                    nextLayer.push(activation);
+                }
+                
+                this.activeNeurons.push(nextLayer);
+                this.activeConnections.push(connections);
+                
+                this.render();
+            }
+            
+            toggleWeights() {
+                this.showWeights = !this.showWeights;
+                this.render();
+            }
+            
+            render() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw connections
+                for (let layerIndex = 0; layerIndex < this.layers.length - 1; layerIndex++) {
+                    const fromLayer = this.neuronPositions[layerIndex];
+                    const toLayer = this.neuronPositions[layerIndex + 1];
+                    
+                    for (let fromNeuron = 0; fromNeuron < fromLayer.length; fromNeuron++) {
+                        for (let toNeuron = 0; toNeuron < toLayer.length; toNeuron++) {
+                            // Check if this connection is active
+                            let isActive = false;
+                            let weight = null;
+                            
+                            if (layerIndex < this.activeConnections.length) {
+                                const connections = this.activeConnections[layerIndex];
+                                for (const conn of connections) {
+                                    if (conn.from.neuron === fromNeuron && conn.to.neuron === toNeuron) {
+                                        isActive = true;
+                                        weight = conn.weight;
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            // Draw connection
+                            this.ctx.beginPath();
+                            this.ctx.moveTo(fromLayer[fromNeuron].x, fromLayer[fromNeuron].y);
+                            this.ctx.lineTo(toLayer[toNeuron].x, toLayer[toNeuron].y);
+                            
+                            if (isActive) {
+                                this.ctx.strokeStyle = '#ff6b6b';
+                                this.ctx.lineWidth = 2;
+                            } else {
+                                this.ctx.strokeStyle = '#e9ecef';
+                                this.ctx.lineWidth = 1;
+                            }
+                            
+                            this.ctx.stroke();
+                            
+                            // Draw weight if enabled
+                            if (this.showWeights) {
+                                const midX = (fromLayer[fromNeuron].x + toLayer[toNeuron].x) / 2;
+                                const midY = (fromLayer[fromNeuron].y + toLayer[toNeuron].y) / 2;
+                                
+                                this.ctx.fillStyle = isActive ? '#ff6b6b' : '#495057';
+                                this.ctx.font = '10px Arial';
+                                this.ctx.textAlign = 'center';
+                                this.ctx.textBaseline = 'middle';
+                                this.ctx.fillText(this.weights[layerIndex][fromNeuron][toNeuron], midX, midY);
+                            }
+                        }
+                    }
+                }
+                
+                // Draw neurons
+                for (let layerIndex = 0; layerIndex < this.layers.length; layerIndex++) {
+                    const layer = this.neuronPositions[layerIndex];
+                    
+                    // Draw layer label
+                    this.ctx.fillStyle = '#495057';
+                    this.ctx.font = '14px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText(this.layers[layerIndex].name, layer[0].x, 20);
+                    
+                    for (let neuronIndex = 0; neuronIndex < layer.length; neuronIndex++) {
+                        const neuron = layer[neuronIndex];
+                        
+                        // Check if this neuron is active
+                        let isActive = false;
+                        if (layerIndex < this.activeNeurons.length) {
+                            isActive = this.activeNeurons[layerIndex][neuronIndex];
+                        }
+                        
+                        // Draw neuron
+                        this.ctx.beginPath();
+                        this.ctx.arc(neuron.x, neuron.y, this.neuronRadius, 0, Math.PI * 2);
+                        
+                        if (isActive) {
+                            this.ctx.fillStyle = '#4a6bff';
+                        } else {
+                            this.ctx.fillStyle = 'white';
+                        }
+                        
+                        this.ctx.fill();
+                        this.ctx.strokeStyle = '#495057';
+                        this.ctx.lineWidth = 1;
+                        this.ctx.stroke();
+                        
+                        // Draw neuron label
+                        this.ctx.fillStyle = isActive ? 'white' : '#495057';
+                        this.ctx.font = '12px Arial';
+                        this.ctx.textAlign = 'center';
+                        this.ctx.textBaseline = 'middle';
+                        this.ctx.fillText(neuronIndex + 1, neuron.x, neuron.y);
+                    }
+                }
+            }
+        }
+        
+        // Activation Function Graph
+        class ActivationFunctionGraph {
+            constructor(containerId) {
+                this.container = document.getElementById(containerId);
+                this.canvas = document.createElement('canvas');
+                this.canvas.width = this.container.clientWidth;
+                this.canvas.height = this.container.clientHeight;
+                this.container.appendChild(this.canvas);
+                this.ctx = this.canvas.getContext('2d');
+                
+                this.padding = 30;
+                this.xMin = -5;
+                this.xMax = 5;
+                this.yMin = -1.5;
+                this.yMax = 1.5;
+                
+                this.currentFunction = 'relu';
+                
+                window.addEventListener('resize', () => this.handleResize());
+                
+                this.render();
+            }
+            
+            handleResize() {
+                this.canvas.width = this.container.clientWidth;
+                this.canvas.height = this.container.clientHeight;
+                this.render();
+            }
+            
+            setFunction(name) {
+                this.currentFunction = name;
+                this.render();
+            }
+            
+            mapX(x) {
+                return this.padding + (x - this.xMin) / (this.xMax - this.xMin) * (this.canvas.width - 2 * this.padding);
+            }
+            
+            mapY(y) {
+                return this.canvas.height - (this.padding + (y - this.yMin) / (this.yMax - this.yMin) * (this.canvas.height - 2 * this.padding));
+            }
+            
+            calculateFunction(x) {
+                switch (this.currentFunction) {
+                    case 'relu':
+                        return Math.max(0, x);
+                    case 'sigmoid':
+                        return 1 / (1 + Math.exp(-x));
+                    case 'tanh':
+                        return Math.tanh(x);
+                    default:
+                        return 0;
+                }
+            }
+            
+            render() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw axes
+                this.ctx.beginPath();
+                this.ctx.strokeStyle = '#495057';
+                this.ctx.lineWidth = 1;
+                
+                // X-axis
+                this.ctx.moveTo(this.mapX(this.xMin), this.mapY(0));
+                this.ctx.lineTo(this.mapX(this.xMax), this.mapY(0));
+                
+                // Y-axis
+                this.ctx.moveTo(this.mapX(0), this.mapY(this.yMin));
+                this.ctx.lineTo(this.mapX(0), this.mapY(this.yMax));
+                
+                this.ctx.stroke();
+                
+                // Draw axis labels
+                this.ctx.fillStyle = '#495057';
+                this.ctx.font = '12px Arial';
+                this.ctx.textAlign = 'center';
+                
+                // X-axis labels
+                for (let x = this.xMin; x <= this.xMax; x++) {
+                    if (x !== 0) {
+                        this.ctx.fillText(x.toString(), this.mapX(x), this.mapY(0) + 15);
+                        
+                        // Tick mark
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(this.mapX(x), this.mapY(0) - 3);
+                        this.ctx.lineTo(this.mapX(x), this.mapY(0) + 3);
+                        this.ctx.stroke();
+                    }
+                }
+                
+                // Y-axis labels
+                this.ctx.textAlign = 'right';
+                for (let y = this.yMin; y <= this.yMax; y++) {
+                    if (y !== 0) {
+                        this.ctx.fillText(y.toString(), this.mapX(0) - 5, this.mapY(y));
+                        
+                        // Tick mark
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(this.mapX(0) - 3, this.mapY(y));
+                        this.ctx.lineTo(this.mapX(0) + 3, this.mapY(y));
+                        this.ctx.stroke();
+                    }
+                }
+                
+                // Draw function
+                this.ctx.beginPath();
+                this.ctx.strokeStyle = '#4a6bff';
+                this.ctx.lineWidth = 2;
+                
+                const step = (this.xMax - this.xMin) / 100;
+                let first = true;
+                
+                for (let x = this.xMin; x <= this.xMax; x += step) {
+                    const y = this.calculateFunction(x);
+                    
+                    if (first) {
+                        this.ctx.moveTo(this.mapX(x), this.mapY(y));
+                        first = false;
+                    } else {
+                        this.ctx.lineTo(this.mapX(x), this.mapY(y));
+                    }
+                }
+                
+                this.ctx.stroke();
+                
+                // Draw function name
+                this.ctx.fillStyle = '#4a6bff';
+                this.ctx.font = 'bold 14px Arial';
+                this.ctx.textAlign = 'center';
+                
+                let functionName = '';
+                switch (this.currentFunction) {
+                    case 'relu':
+                        functionName = 'ReLU: f(x) = max(0, x)';
+                        break;
+                    case 'sigmoid':
+                        functionName = 'Sigmoid: f(x) = 1 / (1 + e^-x)';
+                        break;
+                    case 'tanh':
+                        functionName = 'Tanh: f(x) = tanh(x)';
+                        break;
+                }
+                
+                this.ctx.fillText(functionName, this.canvas.width / 2, 20);
+            }
+        }
+        
+        // Initialize Neural Network Diagram
+        const networkDiagram = new NeuralNetworkDiagram('networkDiagram');
+        
+        // Initialize Activation Function Graph
+        const activationGraph = new ActivationFunctionGraph('activationGraph');
+        
+        // Button event listeners
+        document.getElementById('resetBtn').addEventListener('click', () => networkDiagram.reset());
+        document.getElementById('forwardBtn').addEventListener('click', () => networkDiagram.forwardPass());
+        document.getElementById('activateBtn').addEventListener('click', () => networkDiagram.activateInput());
+        document.getElementById('toggleWeightsBtn').addEventListener('click', () => networkDiagram.toggleWeights());
+        
+        document.getElementById('reluBtn').addEventListener('click', () => activationGraph.setFunction('relu'));
+        document.getElementById('sigmoidBtn').addEventListener('click', () => activationGraph.setFunction('sigmoid'));
+        document.getElementById('tanhBtn').addEventListener('click', () => activationGraph.setFunction('tanh'));
+    </script>
+</body>
+</html>

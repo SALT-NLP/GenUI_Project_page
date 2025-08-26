@@ -1,0 +1,2981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build Your Recommendation System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --primary-light: #e6eaff;
+            --secondary-color: #3a0ca3;
+            --accent-color: #f72585;
+            --success-color: #4cc9f0;
+            --warning-color: #f8961e;
+            --danger-color: #ef476f;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-400: #ced4da;
+            --gray-500: #adb5bd;
+            --gray-600: #6c757d;
+            --gray-700: #495057;
+            --gray-800: #343a40;
+            --gray-900: #212529;
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+            --border-radius-sm: 4px;
+            --border-radius-md: 8px;
+            --border-radius-lg: 12px;
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+            --spacing-xxl: 48px;
+            --transition-fast: 0.2s;
+            --transition-medium: 0.3s;
+            --transition-slow: 0.5s;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--gray-800);
+            background-color: var(--gray-100);
+            padding: var(--spacing-md);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--spacing-lg);
+            background-color: white;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-md);
+        }
+
+        header {
+            margin-bottom: var(--spacing-xl);
+            text-align: center;
+            position: relative;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: var(--spacing-md);
+            color: var(--secondary-color);
+            position: relative;
+            display: inline-block;
+        }
+
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background-color: var(--accent-color);
+            border-radius: 2px;
+        }
+
+        p.subtitle {
+            font-size: 1.2rem;
+            color: var(--gray-600);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .steps-container {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .steps-progress {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 220px;
+            padding-right: var(--spacing-lg);
+            position: sticky;
+            top: var(--spacing-xl);
+        }
+
+        .step-item {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+            border-radius: var(--border-radius-md);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .step-item:hover {
+            background-color: var(--gray-200);
+            transform: translateX(3px);
+        }
+
+        .step-item.active {
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+            font-weight: 600;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .step-item.completed {
+            color: var(--success-color);
+        }
+
+        .step-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background-color: transparent;
+            transition: background-color var(--transition-fast);
+        }
+
+        .step-item.active::before {
+            background-color: var(--primary-color);
+        }
+
+        .step-item.completed::before {
+            background-color: var(--success-color);
+        }
+
+        .step-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: var(--gray-300);
+            color: var(--gray-700);
+            margin-right: var(--spacing-md);
+            font-weight: 600;
+            transition: all var(--transition-fast);
+        }
+
+        .step-item.active .step-number {
+            background-color: var(--primary-color);
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.2);
+        }
+
+        .step-item.completed .step-number {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .step-content {
+            flex: 1;
+            min-height: 500px;
+        }
+
+        .step-pane {
+            display: none;
+            animation: fadeIn var(--transition-medium);
+        }
+
+        .step-pane.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background-color: white;
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+            transition: box-shadow var(--transition-fast);
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+            padding-bottom: var(--spacing-md);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .card-description {
+            margin-bottom: var(--spacing-lg);
+            color: var(--gray-700);
+        }
+
+        .upload-area {
+            border: 2px dashed var(--gray-400);
+            border-radius: var(--border-radius-md);
+            padding: var(--spacing-xl);
+            text-align: center;
+            margin-bottom: var(--spacing-lg);
+            transition: all var(--transition-medium);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--primary-color);
+            background-color: var(--primary-light);
+            transform: translateY(-3px);
+        }
+
+        .upload-icon {
+            font-size: 2.5rem;
+            color: var(--gray-500);
+            margin-bottom: var(--spacing-md);
+            transition: transform var(--transition-medium);
+        }
+
+        .upload-area:hover .upload-icon {
+            color: var(--primary-color);
+            transform: scale(1.1);
+        }
+
+        .upload-text {
+            margin-bottom: var(--spacing-md);
+            color: var(--gray-700);
+            font-weight: 500;
+        }
+
+        .upload-format {
+            font-size: 0.9rem;
+            color: var(--gray-600);
+            background-color: var(--gray-100);
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: var(--border-radius-sm);
+        }
+
+        .data-preview {
+            margin-top: var(--spacing-xl);
+            overflow: auto;
+            max-height: 300px;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--border-radius-md);
+            transition: all var(--transition-fast);
+        }
+
+        .data-preview:hover {
+            border-color: var(--primary-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: var(--spacing-md);
+            text-align: left;
+            border-bottom: 1px solid var(--gray-300);
+        }
+
+        th {
+            background-color: var(--gray-200);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        tr:nth-child(even) {
+            background-color: var(--gray-100);
+        }
+
+        tr:hover {
+            background-color: var(--primary-light);
+        }
+
+        .chart-container {
+            height: 400px;
+            margin: var(--spacing-lg) 0;
+            position: relative;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--border-radius-md);
+            padding: var(--spacing-md);
+            background-color: white;
+            transition: all var(--transition-fast);
+        }
+
+        .chart-container:hover {
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary-color);
+        }
+
+        .algorithm-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .algorithm-card {
+            border: 1px solid var(--gray-300);
+            border-radius: var(--border-radius-md);
+            padding: var(--spacing-lg);
+            cursor: pointer;
+            transition: all var(--transition-medium);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .algorithm-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background-color: transparent;
+            transition: background-color var(--transition-fast);
+        }
+
+        .algorithm-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary-color);
+        }
+
+        .algorithm-card:hover::before {
+            background-color: var(--primary-color);
+        }
+
+        .algorithm-card.selected {
+            border-color: var(--primary-color);
+            background-color: var(--primary-light);
+            box-shadow: var(--shadow-md);
+        }
+
+        .algorithm-card.selected::before {
+            background-color: var(--primary-color);
+        }
+
+        .algorithm-title {
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+            color: var(--gray-800);
+            display: flex;
+            align-items: center;
+        }
+
+        .algorithm-card.selected .algorithm-title {
+            color: var(--primary-color);
+        }
+
+        .algorithm-description {
+            font-size: 0.9rem;
+            color: var(--gray-600);
+            line-height: 1.5;
+        }
+
+        .config-form {
+            margin-top: var(--spacing-xl);
+            padding: var(--spacing-lg);
+            background-color: var(--gray-100);
+            border-radius: var(--border-radius-md);
+            border: 1px solid var(--gray-200);
+        }
+
+        .form-group {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        label {
+            display: block;
+            margin-bottom: var(--spacing-sm);
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: var(--spacing-md);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--border-radius-md);
+            font-size: 1rem;
+            transition: all var(--transition-fast);
+            background-color: white;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .slider {
+            flex: 1;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--gray-300);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.2);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            border: none;
+        }
+
+        .slider::-moz-range-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.2);
+        }
+
+        .slider-value {
+            width: 60px;
+            text-align: center;
+            font-weight: 600;
+            color: var(--primary-color);
+            background-color: var(--primary-light);
+            padding: 4px 8px;
+            border-radius: var(--border-radius-sm);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--spacing-md) var(--spacing-lg);
+            border: none;
+            border-radius: var(--border-radius-md);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-medium);
+            text-align: center;
+            gap: var(--spacing-sm);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary:focus {
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.3);
+            outline: none;
+        }
+
+        .btn-secondary {
+            background-color: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--gray-300);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-secondary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary:focus {
+            box-shadow: 0 0 0 3px rgba(222, 226, 230, 0.5);
+            outline: none;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-xl);
+        }
+
+        .recommendation-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: var(--spacing-lg);
+        }
+
+        .recommendation-card {
+            border: 1px solid var(--gray-300);
+            border-radius: var(--border-radius-md);
+            padding: var(--spacing-lg);
+            transition: all var(--transition-medium);
+            background-color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .recommendation-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary-color);
+        }
+
+        .recommendation-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background-color: var(--primary-color);
+            opacity: 0;
+            transition: opacity var(--transition-fast);
+        }
+
+        .recommendation-card:hover::before {
+            opacity: 1;
+        }
+
+        .recommendation-title {
+            font-weight: 600;
+            margin-bottom: var(--spacing-xs);
+            color: var(--gray-800);
+        }
+
+        .recommendation-score {
+            display: inline-block;
+            padding: var(--spacing-xs) var(--spacing-sm);
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+            border-radius: var(--border-radius-sm);
+            font-weight: 500;
+            font-size: 0.9rem;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .recommendation-reason {
+            font-size: 0.9rem;
+            color: var(--gray-600);
+            line-height: 1.5;
+            margin-top: var(--spacing-sm);
+            padding-top: var(--spacing-sm);
+            border-top: 1px dashed var(--gray-300);
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background-color: var(--gray-200);
+            border-radius: 4px;
+            margin: var(--spacing-lg) 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 0%;
+            transition: width var(--transition-slow);
+            position: relative;
+        }
+
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+                90deg,
+                transparent 0%,
+                rgba(255, 255, 255, 0.2) 50%,
+                transparent 100%
+            );
+            animation: shimmer 1.5s infinite;
+            background-size: 200% 100%;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .help-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: var(--gray-200);
+            color: var(--gray-700);
+            font-size: 14px;
+            margin-left: var(--spacing-sm);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .help-icon:hover {
+            background-color: var(--primary-color);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 250px;
+            background-color: var(--gray-800);
+            color: white;
+            text-align: center;
+            border-radius: var(--border-radius-sm);
+            padding: var(--spacing-sm) var(--spacing-md);
+            position: absolute;
+            z-index: 100;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: all var(--transition-medium);
+            font-size: 0.9rem;
+            box-shadow: var(--shadow-md);
+            pointer-events: none;
+        }
+
+        .tooltip .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--gray-800) transparent transparent transparent;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(-5px);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity var(--transition-medium);
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid var(--primary-light);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .loading-text {
+            color: var(--primary-color);
+            font-weight: 500;
+            margin-top: var(--spacing-md);
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .floating-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: var(--border-radius-md);
+            box-shadow: var(--shadow-md);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all var(--transition-medium);
+            pointer-events: none;
+            z-index: 100;
+            min-width: 200px;
+        }
+
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .control-group {
+            margin: 10px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            flex-direction: column;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: var(--spacing-sm);
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+        }
+
+        .badge.basic {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .badge.advanced {
+            background-color: var(--warning-color);
+            color: white;
+        }
+
+        .badge.expert {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .info-box {
+            background-color: var(--primary-light);
+            border-left: 4px solid var(--primary-color);
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius-sm);
+            margin: var(--spacing-md) 0;
+            font-size: 0.9rem;
+            color: var(--gray-700);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+
+        @media (max-width: 768px) {
+            .steps-container {
+                flex-direction: column;
+            }
+
+            .steps-progress {
+                width: 100%;
+                margin-bottom: var(--spacing-lg);
+                position: static;
+                flex-direction: row;
+                overflow-x: auto;
+                padding-bottom: var(--spacing-md);
+            }
+
+            .step-item {
+                width: auto;
+                flex-shrink: 0;
+            }
+
+            .algorithm-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .recommendation-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .help-icon {
+                margin-left: 0;
+                margin-top: var(--spacing-xs);
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .algorithm-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .recommendation-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Focus styles for keyboard navigation */
+        .btn:focus-visible,
+        .step-item:focus-visible,
+        .algorithm-card:focus-visible,
+        input:focus-visible,
+        select:focus-visible {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --primary-light: rgba(67, 97, 238, 0.2);
+                --gray-100: #1e1e1e;
+                --gray-200: #2d2d2d;
+                --gray-300: #3a3a3a;
+                --gray-400: #4a4a4a;
+                --gray-700: #b0b0b0;
+                --gray-800: #d0d0d0;
+            }
+
+            body {
+                background-color: #121212;
+            }
+
+            .container {
+                background-color: #1a1a1a;
+            }
+
+            .card {
+                background-color: #1a1a1a;
+            }
+
+            input[type="text"],
+            input[type="number"],
+            select {
+                background-color: #2a2a2a;
+                color: #d0d0d0;
+            }
+
+            .chart-container,
+            .recommendation-card {
+                background-color: #1a1a1a;
+            }
+
+            tr:nth-child(even) {
+                background-color: #222;
+            }
+
+            tr:hover {
+                background-color: var(--primary-light);
+            }
+
+            .loading-overlay {
+                background-color: rgba(26, 26, 26, 0.9);
+            }
+
+            .floating-controls {
+                background-color: #2a2a2a;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Build Your Recommendation System</h1>
+            <p class="subtitle">Learn how to create, configure, and understand recommendation systems through this interactive guide. Follow the steps below to build your own basic recommendation engine.</p>
+        </header>
+
+        <div class="steps-container">
+            <div class="steps-progress">
+                <div class="step-item active" data-step="1" tabindex="0" role="button">
+                    <div class="step-number">1</div>
+                    <div class="step-label">Upload Data</div>
+                </div>
+                <div class="step-item" data-step="2" tabindex="0" role="button">
+                    <div class="step-number">2</div>
+                    <div class="step-label">Explore Data</div>
+                </div>
+                <div class="step-item" data-step="3" tabindex="0" role="button">
+                    <div class="step-number">3</div>
+                    <div class="step-label">Select Algorithm</div>
+                </div>
+                <div class="step-item" data-step="4" tabindex="0" role="button">
+                    <div class="step-number">4</div>
+                    <div class="step-label">Generate Recommendations</div>
+                </div>
+            </div>
+            
+            <div class="step-content">
+                <!-- Step 1: Data Input -->
+                <div class="step-pane active" id="step1" aria-labelledby="step1-heading" role="tabpanel">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title" id="step1-heading">Upload Your Data</h2>
+                            <div class="tooltip">
+                                <div class="help-icon" aria-label="Help information" role="button" tabindex="0">?</div>
+                                <span class="tooltip-text">Upload a CSV file with user-item interactions. The file should contain at least user IDs, item IDs, and ratings. This data will be used to train the recommendation model.</span>
+                            </div>
+                        </div>
+                        <p class="card-description">Start by uploading your dataset. We'll use this data to train the recommendation algorithm and generate personalized recommendations.</p>
+                        
+                        <div class="info-box">
+                            <strong>What is a recommendation system?</strong> A recommendation system analyzes user preferences and behavior to suggest items they might like. Common applications include product recommendations, movie suggestions, and music playlists.
+                        </div>
+                        
+                        <div class="upload-area" id="uploadArea" tabindex="0" role="button" aria-label="Upload file area. Click or drag and drop files here.">
+                            <div class="upload-icon">📁</div>
+                            <p class="upload-text">Drag and drop your file here or click to browse</p>
+                            <p class="upload-format">Supported formats: <span class="badge">CSV</span> <span class="badge">JSON</span></p>
+                            <input type="file" id="fileInput" style="display: none;" accept=".csv, .json" aria-label="File upload input">
+                        </div>
+                        
+                        <div id="dataPreview" class="data-preview" style="display: none;" aria-live="polite">
+                            <h3 style="margin: var(--spacing-md);">Data Preview</h3>
+                            <table id="previewTable" aria-label="Data preview table"></table>
+                        </div>
+                        
+                        <div class="btn-group">
+                            <button class="btn btn-secondary" id="useExampleData" aria-label="Use example data">
+                                <span>Use Example Data</span>
+                            </button>
+                            <button class="btn btn-primary" id="nextBtn1" disabled aria-label="Next: Explore Data">
+                                <span>Next: Explore Data</span>
+                                <span style="font-size: 1.2em;">→</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Step 2: Data Exploration -->
+                <div class="step-pane" id="step2" aria-labelledby="step2-heading" role="tabpanel">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title" id="step2-heading">Explore Your Data</h2>
+                            <div class="tooltip">
+                                <div class="help-icon" aria-label="Help information" role="button" tabindex="0">?</div>
+                                <span class="tooltip-text">Explore the distribution and patterns in your data before building a recommendation model. Understanding your data is crucial for selecting the right algorithm.</span>
+                            </div>
+                        </div>
+                        <p class="card-description">Understanding your data is crucial for building effective recommendation systems. Let's visualize some key aspects of your dataset.</p>
+                        
+                        <div class="info-box">
+                            <strong>Why explore data?</strong> Data exploration helps identify patterns, biases, and characteristics that influence recommendation quality. It guides algorithm selection and parameter tuning.
+                        </div>
+                        
+                        <div class="chart-container" aria-label="Item popularity chart">
+                            <canvas id="itemPopularityChart"></canvas>
+                            <div class="floating-controls" id="controls1">
+                                <div class="control-group">
+                                    <label for="chartType1">Chart Type</label>
+                                    <select id="chartType1" aria-label="Change chart type">
+                                        <option value="bar">Bar Chart</option>
+                                        <option value="line">Line Chart</option>
+                                        <option value="pie">Pie Chart</option>
+                                        <option value="polarArea">Polar Area</option>
+                                    </select>
+                                </div>
+                                <div class="control-group">
+                                    <label for="chartColor1">Color Theme</label>
+                                    <input type="color" id="chartColor1" value="#4361ee" aria-label="Change chart color">
+                                </div>
+                                <div class="control-group">
+                                    <label for="itemCount1">Number of Items: <span id="itemCountValue">10</span></label>
+                                    <input type="range" id="itemCount1" class="slider" min="5" max="20" value="10" aria-label="Change number of items displayed">
+                                </div>
+                                <div class="control-group">
+                                    <label for="sortBy1">Sort By</label>
+                                    <select id="sortBy1" aria-label="Change sort order">
+                                        <option value="desc">Highest First</option>
+                                        <option value="asc">Lowest First</option>
+                                        <option value="alphabetical">Alphabetical</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-container" aria-label="User activity chart">
+                            <canvas id="userActivityChart"></canvas>
+                            <div class="floating-controls" id="controls2">
+                                <div class="control-group">
+                                    <label for="chartType2">Chart Type</label>
+                                    <select id="chartType2" aria-label="Change chart type">
+                                        <option value="bar">Bar Chart</option>
+                                        <option value="line">Line Chart</option>
+                                        <option value="radar">Radar Chart</option>
+                                        <option value="doughnut">Doughnut Chart</option>
+                                    </select>
+                                </div>
+                                <div class="control-group">
+                                    <label for="chartColor2">Color Theme</label>
+                                    <input type="color" id="chartColor2" value="#f72585" aria-label="Change chart color">
+                                </div>
+                                <div class="control-group">
+                                    <label for="groupBy">Group By</label>
+                                    <select id="groupBy" aria-label="Change grouping metric">
+                                        <option value="count">Rating Count</option>
+                                        <option value="average">Average Rating</option>
+                                        <option value="max">Highest Rating</option>
+                                        <option value="min">Lowest Rating</option>
+                                    </select>
+                                </div>
+                                <div class="control-group">
+                                    <label for="userCount">Number of Users: <span id="userCountValue">10</span></label>
+                                    <input type="range" id="userCount" class="slider" min="5" max="20" value="10" aria-label="Change number of users displayed">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-container" aria-label="Rating distribution chart">
+                            <canvas id="ratingDistributionChart"></canvas>
+                            <div class="floating-controls" id="controls3">
+                                <div class="control-group">
+                                    <label for="chartType3">Chart Type</label>
+                                    <select id="chartType3" aria-label="Change chart type">
+                                        <option value="bar">Bar Chart</option>
+                                        <option value="pie">Pie Chart</option>
+                                        <option value="polarArea">Polar Area</option>
+                                    </select>
+                                </div>
+                                <div class="control-group">
+                                    <label for="chartColor3">Color Theme</label>
+                                    <input type="color" id="chartColor3" value="#4cc9f0" aria-label="Change chart color">
+                                </div>
+                                <div class="control-group">
+                                    <label for="binSize">Bin Size</label>
+                                    <select id="binSize" aria-label="Change histogram bin size">
+                                        <option value="0.5">0.5</option>
+                                        <option value="1.0" selected>1.0</option>
+                                        <option value="2.0">2.0</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="btn-group">
+                            <button class="btn btn-secondary" id="backBtn2" aria-label="Back to previous step">
+                                <span style="font-size: 1.2em;">←</span>
+                                <span>Back</span>
+                            </button>
+                            <button class="btn btn-primary" id="nextBtn2" aria-label="Next: Select Algorithm">
+                                <span>Next: Select Algorithm</span>
+                                <span style="font-size: 1.2em;">→</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Step 3: Algorithm Selection -->
+                <div class="step-pane" id="step3" aria-labelledby="step3-heading" role="tabpanel">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title" id="step3-heading">Select a Recommendation Algorithm</h2>
+                            <div class="tooltip">
+                                <div class="help-icon" aria-label="Help information" role="button" tabindex="0">?</div>
+                                <span class="tooltip-text">Choose an algorithm that best fits your recommendation needs and data characteristics. Different algorithms have different strengths and weaknesses.</span>
+                            </div>
+                        </div>
+                        <p class="card-description">Different algorithms have different strengths. Select the one that best matches your use case and data characteristics.</p>
+                        
+                        <div class="info-box">
+                            <strong>How to choose?</strong> Consider your data size, sparsity, and the type of recommendations you want to generate. Some algorithms work better with implicit feedback, while others need explicit ratings.
+                        </div>
+                        
+                        <div class="algorithm-cards">
+                            <div class="algorithm-card" data-algorithm="popularity" tabindex="0" role="button" aria-pressed="false">
+                                <h3 class="algorithm-title">Popularity-Based <span class="badge basic">Basic</span></h3>
+                                <p class="algorithm-description">Recommends items that are popular among all users. Simple but effective for new users and cold-start scenarios. Works well with implicit feedback data.</p>
+                            </div>
+                            <div class="algorithm-card" data-algorithm="content" tabindex="0" role="button" aria-pressed="false">
+                                <h3 class="algorithm-title">Content-Based <span class="badge advanced">Intermediate</span></h3>
+                                <p class="algorithm-description">Recommends items similar to those a user has liked in the past, based on item features and attributes. Good for specialized domains with rich item metadata.</p>
+                            </div>
+                            <div class="algorithm-card" data-algorithm="collaborative" tabindex="0" role="button" aria-pressed="false">
+                                <h3 class="algorithm-title">Collaborative Filtering <span class="badge advanced">Intermediate</span></h3>
+                                <p class="algorithm-description">Recommends items based on similarities between users or items from past behavior. Highly effective when you have sufficient interaction data and want personalized recommendations.</p>
+                            </div>
+                            <div class="algorithm-card" data-algorithm="hybrid" tabindex="0" role="button" aria-pressed="false">
+                                <h3 class="algorithm-title">Hybrid Approach <span class="badge expert">Advanced</span></h3>
+                                <p class="algorithm-description">Combines multiple recommendation techniques to leverage strengths of different approaches. Best for complex recommendation scenarios and overcoming limitations of individual methods.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="config-form" id="algorithmConfig" style="display: none;" aria-live="polite">
+                            <h3 style="margin-bottom: var(--spacing-md);">Algorithm Configuration</h3>
+                            
+                            <!-- Popularity-Based Config -->
+                            <div class="algorithm-config" id="popularityConfig" style="display: none;">
+                                <div class="form-group">
+                                    <label for="minRating">Minimum Rating Threshold</label>
+                                    <input type="number" id="minRating" min="1" max="5" step="0.1" value="3.5" aria-label="Minimum rating threshold">
+                                </div>
+                                <div class="form-group">
+                                    <label for="minInteractions">Minimum Interactions</label>
+                                    <input type="number" id="minInteractions" min="1" value="5" aria-label="Minimum interactions required">
+                                </div>
+                                <div class="form-group">
+                                    <label for="popularityMetric">Popularity Metric</label>
+                                    <select id="popularityMetric" aria-label="Select popularity metric">
+                                        <option value="count">Interaction Count</option>
+                                        <option value="average">Average Rating</option>
+                                        <option value="weighted">Weighted Rating</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Content-Based Config -->
+                            <div class="algorithm-config" id="contentConfig" style="display: none;">
+                                <div class="form-group">
+                                    <label for="featureWeight">Feature Weighting</label>
+                                    <div class="slider-container">
+                                        <input type="range" id="featureWeight" class="slider" min="0" max="1" step="0.1" value="0.5" aria-label="Feature weight slider">
+                                        <span class="slider-value" id="featureWeightValue">0.5</span>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="similarityMetric">Similarity Metric</label>
+                                    <select id="similarityMetric" aria-label="Select similarity metric">
+                                        <option value="cosine">Cosine Similarity</option>
+                                        <option value="euclidean">Euclidean Distance</option>
+                                        <option value="pearson">Pearson Correlation</option>
+                                        <option value="jaccard">Jaccard Similarity</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="featureSelection">Feature Selection</label>
+                                    <select id="featureSelection" aria-label="Select features to include" multiple size="3">
+                                        <option value="genre" selected>Genre</option>
+                                        <option value="keywords" selected>Keywords</option>
+                                        <option value="actor">Actors/Artists</option>
+                                        <option value="director">Directors/Creators</option>
+                                        <option value="year">Release Year</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Collaborative Filtering Config -->
+                            <div class="algorithm-config" id="collaborativeConfig" style="display: none;">
+                                <div class="form-group">
+                                    <label for="cfType">Type</label>
+                                    <select id="cfType" aria-label="Select collaborative filtering type">
+                                        <option value="user">User-Based</option>
+                                        <option value="item">Item-Based</option>
+                                        <option value="matrix">Matrix Factorization</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="neighborCount">Number of Neighbors</label>
+                                    <input type="number" id="neighborCount" min="1" max="100" value="20" aria-label="Number of neighbors to consider">
+                                </div>
+                                <div class="form-group">
+                                    <label for="similarityThreshold">Similarity Threshold</label>
+                                    <div class="slider-container">
+                                        <input type="range" id="similarityThreshold" class="slider" min="0" max="1" step="0.05" value="0.2" aria-label="Similarity threshold slider">
+                                        <span class="slider-value" id="similarityThresholdValue">0.2</span>
+                                    </div>
+                                </div>
+                                <div class="form-group" id="matrixFactorizationOptions" style="display: none;">
+                                    <label for="factorCount">Number of Latent Factors</label>
+                                    <input type="number" id="factorCount" min="5" max="100" value="20" aria-label="Number of latent factors">
+                                </div>
+                            </div>
+                            
+                            <!-- Hybrid Config -->
+                            <div class="algorithm-config" id="hybridConfig" style="display: none;">
+                                <div class="form-group">
+                                    <label for="contentWeight">Content-Based Weight</label>
+                                    <div class="slider-container">
+                                        <input type="range" id="contentWeight" class="slider" min="0" max="1" step="0.1" value="0.5" aria-label="Content-based weight slider">
+                                        <span class="slider-value" id="contentWeightValue">0.5</span>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="collaborativeWeight">Collaborative Filtering Weight</label>
+                                    <div class="slider-container">
+                                        <input type="range" id="collaborativeWeight" class="slider" min="0" max="1" step="0.1" value="0.5" aria-label="Collaborative filtering weight slider">
+                                        <span class="slider-value" id="collaborativeWeightValue">0.5</span>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="popularityWeight">Popularity Weight</label>
+                                    <div class="slider-container">
+                                        <input type="range" id="popularityWeight" class="slider" min="0" max="1" step="0.1" value="0.3" aria-label="Popularity weight slider">
+                                        <span class="slider-value" id="popularityWeightValue">0.3</span>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="hybridMethod">Hybrid Method</label>
+                                    <select id="hybridMethod" aria-label="Select hybrid combination method">
+                                        <option value="weighted">Weighted</option>
+                                        <option value="switching">Switching</option>
+                                        <option value="cascade">Cascade</option>
+                                        <option value="feature">Feature Combination</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="btn-group">
+                            <button class="btn btn-secondary" id="backBtn3" aria-label="Back to previous step">
+                                <span style="font-size: 1.2em;">←</span>
+                                <span>Back</span>
+                            </button>
+                            <button class="btn btn-primary" id="nextBtn3" disabled aria-label="Next: Generate Recommendations">
+                                <span>Next: Generate Recommendations</span>
+                                <span style="font-size: 1.2em;">→</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Step 4: Generate Recommendations -->
+                <div class="step-pane" id="step4" aria-labelledby="step4-heading" role="tabpanel">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title" id="step4-heading">Generate Recommendations</h2>
+                            <div class="tooltip">
+                                <div class="help-icon" aria-label="Help information" role="button" tabindex="0">?</div>
+                                <span class="tooltip-text">Generate personalized recommendations using the selected algorithm and configuration. You can select an existing user or create a new user profile.</span>
+                            </div>
+                        </div>
+                        <p class="card-description">Generate personalized recommendations based on your data and selected algorithm. You can select a user to see their recommendations or generate recommendations for a new user.</p>
+                        
+                        <div class="info-box">
+                            <strong>How it works:</strong> The system will apply the algorithm you configured to generate recommendations based on the user's past interactions and preferences, filtered by the parameters you set.
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="userSelect">Select User</label>
+                            <select id="userSelect" aria-label="Select a user to generate recommendations for"></select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="recommendationCount">Number of Recommendations</label>
+                            <input type="number" id="recommendationCount" min="1" max="20" value="5" aria-label="Number of recommendations to generate">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="diversityLevel">Recommendation Diversity</label>
+                            <div class="slider-container">
+                                <input type="range" id="diversityLevel" class="slider" min="0" max="1" step="0.1" value="0.3" aria-label="Diversity level slider">
+                                <span class="slider-value" id="diversityLevelValue">0.3</span>
+                            </div>
+                            <small>Higher values prioritize diverse recommendations over similarity</small>
+                        </div>
+                        
+                        <div class="progress-container" id="progressContainer" style="display: none;" aria-live="polite">
+                            <div class="progress-bar" id="progressBar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+                        </div>
+                        
+                        <button class="btn btn-primary pulse-animation" id="generateBtn" aria-label="Generate recommendations">
+                            <span>Generate Recommendations</span>
+                        </button>
+                        
+                        <div id="recommendationsContainer" style="margin-top: var(--spacing-xl); display: none;" aria-live="polite">
+                            <h3 style="margin-bottom: var(--spacing-md);">Recommended Items</h3>
+                            <div id="recommendationsList" class="recommendation-cards"></div>
+                            
+                            <div class="chart-container" style="margin-top: var(--spacing-xl);">
+                                <canvas id="recommendationChart"></canvas>
+                                <div class="floating-controls" id="controls4">
+                                    <div class="control-group">
+                                        <label for="chartType4">Chart Type</label>
+                                        <select id="chartType4" aria-label="Change chart type">
+                                            <option value="bar">Bar Chart</option>
+                                            <option value="radar">Radar Chart</option>
+                                            <option value="polarArea">Polar Area</option>
+                                        </select>
+                                    </div>
+                                    <div class="control-group">
+                                        <label for="chartColor4">Color Theme</label>
+                                        <input type="color" id="chartColor4" value="#3a0ca3" aria-label="Change chart color">
+                                    </div>
+                                    <div class="control-group">
+                                        <label for="sortMethod">Sort By</label>
+                                        <select id="sortMethod" aria-label="Change sort method">
+                                            <option value="score">Recommendation Score</option>
+                                            <option value="alphabetical">Alphabetical</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="btn-group">
+                            <button class="btn btn-secondary" id="backBtn4" aria-label="Back to previous step">
+                                <span style="font-size: 1.2em;">←</span>
+                                <span>Back</span>
+                            </button>
+                            <button class="btn btn-secondary" id="exportBtn" style="display: none;" aria-label="Export recommendations">
+                                <span>Export Results</span>
+                            </button>
+                            <button class="btn btn-primary" id="resetBtn" aria-label="Start over">
+                                <span>Start Over</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p class="loading-text" id="loadingText">Processing data...</p>
+    </div>
+    
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+        
+        // Sample data for example
+        const exampleData = {
+            users: ["user1", "user2", "user3", "user4", "user5", "user6", "user7", "user8", "user9", "user10"],
+            items: ["Movie A", "Movie B", "Movie C", "Movie D", "Movie E", "Movie F", "Movie G", "Movie H", "Movie I", "Movie J"],
+            ratings: [
+                {userId: "user1", itemId: "Movie A", rating: 5.0},
+                {userId: "user1", itemId: "Movie B", rating: 3.5},
+                {userId: "user1", itemId: "Movie D", rating: 4.0},
+                {userId: "user2", itemId: "Movie A", rating: 4.0},
+                {userId: "user2", itemId: "Movie C", rating: 5.0},
+                {userId: "user2", itemId: "Movie E", rating: 3.0},
+                {userId: "user3", itemId: "Movie B", rating: 4.5},
+                {userId: "user3", itemId: "Movie C", rating: 4.0},
+                {userId: "user3", itemId: "Movie D", rating: 3.5},
+                {userId: "user4", itemId: "Movie A", rating: 5.0},
+                {userId: "user4", itemId: "Movie E", rating: 4.0},
+                {userId: "user4", itemId: "Movie F", rating: 4.5},
+                {userId: "user5", itemId: "Movie C", rating: 3.5},
+                {userId: "user5", itemId: "Movie D", rating: 4.0},
+                {userId: "user5", itemId: "Movie H", rating: 5.0},
+                {userId: "user6", itemId: "Movie A", rating: 4.0},
+                {userId: "user6", itemId: "Movie G", rating: 4.5},
+                {userId: "user6", itemId: "Movie I", rating: 3.0},
+                {userId: "user7", itemId: "Movie B", rating: 4.0},
+                {userId: "user7", itemId: "Movie F", rating: 5.0},
+                {userId: "user7", itemId: "Movie H", rating: 4.5},
+                {userId: "user8", itemId: "Movie C", rating: 3.5},
+                {userId: "user8", itemId: "Movie G", rating: 4.0},
+                {userId: "user8", itemId: "Movie I", rating: 4.5},
+                {userId: "user9", itemId: "Movie D", rating: 4.0},
+                {userId: "user9", itemId: "Movie H", rating: 5.0},
+                {userId: "user9", itemId: "Movie J", rating: 3.5},
+                {userId: "user10", itemId: "Movie E", rating: 4.5},
+                {userId: "user10", itemId: "Movie I", rating: 4.0},
+                {userId: "user10", itemId: "Movie J", rating: 5.0}
+            ]
+        };
+        
+        // Global state
+        let userData = null;
+        let selectedAlgorithm = null;
+        let charts = {};
+        let currentStep = 1;
+        
+        // DOM Elements
+        const stepItems = document.querySelectorAll('.step-item');
+        const stepPanes = document.querySelectorAll('.step-pane');
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const useExampleDataBtn = document.getElementById('useExampleData');
+        const dataPreview = document.getElementById('dataPreview');
+        const previewTable = document.getElementById('previewTable');
+        const nextBtn1 = document.getElementById('nextBtn1');
+        const nextBtn2 = document.getElementById('nextBtn2');
+        const nextBtn3 = document.getElementById('nextBtn3');
+        const backBtn2 = document.getElementById('backBtn2');
+        const backBtn3 = document.getElementById('backBtn3');
+        const backBtn4 = document.getElementById('backBtn4');
+        const resetBtn = document.getElementById('resetBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const algorithmCards = document.querySelectorAll('.algorithm-card');
+        const algorithmConfig = document.getElementById('algorithmConfig');
+        const algorithmConfigs = document.querySelectorAll('.algorithm-config');
+        const generateBtn = document.getElementById('generateBtn');
+        const userSelect = document.getElementById('userSelect');
+        const recommendationCount = document.getElementById('recommendationCount');
+        const diversityLevel = document.getElementById('diversityLevel');
+        const diversityLevelValue = document.getElementById('diversityLevelValue');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const recommendationsContainer = document.getElementById('recommendationsContainer');
+        const recommendationsList = document.getElementById('recommendationsList');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingText = document.getElementById('loadingText');
+        const cfType = document.getElementById('cfType');
+        const matrixFactorizationOptions = document.getElementById('matrixFactorizationOptions');
+        
+        // Chart controls
+        const chartType1 = document.getElementById('chartType1');
+        const chartColor1 = document.getElementById('chartColor1');
+        const itemCount1 = document.getElementById('itemCount1');
+        const itemCountValue = document.getElementById('itemCountValue');
+        const sortBy1 = document.getElementById('sortBy1');
+        
+        const chartType2 = document.getElementById('chartType2');
+        const chartColor2 = document.getElementById('chartColor2');
+        const groupBy = document.getElementById('groupBy');
+        const userCount = document.getElementById('userCount');
+        const userCountValue = document.getElementById('userCountValue');
+        
+        const chartType3 = document.getElementById('chartType3');
+        const chartColor3 = document.getElementById('chartColor3');
+        const binSize = document.getElementById('binSize');
+        
+        const chartType4 = document.getElementById('chartType4');
+        const chartColor4 = document.getElementById('chartColor4');
+        const sortMethod = document.getElementById('sortMethod');
+        
+        // Slider value displays
+        document.querySelectorAll('.slider').forEach(slider => {
+            const valueDisplay = document.getElementById(`${slider.id}Value`);
+            if (valueDisplay) {
+                slider.addEventListener('input', () => {
+                    valueDisplay.textContent = slider.value;
+                });
+            }
+        });
+        
+        // CF Type change handler
+        cfType.addEventListener('change', () => {
+            if (cfType.value === 'matrix') {
+                matrixFactorizationOptions.style.display = 'block';
+            } else {
+                matrixFactorizationOptions.style.display = 'none';
+            }
+        });
+        
+        // Step navigation
+        stepItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const step = parseInt(item.dataset.step);
+                if (canNavigateToStep(step)) {
+                    navigateToStep(step);
+                }
+            });
+            
+            // Keyboard navigation
+            item.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    const step = parseInt(item.dataset.step);
+                    if (canNavigateToStep(step)) {
+                        navigateToStep(step);
+                    }
+                }
+            });
+        });
+        
+        function canNavigateToStep(step) {
+            // Only allow navigation to completed steps or the current step + 1
+            const completedSteps = Array.from(stepItems)
+                .filter(item => item.classList.contains('completed'))
+                .map(item => parseInt(item.dataset.step));
+            
+            const currentStep = Array.from(stepItems)
+                .findIndex(item => item.classList.contains('active')) + 1;
+            
+            return completedSteps.includes(step) || step === currentStep || step === currentStep + 1;
+        }
+        
+        function navigateToStep(step) {
+            // Hide all panes
+            stepPanes.forEach(pane => pane.classList.remove('active'));
+            
+            // Show selected pane
+            document.getElementById(`step${step}`).classList.add('active');
+            
+            // Update step indicators
+            stepItems.forEach(item => {
+                const itemStep = parseInt(item.dataset.step);
+                item.classList.remove('active');
+                item.setAttribute('aria-pressed', 'false');
+                
+                if (itemStep === step) {
+                    item.classList.add('active');
+                    item.setAttribute('aria-pressed', 'true');
+                }
+            });
+            
+            // Update current step
+            currentStep = step;
+            
+            // Initialize charts if navigating to step 2
+            if (step === 2 && userData) {
+                initCharts();
+            }
+            
+            // Update focus
+            document.getElementById(`step${step}-heading`).focus();
+        }
+        
+        // Next and Back buttons
+        nextBtn1.addEventListener('click', () => navigateToStep(2));
+        nextBtn2.addEventListener('click', () => navigateToStep(3));
+        nextBtn3.addEventListener('click', () => navigateToStep(4));
+        backBtn2.addEventListener('click', () => navigateToStep(1));
+        backBtn3.addEventListener('click', () => navigateToStep(2));
+        backBtn4.addEventListener('click', () => navigateToStep(3));
+        
+        // Reset button
+        resetBtn.addEventListener('click', () => {
+            // Reset all state
+            userData = null;
+            selectedAlgorithm = null;
+            
+            // Clear UI
+            dataPreview.style.display = 'none';
+            previewTable.innerHTML = '';
+            nextBtn1.disabled = true;
+            nextBtn3.disabled = true;
+            algorithmConfig.style.display = 'none';
+            algorithmCards.forEach(card => {
+                card.classList.remove('selected');
+                card.setAttribute('aria-pressed', 'false');
+            });
+            recommendationsContainer.style.display = 'none';
+            recommendationsList.innerHTML = '';
+            exportBtn.style.display = 'none';
+            
+            // Destroy charts
+            Object.values(charts).forEach(chart => {
+                if (chart) chart.destroy();
+            });
+            charts = {};
+            
+            // Reset steps
+            stepItems.forEach(item => {
+                item.classList.remove('completed');
+            });
+            
+            // Navigate to first step
+            navigateToStep(1);
+        });
+        
+        // Export button
+        exportBtn.addEventListener('click', () => {
+            const recommendations = generateRecommendations();
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(recommendations, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "recommendations.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        });
+        
+        // File upload handling
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+        
+        uploadArea.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                fileInput.click();
+            }
+        });
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            if (e.dataTransfer.files.length) {
+                handleFileUpload(e.dataTransfer.files[0]);
+            }
+        });
+        
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length) {
+                handleFileUpload(fileInput.files[0]);
+            }
+        });
+        
+        function handleFileUpload(file) {
+            // Show loading
+            loadingOverlay.classList.add('active');
+            loadingText.textContent = 'Processing file...';
+            
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                try {
+                    // Parse file based on type
+                    if (file.name.endsWith('.csv')) {
+                        userData = parseCSV(e.target.result);
+                    } else if (file.name.endsWith('.json')) {
+                        userData = JSON.parse(e.target.result);
+                    } else {
+                        throw new Error('Unsupported file format');
+                    }
+                    
+                    // Display data preview
+                    showDataPreview(userData);
+                    
+                    // Enable next button
+                    nextBtn1.disabled = false;
+                    
+                    // Mark step as completed
+                    stepItems[0].classList.add('completed');
+                    
+                    // Hide loading
+                    loadingOverlay.classList.remove('active');
+                } catch (error) {
+                    loadingOverlay.classList.remove('active');
+                    alert(`Error processing file: ${error.message}`);
+                }
+            };
+            
+            reader.readAsText(file);
+        }
+        
+        // Parse CSV helper
+        function parseCSV(csvText) {
+            const lines = csvText.split('\n');
+            const headers = lines[0].split(',').map(h => h.trim());
+            
+            const data = {
+                users: [],
+                items: [],
+                ratings: []
+            };
+            
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                
+                const values = lines[i].split(',').map(v => v.trim());
+                const row = {};
+                
+                headers.forEach((header, index) => {
+                    row[header] = values[index];
+                });
+                
+                if (row.userId && row.itemId && row.rating) {
+                    if (!data.users.includes(row.userId)) {
+                        data.users.push(row.userId);
+                    }
+                    
+                    if (!data.items.includes(row.itemId)) {
+                        data.items.push(row.itemId);
+                    }
+                    
+                    data.ratings.push({
+                        userId: row.userId,
+                        itemId: row.itemId,
+                        rating: parseFloat(row.rating)
+                    });
+                }
+            }
+            
+            return data;
+        }
+        
+        // Display data preview
+        function showDataPreview(data) {
+            // Clear existing table
+            previewTable.innerHTML = '';
+            
+            // Create header row
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            
+            const headers = ['User ID', 'Item ID', 'Rating'];
+            headers.forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header;
+                headerRow.appendChild(th);
+            });
+            
+            thead.appendChild(headerRow);
+            previewTable.appendChild(thead);
+            
+            // Create body rows
+            const tbody = document.createElement('tbody');
+            
+            // Show up to 10 ratings
+            const ratingsToShow = data.ratings.slice(0, 10);
+            
+            ratingsToShow.forEach(rating => {
+                const tr = document.createElement('tr');
+                
+                const tdUser = document.createElement('td');
+                tdUser.textContent = rating.userId;
+                
+                const tdItem = document.createElement('td');
+                tdItem.textContent = rating.itemId;
+                
+                const tdRating = document.createElement('td');
+                tdRating.textContent = rating.rating;
+                
+                tr.appendChild(tdUser);
+                tr.appendChild(tdItem);
+                tr.appendChild(tdRating);
+                
+                tbody.appendChild(tr);
+            });
+            
+            previewTable.appendChild(tbody);
+            dataPreview.style.display = 'block';
+        }
+        
+        // Use example data
+        useExampleDataBtn.addEventListener('click', () => {
+            // Show loading
+            loadingOverlay.classList.add('active');
+            loadingText.textContent = 'Loading example data...';
+            
+            setTimeout(() => {
+                userData = exampleData;
+                showDataPreview(userData);
+                nextBtn1.disabled = false;
+                stepItems[0].classList.add('completed');
+                loadingOverlay.classList.remove('active');
+            }, 600);
+        });
+        
+        // Initialize charts
+        function initCharts() {
+            // Calculate item popularity
+            const itemPopularity = {};
+            userData.items.forEach(item => {
+                itemPopularity[item] = userData.ratings.filter(r => r.itemId === item).length;
+            });
+            
+            // Sort items by popularity
+            const sortedItems = Object.keys(itemPopularity).sort((a, b) => itemPopularity[b] - itemPopularity[a]);
+            
+            // Get top N items
+            const topItems = sortedItems.slice(0, 10);
+            const topItemCounts = topItems.map(item => itemPopularity[item]);
+            
+            // Calculate user activity
+            const userActivity = {};
+            userData.users.forEach(user => {
+                userActivity[user] = userData.ratings.filter(r => r.userId === user).length;
+            });
+            
+            // Sort users by activity
+            const sortedUsers = Object.keys(userActivity).sort((a, b) => userActivity[b] - userActivity[a]);
+            
+            // Get top N users
+            const topUsers = sortedUsers.slice(0, 10);
+            const topUserCounts = topUsers.map(user => userActivity[user]);
+            
+            // Calculate rating distribution
+            const ratingCounts = {};
+            const step = parseFloat(binSize.value) || 1.0;
+            
+            userData.ratings.forEach(rating => {
+                // Round to nearest step
+                const roundedRating = Math.round(rating.rating / step) * step;
+                ratingCounts[roundedRating] = (ratingCounts[roundedRating] || 0) + 1;
+            });
+            
+            const ratingLabels = Object.keys(ratingCounts).sort((a, b) => parseFloat(a) - parseFloat(b));
+            const ratingValues = ratingLabels.map(label => ratingCounts[label]);
+            
+            // Item Popularity Chart
+            const itemCtx = document.getElementById('itemPopularityChart').getContext('2d');
+            if (charts.itemPopularity) {
+                charts.itemPopularity.destroy();
+            }
+            
+            charts.itemPopularity = new Chart(itemCtx, {
+                type: 'bar',
+                data: {
+                    labels: topItems,
+                    datasets: [{
+                        label: 'Number of Ratings',
+                        data: topItemCounts,
+                        backgroundColor: chartColor1.value,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Item Popularity (Number of Ratings)',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            },
+                            padding: {
+                                top: 10,
+                                bottom: 20
+                            }
+                        },
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Ratings: ${context.raw}`;
+                                }
+                            }
+                        }
+                    },
+                    onClick: function() {
+                        const controls = document.getElementById('controls1');
+                        controls.classList.toggle('active');
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Ratings',
+                                font: {
+                                    weight: 'bold'
+                                }
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Items',
+                                font: {
+                                    weight: 'bold'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // User Activity Chart
+            const userCtx = document.getElementById('userActivityChart').getContext('2d');
+            if (charts.userActivity) {
+                charts.userActivity.destroy();
+            }
+            
+            charts.userActivity = new Chart(userCtx, {
+                type: 'bar',
+                data: {
+                    labels: topUsers,
+                    datasets: [{
+                        label: 'Number of Ratings',
+                        data: topUserCounts,
+                        backgroundColor: chartColor2.value,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'User Activity (Number of Ratings)',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            },
+                            padding: {
+                                top: 10,
+                                bottom: 20
+                            }
+                        },
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    onClick: function() {
+                        const controls = document.getElementById('controls2');
+                        controls.classList.toggle('active');
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Ratings',
+                                font: {
+                                    weight: 'bold'
+                                }
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Users',
+                                font: {
+                                    weight: 'bold'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Rating Distribution Chart
+            const ratingCtx = document.getElementById('ratingDistributionChart').getContext('2d');
+            if (charts.ratingDistribution) {
+                charts.ratingDistribution.destroy();
+            }
+            
+            charts.ratingDistribution = new Chart(ratingCtx, {
+                type: 'bar',
+                data: {
+                    labels: ratingLabels,
+                    datasets: [{
+                        label: 'Rating Frequency',
+                        data: ratingValues,
+                        backgroundColor: chartColor3.value,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Rating Distribution',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            },
+                            padding: {
+                                top: 10,
+                                bottom: 20
+                            }
+                        },
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    onClick: function() {
+                        const controls = document.getElementById('controls3');
+                        controls.classList.toggle('active');
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Frequency',
+                                font: {
+                                    weight: 'bold'
+                                }
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Rating Value',
+                                font: {
+                                    weight: 'bold'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Mark step as completed
+            stepItems[1].classList.add('completed');
+            
+            // Update chart controls
+            chartType1.addEventListener('change', updateItemChart);
+            chartColor1.addEventListener('input', updateItemChart);
+            itemCount1.addEventListener('input', () => {
+                itemCountValue.textContent = itemCount1.value;
+                updateItemChart();
+            });
+            sortBy1.addEventListener('change', updateItemChart);
+            
+            chartType2.addEventListener('change', updateUserChart);
+            chartColor2.addEventListener('input', updateUserChart);
+            groupBy.addEventListener('change', updateUserChart);
+            userCount.addEventListener('input', () => {
+                userCountValue.textContent = userCount.value;
+                updateUserChart();
+            });
+            
+            chartType3.addEventListener('change', updateRatingChart);
+            chartColor3.addEventListener('input', updateRatingChart);
+            binSize.addEventListener('change', updateRatingChart);
+            
+            // Close controls when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.floating-controls') && !e.target.closest('canvas')) {
+                    document.querySelectorAll('.floating-controls').forEach(control => {
+                        control.classList.remove('active');
+                    });
+                }
+            });
+        }
+        
+        // Update item popularity chart
+        function updateItemChart() {
+            const count = parseInt(itemCount1.value);
+            
+            // Calculate item popularity
+            const itemPopularity = {};
+            userData.items.forEach(item => {
+                itemPopularity[item] = userData.ratings.filter(r => r.itemId === item).length;
+            });
+            
+            // Sort items based on selected option
+            let sortedItems;
+            
+            if (sortBy1.value === 'desc') {
+                sortedItems = Object.keys(itemPopularity).sort((a, b) => itemPopularity[b] - itemPopularity[a]);
+            } else if (sortBy1.value === 'asc') {
+                sortedItems = Object.keys(itemPopularity).sort((a, b) => itemPopularity[a] - itemPopularity[b]);
+            } else if (sortBy1.value === 'alphabetical') {
+                sortedItems = Object.keys(itemPopularity).sort();
+            }
+            
+            // Get top N items
+            const topItems = sortedItems.slice(0, count);
+            const topItemCounts = topItems.map(item => itemPopularity[item]);
+            
+            // Update chart
+            charts.itemPopularity.config.type = chartType1.value;
+            charts.itemPopularity.data.labels = topItems;
+            charts.itemPopularity.data.datasets[0].data = topItemCounts;
+            charts.itemPopularity.data.datasets[0].backgroundColor = chartColor1.value;
+            
+            charts.itemPopularity.update();
+        }
+        
+        // Update user activity chart
+        function updateUserChart() {
+            const count = parseInt(userCount.value);
+            
+            // Calculate user metrics
+            const userMetrics = {};
+            userData.users.forEach(user => {
+                const userRatings = userData.ratings.filter(r => r.userId === user);
+                userMetrics[user] = {
+                    count: userRatings.length,
+                    average: userRatings.reduce((sum, r) => sum + r.rating, 0) / userRatings.length,
+                    max: Math.max(...userRatings.map(r => r.rating)),
+                    min: Math.min(...userRatings.map(r => r.rating))
+                };
+            });
+            
+            const metric = groupBy.value;
+            const metricLabels = {
+                count: 'Number of Ratings',
+                average: 'Average Rating',
+                max: 'Highest Rating',
+                min: 'Lowest Rating'
+            };
+            
+            // Sort users by selected metric
+            const sortedUsers = Object.keys(userMetrics).sort((a, b) => userMetrics[b][metric] - userMetrics[a][metric]);
+            
+            // Get top N users
+            const topUsers = sortedUsers.slice(0, count);
+            const topUserValues = topUsers.map(user => userMetrics[user][metric]);
+            
+            // Update chart
+            charts.userActivity.config.type = chartType2.value;
+            charts.userActivity.data.labels = topUsers;
+            charts.userActivity.data.datasets[0].label = metricLabels[metric];
+            charts.userActivity.data.datasets[0].data = topUserValues;
+            charts.userActivity.data.datasets[0].backgroundColor = chartColor2.value;
+            charts.userActivity.options.plugins.title.text = `User Activity (${metricLabels[metric]})`;
+            charts.userActivity.options.scales.y.title.text = metricLabels[metric];
+            
+            charts.userActivity.update();
+        }
+        
+        // Update rating distribution chart
+        function updateRatingChart() {
+            // Calculate rating distribution
+            const ratingCounts = {};
+            const step = parseFloat(binSize.value) || 1.0;
+            
+            userData.ratings.forEach(rating => {
+                // Round to nearest step
+                const roundedRating = Math.round(rating.rating / step) * step;
+                ratingCounts[roundedRating] = (ratingCounts[roundedRating] || 0) + 1;
+            });
+            
+            const ratingLabels = Object.keys(ratingCounts).sort((a, b) => parseFloat(a) - parseFloat(b));
+            const ratingValues = ratingLabels.map(label => ratingCounts[label]);
+            
+            // Update chart
+            charts.ratingDistribution.config.type = chartType3.value;
+            charts.ratingDistribution.data.labels = ratingLabels;
+            charts.ratingDistribution.data.datasets[0].data = ratingValues;
+            charts.ratingDistribution.data.datasets[0].backgroundColor = chartColor3.value;
+            
+            charts.ratingDistribution.update();
+        }
+        
+        // Algorithm selection
+        algorithmCards.forEach(card => {
+            card.addEventListener('click', selectAlgorithm);
+            card.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    selectAlgorithm.call(card);
+                }
+            });
+        });
+        
+        function selectAlgorithm() {
+            // Clear previous selection
+            algorithmCards.forEach(c => {
+                c.classList.remove('selected');
+                c.setAttribute('aria-pressed', 'false');
+            });
+            
+            // Select this algorithm
+            this.classList.add('selected');
+            this.setAttribute('aria-pressed', 'true');
+            selectedAlgorithm = this.dataset.algorithm;
+            
+            // Show configuration form
+            algorithmConfig.style.display = 'block';
+            
+            // Show relevant config section
+            algorithmConfigs.forEach(config => {
+                config.style.display = 'none';
+            });
+            
+            document.getElementById(`${selectedAlgorithm}Config`).style.display = 'block';
+            
+            // Enable next button
+            nextBtn3.disabled = false;
+            
+            // Mark step as completed
+            stepItems[2].classList.add('completed');
+        }
+        
+        // Generate recommendations
+        generateBtn.addEventListener('click', () => {
+            // Show loading
+            loadingOverlay.classList.add('active');
+            loadingText.textContent = 'Generating recommendations...';
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            progressBar.setAttribute('aria-valuenow', '0');
+            
+            // Simulate progress
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 5;
+                progressBar.style.width = `${progress}%`;
+                progressBar.setAttribute('aria-valuenow', progress);
+                
+                // Update loading text based on progress
+                if (progress < 30) {
+                    loadingText.textContent = 'Analyzing user preferences...';
+                } else if (progress < 60) {
+                    loadingText.textContent = 'Computing item similarities...';
+                } else if (progress < 90) {
+                    loadingText.textContent = 'Ranking recommendations...';
+                } else {
+                    loadingText.textContent = 'Finalizing results...';
+                }
+                
+                if (progress >= 100) {
+                    clearInterval(progressInterval);
+                    setTimeout(() => {
+                        // Hide loading
+                        loadingOverlay.classList.remove('active');
+                        
+                        // Generate recommendations
+                        const recommendations = generateRecommendations();
+                        
+                        // Display recommendations
+                        displayRecommendations(recommendations);
+                        
+                        // Create recommendation chart
+                        createRecommendationChart(recommendations);
+                        
+                        // Show export button
+                        exportBtn.style.display = 'block';
+                        
+                        // Mark step as completed
+                        stepItems[3].classList.add('completed');
+                    }, 500);
+                }
+            }, 100);
+        });
+        
+        // Populate user select dropdown
+        function populateUserSelect() {
+            userSelect.innerHTML = '';
+            
+            userData.users.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user;
+                option.textContent = user;
+                userSelect.appendChild(option);
+            });
+        }
+        
+        // Generate recommendations based on selected algorithm
+        function generateRecommendations() {
+            const selectedUser = userSelect.value;
+            const userRatings = userData.ratings.filter(r => r.userId === selectedUser);
+            const ratedItems = userRatings.map(r => r.itemId);
+            const count = parseInt(recommendationCount.value) || 5;
+            const diversity = parseFloat(diversityLevel.value) || 0.3;
+            
+            let recommendations = [];
+            
+            // Simple recommendation logic for each algorithm type
+            switch (selectedAlgorithm) {
+                case 'popularity':
+                    // Count ratings for each item
+                    const itemPopularity = {};
+                    userData.items.forEach(item => {
+                        if (!ratedItems.includes(item)) {
+                            itemPopularity[item] = userData.ratings.filter(r => r.itemId === item).length;
+                        }
+                    });
+                    
+                    // Sort by popularity
+                    recommendations = Object.keys(itemPopularity)
+                        .sort((a, b) => itemPopularity[b] - itemPopularity[a])
+                        .slice(0, count * 2) // Get more candidates for diversity
+                        .map(item => ({
+                            itemId: item,
+                            score: (itemPopularity[item] / Math.max(...Object.values(itemPopularity))) * 5,
+                            reason: `Popular among ${itemPopularity[item]} users`,
+                            details: {
+                                popularity: itemPopularity[item],
+                                totalUsers: userData.ratings.filter(r => r.itemId === item).map(r => r.userId).filter((v, i, a) => a.indexOf(v) === i).length
+                            }
+                        }));
+                    
+                    // Apply diversity filter
+                    recommendations = applyDiversity(recommendations, diversity, count);
+                    break;
+                
+                case 'content':
+                    // Simulate content-based recommendations
+                    // In a real system, this would use item features
+                    const userPreferences = {};
+                    userRatings.forEach(rating => {
+                        userPreferences[rating.itemId] = rating.rating;
+                    });
+                    
+                    // Find similar items (simplified)
+                    const unratedItems = userData.items.filter(item => !ratedItems.includes(item));
+                    
+                    recommendations = unratedItems
+                        .map(item => {
+                            // Simulate similarity score based on first character (just for demo)
+                            const similarItems = Object.keys(userPreferences).filter(
+                                rated => rated.charAt(0) === item.charAt(0) || 
+                                         rated.charAt(1) === item.charAt(1)
+                            );
+                            
+                            if (similarItems.length === 0) return null;
+                            
+                            const avgRating = similarItems.reduce(
+                                (sum, similar) => sum + userPreferences[similar], 0
+                            ) / similarItems.length;
+                            
+                            return {
+                                itemId: item,
+                                score: avgRating,
+                                reason: `Similar to ${similarItems.slice(0, 2).join(', ')}${similarItems.length > 2 ? ' and others' : ''}`,
+                                details: {
+                                    similarItems: similarItems,
+                                    similarityScore: similarItems.length / Object.keys(userPreferences).length,
+                                    averageRating: avgRating.toFixed(1)
+                                }
+                            };
+                        })
+                        .filter(item => item !== null)
+                        .sort((a, b) => b.score - a.score)
+                        .slice(0, count * 2);
+                    
+                    // Apply diversity filter
+                    recommendations = applyDiversity(recommendations, diversity, count);
+                    break;
+                
+                case 'collaborative':
+                    // Simplified collaborative filtering
+                    if (cfType.value === 'user' || cfType.value === 'item') {
+                        // Find similar users
+                        const userSimilarity = {};
+                        
+                        userData.users.forEach(user => {
+                            if (user !== selectedUser) {
+                                const otherUserRatings = userData.ratings.filter(r => r.userId === user);
+                                const commonItems = otherUserRatings
+                                    .filter(r => ratedItems.includes(r.itemId))
+                                    .map(r => r.itemId);
+                                
+                                if (commonItems.length > 0) {
+                                    // Calculate simple similarity (common items / total items)
+                                    userSimilarity[user] = commonItems.length / 
+                                        Math.sqrt(ratedItems.length * otherUserRatings.length);
+                                }
+                            }
+                        });
+                        
+                        // Get top similar users
+                        const similarityThreshold = parseFloat(document.getElementById('similarityThreshold').value);
+                        const neighborCount = parseInt(document.getElementById('neighborCount').value);
+                        
+                        const similarUsers = Object.keys(userSimilarity)
+                            .filter(user => userSimilarity[user] >= similarityThreshold)
+                            .sort((a, b) => userSimilarity[b] - userSimilarity[a])
+                            .slice(0, neighborCount);
+                        
+                        // Get recommendations from similar users
+                        const candidateItems = {};
+                        
+                        similarUsers.forEach(user => {
+                            const userWeight = userSimilarity[user];
+                            const userRecs = userData.ratings
+                                .filter(r => r.userId === user && !ratedItems.includes(r.itemId));
+                            
+                            userRecs.forEach(rec => {
+                                if (!candidateItems[rec.itemId]) {
+                                    candidateItems[rec.itemId] = {
+                                        weightedSum: 0,
+                                        weightSum: 0,
+                                        recommenders: []
+                                    };
+                                }
+                                
+                                candidateItems[rec.itemId].weightedSum += rec.rating * userWeight;
+                                candidateItems[rec.itemId].weightSum += userWeight;
+                                candidateItems[rec.itemId].recommenders.push(user);
+                            });
+                        });
+                        
+                        // Calculate weighted average and create recommendations
+                        recommendations = Object.keys(candidateItems)
+                            .map(item => ({
+                                itemId: item,
+                                score: candidateItems[item].weightedSum / candidateItems[item].weightSum,
+                                reason: `Liked by similar users: ${candidateItems[item].recommenders.slice(0, 2).join(', ')}${candidateItems[item].recommenders.length > 2 ? ' and others' : ''}`,
+                                details: {
+                                    similarUsers: candidateItems[item].recommenders,
+                                    similarityScore: candidateItems[item].weightSum / similarUsers.length,
+                                    recommendersCount: candidateItems[item].recommenders.length
+                                }
+                            }))
+                            .sort((a, b) => b.score - a.score)
+                            .slice(0, count * 2);
+                    } else {
+                        // Matrix Factorization (simplified simulation)
+                        const factorCount = parseInt(document.getElementById('factorCount').value);
+                        
+                        // Simulate latent factors (just for demo)
+                        const itemFactors = {};
+                        userData.items.forEach(item => {
+                            // Generate random factors based on item name (deterministic for demo)
+                            const factors = [];
+                            for (let i = 0; i < factorCount; i++) {
+                                // Use character codes to create deterministic "factors"
+                                factors.push((item.charCodeAt(i % item.length) % 10) / 10);
+                            }
+                            itemFactors[item] = factors;
+                        });
+                        
+                        // Calculate user factors based on ratings
+                        const userFactors = [];
+                        for (let i = 0; i < factorCount; i++) {
+                            let sum = 0;
+                            userRatings.forEach(rating => {
+                                sum += rating.rating * itemFactors[rating.itemId][i];
+                            });
+                            userFactors.push(sum / userRatings.length);
+                        }
+                        
+                        // Calculate predicted ratings for unrated items
+                        const predictions = [];
+                        userData.items.forEach(item => {
+                            if (!ratedItems.includes(item)) {
+                                // Calculate dot product
+                                let prediction = 0;
+                                for (let i = 0; i < factorCount; i++) {
+                                    prediction += userFactors[i] * itemFactors[item][i];
+                                }
+                                
+                                // Scale to 1-5 range
+                                prediction = Math.min(5, Math.max(1, prediction * 3 + 2));
+                                
+                                predictions.push({
+                                    itemId: item,
+                                    score: prediction,
+                                    reason: `Matches your preference patterns`,
+                                    details: {
+                                        factorMatch: (prediction / 5).toFixed(2),
+                                        confidence: Math.min(1, userRatings.length / 10).toFixed(2)
+                                    }
+                                });
+                            }
+                        });
+                        
+                        recommendations = predictions
+                            .sort((a, b) => b.score - a.score)
+                            .slice(0, count * 2);
+                    }
+                    
+                    // Apply diversity filter
+                    recommendations = applyDiversity(recommendations, diversity, count);
+                    break;
+                
+                case 'hybrid':
+                    // Simplified hybrid approach (combine popularity and content-based)
+                    const contentWeight = parseFloat(document.getElementById('contentWeight').value);
+                    const collaborativeWeight = parseFloat(document.getElementById('collaborativeWeight').value);
+                    const popularityWeight = parseFloat(document.getElementById('popularityWeight').value);
+                    const hybridMethod = document.getElementById('hybridMethod').value;
+                    
+                    // Normalize weights
+                    const totalWeight = contentWeight + collaborativeWeight + popularityWeight;
+                    const normContentWeight = contentWeight / totalWeight;
+                    const normCollabWeight = collaborativeWeight / totalWeight;
+                    const normPopWeight = popularityWeight / totalWeight;
+                    
+                    // Popularity component
+                    const popularityScores = {};
+                    userData.items.forEach(item => {
+                        if (!ratedItems.includes(item)) {
+                            const count = userData.ratings.filter(r => r.itemId === item).length;
+                            popularityScores[item] = {
+                                score: count / userData.ratings.length * 5,
+                                reason: `Popular among ${count} users`
+                            };
+                        }
+                    });
+                    
+                    // Content component (simplified)
+                    const contentScores = {};
+                    const unratedItems = userData.items.filter(item => !ratedItems.includes(item));
+                    
+                    unratedItems.forEach(item => {
+                        // Simulate content similarity (just for demo)
+                        const similarItems = ratedItems.filter(
+                            rated => rated.charAt(0) === item.charAt(0) || 
+                                     rated.charAt(1) === item.charAt(1)
+                        );
+                        
+                        if (similarItems.length > 0) {
+                            const avgRating = similarItems.reduce(
+                                (sum, similar) => sum + userRatings.find(r => r.itemId === similar).rating, 0
+                            ) / similarItems.length;
+                            
+                            contentScores[item] = {
+                                score: avgRating,
+                                reason: `Similar to ${similarItems.slice(0, 2).join(', ')}${similarItems.length > 2 ? ' and others' : ''}`
+                            };
+                        } else {
+                            contentScores[item] = {
+                                score: 0,
+                                reason: 'No content similarity found'
+                            };
+                        }
+                    });
+                    
+                    // Collaborative component (simplified)
+                    const collabScores = {};
+                    
+                    // Find similar users
+                    const userSimilarity = {};
+                    userData.users.forEach(user => {
+                        if (user !== selectedUser) {
+                            const otherUserRatings = userData.ratings.filter(r => r.userId === user);
+                            const commonItems = otherUserRatings
+                                .filter(r => ratedItems.includes(r.itemId))
+                                .map(r => r.itemId);
+                            
+                            if (commonItems.length > 0) {
+                                userSimilarity[user] = commonItems.length / 
+                                    Math.sqrt(ratedItems.length * otherUserRatings.length);
+                            }
+                        }
+                    });
+                    
+                    // Get top similar users
+                    const similarUsers = Object.keys(userSimilarity)
+                        .sort((a, b) => userSimilarity[b] - userSimilarity[a])
+                        .slice(0, 5);
+                    
+                    // Get recommendations from similar users
+                    unratedItems.forEach(item => {
+                        const userRecs = [];
+                        
+                        similarUsers.forEach(user => {
+                            const rating = userData.ratings.find(r => r.userId === user && r.itemId === item);
+                            if (rating) {
+                                userRecs.push({
+                                    user: user,
+                                    rating: rating.rating,
+                                    weight: userSimilarity[user]
+                                });
+                            }
+                        });
+                        
+                        if (userRecs.length > 0) {
+                            const weightedSum = userRecs.reduce((sum, rec) => sum + rec.rating * rec.weight, 0);
+                            const weightSum = userRecs.reduce((sum, rec) => sum + rec.weight, 0);
+                            
+                            collabScores[item] = {
+                                score: weightedSum / weightSum,
+                                reason: `Liked by similar users: ${userRecs.slice(0, 2).map(r => r.user).join(', ')}${userRecs.length > 2 ? ' and others' : ''}`
+                            };
+                        } else {
+                            collabScores[item] = {
+                                score: 0,
+                                reason: 'No collaborative data found'
+                            };
+                        }
+                    });
+                    
+                    // Combine scores based on hybrid method
+                    const hybridScores = {};
+                    
+                    if (hybridMethod === 'weighted') {
+                        // Weighted combination
+                        unratedItems.forEach(item => {
+                            const popScore = popularityScores[item]?.score || 0;
+                            const contScore = contentScores[item]?.score || 0;
+                            const collScore = collabScores[item]?.score || 0;
+                            
+                            const score = (popScore * normPopWeight) + 
+                                          (contScore * normContentWeight) + 
+                                          (collScore * normCollabWeight);
+                            
+                            // Determine primary reason
+                            let primaryReason = '';
+                            let maxComponent = Math.max(
+                                popScore * normPopWeight,
+                                contScore * normContentWeight,
+                                collScore * normCollabWeight
+                            );
+                            
+                            if (maxComponent === popScore * normPopWeight && popScore > 0) {
+                                primaryReason = popularityScores[item].reason;
+                            } else if (maxComponent === contScore * normContentWeight && contScore > 0) {
+                                primaryReason = contentScores[item].reason;
+                            } else if (maxComponent === collScore * normCollabWeight && collScore > 0) {
+                                primaryReason = collabScores[item].reason;
+                            } else {
+                                primaryReason = 'Combined factors';
+                            }
+                            
+                            hybridScores[item] = {
+                                score: score,
+                                reason: primaryReason,
+                                details: {
+                                    popularity: Math.round(popScore * normPopWeight * 100) / 100,
+                                    content: Math.round(contScore * normContentWeight * 100) / 100,
+                                    collaborative: Math.round(collScore * normCollabWeight * 100) / 100
+                                }
+                            };
+                        });
+                    } else if (hybridMethod === 'switching') {
+                        // Switching strategy (use best available score)
+                        unratedItems.forEach(item => {
+                            const popScore = popularityScores[item]?.score || 0;
+                            const contScore = contentScores[item]?.score || 0;
+                            const collScore = collabScores[item]?.score || 0;
+                            
+                            let bestScore = 0;
+                            let bestReason = '';
+                            
+                            if (collScore > bestScore) {
+                                bestScore = collScore;
+                                bestReason = collabScores[item].reason;
+                            }
+                            
+                            if (contScore > bestScore) {
+                                bestScore = contScore;
+                                bestReason = contentScores[item].reason;
+                            }
+                            
+                            if (popScore > bestScore) {
+                                bestScore = popScore;
+                                bestReason = popularityScores[item].reason;
+                            }
+                            
+                            hybridScores[item] = {
+                                score: bestScore,
+                                reason: bestReason,
+                                details: {
+                                    bestMethod: bestReason.includes('Popular') ? 'Popularity' :
+                                                bestReason.includes('Similar to') ? 'Content' :
+                                                'Collaborative'
+                                }
+                            };
+                        });
+                    } else {
+                        // Default to weighted for other methods
+                        unratedItems.forEach(item => {
+                            const popScore = popularityScores[item]?.score || 0;
+                            const contScore = contentScores[item]?.score || 0;
+                            const collScore = collabScores[item]?.score || 0;
+                            
+                            hybridScores[item] = {
+                                score: (popScore * normPopWeight) + 
+                                       (contScore * normContentWeight) + 
+                                       (collScore * normCollabWeight),
+                                reason: 'Combined recommendation methods',
+                                details: {
+                                    popularity: Math.round(popScore * 100) / 100,
+                                    content: Math.round(contScore * 100) / 100,
+                                    collaborative: Math.round(collScore * 100) / 100
+                                }
+                            };
+                        });
+                    }
+                    
+                    // Create recommendations
+                    recommendations = Object.keys(hybridScores)
+                        .map(item => ({
+                            itemId: item,
+                            score: hybridScores[item].score,
+                            reason: hybridScores[item].reason,
+                            details: hybridScores[item].details
+                        }))
+                        .filter(rec => rec.score > 0)
+                        .sort((a, b) => b.score - a.score)
+                        .slice(0, count * 2);
+                    
+                    // Apply diversity
+                    recommendations = applyDiversity(recommendations, diversity, count);
+                    break;
+            }
+            
+            return recommendations.slice(0, count);
+        }
+        
+        // Apply diversity to recommendations
+        function applyDiversity(recommendations, diversityFactor, finalCount) {
+            if (diversityFactor <= 0 || recommendations.length <= finalCount) {
+                return recommendations.slice(0, finalCount);
+            }
+            
+            // Start with the highest scored item
+            const result = [recommendations[0]];
+            const remainingCandidates = recommendations.slice(1);
+            
+            // Add items one by one, balancing score and diversity
+            while (result.length < finalCount && remainingCandidates.length > 0) {
+                // Calculate diversity score for each candidate
+                const diversityScores = remainingCandidates.map(candidate => {
+                    // Simple diversity based on first character difference (demo only)
+                    const avgSimilarity = result.reduce((sum, item) => {
+                        return sum + (item.itemId.charAt(0) === candidate.itemId.charAt(0) ? 1 : 0);
+                    }, 0) / result.length;
+                    
+                    const diversityScore = 1 - avgSimilarity;
+                    
+                    // Combine recommendation score and diversity
+                    const normalizedScore = candidate.score / recommendations[0].score; // Normalize to 0-1
+                    const combinedScore = (normalizedScore * (1 - diversityFactor)) + 
+                                         (diversityScore * diversityFactor);
+                    
+                    return {
+                        candidate: candidate,
+                        combinedScore: combinedScore
+                    };
+                });
+                
+                // Pick the item with highest combined score
+                diversityScores.sort((a, b) => b.combinedScore - a.combinedScore);
+                const nextItem = diversityScores[0].candidate;
+                
+                // Add to results and remove from candidates
+                result.push(nextItem);
+                const index = remainingCandidates.findIndex(item => item.itemId === nextItem.itemId);
+                remainingCandidates.splice(index, 1);
+            }
+            
+            return result;
+        }
+        
+        // Display recommendations
+        function displayRecommendations(recommendations) {
+            recommendationsList.innerHTML = '';
+            
+            if (recommendations.length === 0) {
+                recommendationsList.innerHTML = '<p>No recommendations found for this user.</p>';
+            } else {
+                recommendations.forEach(rec => {
+                    const card = document.createElement('div');
+                    card.className = 'recommendation-card';
+                    card.setAttribute('tabindex', '0');
+                    
+                    const title = document.createElement('h4');
+                    title.className = 'recommendation-title';
+                    title.textContent = rec.itemId;
+                    
+                    const score = document.createElement('div');
+                    score.className = 'recommendation-score';
+                    score.textContent = `Score: ${rec.score.toFixed(2)}`;
+                    
+                    const reason = document.createElement('p');
+                    reason.className = 'recommendation-reason';
+                    reason.textContent = `Why: ${rec.reason}`;
+                    
+                    // Add details if available
+                    if (rec.details) {
+                        const details = document.createElement('div');
+                        details.style.fontSize = '0.85rem';
+                        details.style.color = 'var(--gray-600)';
+                        details.style.marginTop = 'var(--spacing-sm)';
+                        
+                        Object.entries(rec.details).forEach(([key, value]) => {
+                            const detailItem = document.createElement('div');
+                            detailItem.textContent = `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value}`;
+                            details.appendChild(detailItem);
+                        });
+                        
+                        card.appendChild(title);
+                        card.appendChild(score);
+                        card.appendChild(reason);
+                        card.appendChild(details);
+                    } else {
+                        card.appendChild(title);
+                        card.appendChild(score);
+                        card.appendChild(reason);
+                    }
+                    
+                    recommendationsList.appendChild(card);
+                });
+            }
+            
+            recommendationsContainer.style.display = 'block';
+        }
+        
+        // Create recommendation chart
+        function createRecommendationChart(recommendations) {
+            const chartCtx = document.getElementById('recommendationChart').getContext('2d');
+            
+            if (charts.recommendations) {
+                charts.recommendations.destroy();
+            }
+            
+            const labels = recommendations.map(rec => rec.itemId);
+            const scores = recommendations.map(rec => rec.score);
+            
+            charts.recommendations = new Chart(chartCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Recommendation Score',
+                        data: scores,
+                        backgroundColor: chartColor4.value,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Recommendation Scores',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            },
+                            padding: {
+                                top: 10,
+                                bottom: 20
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: function(context) {
+                                    const idx = context.dataIndex;
+                                    return `Reason: ${recommendations[idx].reason}`;
+                                }
+                            }
+                        }
+                    },
+                    onClick: function() {
+                        const controls = document.getElementById('controls4');
+                        controls.classList.toggle('active');
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 5,
+                            title: {
+                                display: true,
+                                text: 'Score',
+                                font: {
+                                    weight: 'bold'
+                                }
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Items',
+                                font: {
+                                    weight: 'bold'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Chart controls
+            chartType4.addEventListener('change', updateRecommendationChart);
+            chartColor4.addEventListener('input', updateRecommendationChart);
+            sortMethod.addEventListener('change', updateRecommendationChart);
+        }
+        
+        // Update recommendation chart
+        function updateRecommendationChart() {
+            const recommendations = generateRecommendations();
+            let sortedRecs = [...recommendations];
+            
+            if (sortMethod.value === 'alphabetical') {
+                sortedRecs.sort((a, b) => a.itemId.localeCompare(b.itemId));
+            } else {
+                sortedRecs.sort((a, b) => b.score - a.score);
+            }
+            
+            const labels = sortedRecs.map(rec => rec.itemId);
+            const scores = sortedRecs.map(rec => rec.score);
+            
+            charts.recommendations.config.type = chartType4.value;
+            charts.recommendations.data.labels = labels;
+            charts.recommendations.data.datasets[0].data = scores;
+            charts.recommendations.data.datasets[0].backgroundColor = chartColor4.value;
+            
+            charts.recommendations.update();
+        }
+        
+        // Initialize when step 4 is shown
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set up event listeners for navigation to step 4
+            nextBtn3.addEventListener('click', () => {
+                if (userData) {
+                    populateUserSelect();
+                }
+            });
+            
+            // Set up keyboard navigation
+            document.addEventListener('keydown', (e) => {
+                // Allow navigation with arrow keys
+                if (e.key === 'ArrowRight' && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    const nextStep = currentStep + 1;
+                    if (nextStep <= 4 && canNavigateToStep(nextStep)) {
+                        navigateToStep(nextStep);
+                    }
+                } else if (e.key === 'ArrowLeft' && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    const prevStep = currentStep - 1;
+                    if (prevStep >= 1) {
+                        navigateToStep(prevStep);
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

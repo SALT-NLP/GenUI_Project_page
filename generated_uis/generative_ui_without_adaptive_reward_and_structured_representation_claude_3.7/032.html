@@ -1,0 +1,2050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poster Designer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --background-color: #f4f7f6;
+            --surface-color: #ffffff;
+            --border-color: #dee2e6;
+            --text-color: #212529;
+            --text-muted-color: #6c757d;
+            --shadow-color: rgba(0, 0, 0, 0.08);
+            --border-radius: 8px;
+            --padding-base: 16px;
+            --margin-base: 16px;
+            --header-height: 60px;
+            --sidebar-width: 280px;
+            --handle-size: 10px;
+            --rotate-handle-offset: 20px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow: hidden; /* Prevent body scroll */
+        }
+
+        header {
+            height: var(--header-height);
+            background-color: var(--surface-color);
+            box-shadow: 0 2px 4px var(--shadow-color);
+            display: flex;
+            align-items: center;
+            padding: 0 var(--padding-base);
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
+        .header-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-right: auto;
+            color: var(--dark-color);
+        }
+
+        .tool-bar {
+            display: flex;
+            gap: 8px;
+        }
+
+        .tool-button {
+            background-color: transparent;
+            border: none;
+            padding: 8px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            color: var(--text-color);
+            font-size: 1.2rem; /* Material Symbols default size */
+        }
+
+        .tool-button:hover {
+            background-color: var(--light-color);
+        }
+
+        .tool-button:active {
+            transform: scale(0.95);
+        }
+
+         .tool-button:disabled {
+             opacity: 0.5;
+             cursor: not-allowed;
+         }
+
+        .tool-button .material-symbols-rounded {
+            font-size: 24px; /* Ensure consistent icon size */
+            user-select: none; /* Prevent text selection on icon drag */
+        }
+
+        .container {
+            display: flex;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--surface-color);
+            box-shadow: 2px 0 4px var(--shadow-color);
+            padding: var(--padding-base);
+            overflow-y: auto;
+            flex-shrink: 0;
+            transition: width 0.3s ease;
+            contain: layout size style; /* Optimize rendering */
+        }
+
+        .sidebar-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: var(--padding-base);
+            color: var(--dark-color);
+        }
+
+        .property-group {
+            margin-bottom: var(--margin-base);
+            padding-bottom: var(--margin-base);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .property-group:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .property-label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-muted-color);
+        }
+
+        .property-input,
+        .property-select,
+        .property-color {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            box-sizing: border-box;
+            background-color: var(--light-color);
+            color: var(--text-color);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .property-input:focus,
+        .property-select:focus,
+        .property-color:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        .property-color {
+            padding: 4px; /* Adjust padding for color input */
+            height: 38px; /* Match height of other inputs */
+        }
+
+        .canvas-area {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: auto; /* Allow canvas area to scroll if needed */
+            padding: var(--padding-base);
+            position: relative; /* Needed for positioning canvas */
+             /* Allow canvas area to receive keyboard focus */
+            outline: none;
+        }
+
+        #designCanvas {
+            background-color: white;
+            box-shadow: 0 4px 12px var(--shadow-color);
+            display: block; /* Remove extra space below canvas */
+            /* Canvas size will be set by JS */
+             /* Add a border to make focus visible */
+             border: 2px solid transparent;
+             transition: border-color 0.2s ease;
+        }
+
+         #designCanvas:focus-visible {
+             border-color: var(--primary-color);
+         }
+
+
+        .contextual-toolbar {
+            position: absolute;
+            background-color: var(--dark-color);
+            color: var(--light-color);
+            border-radius: var(--border-radius);
+            padding: 4px 8px;
+            box-shadow: 0 2px 8px var(--shadow-color);
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            z-index: 5; /* Above canvas, below header/sidebar */
+             transform: translateY(10px); /* Initial state for animation */
+        }
+
+        .contextual-toolbar.visible {
+            opacity: 1;
+            pointer-events: all;
+             transform: translateY(0);
+        }
+
+        .contextual-toolbar button {
+            background: none;
+            border: none;
+            color: var(--light-color);
+            padding: 4px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .contextual-toolbar button:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .contextual-toolbar button .material-symbols-rounded {
+             font-size: 18px; /* Smaller icons for contextual toolbar */
+             user-select: none;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.visible {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background-color: var(--surface-color);
+            padding: var(--padding-base) * 2;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 16px var(--shadow-color);
+            max-width: 80%;
+            max-height: 80%;
+            overflow-y: auto;
+            position: relative;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+         .modal-overlay.visible .modal-content {
+             transform: translateY(0);
+         }
+
+
+        .modal-close {
+            position: absolute;
+            top: var(--padding-base);
+            right: var(--padding-base);
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted-color);
+            transition: color 0.2s ease;
+        }
+
+        .modal-close:hover {
+            color: var(--dark-color);
+        }
+
+        .template-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: var(--margin-base);
+        }
+
+        .template-item {
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            cursor: pointer;
+            transition: box-shadow 0.2s ease, transform 0.1s ease;
+            background-color: var(--light-color);
+        }
+
+        .template-item:hover {
+            box-shadow: 0 2px 8px var(--shadow-color);
+            transform: translateY(-2px);
+        }
+
+        .template-preview {
+            width: 100%;
+            height: 200px; /* Fixed height for previews */
+            object-fit: cover;
+            display: block;
+        }
+
+        .template-name {
+            padding: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-align: center;
+            color: var(--text-color);
+        }
+
+        /* Utility classes for layout/spacing */
+        .mb-base { margin-bottom: var(--margin-base); }
+        .mt-base { margin-top: var(--margin-base); }
+        .p-base { padding: var(--padding-base); }
+        .flex-row { display: flex; flex-direction: row; }
+        .flex-col { display: flex; flex-direction: column; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .w-full { width: 100%; }
+         .gap-8 { gap: 8px; }
+
+        /* Custom styles for controls */
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .control-row label {
+            flex-shrink: 0;
+            width: 80px; /* Fixed width for labels */
+            font-size: 0.9rem;
+            color: var(--text-muted-color);
+        }
+        .control-row input[type="text"],
+        .control-row input[type="number"],
+        .control-row select,
+        .control-row textarea {
+            flex-grow: 1;
+            padding: 6px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.9rem;
+            background-color: var(--light-color);
+            color: var(--text-color);
+             transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+         .control-row input[type="text"]:focus,
+         .control-row input[type="number"]:focus,
+         .control-row select:focus,
+         .control-row textarea:focus {
+             outline: none;
+             border-color: var(--primary-color);
+             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+         }
+
+         .control-row input[type="color"] {
+            flex-grow: 1;
+            padding: 4px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--light-color);
+            height: 32px;
+             cursor: pointer;
+             transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+         .control-row input[type="color"]:focus {
+             outline: none;
+             border-color: var(--primary-color);
+             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+         }
+
+
+        /* Specific styles for text properties */
+        .text-properties .control-row {
+            flex-wrap: wrap;
+        }
+         .text-properties .control-row label {
+             width: auto; /* Auto width for text property labels */
+             margin-right: 8px;
+         }
+         .text-properties .control-row input[type="text"],
+         .text-properties .control-row input[type="number"],
+         .text-properties .control-row select {
+             width: auto;
+             flex-grow: 1;
+             min-width: 80px;
+         }
+         .text-properties .control-row input[type="color"] {
+             width: auto;
+             min-width: 40px;
+             flex-grow: 0;
+         }
+
+        .align-buttons {
+            display: flex;
+            gap: 4px;
+        }
+         .align-buttons button {
+             background-color: var(--light-color);
+             border: 1px solid var(--border-color);
+             padding: 6px 10px;
+             border-radius: 4px;
+             cursor: pointer;
+             transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+             color: var(--text-color);
+         }
+         .align-buttons button:hover {
+             background-color: var(--border-color);
+         }
+         .align-buttons button:focus-visible {
+             outline: none;
+             border-color: var(--primary-color);
+             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+         }
+         .align-buttons button.active {
+             background-color: var(--primary-color);
+             border-color: var(--primary-color);
+             color: white;
+         }
+          .align-buttons button.active:hover {
+              background-color: #0056b3;
+              border-color: #0056b3;
+          }
+          .align-buttons button.active:focus-visible {
+              outline: none;
+              border-color: var(--primary-color);
+              box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+          }
+
+
+         .align-buttons button .material-symbols-rounded {
+             font-size: 18px;
+             user-select: none;
+         }
+
+         /* Layer control buttons */
+         .layer-controls {
+             display: flex;
+             gap: 4px;
+         }
+         .layer-controls button {
+             background-color: var(--light-color);
+             border: 1px solid var(--border-color);
+             padding: 6px 10px;
+             border-radius: 4px;
+             cursor: pointer;
+             transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+             color: var(--text-color);
+         }
+          .layer-controls button:hover {
+             background-color: var(--border-color);
+         }
+          .layer-controls button:focus-visible {
+             outline: none;
+             border-color: var(--primary-color);
+             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+         }
+          .layer-controls button:disabled {
+              opacity: 0.5;
+              cursor: not-allowed;
+          }
+
+          .layer-controls button .material-symbols-rounded {
+             font-size: 18px;
+             user-select: none;
+         }
+
+         /* File upload button */
+         .file-upload-button {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 8px 16px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
+            font-size: 1rem;
+            text-align: center;
+            border: none;
+         }
+         .file-upload-button:hover {
+             background-color: #0056b3;
+         }
+         .file-upload-button:focus-visible {
+             outline: none;
+             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+         }
+         .file-upload-button input[type="file"] {
+             display: none;
+         }
+
+         /* Export button */
+         .export-button {
+            background-color: var(--success-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
+            font-size: 1.1rem;
+            text-align: center;
+            border: none;
+            display: block;
+            width: 100%;
+            margin-top: var(--margin-base);
+         }
+         .export-button:hover {
+             background-color: #218838;
+         }
+         .export-button:focus-visible {
+             outline: none;
+             box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+         }
+
+
+         /* Placeholder for canvas element handles */
+         .element-handle {
+             position: absolute;
+             width: var(--handle-size);
+             height: var(--handle-size);
+             background-color: var(--primary-color);
+             border: 1px solid white;
+             border-radius: 50%;
+             cursor: grab;
+             z-index: 6; /* Above element */
+             box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+         }
+         .element-handle.tl { top: calc(var(--handle-size) / -2); left: calc(var(--handle-size) / -2); cursor: nwse-resize; }
+         .element-handle.tr { top: calc(var(--handle-size) / -2); right: calc(var(--handle-size) / -2); cursor: nesw-resize; }
+         .element-handle.bl { bottom: calc(var(--handle-size) / -2); left: calc(var(--handle-size) / -2); cursor: nesw-resize; }
+         .element-handle.br { bottom: calc(var(--handle-size) / -2); right: calc(var(--handle-size) / -2); cursor: nwse-resize; }
+         .element-handle.rot { top: calc(var(--rotate-handle-offset) * -1); left: 50%; transform: translateX(-50%); cursor: grab; background-color: var(--danger-color); }
+
+         .element-outline {
+             position: absolute;
+             border: 1px dashed var(--primary-color);
+             z-index: 4; /* Below handles, above element */
+             pointer-events: none; /* Don't interfere with clicks */
+         }
+
+
+    </style>
+</head>
+<body role="application">
+    <header>
+        <div class="header-title">Poster Designer</div>
+        <div class="tool-bar">
+            <button class="tool-button" id="addTextBtn" title="Add Text (T)" aria-label="Add Text">
+                <span class="material-symbols-rounded" aria-hidden="true">text_fields</span>
+            </button>
+            <button class="tool-button" id="addImageBtn" title="Add Image (I)" aria-label="Add Image">
+                <span class="material-symbols-rounded" aria-hidden="true">image</span>
+            </button>
+            <button class="tool-button" id="addShapeBtn" title="Add Shape (S)" aria-label="Add Shape">
+                 <span class="material-symbols-rounded" aria-hidden="true">rectangle</span>
+            </button>
+             <button class="tool-button" id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo" disabled>
+                <span class="material-symbols-rounded" aria-hidden="true">undo</span>
+            </button>
+             <button class="tool-button" id="redoBtn" title="Redo (Ctrl+Y)" aria-label="Redo" disabled>
+                <span class="material-symbols-rounded" aria-hidden="true">redo</span>
+            </button>
+            <button class="tool-button" id="templatesBtn" title="Templates" aria-label="Templates">
+                <span class="material-symbols-rounded" aria-hidden="true">layers</span>
+            </button>
+            <button class="tool-button" id="exportBtn" title="Export (E)" aria-label="Export">
+                <span class="material-symbols-rounded" aria-hidden="true">download</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="container">
+        <aside class="sidebar" id="propertiesPanel" aria-label="Element Properties">
+            <div class="sidebar-title">Element Properties</div>
+            <div id="noElementSelected" class="mb-base" style="font-size: 0.9rem; color: var(--text-muted-color);">Select an element on the canvas to edit its properties.</div>
+
+            <div id="textProperties" class="property-group" style="display: none;">
+                 <div class="property-label">Text</div>
+                 <textarea id="propTextContent" class="property-input mb-base" rows="3" aria-label="Text Content"></textarea>
+
+                 <div class="property-label">Font</div>
+                 <div class="control-row">
+                    <select id="propFontFamily" class="property-select" aria-label="Font Family">
+                        <option value="Inter">Inter</option>
+                        <option value="Roboto">Roboto</option>
+                        <option value="Open Sans">Open Sans</option>
+                        <option value="Lato">Lato</option>
+                        <option value="Montserrat">Montserrat</option>
+                        <option value="Arial">Arial</option>
+                        <option value="Verdana">Verdana</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                    </select>
+                 </div>
+
+                 <div class="control-row">
+                     <label for="propFontSize">Size:</label>
+                     <input type="number" id="propFontSize" class="property-input" value="24" min="1" aria-label="Font Size">
+                 </div>
+
+                 <div class="control-row">
+                      <label for="propTextColor">Color:</label>
+                      <input type="color" id="propTextColor" class="property-color" value="#000000" aria-label="Text Color">
+                 </div>
+
+                 <div class="property-label mt-base">Alignment</div>
+                 <div class="flex-row align-buttons" role="group" aria-label="Text Alignment">
+                     <button data-align="left" title="Align Left" aria-label="Align Left"><span class="material-symbols-rounded" aria-hidden="true">format_align_left</span></button>
+                     <button data-align="center" title="Align Center" aria-label="Align Center"><span class="material-symbols-rounded" aria-hidden="true">format_align_center</span></button>
+                     <button data-align="right" title="Align Right" aria-label="Align Right"><span class="material-symbols-rounded" aria-hidden="true">format_align_right</span></button>
+                 </div>
+            </div>
+
+             <div id="imageProperties" class="property-group" style="display: none;">
+                 <div class="property-label">Image Source</div>
+                  <div class="control-row">
+                     <input type="text" id="propImageUrl" class="property-input" placeholder="Enter image URL" aria-label="Image URL">
+                  </div>
+                  <div class="control-row">
+                     <label class="file-upload-button" for="uploadImageInput">
+                         Upload Image
+                         <input type="file" id="uploadImageInput" accept="image/*" aria-label="Upload Image">
+                     </label>
+                  </div>
+             </div>
+
+            <div id="shapeProperties" class="property-group" style="display: none;">
+                 <div class="property-label">Shape Properties</div>
+                 <div class="control-row">
+                      <label for="propShapeFillColor">Fill Color:</label>
+                      <input type="color" id="propShapeFillColor" class="property-color" value="#007bff" aria-label="Shape Fill Color">
+                 </div>
+                  <div class="control-row">
+                      <label for="propShapeStrokeColor">Stroke Color:</label>
+                      <input type="color" id="propShapeStrokeColor" class="property-color" value="#000000" aria-label="Shape Stroke Color">
+                 </div>
+                  <div class="control-row">
+                     <label for="propShapeStrokeWidth">Stroke Width:</label>
+                     <input type="number" id="propShapeStrokeWidth" class="property-input" value="0" min="0" aria-label="Shape Stroke Width">
+                 </div>
+            </div>
+
+            <div id="commonProperties" class="property-group" style="display: none;">
+                 <div class="property-label">Position & Size</div>
+                 <div class="control-row">
+                     <label for="propX">X:</label>
+                     <input type="number" id="propX" class="property-input" value="0" aria-label="Element X position">
+                      <label for="propY">Y:</label>
+                     <input type="number" id="propY" class="property-input" value="0" aria-label="Element Y position">
+                 </div>
+                 <div class="control-row">
+                     <label for="propWidth">Width:</label>
+                     <input type="number" id="propWidth" class="property-input" value="100" min="1" aria-label="Element Width">
+                      <label for="propHeight">Height:</label>
+                     <input type="number" id="propHeight" class="property-input" value="100" min="1" aria-label="Element Height">
+                 </div>
+                 <div class="control-row">
+                     <label for="propRotation">Rotation (°):</label>
+                     <input type="number" id="propRotation" class="property-input" value="0" aria-label="Element Rotation in degrees">
+                 </div>
+                 <div class="control-row">
+                     <label for="propOpacity">Opacity:</label>
+                     <input type="number" id="propOpacity" class="property-input" value="1" min="0" max="1" step="0.01" aria-label="Element Opacity">
+                 </div>
+
+                 <div class="property-label mt-base">Layer</div>
+                 <div class="flex-row layer-controls" role="group" aria-label="Layer Controls">
+                     <button id="propBringForward" title="Bring Forward" aria-label="Bring Forward"><span class="material-symbols-rounded" aria-hidden="true">arrow_upward</span></button>
+                     <button id="propSendBackward" title="Send Backward" aria-label="Send Backward"><span class="material-symbols-rounded" aria-hidden="true">arrow_downward</span></button>
+                      <button id="propBringToFront" title="Bring to Front" aria-label="Bring to Front"><span class="material-symbols-rounded" aria-hidden="true">keyboard_double_arrow_up</span></button>
+                     <button id="propSendToBack" title="Send to Back" aria-label="Send to Back"><span class="material-symbols-rounded" aria-hidden="true">keyboard_double_arrow_down</span></button>
+                 </div>
+            </div>
+
+        </aside>
+
+        <main class="canvas-area" role="region" aria-label="Design Canvas Area" tabindex="0">
+            <canvas id="designCanvas" role="img" aria-label="Poster Design Canvas"></canvas>
+             <div id="contextualToolbar" class="contextual-toolbar" aria-label="Selected Element Actions">
+                 <button id="deleteElementBtn" title="Delete (Del)" aria-label="Delete Element"><span class="material-symbols-rounded" aria-hidden="true">delete</span></button>
+                 <button id="duplicateElementBtn" title="Duplicate (Ctrl+D)" aria-label="Duplicate Element"><span class="material-symbols-rounded" aria-hidden="true">content_copy</span></button>
+             </div>
+        </main>
+    </div>
+
+    <!-- Templates Modal -->
+    <div id="templatesModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="templatesModalTitle">
+        <div class="modal-content">
+            <button class="modal-close" aria-label="Close Modal">&times;</button>
+            <h2 class="sidebar-title" id="templatesModalTitle">Choose a Template</h2>
+            <div class="template-gallery" role="list">
+                <!-- Template items will be loaded here -->
+                <div class="template-item" data-template-id="1" role="listitem" aria-label="Template 1: Event Template">
+                    <img src="https://placehold.co/150x200?text=Template+1" alt="Template 1 Preview" class="template-preview">
+                    <div class="template-name">Event Template</div>
+                </div>
+                 <div class="template-item" data-template-id="2" role="listitem" aria-label="Template 2: Community Fair">
+                    <img src="https://placehold.co/150x200?text=Template+2" alt="Template 2 Preview" class="template-preview">
+                    <div class="template-name">Community Fair</div>
+                </div>
+                 <div class="template-item" data-template-id="3" role="listitem" aria-label="Template 3: Workshop">
+                    <img src="https://placehold.co/150x200?text=Template+3" alt="Template 3 Preview" class="template-preview">
+                    <div class="template-name">Workshop</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+     <!-- Export Modal (Simple confirmation/options for now) -->
+     <div id="exportModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="exportModalTitle">
+        <div class="modal-content">
+            <button class="modal-close" aria-label="Close Modal">&times;</button>
+            <h2 class="sidebar-title" id="exportModalTitle">Export Poster</h2>
+            <p class="mb-base">Choose an export format:</p>
+            <div class="flex-row gap-8 mb-base">
+                <button class="tool-button" id="exportPngBtn" style="background-color: var(--success-color); color: white;" aria-label="Export as PNG">Export as PNG</button>
+                <!-- Add other formats like JPG if needed -->
+            </div>
+             <p style="font-size: 0.9rem; color: var(--text-muted-color);">Export will download the current design as an image file.</p>
+        </div>
+    </div>
+
+
+    <script>
+        // --- State Management ---
+        let elements = []; // Array to hold all design elements
+        let selectedElement = null;
+        let canvas = document.getElementById('designCanvas');
+        let ctx = canvas.getContext('2d');
+        let canvasRect = canvas.getBoundingClientRect(); // To get canvas position
+        let isDragging = false;
+        let isResizing = false;
+        let isRotating = false;
+        let dragStartX, dragStartY; // Mouse position on drag start
+        let initialElementX, initialElementY; // Element position on drag start
+        let initialElementWidth, initialElementHeight; // Element size on drag start
+        let initialElementRotation; // Element rotation on drag start
+        let resizeHandle = null; // 'tl', 'tr', 'bl', 'br'
+        let initialAnchorX, initialAnchorY; // Anchor point (opposite handle) position on resize start
+        let initialRotationAngle; // Angle from center to mouse on rotation start
+        let history = [];
+        let historyIndex = -1;
+
+        // --- Constants ---
+        const CANVAS_WIDTH = 600;
+        const CANVAS_HEIGHT = 800;
+        const HANDLE_SIZE = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--handle-size'));
+        const ROTATE_HANDLE_OFFSET = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--rotate-handle-offset'));
+        const MIN_ELEMENT_SIZE = 5; // Minimum width/height for elements
+        const MOVE_STEP = 1; // Keyboard move step
+        const FAST_MOVE_STEP = 10; // Shift + Keyboard move step
+
+
+        // --- DOM Elements ---
+        const propertiesPanel = document.getElementById('propertiesPanel');
+        const noElementSelectedMsg = document.getElementById('noElementSelected');
+        const textPropertiesPanel = document.getElementById('textProperties');
+        const imagePropertiesPanel = document.getElementById('imageProperties');
+        const shapePropertiesPanel = document.getElementById('shapeProperties');
+        const commonPropertiesPanel = document.getElementById('commonProperties');
+        const contextualToolbar = document.getElementById('contextualToolbar');
+        const canvasArea = document.querySelector('.canvas-area');
+
+        // Text properties inputs
+        const propTextContent = document.getElementById('propTextContent');
+        const propFontFamily = document.getElementById('propFontFamily');
+        const propFontSize = document.getElementById('propFontSize');
+        const propTextColor = document.getElementById('propTextColor');
+        const propTextAlignButtons = document.querySelectorAll('#textProperties button[data-align]');
+
+
+        // Image properties inputs
+        const propImageUrl = document.getElementById('propImageUrl');
+        const uploadImageInput = document.getElementById('uploadImageInput');
+
+        // Shape properties inputs
+        const propShapeFillColor = document.getElementById('propShapeFillColor');
+        const propShapeStrokeColor = document.getElementById('propShapeStrokeColor');
+        const propShapeStrokeWidth = document.getElementById('propShapeStrokeWidth');
+
+
+        // Common properties inputs
+        const propX = document.getElementById('propX');
+        const propY = document.getElementById('propY');
+        const propWidth = document.getElementById('propWidth');
+        const propHeight = document.getElementById('propHeight');
+        const propRotation = document.getElementById('propRotation');
+        const propOpacity = document.getElementById('propOpacity');
+        const propBringForward = document.getElementById('propBringForward');
+        const propSendBackward = document.getElementById('propSendBackward');
+        const propBringToFront = document.getElementById('propBringToFront');
+        const propSendToBack = document.getElementById('propSendToBack');
+
+
+        // Tool buttons
+        const addTextBtn = document.getElementById('addTextBtn');
+        const addImageBtn = document.getElementById('addImageBtn');
+        const addShapeBtn = document.getElementById('addShapeBtn');
+        const undoBtn = document.getElementById('undoBtn');
+        const redoBtn = document.getElementById('redoBtn');
+        const templatesBtn = document.getElementById('templatesBtn');
+        const exportBtn = document.getElementById('exportBtn');
+
+        // Contextual Toolbar Buttons
+        const deleteElementBtn = document.getElementById('deleteElementBtn');
+        const duplicateElementBtn = document.getElementById('duplicateElementBtn');
+
+        // Modals
+        const templatesModal = document.getElementById('templatesModal');
+        const exportModal = document.getElementById('exportModal');
+        const modalCloseButtons = document.querySelectorAll('.modal-close');
+        const templateItems = document.querySelectorAll('.template-item');
+        const exportPngBtn = document.getElementById('exportPngBtn');
+
+
+        // --- Geometry Helpers ---
+        function rotatePoint(px, py, cx, cy, angleDegrees) {
+            const angleRad = angleDegrees * Math.PI / 180;
+            const cos = Math.cos(angleRad);
+            const sin = Math.sin(angleRad);
+            const translatedX = px - cx;
+            const translatedY = py - cy;
+            const rotatedX = translatedX * cos - translatedY * sin;
+            const rotatedY = translatedX * sin + translatedY * cos;
+            return { x: rotatedX + cx, y: rotatedY + cy };
+        }
+
+         function getRotatedCorners(element) {
+             const cx = element.x + element.width / 2;
+             const cy = element.y + element.height / 2;
+             const corners = [
+                 { x: element.x, y: element.y }, // tl
+                 { x: element.x + element.width, y: element.y }, // tr
+                 { x: element.x, y: element.y + element.height }, // bl
+                 { x: element.x + element.width, y: element.y + element.height } // br
+             ];
+             return corners.map(corner => rotatePoint(corner.x, corner.y, cx, cy, element.rotation));
+         }
+
+         function getRotatedHandlePosition(element, handleName) {
+             const cx = element.x + element.width / 2;
+             const cy = element.y + element.height / 2;
+             let handleX, handleY;
+
+             switch (handleName) {
+                 case 'tl': handleX = element.x; handleY = element.y; break;
+                 case 'tr': handleX = element.x + element.width; handleY = element.y; break;
+                 case 'bl': handleX = element.x; handleY = element.y + element.height; break;
+                 case 'br': handleX = element.x + element.width; handleY = element.y + element.height; break;
+                 case 'rot': handleX = element.x + element.width / 2; handleY = element.y - ROTATE_HANDLE_OFFSET; break;
+                 default: return null;
+             }
+
+             return rotatePoint(handleX, handleY, cx, cy, element.rotation);
+         }
+
+         function getOppositeHandleName(handleName) {
+             switch (handleName) {
+                 case 'tl': return 'br';
+                 case 'tr': return 'bl';
+                 case 'bl': return 'tr';
+                 case 'br': return 'tl';
+                 default: return null;
+             }
+         }
+
+
+        // --- Element Class ---
+        class DesignElement {
+            constructor(type, options = {}) {
+                this.id = Date.now() + Math.random(); // Simple unique ID
+                this.type = type; // 'text', 'image', 'shape'
+                this.x = options.x || 50;
+                this.y = options.y || 50;
+                this.width = options.width || 100;
+                this.height = options.height || 100;
+                this.rotation = options.rotation || 0; // in degrees
+                this.opacity = options.opacity !== undefined ? options.opacity : 1;
+                this.zIndex = options.zIndex !== undefined ? options.zIndex : elements.length; // Layer order
+
+                // Type-specific properties
+                if (type === 'text') {
+                    this.text = options.text || 'Double click to edit';
+                    this.fontFamily = options.fontFamily || 'Inter';
+                    this.fontSize = options.fontSize || 24; // in pixels
+                    this.textColor = options.textColor || '#000000';
+                    this.textAlign = options.textAlign || 'left'; // 'left', 'center', 'right'
+                     // Text elements don't have a fixed height initially, it's calculated
+                     this.maxWidth = options.maxWidth || 300; // Max width for text wrapping (simple)
+                     this.height = this.measureTextHeight(); // Initial height calculation
+                } else if (type === 'image') {
+                    this.src = options.src || '';
+                    this.image = null; // HTMLImageElement
+                    if (this.src) this.loadImage();
+                } else if (type === 'shape') {
+                    // For simplicity, only rectangle shape for now
+                    this.shapeType = options.shapeType || 'rect';
+                    this.fillColor = options.fillColor || '#007bff';
+                    this.strokeColor = options.strokeColor || '#000000';
+                    this.strokeWidth = options.strokeWidth || 0;
+                }
+            }
+
+             measureTextHeight() {
+                 if (this.type !== 'text' || !this.text) return this.fontSize; // Default or initial guess
+
+                 // Use a temporary canvas context to measure text
+                 const tempCtx = canvas.getContext('2d'); // Use the main canvas context
+                 tempCtx.font = `${this.fontSize}px ${this.fontFamily}`;
+                 const lines = this.text.split('\n');
+                 const lineHeight = this.fontSize * 1.2; // Add some line spacing
+                 return lines.length * lineHeight;
+             }
+
+
+            loadImage() {
+                 if (!this.src) {
+                     this.image = null;
+                     renderCanvas();
+                     updatePropertiesPanel();
+                     return;
+                 }
+                 this.image = new Image();
+                 this.image.onload = () => {
+                     // Set initial size based on image aspect ratio if not set
+                     // Check if using default size (100x100) and is an image being loaded for the first time
+                     if (this.width === 100 && this.height === 100 && this.type === 'image' && !this._initialSizeSet) {
+                         const aspectRatio = this.image.width / this.image.height;
+                         this.width = 200; // Default image width
+                         this.height = 200 / aspectRatio;
+                         this._initialSizeSet = true; // Mark that initial size is set
+                     }
+                     renderCanvas(); // Redraw after image loads
+                     updatePropertiesPanel(); // Update panel if this is the selected element
+                 };
+                 this.image.onerror = () => {
+                     console.error("Failed to load image:", this.src);
+                     this.image = null; // Clear image if loading fails
+                     renderCanvas();
+                     updatePropertiesPanel();
+                 };
+                 this.image.crossOrigin = 'anonymous'; // Handle CORS for some images
+                 this.image.src = this.src;
+             }
+
+            draw(context) {
+                context.save();
+                context.globalAlpha = this.opacity;
+                const cx = this.x + this.width / 2;
+                const cy = this.y + this.height / 2;
+                context.translate(cx, cy);
+                context.rotate(this.rotation * Math.PI / 180);
+                context.translate(-cx, -cy);
+
+                if (this.type === 'text') {
+                    context.font = `${this.fontSize}px ${this.fontFamily}`;
+                    context.fillStyle = this.textColor;
+                    context.textAlign = this.textAlign;
+                    context.textBaseline = 'top'; // Align text to the top of the bounding box
+
+                    const lines = this.text.split('\n');
+                    const lineHeight = this.fontSize * 1.2; // Add some line spacing
+                    this.height = lines.length * lineHeight; // Update height based on content
+
+                    lines.forEach((line, index) => {
+                        let textX = this.x;
+                        if (this.textAlign === 'center') {
+                            textX = this.x + this.width / 2;
+                        } else if (this.textAlign === 'right') {
+                            textX = this.x + this.width;
+                        }
+                        context.fillText(line, textX, this.y + index * lineHeight);
+                    });
+
+                } else if (this.type === 'image') {
+                    if (this.image) {
+                        context.drawImage(this.image, this.x, this.y, this.width, this.height);
+                    } else {
+                         // Draw a placeholder if image not loaded or failed
+                         context.fillStyle = '#cccccc';
+                         context.fillRect(this.x, this.y, this.width, this.height);
+                         context.strokeStyle = '#666666';
+                         context.lineWidth = 2;
+                         context.strokeRect(this.x, this.y, this.width, this.height);
+                         context.fillStyle = '#333333';
+                         context.font = '12px Arial';
+                         context.textAlign = 'center';
+                         context.textBaseline = 'middle';
+                         context.fillText("Image", this.x + this.width / 2, this.y + this.height / 2);
+                    }
+                } else if (this.type === 'shape') {
+                    if (this.shapeType === 'rect') {
+                        context.fillStyle = this.fillColor;
+                        context.fillRect(this.x, this.y, this.width, this.height);
+                        if (this.strokeWidth > 0) {
+                            context.strokeStyle = this.strokeColor;
+                            context.lineWidth = this.strokeWidth;
+                            context.strokeRect(this.x, this.y, this.width, this.height);
+                        }
+                    }
+                }
+
+                context.restore();
+
+                // Draw selection outline and handles if selected
+                if (this === selectedElement && !isDragging && !isResizing && !isRotating) {
+                    this.drawSelection(context);
+                }
+            }
+
+            drawSelection(context) {
+                context.save();
+                const cx = this.x + this.width / 2;
+                const cy = this.y + this.height / 2;
+                context.translate(cx, cy);
+                context.rotate(this.rotation * Math.PI / 180);
+                context.translate(-cx, -cy);
+
+                // Draw outline
+                context.strokeStyle = "var(--primary-color)";
+                context.lineWidth = 1;
+                context.setLineDash([5, 5]);
+                context.strokeRect(this.x, this.y, this.width, this.height);
+                context.setLineDash([]); // Reset line dash
+
+                // Draw handles
+                const handles = [
+                    { x: this.x, y: this.y, name: 'tl' },
+                    { x: this.x + this.width, y: this.y, name: 'tr' },
+                    { x: this.x, y: this.y + this.height, name: 'bl' },
+                    { x: this.x + this.width, y: this.y + this.height, name: 'br' },
+                ];
+
+                handles.forEach(handle => {
+                    context.fillStyle = "var(--primary-color)";
+                    context.strokeStyle = "white";
+                    context.lineWidth = 1;
+                    context.beginPath();
+                    context.arc(handle.x, handle.y, HANDLE_SIZE / 2, 0, Math.PI * 2);
+                    context.fill();
+                    context.stroke();
+                });
+
+                // Draw rotation handle
+                 const rotateHandleX = this.x + this.width / 2;
+                 const rotateHandleY = this.y - ROTATE_HANDLE_OFFSET;
+                 context.fillStyle = "var(--danger-color)";
+                 context.strokeStyle = "white";
+                 context.lineWidth = 1;
+                 context.beginPath();
+                 context.arc(rotateHandleX, rotateHandleY, HANDLE_SIZE / 2, 0, Math.PI * 2);
+                 context.fill();
+                 context.stroke();
+
+                context.restore();
+            }
+
+             // Check if a point (px, py) is inside the element's rotated bounding box
+             containsPoint(px, py) {
+                 const cx = this.x + this.width / 2;
+                 const cy = this.y + this.height / 2;
+
+                 // Rotate point back relative to the element's center and rotation
+                 const rotatedPoint = rotatePoint(px, py, cx, cy, -this.rotation);
+
+                 // Check if the rotated point is within the unrotated bounding box
+                 return rotatedPoint.x >= this.x && rotatedPoint.x <= this.x + this.width &&
+                        rotatedPoint.y >= this.y && rotatedPoint.y <= this.y + this.height;
+             }
+
+             // Check if a point (px, py) is near a resize handle or rotation handle
+             getHandleAtPoint(px, py) {
+                 const cx = this.x + this.width / 2;
+                 const cy = this.y + this.height / 2;
+
+                 // Get rotated positions of handles
+                 const handlePositions = {
+                     tl: getRotatedHandlePosition(this, 'tl'),
+                     tr: getRotatedHandlePosition(this, 'tr'),
+                     bl: getRotatedHandlePosition(this, 'bl'),
+                     br: getRotatedHandlePosition(this, 'br'),
+                     rot: getRotatedHandlePosition(this, 'rot'),
+                 };
+
+                 // Check distance from mouse point to each rotated handle position
+                 for (const handleName in handlePositions) {
+                     const pos = handlePositions[handleName];
+                     if (!pos) continue;
+                     const dist = Math.sqrt((px - pos.x)**2 + (py - pos.y)**2);
+
+                     if (dist < HANDLE_SIZE) {
+                         return handleName;
+                     }
+                 }
+                 return null;
+             }
+        }
+
+        // --- Canvas Rendering ---
+        function renderCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Sort elements by zIndex before drawing
+            elements.sort((a, b) => a.zIndex - b.zIndex);
+            elements.forEach(element => element.draw(ctx));
+        }
+
+        // --- History (Undo/Redo) ---
+        function saveHistory() {
+            // Limit history size
+            const maxHistory = 50;
+            if (historyIndex < history.length - 1) {
+                history = history.slice(0, historyIndex + 1);
+            }
+            if (history.length >= maxHistory) {
+                 history.shift(); // Remove the oldest state
+            }
+            // Deep clone elements to save state
+            const state = JSON.parse(JSON.stringify(elements));
+             // For images, save only the src, the image object will be reloaded
+             state.forEach(el => {
+                 if (el.type === 'image') {
+                     el.image = null; // Don't save the image object itself
+                 }
+             });
+            history.push(state);
+            historyIndex = history.length - 1;
+            updateUndoRedoButtons();
+        }
+
+        function loadHistoryState(index) {
+            if (index >= 0 && index < history.length) {
+                const state = history[index];
+                elements = JSON.parse(JSON.stringify(state)); // Deep clone the state
+
+                 // Re-load images after cloning and update text element heights
+                 elements.forEach(el => {
+                     if (el.type === 'image' && el.src) {
+                         // Create a new DesignElement instance to use its loadImage method
+                         const tempElement = new DesignElement('image', { src: el.src });
+                         tempElement.image = el.image; // Preserve loaded image if it exists (though JSON.parse makes it null)
+                         tempElement.loadImage(); // This will reload the image and update the element in the elements array
+                         // Find the element in the new array and replace it with the one that will load the image
+                          const indexInNewArray = elements.findIndex(item => item.id === el.id);
+                          if (indexInNewArray !== -1) {
+                              elements[indexInNewArray] = tempElement;
+                          }
+                     } else if (el.type === 'text') {
+                          // Recalculate height after loading state
+                         const tempElement = new DesignElement('text', el); // Create temp instance to use method
+                          el.height = tempElement.measureTextHeight();
+                     }
+                 });
+
+                historyIndex = index;
+                // Ensure selected element reference is updated after loading state
+                if (selectedElement) {
+                    const currentSelectedId = selectedElement.id;
+                    selectedElement = elements.find(el => el.id === currentSelectedId) || null;
+                }
+                renderCanvas();
+                updatePropertiesPanel();
+                updateUndoRedoButtons();
+                 if(selectedElement) showContextualToolbar(); else hideContextualToolbar();
+            }
+        }
+
+        function undo() {
+            if (historyIndex > 0) {
+                loadHistoryState(historyIndex - 1);
+            }
+        }
+
+        function redo() {
+            if (historyIndex < history.length - 1) {
+                loadHistoryState(historyIndex + 1);
+            }
+        }
+
+        function updateUndoRedoButtons() {
+            undoBtn.disabled = historyIndex <= 0;
+            redoBtn.disabled = historyIndex >= history.length - 1;
+        }
+
+
+        // --- Element Management ---
+        function addElement(type, options) {
+            const newElement = new DesignElement(type, options);
+            elements.push(newElement);
+            selectElement(newElement);
+            saveHistory();
+        }
+
+        function deleteSelectedElement() {
+            if (selectedElement) {
+                elements = elements.filter(el => el.id !== selectedElement.id);
+                selectedElement = null;
+                renderCanvas();
+                updatePropertiesPanel();
+                hideContextualToolbar();
+                saveHistory();
+            }
+        }
+
+        function duplicateSelectedElement() {
+             if (selectedElement) {
+                 // Simple duplication: create a new element with same properties, offset slightly
+                 const duplicatedElement = new DesignElement(selectedElement.type, {
+                     ...selectedElement, // Copy properties
+                     id: Date.now() + Math.random(), // New unique ID
+                     x: selectedElement.x + 20, // Offset position
+                     y: selectedElement.y + 20,
+                     zIndex: elements.length // Place on top
+                 });
+
+                 // Handle image cloning specifically - reference the same loaded image object
+                 if (selectedElement.type === 'image' && selectedElement.image) {
+                      duplicatedElement.image = selectedElement.image;
+                 }
+
+                 elements.push(duplicatedElement);
+                 selectElement(duplicatedElement);
+                 saveHistory();
+             }
+        }
+
+         function changeElementLayer(direction) {
+             if (!selectedElement) return;
+
+             const currentIndex = elements.indexOf(selectedElement);
+             if (currentIndex === -1) return;
+
+             // Create a sorted list of elements by zIndex
+             const sortedElements = [...elements].sort((a, b) => a.zIndex - b.zIndex);
+             const currentSortedIndex = sortedElements.indexOf(selectedElement);
+
+             let newSortedIndex = currentSortedIndex;
+
+             if (direction === 'forward') {
+                 if (currentSortedIndex < sortedElements.length - 1) {
+                     newSortedIndex = currentSortedIndex + 1;
+                 } else {
+                     return; // Already at front
+                 }
+             } else if (direction === 'backward') {
+                  if (currentSortedIndex > 0) {
+                      newSortedIndex = currentSortedIndex - 1;
+                  } else {
+                      return; // Already at back
+                  }
+             } else if (direction === 'front') {
+                 newSortedIndex = sortedElements.length - 1;
+             } else if (direction === 'back') {
+                 newSortedIndex = 0;
+             } else {
+                 return; // No change needed
+             }
+
+             // Swap zIndex with the element at the target sorted index
+             if (newSortedIndex !== currentSortedIndex) {
+                 const targetElement = sortedElements[newSortedIndex];
+                 const currentZIndex = selectedElement.zIndex;
+                 selectedElement.zIndex = targetElement.zIndex;
+                 targetElement.zIndex = currentZIndex;
+             }
+
+             // Re-sort the main elements array (optional but good practice)
+             // elements.sort((a, b) => a.zIndex - b.zIndex);
+             // Re-assign sequential zIndex to keep them manageable (optional)
+             // elements.forEach((el, index) => el.zIndex = index);
+
+
+             renderCanvas();
+             saveHistory();
+         }
+
+
+        // --- Selection ---
+        function selectElement(element) {
+            if (selectedElement === element) return; // Already selected
+
+            selectedElement = element;
+            updatePropertiesPanel();
+            showContextualToolbar();
+            renderCanvas(); // Redraw to show selection handles
+             // Set focus to canvas area when element is selected for keyboard control
+             canvasArea.focus();
+        }
+
+        function deselectElement() {
+            if (!selectedElement && !contextualToolbar.classList.contains('visible')) return; // Already deselected
+
+            selectedElement = null;
+            updatePropertiesPanel();
+            hideContextualToolbar();
+            renderCanvas(); // Redraw to hide selection handles
+        }
+
+        // --- Properties Panel ---
+        function updatePropertiesPanel() {
+            // Hide all panels first
+            noElementSelectedMsg.style.display = selectedElement ? 'none' : 'block';
+            textPropertiesPanel.style.display = 'none';
+            imagePropertiesPanel.style.display = 'none';
+            shapePropertiesPanel.style.display = 'none';
+            commonPropertiesPanel.style.display = selectedElement ? 'block' : 'none';
+
+            if (!selectedElement) {
+                return;
+            }
+
+            // Show type-specific panel
+            if (selectedElement.type === 'text') {
+                textPropertiesPanel.style.display = 'block';
+                propTextContent.value = selectedElement.text;
+                propFontFamily.value = selectedElement.fontFamily;
+                propFontSize.value = selectedElement.fontSize;
+                propTextColor.value = selectedElement.textColor;
+                // Update alignment buttons
+                propTextAlignButtons.forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.align === selectedElement.textAlign);
+                });
+
+            } else if (selectedElement.type === 'image') {
+                imagePropertiesPanel.style.display = 'block';
+                propImageUrl.value = selectedElement.src;
+
+            } else if (selectedElement.type === 'shape') {
+                 shapePropertiesPanel.style.display = 'block';
+                 propShapeFillColor.value = selectedElement.fillColor;
+                 propShapeStrokeColor.value = selectedElement.strokeColor;
+                 propShapeStrokeWidth.value = selectedElement.strokeWidth;
+            }
+
+            // Update common properties
+            propX.value = Math.round(selectedElement.x);
+            propY.value = Math.round(selectedElement.y);
+            propWidth.value = Math.round(selectedElement.width);
+            propHeight.value = Math.round(selectedElement.height);
+            propRotation.value = Math.round(selectedElement.rotation);
+            propOpacity.value = selectedElement.opacity;
+        }
+
+        function updateSelectedElementProperties() {
+            if (!selectedElement) return;
+
+            // Update type-specific properties
+            if (selectedElement.type === 'text') {
+                selectedElement.text = propTextContent.value;
+                selectedElement.fontFamily = propFontFamily.value;
+                selectedElement.fontSize = Math.max(1, parseFloat(propFontSize.value) || 1); // Ensure minimum size
+                selectedElement.textColor = propTextColor.value;
+                // Alignment is handled by button clicks
+                selectedElement.height = selectedElement.measureTextHeight(); // Recalculate height
+            } else if (selectedElement.type === 'image') {
+                 const newSrc = propImageUrl.value;
+                 if (selectedElement.src !== newSrc) {
+                     selectedElement.src = newSrc;
+                     selectedElement.loadImage(); // Reload image if URL changes
+                 }
+            } else if (selectedElement.type === 'shape') {
+                selectedElement.fillColor = propShapeFillColor.value;
+                selectedElement.strokeColor = propShapeStrokeColor.value;
+                selectedElement.strokeWidth = Math.max(0, parseFloat(propShapeStrokeWidth.value) || 0);
+            }
+
+            // Update common properties
+            selectedElement.x = parseFloat(propX.value) || 0;
+            selectedElement.y = parseFloat(propY.value) || 0;
+            selectedElement.width = Math.max(MIN_ELEMENT_SIZE, parseFloat(propWidth.value) || MIN_ELEMENT_SIZE); // Ensure minimum size
+            selectedElement.height = Math.max(MIN_ELEMENT_SIZE, parseFloat(propHeight.value) || MIN_ELEMENT_SIZE); // Ensure minimum size
+            selectedElement.rotation = parseFloat(propRotation.value) || 0;
+             selectedElement.opacity = Math.max(0, Math.min(1, parseFloat(propOpacity.value) || 0)); // Ensure opacity is between 0 and 1
+
+
+            renderCanvas();
+            showContextualToolbar(); // Update toolbar position
+            // saveHistory(); // Save history after a batch of property changes or on blur/change
+        }
+
+         function savePropertiesChanges() {
+             // Called when input blurs or change events finish
+             // This prevents saving history state on every single input character
+             saveHistory();
+         }
+
+
+        // --- Contextual Toolbar ---
+        function showContextualToolbar() {
+            if (!selectedElement) {
+                hideContextualToolbar();
+                return;
+            }
+            // Calculate the position of the rotation handle relative to the canvas
+            const rotateHandlePos = getRotatedHandlePosition(selectedElement, 'rot');
+
+             if (!rotateHandlePos) return;
+
+            // Position toolbar above the rotation handle, accounting for canvas offset
+             const canvasOffset = canvas.getBoundingClientRect();
+             const toolbarWidth = contextualToolbar.offsetWidth; // Get current width
+
+            contextualToolbar.style.left = `${canvasOffset.left + rotateHandlePos.x - toolbarWidth / 2}px`;
+            contextualToolbar.style.top = `${canvasOffset.top + rotateHandlePos.y - contextualToolbar.offsetHeight - 5}px`; // Position above rotation handle
+            contextualToolbar.classList.add('visible');
+        }
+
+        function hideContextualToolbar() {
+            contextualToolbar.classList.remove('visible');
+        }
+
+
+        // --- Event Handlers ---
+
+        // Tool Bar Buttons
+        addTextBtn.addEventListener('click', () => {
+            addElement('text', { x: CANVAS_WIDTH / 2 - 150, y: CANVAS_HEIGHT / 2 - 20, width: 300, height: 40, textAlign: 'center' });
+        });
+
+        addImageBtn.addEventListener('click', () => {
+             // For simplicity, add a placeholder image initially
+             addElement('image', { x: CANVAS_WIDTH / 2 - 100, y: CANVAS_HEIGHT / 2 - 75, width: 200, height: 150, src: 'https://placehold.co/200x150?text=Image' });
+        });
+
+        addShapeBtn.addEventListener('click', () => {
+             addElement('shape', { x: CANVAS_WIDTH / 2 - 75, y: CANVAS_HEIGHT / 2 - 50, width: 150, height: 100, fillColor: '#007bff', strokeColor: '#000000', strokeWidth: 0 });
+        });
+
+        undoBtn.addEventListener('click', undo);
+        redoBtn.addEventListener('click', redo);
+
+        templatesBtn.addEventListener('click', () => {
+            templatesModal.classList.add('visible');
+        });
+
+        exportBtn.addEventListener('click', () => {
+            exportModal.classList.add('visible');
+        });
+
+
+        // Properties Panel Inputs
+        propTextContent.addEventListener('input', updateSelectedElementProperties);
+        propTextContent.addEventListener('blur', savePropertiesChanges);
+
+        propFontFamily.addEventListener('change', () => { updateSelectedElementProperties(); savePropertiesChanges(); });
+        propFontSize.addEventListener('input', updateSelectedElementProperties);
+        propFontSize.addEventListener('blur', savePropertiesChanges);
+        propTextColor.addEventListener('input', updateSelectedElementProperties);
+        propTextColor.addEventListener('change', savePropertiesChanges); // Use change for color picker
+
+        propTextAlignButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (selectedElement && selectedElement.type === 'text') {
+                    selectedElement.textAlign = btn.dataset.align;
+                    // Update button active state
+                     propTextAlignButtons.forEach(b => b.classList.remove('active'));
+                     btn.classList.add('active');
+                    renderCanvas();
+                    saveHistory(); // Alignment change is a distinct action
+                }
+            });
+        });
+
+        propImageUrl.addEventListener('change', () => { updateSelectedElementProperties(); savePropertiesChanges(); }); // Use change to wait for blur/enter
+        uploadImageInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    if (selectedElement && selectedElement.type === 'image') {
+                        selectedElement.src = e.target.result; // Data URL
+                        selectedElement.loadImage();
+                         saveHistory(); // Image upload is a distinct action
+                    } else {
+                        // If no image element is selected, add a new one
+                        addElement('image', { x: CANVAS_WIDTH / 2 - 100, y: CANVAS_HEIGHT / 2 - 75, src: e.target.result });
+                    }
+                };
+                reader.readAsDataURL(file); // Read file as data URL
+                 // Clear the file input value so the same file can be selected again
+                 event.target.value = '';
+            }
+        });
+
+        propShapeFillColor.addEventListener('input', updateSelectedElementProperties);
+        propShapeFillColor.addEventListener('change', savePropertiesChanges);
+        propShapeStrokeColor.addEventListener('input', updateSelectedElementProperties);
+        propShapeStrokeColor.addEventListener('change', savePropertiesChanges);
+        propShapeStrokeWidth.addEventListener('input', updateSelectedElementProperties);
+        propShapeStrokeWidth.addEventListener('blur', savePropertiesChanges);
+
+
+        propX.addEventListener('input', updateSelectedElementProperties);
+        propX.addEventListener('blur', savePropertiesChanges);
+        propY.addEventListener('input', updateSelectedElementProperties);
+        propY.addEventListener('blur', savePropertiesChanges);
+        propWidth.addEventListener('input', updateSelectedElementProperties);
+        propWidth.addEventListener('blur', savePropertiesChanges);
+        propHeight.addEventListener('input', updateSelectedElementProperties);
+        propHeight.addEventListener('blur', savePropertiesChanges);
+        propRotation.addEventListener('input', updateSelectedElementProperties);
+        propRotation.addEventListener('blur', savePropertiesChanges);
+        propOpacity.addEventListener('input', updateSelectedElementProperties);
+        propOpacity.addEventListener('blur', savePropertiesChanges);
+
+
+        // Layer controls
+        propBringForward.addEventListener('click', () => changeElementLayer('forward'));
+        propSendBackward.addEventListener('click', () => changeElementLayer('backward'));
+        propBringToFront.addEventListener('click', () => changeElementLayer('front'));
+        propSendToBack.addEventListener('click', () => changeElementLayer('back'));
+
+
+        // Contextual Toolbar Buttons
+        deleteElementBtn.addEventListener('click', deleteSelectedElement);
+        duplicateElementBtn.addEventListener('click', duplicateSelectedElement);
+
+
+        // Modals
+        modalCloseButtons.forEach(button => {
+            button.addEventListener('click', (event) => {
+                event.target.closest('.modal-overlay').classList.remove('visible');
+            });
+        });
+
+        templatesModal.addEventListener('click', (event) => {
+            if (event.target === templatesModal) {
+                templatesModal.classList.remove('visible');
+            }
+        });
+
+         exportModal.addEventListener('click', (event) => {
+            if (event.target === exportModal) {
+                exportModal.classList.remove('visible');
+            }
+        });
+
+
+        templateItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const templateId = item.dataset.templateId;
+                console.log("Applying template:", templateId);
+                // Clear existing elements
+                elements = [];
+                selectedElement = null;
+                // Add some dummy elements based on templateId
+                 if (templateId === '1') {
+                    addElement('shape', { x: 0, y: 0, width: CANVAS_WIDTH, height: CANVAS_HEIGHT, fillColor: '#f0f0f0', strokeWidth: 0, zIndex: 0 });
+                    addElement('text', { x: 50, y: 100, text: `Community Event`, fontSize: 48, width: 500, height: 50, textAlign: 'center', textColor: '#333' });
+                    addElement('text', { x: 50, y: 160, text: `Poster Title ${templateId}`, fontSize: 36, width: 500, height: 40, textAlign: 'center', textColor: '#666' });
+                    addElement('shape', { x: 50, y: 220, width: 500, height: 5, fillColor: "var('--primary-color')", strokeWidth: 0 });
+                    addElement('text', { x: 50, y: 240, text: `Date: MM/DD/YYYY\nTime: HH:MM AM/PM\nLocation: Venue Name`, fontSize: 24, width: 500, height: 80, textAlign: 'center', textColor: '#333' });
+                 } else if (templateId === '2') {
+                     addElement('shape', { x: 0, y: 0, width: CANVAS_WIDTH, height: CANVAS_HEIGHT, fillColor: '#e0f7fa', strokeWidth: 0, zIndex: 0 });
+                     addElement('image', { x: 150, y: 80, width: 300, height: 200, src: 'https://placehold.co/300x200?text=Fair+Image' });
+                     addElement('text', { x: 50, y: 300, text: `Community Fair`, fontSize: 56, width: 500, height: 60, textAlign: 'center', textColor: '#00796b' });
+                     addElement('text', { x: 50, y: 370, text: `Fun for the whole family!`, fontSize: 28, width: 500, height: 30, textAlign: 'center', textColor: '#004d40' });
+                 } else if (templateId === '3') {
+                     addElement('shape', { x: 0, y: 0, width: CANVAS_WIDTH, height: CANVAS_HEIGHT, fillColor: '#fff3e0', strokeWidth: 0, zIndex: 0 });
+                     addElement('shape', { x: 50, y: 50, width: CANVAS_WIDTH - 100, height: CANVAS_HEIGHT - 100, fillColor: 'rgba(255, 152, 0, 0.2)', strokeColor: '#ff9800', strokeWidth: 2 });
+                     addElement('text', { x: 100, y: 100, text: `Workshop Title`, fontSize: 40, width: 400, height: 40, textAlign: 'left', textColor: '#f57c00' });
+                     addElement('text', { x: 100, y: 150, text: `Learn something new!`, fontSize: 24, width: 400, height: 30, textAlign: 'left', textColor: '#e65100' });
+                 }
+
+
+                renderCanvas();
+                updatePropertiesPanel();
+                hideContextualToolbar();
+                saveHistory(); // Save initial template state
+                templatesModal.classList.remove('visible');
+            });
+        });
+
+        exportPngBtn.addEventListener('click', () => {
+            // Draw canvas without selection handles for export
+            const currentSelected = selectedElement;
+            deselectElement(); // Temporarily deselect
+
+            // Use an offscreen canvas for export to avoid flickering
+            const exportCanvas = document.createElement('canvas');
+            exportCanvas.width = CANVAS_WIDTH;
+            exportCanvas.height = CANVAS_HEIGHT;
+            const exportCtx = exportCanvas.getContext('2d');
+
+            // Draw elements onto the offscreen canvas
+            elements.sort((a, b) => a.zIndex - b.zIndex).forEach(element => element.draw(exportCtx));
+
+
+            // Export canvas as PNG
+            const dataUrl = exportCanvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = 'poster.png';
+            link.href = dataUrl;
+            link.click();
+
+            // Re-select the element if there was one
+            if (currentSelected) {
+                 selectElement(elements.find(el => el.id === currentSelected.id) || null);
+            } else {
+                 renderCanvas(); // Redraw the main canvas
+            }
+
+            exportModal.classList.remove('visible');
+        });
+
+
+        // --- Canvas Interaction (Drag, Resize, Select) ---
+        canvas.addEventListener('mousedown', (event) => {
+            canvasRect = canvas.getBoundingClientRect(); // Update canvas position
+            const mouseX = event.clientX - canvasRect.left;
+            const mouseY = event.clientY - canvasRect.top;
+
+            // Check for handle interaction first (iterate elements in reverse order for zIndex)
+             for (let i = elements.length - 1; i >= 0; i--) {
+                const element = elements[i];
+                const handle = element.getHandleAtPoint(mouseX, mouseY);
+                if (handle) {
+                    selectElement(element); // Select the element if a handle is clicked
+                    dragStartX = mouseX;
+                    dragStartY = mouseY;
+                    initialElementX = element.x;
+                    initialElementY = element.y;
+                    initialElementWidth = element.width;
+                    initialElementHeight = element.height;
+                    initialElementRotation = element.rotation;
+
+                    if (handle === 'rot') {
+                        isRotating = true;
+                         // Calculate initial angle from center to mouse for rotation
+                         const centerX = element.x + element.width / 2;
+                         const centerY = element.y + element.height / 2;
+                         initialRotationAngle = Math.atan2(mouseY - centerY, mouseX - centerX) * 180 / Math.PI;
+
+                    } else {
+                        isResizing = true;
+                        resizeHandle = handle;
+                         // Store opposite corner for resizing anchor
+                         const oppositeHandleName = getOppositeHandleName(handle);
+                         const anchorPos = getRotatedHandlePosition(element, oppositeHandleName);
+                         initialAnchorX = anchorPos.x;
+                         initialAnchorY = anchorPos.y;
+                    }
+                    event.preventDefault(); // Prevent default drag behavior
+                    return; // Stop checking elements
+                }
+            }
+
+
+            // Check for element selection/dragging (iterate in reverse order for zIndex)
+            let clickedElement = null;
+            for (let i = elements.length - 1; i >= 0; i--) {
+                const element = elements[i];
+                if (element.containsPoint(mouseX, mouseY)) {
+                    clickedElement = element;
+                    break; // Found the top-most element
+                }
+            }
+
+            if (clickedElement) {
+                selectElement(clickedElement);
+                isDragging = true;
+                dragStartX = mouseX;
+                dragStartY = mouseY;
+                initialElementX = selectedElement.x;
+                initialElementY = selectedElement.y;
+                event.preventDefault(); // Prevent default drag behavior
+            } else {
+                deselectElement(); // Clicked outside any element
+            }
+        });
+
+        canvas.addEventListener('mousemove', (event) => {
+             canvasRect = canvas.getBoundingClientRect(); // Update canvas position
+            const mouseX = event.clientX - canvasRect.left;
+            const mouseY = event.clientY - canvasRect.top;
+
+            if (isDragging && selectedElement) {
+                const dx = mouseX - dragStartX;
+                const dy = mouseY - dragStartY;
+                selectedElement.x = initialElementX + dx;
+                selectedElement.y = initialElementY + dy;
+                updatePropertiesPanel(); // Update panel in real-time
+                renderCanvas();
+                showContextualToolbar(); // Update toolbar position
+            } else if (isResizing && selectedElement && resizeHandle) {
+                 const dx = mouseX - dragStartX;
+                 const dy = mouseY - dragStartY;
+
+                 // Calculate vector from initial anchor to current mouse position
+                 const vecX = initialAnchorX + dx - initialAnchorX; // This simplifies to dx
+                 const vecY = initialAnchorY + dy - initialAnchorY; // This simplifies to dy
+
+                 // Rotate this vector by the negative of the element's initial rotation
+                 const angleRad = -initialElementRotation * Math.PI / 180;
+                 const cos = Math.cos(angleRad);
+                 const sin = Math.sin(angleRad);
+                 const rotatedVecX = vecX * cos - vecY * sin;
+                 const rotatedVecY = vecX * sin + vecY * cos;
+
+                 let newWidth = initialElementWidth;
+                 let newHeight = initialElementHeight;
+                 let newX = initialElementX;
+                 let newY = initialElementY;
+
+                 // Determine new dimensions and position based on handle and rotated vector
+                 switch (resizeHandle) {
+                     case 'tl':
+                         newWidth = initialElementWidth - rotatedVecX;
+                         newHeight = initialElementHeight - rotatedVecY;
+                         // Need to adjust position to keep anchor fixed
+                         newX = initialAnchorX - newWidth; // This is not correct for rotation
+                         newY = initialAnchorY - newHeight; // This is not correct for rotation
+                         break;
+                     case 'tr':
+                         newWidth = initialElementWidth + rotatedVecX;
+                         newHeight = initialElementHeight - rotatedVecY;
+                         newX = initialAnchorX; // Not correct for rotation
+                         newY = initialAnchorY - newHeight; // Not correct for rotation
+                         break;
+                     case 'bl':
+                         newWidth = initialElementWidth - rotatedVecX;
+                         newHeight = initialElementHeight + rotatedVecY;
+                         newX = initialAnchorX - newWidth; // Not correct for rotation
+                         newY = initialAnchorY; // Not correct for rotation
+                         break;
+                     case 'br':
+                         newWidth = initialElementWidth + rotatedVecX;
+                         newHeight = initialElementHeight + rotatedVecY;
+                         newX = initialAnchorX; // Not correct for rotation
+                         newY = initialAnchorY; // Not correct for rotation
+                         break;
+                 }
+
+                 // --- Corrected Resize Logic ---
+                 // Calculate the vector from the initial anchor point to the current mouse position.
+                 const anchorToMouseX = mouseX - initialAnchorX;
+                 const anchorToMouseY = mouseY - initialAnchorY;
+
+                 // Rotate this vector by the negative of the element's initial rotation.
+                 const initialAngleRad = -initialElementRotation * Math.PI / 180;
+                 const cosTheta = Math.cos(initialAngleRad);
+                 const sinTheta = Math.sin(initialAngleRad);
+
+                 const rotatedAnchorToMouseX = anchorToMouseX * cosTheta - anchorToMouseY * sinTheta;
+                 const rotatedAnchorToMouseY = anchorToMouseX * sinTheta + anchorToMouseY * cosTheta;
+
+                 // Calculate the new width and height in the element's local coordinate system.
+                 // The direction of the vector components depends on the handle.
+                 let newWidthLocal, newHeightLocal;
+
+                 switch (resizeHandle) {
+                     case 'tl':
+                         newWidthLocal = initialElementWidth - rotatedAnchorToMouseX;
+                         newHeightLocal = initialElementHeight - rotatedAnchorToMouseY;
+                         break;
+                     case 'tr':
+                         newWidthLocal = initialElementWidth + rotatedAnchorToMouseX;
+                         newHeightLocal = initialElementHeight - rotatedAnchorToMouseY;
+                         break;
+                     case 'bl':
+                         newWidthLocal = initialElementWidth - rotatedAnchorToMouseX;
+                         newHeightLocal = initialElementHeight + rotatedAnchorToMouseY;
+                         break;
+                     case 'br':
+                         newWidthLocal = initialElementWidth + rotatedAnchorToMouseX;
+                         newHeightLocal = initialElementHeight + rotatedAnchorToMouseY;
+                         break;
+                 }
+
+                 // Ensure minimum size
+                 newWidthLocal = Math.max(MIN_ELEMENT_SIZE, newWidthLocal);
+                 newHeightLocal = Math.max(MIN_ELEMENT_SIZE, newHeightLocal);
+
+                 // Calculate the new center in the element's local coordinate system.
+                 // The anchor point is (0,0) in a temporary system. The dragged point is at (rotatedAnchorToMouseX, rotatedAnchorToMouseY).
+                 // The new bounding box in the local system goes from (min(0, rotatedAnchorToMouseX), min(0, rotatedAnchorToMouseY))
+                 // to (max(0, rotatedAnchorToMouseX), max(0, rotatedAnchorToMouseY)).
+                 // The center of this new local box is the midpoint of the anchor (0,0) and the rotated mouse point.
+                 let newCenterXLocal, newCenterYLocal;
+                  switch (resizeHandle) {
+                     case 'tl':
+                     case 'br':
+                         newCenterXLocal = rotatedAnchorToMouseX / 2;
+                         newCenterYLocal = rotatedAnchorToMouseY / 2;
+                         break;
+                     case 'tr':
+                     case 'bl':
+                         newCenterXLocal = rotatedAnchorToMouseX / 2;
+                         newCenterYLocal = rotatedAnchorToMouseY / 2;
+                         break;
+                 }
+
+
+                 // Calculate the new top-left corner in the element's local coordinate system relative to the anchor.
+                 // The new top-left corner in local space is the anchor point (0,0) plus a vector whose components depend on the handle.
+                 let newLocalX, newLocalY;
+
+                 switch (resizeHandle) {
+                     case 'tl':
+                         newLocalX = rotatedAnchorToMouseX;
+                         newLocalY = rotatedAnchorToMouseY;
+                         break;
+                     case 'tr':
+                         newLocalX = 0; // Anchor X is 0 in local system
+                         newLocalY = rotatedAnchorToMouseY;
+                         break;
+                     case 'bl':
+                         newLocalX = rotatedAnchorToMouseX;
+                         newLocalY = 0; // Anchor Y is 0 in local system
+                         break;
+                     case 'br':
+                         newLocalX = 0; // Anchor X is 0 in local system
+                         newLocalY = 0; // Anchor Y is 0 in local system
+                         break;
+                 }
+
+
+                 // Now, rotate the new local top-left corner back by the initial rotation angle and translate by the initial anchor position
+                 const finalAngleRad = initialElementRotation * Math.PI / 180; // Rotate back by original angle
+                 const finalCos = Math.cos(finalAngleRad);
+                 const finalSin = Math.sin(finalAngleRad);
+
+                 // Calculate the vector from the anchor to the new local top-left corner
+                 const anchorToNewLocalTL_X = newLocalX;
+                 const anchorToNewLocalTL_Y = newLocalY;
+
+                 // Rotate this vector back to canvas space
+                 const rotatedAnchorToNewLocalTL_X = anchorToNewLocalTL_X * finalCos - anchorToNewLocalTL_Y * finalSin;
+                 const rotatedAnchorToNewLocalTL_Y = anchorToNewLocalTL_X * finalSin + anchorToNewLocalTL_Y * finalCos;
+
+
+                 // The new canvas position (x, y) is the initial anchor position plus the rotated vector from anchor to new local TL
+                 selectedElement.x = initialAnchorX + rotatedAnchorToNewLocalTL_X;
+                 selectedElement.y = initialAnchorY + rotatedAnchorToNewLocalTL_Y;
+                 selectedElement.width = newWidthLocal;
+                 selectedElement.height = newHeightLocal;
+
+
+                 updatePropertiesPanel();
+                 renderCanvas();
+                 showContextualToolbar(); // Update toolbar position
+
+            } else if (isRotating && selectedElement) {
+                 const centerX = selectedElement.x + selectedElement.width / 2;
+                 const centerY = selectedElement.y + selectedElement.height / 2;
+                 const currentAngle = Math.atan2(mouseY - centerY, mouseX - centerX) * 180 / Math.PI;
+                 const rotationDiff = currentAngle - initialRotationAngle;
+                 selectedElement.rotation = (initialElementRotation + rotationDiff % 360 + 360) % 360; // Keep rotation between 0 and 360
+
+                 updatePropertiesPanel();
+                 renderCanvas();
+                 showContextualToolbar(); // Update toolbar position
+
+             } else {
+                 // Update cursor based on hover
+                 let cursor = 'default';
+                 // Iterate in reverse order to check top-most element/handle
+                 for (let i = elements.length - 1; i >= 0; i--) {
+                     const element = elements[i];
+                     const handle = element.getHandleAtPoint(mouseX, mouseY);
+                     if (handle === 'rot') {
+                         cursor = 'grab'; // Or 'grabbing' on mousedown
+                         break;
+                     } else if (handle) {
+                         cursor = handle === 'tl' || handle === 'br' ? 'nwse-resize' : 'nesw-resize';
+                         break;
+                     } else if (element.containsPoint(mouseX, mouseY)) {
+                         cursor = 'move'; // Or 'grabbing' on mousedown
+                         break;
+                     }
+                 }
+                 canvas.style.cursor = cursor;
+             }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            if (isDragging || isResizing || isRotating) {
+                 saveHistory(); // Save state after drag/resize/rotate ends
+            }
+            isDragging = false;
+            isResizing = false;
+            isRotating = false;
+            resizeHandle = null;
+            canvas.style.cursor = 'default'; // Reset cursor
+        });
+
+        canvas.addEventListener('dblclick', (event) => {
+             canvasRect = canvas.getBoundingClientRect(); // Update canvas position
+            const mouseX = event.clientX - canvasRect.left;
+            const mouseY = event.clientY - canvasRect.top;
+
+             // Find the top-most text element at the double-click location
+             let clickedTextElement = null;
+            for (let i = elements.length - 1; i >= 0; i--) {
+                const element = elements[i];
+                if (element.type === 'text' && element.containsPoint(mouseX, mouseY)) {
+                    clickedTextElement = element;
+                    break;
+                }
+            }
+
+            if (clickedTextElement) {
+                selectElement(clickedTextElement);
+                // Focus the text properties textarea
+                propTextContent.focus();
+            }
+        });
+
+        // Handle clicks outside the canvas to deselect
+        document.addEventListener('click', (event) => {
+             const clickedOnCanvas = canvas.contains(event.target);
+             const clickedOnSidebar = propertiesPanel.contains(event.target);
+             const clickedOnHeader = document.querySelector('header').contains(event.target);
+             const clickedOnModal = event.target.closest('.modal-overlay');
+             const clickedOnContextToolbar = contextualToolbar.contains(event.target);
+
+
+             if (!clickedOnCanvas && !clickedOnSidebar && !clickedOnHeader && !clickedOnModal && !clickedOnContextToolbar) {
+                 deselectElement();
+             }
+        });
+
+        // Prevent default drag behavior on canvas area
+        canvasArea.addEventListener('dragstart', (event) => {
+             event.preventDefault();
+        });
+
+
+        // --- Keyboard Shortcuts ---
+        document.addEventListener('keydown', (event) => {
+            // Check if focus is inside a text input or textarea
+            const isInputFocused = event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.tagName === 'SELECT';
+
+            // Global shortcuts (Undo/Redo, Export, Add Element)
+            if (!isInputFocused) {
+                if ((event.ctrlKey || event.metaKey) && event.key === 'z') {
+                    event.preventDefault();
+                    undo();
+                } else if ((event.ctrlKey || event.metaKey) && (event.key === 'y' || (event.shiftKey && event.key === 'Z'))) {
+                    event.preventDefault();
+                    redo();
+                } else if (event.key === 't' || event.key === 'T') {
+                     event.preventDefault();
+                     addTextBtn.click();
+                } else if (event.key === 'i' || event.key === 'I') {
+                     event.preventDefault();
+                     addImageBtn.click();
+                } else if (event.key === 's' || event.key === 'S') {
+                     event.preventDefault();
+                     addShapeBtn.click();
+                } else if (event.key === 'e' || event.key === 'E') {
+                     event.preventDefault();
+                     exportBtn.click();
+                 }
+            }
+
+
+            // Element-specific shortcuts (Delete, Duplicate, Move)
+            if (selectedElement && !isInputFocused) {
+                if (event.key === 'Delete') {
+                    event.preventDefault();
+                    deleteSelectedElement();
+                } else if ((event.ctrlKey || event.metaKey) && event.key === 'd') {
+                    event.preventDefault();
+                    duplicateSelectedElement();
+                } else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+                     event.preventDefault();
+                     const step = event.shiftKey ? FAST_MOVE_STEP : MOVE_STEP;
+                     let moved = false;
+                     switch (event.key) {
+                         case 'ArrowUp': selectedElement.y -= step; moved = true; break;
+                         case 'ArrowDown': selectedElement.y += step; moved = true; break;
+                         case 'ArrowLeft': selectedElement.x -= step; moved = true; break;
+                         case 'ArrowRight': selectedElement.x += step; moved = true; break;
+                     }
+                     if (moved) {
+                         updatePropertiesPanel();
+                         renderCanvas();
+                         showContextualToolbar();
+                     }
+                }
+            }
+        });
+
+         document.addEventListener('keyup', (event) => {
+             // Save history after keyboard movement ends
+             if (selectedElement && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+                  saveHistory();
+             }
+         });
+
+
+        // --- Initialization ---
+        function init() {
+            canvas.width = CANVAS_WIDTH;
+            canvas.height = CANVAS_HEIGHT;
+            canvasRect = canvas.getBoundingClientRect(); // Initial canvas position
+
+            // Add a default element on load
+            addElement('text', { x: CANVAS_WIDTH / 2 - 200, y: 100, width: 400, height: 50, text: 'Community Event', fontSize: 48, textAlign: 'center', textColor: '#333' });
+            addElement('text', { x: CANVAS_WIDTH / 2 - 200, y: 160, width: 400, height: 40, text: 'Poster Title', fontSize: 36, textAlign: 'center', textColor: '#666' });
+
+            renderCanvas();
+            updatePropertiesPanel();
+            updateUndoRedoButtons(); // Disable undo/redo initially
+            saveHistory(); // Save initial state
+        }
+
+        // Run initialization
+        init();
+
+         // Update canvasRect on window resize or scroll
+         window.addEventListener('resize', () => {
+             canvasRect = canvas.getBoundingClientRect();
+             if(selectedElement) showContextualToolbar(); // Reposition toolbar
+         });
+        canvasArea.addEventListener('scroll', () => {
+             canvasRect = canvas.getBoundingClientRect();
+              if(selectedElement) showContextualToolbar(); // Reposition toolbar
+         });
+
+
+    </script>
+</body>
+</html>

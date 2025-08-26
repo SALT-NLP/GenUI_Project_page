@@ -1,0 +1,2396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clinic Data Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007acc;
+            --primary-hover: #005f99;
+            --secondary-color: #f0f0f0;
+            --secondary-hover: #e0e0e0;
+            --background-color: #f4f7f6;
+            --surface-color: #ffffff;
+            --text-color: #333333;
+            --text-light: #666666;
+            --border-color: #dddddd;
+            --success-color: #4CAF50;
+            --error-color: #f4436c;
+            --warning-color: #ff9800;
+            --info-color: #2196F3;
+            --spacing-unit: 8px;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            --transition-speed: 0.2s ease;
+        }
+
+        body.dark-mode {
+            --primary-color: #5199e0;
+            --primary-hover: #7cb3e0;
+            --secondary-color: #3a3a3a;
+            --secondary-hover: #4a4a4a;
+            --background-color: #1e1e1e;
+            --surface-color: #252526;
+            --text-color: #cccccc;
+            --text-light: #999999;
+            --border-color: #555555;
+            --success-color: #66bb6a;
+            --error-color: #ef5350;
+            --warning-color: #ffa726;
+            --info-color: #42a5f5;
+            --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: grid;
+            grid-template-areas:
+                "header header"
+                "sidebar main";
+            grid-template-columns: 280px 1fr;
+            grid-template-rows: auto 1fr;
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background-color var(--transition-speed), color var(--transition-speed);
+        }
+
+        header {
+            grid-area: header;
+            background-color: var(--surface-color);
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 3);
+            box-shadow: var(--box-shadow);
+            display: flex;
+            align-items: center;
+            justify-content: space-between; /* Added space between logo/title and controls */
+            gap: calc(var(--spacing-unit) * 2);
+            z-index: 20;
+            transition: background-color var(--transition-speed), color var(--transition-speed), box-shadow var(--transition-speed);
+        }
+
+        header .header-left {
+            display: flex;
+            align-items: center;
+            gap: calc(var(--spacing-unit) * 2);
+        }
+
+        header .logo {
+            height: 40px;
+            width: auto;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8em;
+            font-weight: 600;
+            color: var(--primary-color);
+            transition: color var(--transition-speed);
+        }
+
+        .sidebar-toggle {
+            display: none; /* Hidden by default on desktop */
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: var(--text-color);
+            padding: var(--spacing-unit);
+            border-radius: var(--border-radius);
+            transition: color var(--transition-speed), background-color var(--transition-speed);
+        }
+        .sidebar-toggle:hover {
+            background-color: var(--secondary-hover);
+        }
+
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-unit);
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            font-size: 1.2em;
+            cursor: pointer;
+            color: var(--text-light);
+            padding: var(--spacing-unit);
+            border-radius: var(--border-radius);
+            transition: color var(--transition-speed), background-color var(--transition-speed);
+        }
+         .theme-toggle:hover {
+             color: var(--text-color);
+             background-color: var(--secondary-hover);
+         }
+
+
+        .sidebar {
+            grid-area: sidebar;
+            background-color: var(--surface-color);
+            padding: calc(var(--spacing-unit) * 3);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            position: relative;
+            z-index: 10;
+            transition: transform var(--transition-speed), background-color var(--transition-speed), border-color var(--transition-speed);
+        }
+
+        .sidebar.collapsed {
+             transform: translateX(-280px); /* Hide sidebar */
+        }
+
+        body.sidebar-collapsed {
+             grid-template-columns: 0 1fr; /* Collapse sidebar column */
+        }
+
+
+        .sidebar h2 {
+            margin-top: 0;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--text-color);
+             transition: color var(--transition-speed);
+        }
+
+        .filter-group {
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            padding-bottom: calc(var(--spacing-unit) * 3);
+            border-bottom: 1px solid var(--border-color);
+            transition: border-color var(--transition-speed);
+        }
+
+        .filter-group:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+            margin-bottom: 0;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: var(--spacing-unit);
+            font-weight: 500;
+            color: var(--text-light);
+            font-size: 0.9em;
+            transition: color var(--transition-speed);
+        }
+
+        .filter-group input[type="date"],
+        .filter-group select,
+        .filter-group input[type="text"],
+        .filter-group input[type="file"],
+         .filter-group input[type="range"] {
+            width: 100%;
+            padding: var(--spacing-unit);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            box-sizing: border-box;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            transition: border-color var(--transition-speed), background-color var(--transition-speed), color var(--transition-speed);
+        }
+
+         .filter-group input[type="file"] {
+             padding-top: calc(var(--spacing-unit) * 1.5);
+             padding-bottom: calc(var(--spacing-unit) * 1.5);
+         }
+
+        .filter-group .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-unit);
+        }
+
+        .filter-group .checkbox-group label {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0;
+            font-weight: 400;
+            font-size: 1em;
+            cursor: pointer;
+             color: var(--text-color); /* Checkbox labels are main text color */
+             transition: color var(--transition-speed);
+        }
+
+        .filter-group .checkbox-group input[type="checkbox"] {
+            margin-right: var(--spacing-unit);
+            cursor: pointer;
+        }
+
+         .filter-group .range-display {
+             margin-top: var(--spacing-unit);
+             text-align: center;
+             font-size: 0.9em;
+             color: var(--text-light);
+             transition: color var(--transition-speed);
+         }
+
+
+        .filter-buttons {
+            display: flex;
+            gap: calc(var(--spacing-unit) * 2);
+            margin-top: calc(var(--spacing-unit) * 3);
+        }
+
+        button {
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: background-color var(--transition-speed), opacity var(--transition-speed), transform 0.1s ease;
+            outline-offset: 2px;
+        }
+
+        button:focus-visible {
+            outline: 2px solid var(--primary-color);
+        }
+
+        button.primary {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+             transition: background-color var(--transition-speed), color var(--transition-speed);
+        }
+
+        button.primary:hover {
+            background-color: var(--primary-hover);
+        }
+         button.primary:active {
+             transform: scale(0.98);
+         }
+
+
+        button.secondary {
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+             transition: background-color var(--transition-speed), color var(--transition-speed), border-color var(--transition-speed);
+        }
+
+        button.secondary:hover {
+            background-color: var(--secondary-hover);
+        }
+         button.secondary:active {
+             transform: scale(0.98);
+         }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        main {
+            grid-area: main;
+            padding: calc(var(--spacing-unit) * 3);
+            overflow-y: auto;
+            transition: padding var(--transition-speed);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: calc(var(--spacing-unit) * 3);
+        }
+
+        .card {
+            background-color: var(--surface-color);
+            padding: calc(var(--spacing-unit) * 3);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+             transition: background-color var(--transition-speed), box-shadow var(--transition-speed);
+        }
+
+        .card h3 {
+            margin-top: 0;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            font-size: 1.1em;
+            font-weight: 600;
+            color: var(--text-color);
+             transition: color var(--transition-speed);
+        }
+
+        .kpi-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .kpi-card .kpi-value {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: var(--spacing-unit);
+             transition: color var(--transition-speed);
+        }
+
+         .kpi-card .kpi-label {
+            font-size: 1em;
+            color: var(--text-light);
+             transition: color var(--transition-speed);
+         }
+
+        .chart-container {
+            flex-grow: 1;
+            min-height: 200px;
+            position: relative;
+            cursor: pointer;
+            outline-offset: 2px;
+        }
+         .chart-container:focus-visible {
+              outline: 2px solid var(--primary-color);
+         }
+
+
+         .floating-controls {
+            position: absolute;
+            top: var(--spacing-unit);
+            right: var(--spacing-unit);
+            background: var(--surface-color); /* Use surface color */
+            padding: calc(var(--spacing-unit) * 2);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 10;
+            min-width: 180px;
+            max-width: 250px;
+            /* backdrop-filter: blur(2px); /* Subtle blur behind */
+             border: 1px solid var(--border-color); /* Add border */
+             transition: all 0.3s ease, background-color var(--transition-speed), border-color var(--transition-speed);
+        }
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+        .floating-controls .control-group {
+            margin-bottom: calc(var(--spacing-unit) * 1.5);
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-unit);
+        }
+         .floating-controls .control-group:last-child {
+             margin-bottom: 0;
+         }
+         .floating-controls .control-group label {
+             font-size: 0.8em;
+             font-weight: 500;
+             color: var(--text-light);
+             margin-bottom: 0;
+             transition: color var(--transition-speed);
+         }
+         .floating-controls .control-group input[type="color"],
+         .floating-controls .control-group select {
+             padding: var(--spacing-unit);
+             border: 1px solid var(--border-color);
+             border-radius: var(--border-radius);
+             font-size: 0.9em;
+             background-color: var(--background-color);
+             color: var(--text-color);
+             width: 100%;
+             box-sizing: border-box;
+             transition: border-color var(--transition-speed), background-color var(--transition-speed), color var(--transition-speed);
+         }
+         .floating-controls .control-group button {
+             width: 100%;
+             text-align: center;
+             font-size: 0.9em;
+         }
+
+
+        .data-table-container {
+            margin-top: calc(var(--spacing-unit) * 2);
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: var(--spacing-unit) 0;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+             transition: border-color var(--transition-speed);
+        }
+
+        .data-table th {
+            font-weight: 600;
+            color: var(--text-color);
+            cursor: pointer;
+            padding-right: calc(var(--spacing-unit) * 3);
+            position: relative;
+            outline-offset: 2px;
+             transition: color var(--transition-speed);
+        }
+         .data-table th:focus-visible {
+             outline: 2px solid var(--primary-color);
+         }
+
+
+         .data-table th::after {
+             content: '';
+             position: absolute;
+             right: var(--spacing-unit);
+             top: 50%;
+             transform: translateY(-50%);
+             border: 4px solid transparent;
+             opacity: 0.3;
+         }
+
+         .data-table th.sorted-asc::after {
+             border-bottom-color: var(--text-color);
+             opacity: 1;
+         }
+
+         .data-table th.sorted-desc::after {
+             border-top-color: var(--text-color);
+             opacity: 1;
+         }
+
+
+        .data-table tbody tr:hover {
+            background-color: var(--secondary-hover);
+        }
+
+        .data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: calc(var(--spacing-unit) * 2);
+            flex-wrap: wrap;
+            gap: var(--spacing-unit);
+        }
+
+        .pagination-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: var(--spacing-unit);
+        }
+
+        .pagination-controls button {
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+             transition: background-color var(--transition-speed), color var(--transition-speed), border-color var(--transition-speed);
+        }
+
+        .pagination-controls button:hover:not(:disabled) {
+            background-color: var(--secondary-hover);
+        }
+
+        .pagination-controls span {
+            font-weight: 500;
+             color: var(--text-color);
+             transition: color var(--transition-speed);
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6); /* Darker overlay */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: var(--surface-color);
+            padding: calc(var(--spacing-unit) * 4);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            max-width: 500px;
+            width: 90%;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease, background-color var(--transition-speed), color var(--transition-speed), box-shadow var(--transition-speed);
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            font-size: 1.3em;
+            font-weight: 600;
+            color: var(--text-color);
+             transition: color var(--transition-speed);
+        }
+
+         .modal-content .report-options {
+             margin-bottom: calc(var(--spacing-unit) * 3);
+         }
+         .modal-content .report-options label {
+             display: block;
+             margin-bottom: var(--spacing-unit);
+             font-size: 1em;
+             cursor: pointer;
+             color: var(--text-color);
+             transition: color var(--transition-speed);
+         }
+         .modal-content .report-options input[type="checkbox"] {
+             margin-right: var(--spacing-unit);
+             cursor: pointer;
+         }
+
+
+        .modal-content .button-group {
+            display: flex;
+            justify-content: flex-end;
+            gap: calc(var(--spacing-unit) * 2);
+            margin-top: calc(var(--spacing-unit) * 3);
+        }
+
+        /* Guided Tour Tooltip styles */
+        .tour-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4); /* Slightly darker overlay */
+            z-index: 99;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .tour-tooltip {
+            position: absolute;
+            background-color: var(--info-color);
+            color: var(--surface-color);
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            z-index: 101;
+            max-width: 300px;
+            font-size: 0.9em;
+            pointer-events: all;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.3s ease, transform 0.3s ease, background-color var(--transition-speed), box-shadow var(--transition-speed);
+        }
+
+         .tour-tooltip.active {
+             opacity: 1;
+             transform: translateY(0);
+         }
+
+        .tour-tooltip .tour-buttons {
+            margin-top: var(--spacing-unit);
+            display: flex;
+            justify-content: flex-end;
+            gap: var(--spacing-unit);
+        }
+
+         .tour-tooltip button {
+             padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+             font-size: 0.8em;
+             background-color: rgba(255, 255, 255, 0.2);
+             color: var(--surface-color);
+             transition: background-color 0.2s ease;
+         }
+
+         .tour-tooltip button:hover {
+             background-color: rgba(255, 255, 255, 0.3);
+         }
+
+        .tour-highlight {
+            position: relative;
+            z-index: 102;
+            box-shadow: 0 0 0 4px var(--info-color); /* Highlight ring */
+            transition: box-shadow 0.3s ease;
+        }
+         body.dark-mode .tour-highlight {
+             box-shadow: 0 0 0 4px var(--info-color); /* Keep same highlight color */
+         }
+
+
+         /* Loading Indicator */
+         .loading-overlay {
+             position: fixed;
+             top: 0;
+             left: 0;
+             width: 100%;
+             height: 100%;
+             background: rgba(0, 0, 0, 0.5);
+             display: flex;
+             justify-content: center;
+             align-items: center;
+             z-index: 102;
+             opacity: 0;
+             visibility: hidden;
+             transition: opacity 0.3s ease, visibility 0.3s ease;
+         }
+
+         .loading-overlay.active {
+             opacity: 1;
+             visibility: visible;
+         }
+
+         .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-top: 5px solid var(--surface-color); /* Spinner color based on surface */
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+             transition: border-top-color var(--transition-speed);
+         }
+
+         @keyframes spin {
+             0% { transform: rotate(0deg); }
+             100% { transform: rotate(360deg); }
+         }
+
+         /* Utility Classes */
+         .hidden {
+             display: none !important;
+         }
+
+         .text-center {
+             text-align: center;
+         }
+
+         /* Accessibility: Focus styles */
+         *:focus-visible {
+             outline: 2px solid var(--primary-color);
+             outline-offset: 2px;
+         }
+
+         /* Responsive Design */
+         @media (max-width: 1024px) {
+             body {
+                 grid-template-areas:
+                    "header header"
+                    "sidebar main";
+                 grid-template-columns: 250px 1fr;
+             }
+
+             .sidebar.collapsed {
+                 transform: translateX(-250px);
+             }
+
+             body.sidebar-collapsed {
+                 grid-template-columns: 0 1fr;
+             }
+
+             main {
+                 padding: calc(var(--spacing-unit) * 2);
+             }
+
+             .dashboard-grid {
+                 gap: calc(var(--spacing-unit) * 2);
+             }
+
+             .card {
+                 padding: calc(var(--spacing-unit) * 2);
+             }
+         }
+
+         @media (max-width: 768px) {
+             body {
+                 grid-template-areas:
+                    "header"
+                    "main"; /* Sidebar is positioned absolutely or toggled */
+                 grid-template-columns: 1fr;
+                 grid-template-rows: auto 1fr;
+             }
+
+             .sidebar {
+                 position: fixed; /* Make sidebar fixed */
+                 top: 60px; /* Below header */
+                 left: 0;
+                 bottom: 0;
+                 width: 250px; /* Fixed width */
+                 padding: calc(var(--spacing-unit) * 2);
+                 border-right: 1px solid var(--border-color);
+                 transform: translateX(-250px); /* Start hidden */
+                 transition: transform 0.3s ease;
+                 z-index: 15; /* Above main content */
+                 box-shadow: var(--box-shadow);
+             }
+
+             .sidebar.collapsed {
+                 transform: translateX(-250px); /* Ensure hidden state */
+             }
+
+             body.sidebar-collapsed .sidebar {
+                  transform: translateX(-250px);
+             }
+
+             body:not(.sidebar-collapsed) .sidebar {
+                 transform: translateX(0); /* Show sidebar */
+             }
+
+
+             main {
+                 padding: calc(var(--spacing-unit) * 2);
+             }
+
+             .dashboard-grid {
+                 grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+             }
+
+             header {
+                 padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+             }
+
+             .sidebar-toggle {
+                 display: block; /* Show toggle button */
+             }
+
+             .header-left {
+                 gap: var(--spacing-unit);
+             }
+             header .logo {
+                 height: 35px;
+             }
+             header h1 {
+                 font-size: 1.4em;
+             }
+         }
+
+         @media (max-width: 480px) {
+             header {
+                 flex-direction: column;
+                 align-items: flex-start;
+                 gap: var(--spacing-unit);
+             }
+             header .header-left {
+                 width: 100%;
+                 justify-content: space-between; /* Push toggle to end */
+             }
+             header .header-controls {
+                 width: 100%;
+                 justify-content: flex-end; /* Align controls to the right */
+             }
+
+             .sidebar {
+                 width: 100%; /* Full width sidebar */
+                 transform: translateX(-100%);
+                 border-right: none;
+             }
+             .sidebar.collapsed {
+                 transform: translateX(-100%);
+             }
+             body:not(.sidebar-collapsed) .sidebar {
+                 transform: translateX(0);
+             }
+
+             main {
+                 padding: calc(var(--spacing-unit) * 1.5);
+             }
+             .card {
+                 padding: calc(var(--spacing-unit) * 1.5);
+             }
+             .filter-buttons {
+                 flex-direction: column;
+                 gap: var(--spacing-unit);
+             }
+             button {
+                 width: 100%;
+             }
+             .data-table-actions {
+                flex-direction: column;
+                align-items: stretch;
+             }
+             .pagination-controls {
+                justify-content: space-between;
+                width: 100%;
+             }
+         }
+    </style>
+</head>
+<body>
+
+    <div class="loading-overlay" id="loading-overlay" role="status" aria-label="Loading data">
+         <div class="spinner"></div>
+     </div>
+
+    <header role="banner">
+        <div class="header-left">
+            <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle Sidebar">☰</button>
+            <img src="https://placehold.co/40x40?text=Logo" alt="Clinic Logo" class="logo">
+            <h1>Community Health Clinic Dashboard</h1>
+        </div>
+        <div class="header-controls">
+            <button class="theme-toggle" id="theme-toggle" aria-label="Toggle Dark Mode">🌙</button>
+        </div>
+    </header>
+
+    <aside class="sidebar" id="sidebar" role="complementary" aria-label="Filters and Actions">
+        <h2>Filters</h2>
+
+        <div class="filter-group">
+            <label for="date-start">Date Range</label>
+            <input type="date" id="date-start" aria-label="Start Date">
+            <span>to</span>
+            <input type="date" id="date-end" aria-label="End Date">
+        </div>
+
+        <div class="filter-group">
+            <label for="age-range">Age Range</label>
+             <input type="range" id="age-range" min="0" max="100" value="100" aria-label="Select maximum age">
+             <div class="range-display" id="age-range-display">0 - 100</div>
+        </div>
+
+        <div class="filter-group">
+            <label for="gender">Gender</label>
+            <select id="gender" aria-label="Select Gender">
+                <option value="">All</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>Diagnosis</label>
+            <div class="checkbox-group" id="diagnosis-filters" role="group" aria-label="Filter by Diagnosis">
+                <!-- Checkboxes will be populated by JS -->
+            </div>
+        </div>
+
+         <div class="filter-group">
+            <label>Treatment</label>
+            <div class="checkbox-group" id="treatment-filters" role="group" aria-label="Filter by Treatment">
+                <!-- Checkboxes will be populated by JS -->
+            </div>
+        </div>
+
+         <div class="filter-group">
+            <label>Appointment Type</label>
+            <div class="checkbox-group" id="appointment-filters" role="group" aria-label="Filter by Appointment Type">
+                <!-- Checkboxes will be populated by JS -->
+            </div>
+        </div>
+
+        <div class="filter-buttons">
+            <button class="primary" id="apply-filters" aria-label="Apply Filters">Apply Filters</button>
+            <button class="secondary" id="clear-filters" aria-label="Clear Filters">Clear Filters</button>
+        </div>
+
+        <div class="filter-group" style="margin-top: calc(var(--spacing-unit) * 4);">
+             <h2>Data</h2>
+             <label for="data-upload">Upload Data File (.csv)</label>
+             <input type="file" id="data-upload" accept=".csv" aria-label="Upload data file">
+             <button class="secondary" id="process-upload" style="margin-top: var(--spacing-unit) * 1.5;" aria-label="Process Uploaded Data" disabled>Process File</button>
+             <p style="font-size: 0.8em; color: var(--text-light); margin-top: var(--spacing-unit);">Note: Client-side processing only. Secure handling required for real data.</p>
+        </div>
+
+        <div class="filter-group" style="margin-top: calc(var(--spacing-unit) * 4);">
+             <h2>Actions</h2>
+             <button class="secondary" id="generate-report" aria-label="Generate Report">Generate Report</button>
+             <button class="secondary" id="start-tour" style="margin-top: var(--spacing-unit) * 2;" aria-label="Start Guided Tour">Start Guided Tour</button>
+        </div>
+
+    </aside>
+
+    <main role="main" aria-label="Dashboard Content">
+        <div class="dashboard-grid">
+
+            <!-- KPI Cards -->
+            <div class="card kpi-card" data-tour-step="1" data-tour-title="Key Performance Indicators" data-tour-content="See a quick overview of key clinic metrics here." role="region" aria-label="Total Visits KPI">
+                <h3>Total Visits</h3>
+                <div class="kpi-value" id="kpi-total-visits">-</div>
+                <div class="kpi-label">All Time</div>
+            </div>
+             <div class="card kpi-card" data-tour-step="2" data-tour-title="Common Diagnosis" data-tour-content="Identify the most frequent health issues in your patient population." role="region" aria-label="Most Common Diagnosis KPI">
+                <h3>Most Common Diagnosis</h3>
+                <div class="kpi-value" id="kpi-common-diagnosis">-</div>
+                 <div class="kpi-label">Based on current filters</div>
+            </div>
+             <div class="card kpi-card" data-tour-step="3" data-tour-title="Average Patient Age" data-tour-content="Understand the age distribution of your patients." role="region" aria-label="Average Patient Age KPI">
+                <h3>Average Patient Age</h3>
+                <div class="kpi-value" id="kpi-avg-age">-</div>
+                 <div class="kpi-label">Based on current filters</div>
+            </div>
+             <div class="card kpi-card" role="region" aria-label="Visits Last Month KPI">
+                <h3>Visits Last Month</h3>
+                <div class="kpi-value" id="kpi-visits-last-month">-</div>
+                 <div class="kpi-label">Based on current filters</div>
+            </div>
+
+
+            <!-- Chart Cards -->
+            <div class="card" data-tour-step="4" data-tour-title="Visit Trends Over Time" data-tour-content="Track patient visit volume to identify peak times and plan staffing. Click the chart area to access controls." role="region" aria-label="Visit Trends Over Time Chart">
+                <h3>Visit Trends Over Time</h3>
+                <div class="chart-container" id="visitTrendsChartContainer" tabindex="0" aria-label="Visit Trends Over Time Chart. Click to open chart controls.">
+                    <canvas id="visitTrendsChart"></canvas>
+                     <div class="floating-controls" id="visitTrendsChart-controls" role="dialog" aria-label="Visit Trends Chart Controls">
+                        <div class="control-group">
+                            <label for="visitTrendsChart-lineColor">Line Color</label>
+                            <input type="color" id="visitTrendsChart-lineColor" value="#007acc" aria-label="Line Color">
+                        </div>
+                        <div class="control-group">
+                            <label for="visitTrendsChart-chartType">Chart Type</label>
+                            <select id="visitTrendsChart-chartType" aria-label="Chart Type">
+                                <option value="line">Line</option>
+                                <option value="bar">Bar</option>
+                            </select>
+                        </div>
+                         <div class="control-group">
+                             <button class="secondary export-png" data-chart-id="visitTrendsChart" aria-label="Export Chart as PNG">Export PNG</button>
+                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" data-tour-step="5" data-tour-title="Diagnosis Frequency" data-tour-content="Visualize the most common diagnoses. Click bars to filter the dashboard by diagnosis. Click the chart area to access controls." role="region" aria-label="Diagnosis Frequency Chart">
+                <h3>Diagnosis Frequency</h3>
+                <div class="chart-container" id="diagnosisFreqChartContainer" tabindex="0" aria-label="Diagnosis Frequency Chart. Click bars to filter by diagnosis or click chart area to open controls.">
+                    <canvas id="diagnosisFreqChart"></canvas>
+                     <div class="floating-controls" id="diagnosisFreqChart-controls" role="dialog" aria-label="Diagnosis Frequency Chart Controls">
+                         <div class="control-group">
+                            <label for="diagnosisFreqChart-barColor">Bar Color</label>
+                            <input type="color" id="diagnosisFreqChart-barColor" value="#4CAF50" aria-label="Bar Color">
+                        </div>
+                        <div class="control-group">
+                            <label for="diagnosisFreqChart-chartType">Chart Type</label>
+                            <select id="diagnosisFreqChart-chartType" aria-label="Chart Type">
+                                <option value="bar">Bar</option>
+                                <option value="pie">Pie</option>
+                            </select>
+                        </div>
+                         <div class="control-group">
+                             <button class="secondary export-png" data-chart-id="diagnosisFreqChart" aria-label="Export Chart as PNG">Export PNG</button>
+                         </div>
+                    </div>
+                </div>
+            </div>
+
+             <div class="card" data-tour-step="6" data-tour-title="Demographics Distribution" data-tour-content="See the breakdown of patients by age and gender. Click the chart area to access controls." role="region" aria-label="Demographics Distribution Chart">
+                <h3>Demographics Distribution</h3>
+                <div class="chart-container" id="demographicsChartContainer" tabindex="0" aria-label="Demographics Distribution Chart. Click to open chart controls.">
+                    <canvas id="demographicsChart"></canvas>
+                     <div class="floating-controls" id="demographicsChart-controls" role="dialog" aria-label="Demographics Chart Controls">
+                         <div class="control-group">
+                            <label for="demographicsChart-colorScheme">Color Scheme</label>
+                             <select id="demographicsChart-colorScheme" aria-label="Color Scheme">
+                                <option value="default">Default</option>
+                                <option value="pastel">Pastel</option>
+                                <option value="vibrant">Vibrant</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label for="demographicsChart-chartType">Chart Type</label>
+                            <select id="demographicsChart-chartType" aria-label="Chart Type">
+                                <option value="bar">Bar (Age)</option>
+                                <option value="pie">Pie (Gender)</option>
+                            </select>
+                        </div>
+                         <div class="control-group">
+                             <button class="secondary export-png" data-chart-id="demographicsChart" aria-label="Export Chart as PNG">Export PNG</button>
+                         </div>
+                    </div>
+                </div>
+            </div>
+
+             <div class="card" data-tour-step="7" data-tour-title="Appointment Type Distribution" data-tour-content="Understand how patients book appointments. Click the chart area to access controls." role="region" aria-label="Appointment Type Distribution Chart">
+                <h3>Appointment Type Distribution</h3>
+                <div class="chart-container" id="appointmentTypeChartContainer" tabindex="0" aria-label="Appointment Type Distribution Chart. Click to open chart controls.">
+                    <canvas id="appointmentTypeChart"></canvas>
+                     <div class="floating-controls" id="appointmentTypeChart-controls" role="dialog" aria-label="Appointment Type Chart Controls">
+                         <div class="control-group">
+                            <label for="appointmentTypeChart-colorScheme">Color Scheme</label>
+                             <select id="appointmentTypeChart-colorScheme" aria-label="Color Scheme">
+                                <option value="default">Default</option>
+                                <option value="pastel">Pastel</option>
+                                <option value="vibrant">Vibrant</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label for="appointmentTypeChart-chartType">Chart Type</label>
+                            <select id="appointmentTypeChart-chartType" aria-label="Chart Type">
+                                <option value="pie">Pie</option>
+                                <option value="doughnut">Doughnut</option>
+                                <option value="bar">Bar</option>
+                            </select>
+                        </div>
+                         <div class="control-group">
+                             <button class="secondary export-png" data-chart-id="appointmentTypeChart" aria-label="Export Chart as PNG">Export PNG</button>
+                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" data-tour-step="8" data-tour-title="Treatment Outcomes" data-tour-content="Evaluate the effectiveness of different treatments. Click the chart area to access controls." role="region" aria-label="Treatment Outcomes Chart">
+                <h3>Treatment Outcomes</h3>
+                <div class="chart-container" id="treatmentOutcomesChartContainer" tabindex="0" aria-label="Treatment Outcomes Chart. Click to open chart controls.">
+                    <canvas id="treatmentOutcomesChart"></canvas>
+                     <div class="floating-controls" id="treatmentOutcomesChart-controls" role="dialog" aria-label="Treatment Outcomes Chart Controls">
+                         <div class="control-group">
+                            <label for="treatmentOutcomesChart-barColor">Bar Color</label>
+                            <input type="color" id="treatmentOutcomesChart-barColor" value="#2196F3" aria-label="Bar Color">
+                        </div>
+                        <div class="control-group">
+                            <label for="treatmentOutcomesChart-chartType">Chart Type</label>
+                            <select id="treatmentOutcomesChart-chartType" aria-label="Chart Type">
+                                <option value="bar">Bar</option>
+                                <option value="pie">Pie</option>
+                            </select>
+                        </div>
+                         <div class="control-group">
+                             <button class="secondary export-png" data-chart-id="treatmentOutcomesChart" aria-label="Export Chart as PNG">Export PNG</button>
+                         </div>
+                    </div>
+                </div>
+            </div>
+
+             <div class="card" data-tour-step="9" data-tour-title="Resource Utilization (Simulated)" data-tour-content="Simulated data showing visits per resource type. Click the chart area to access controls." role="region" aria-label="Resource Utilization Chart">
+                <h3>Resource Utilization (Simulated)</h3>
+                <div class="chart-container" id="resourceUtilizationChartContainer" tabindex="0" aria-label="Simulated Resource Utilization Chart. Click to open chart controls.">
+                    <canvas id="resourceUtilizationChart"></canvas>
+                     <div class="floating-controls" id="resourceUtilizationChart-controls" role="dialog" aria-label="Resource Utilization Chart Controls">
+                         <div class="control-group">
+                            <label for="resourceUtilizationChart-barColor">Bar Color</label>
+                            <input type="color" id="resourceUtilizationChart-barColor" value="#ff9800" aria-label="Bar Color">
+                        </div>
+                        <div class="control-group">
+                            <label for="resourceUtilizationChart-chartType">Chart Type</label>
+                            <select id="resourceUtilizationChart-chartType" aria-label="Chart Type">
+                                <option value="bar">Bar</option>
+                                <option value="pie">Pie</option>
+                            </select>
+                        </div>
+                         <div class="control-group">
+                             <button class="secondary export-png" data-chart-id="resourceUtilizationChart" aria-label="Export Chart as PNG">Export PNG</button>
+                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Table Card -->
+            <div class="card" data-tour-step="10" data-tour-title="Filtered Data Table" data-tour-content="View the raw data based on your applied filters. You can sort columns by clicking headers. Use the pagination controls below the table." role="region" aria-label="Filtered Data Table">
+                <h3>Filtered Data</h3>
+                 <div class="data-table-container">
+                    <table class="data-table" role="grid" aria-label="Filtered Patient Data">
+                        <thead>
+                            <tr>
+                                <th data-sort="date" scope="col" aria-sort="none" tabindex="0">Date</th>
+                                <th data-sort="age" scope="col" aria-sort="none" tabindex="0">Age</th>
+                                <th data-sort="gender" scope="col" aria-sort="none" tabindex="0">Gender</th>
+                                <th data-sort="diagnosis" scope="col" aria-sort="none" tabindex="0">Diagnosis</th>
+                                <th data-sort="treatment" scope="col" aria-sort="none" tabindex="0">Treatment</th>
+                                <th data-sort="appointmentType" scope="col" aria-sort="none" tabindex="0">Appt. Type</th>
+                                <th data-sort="outcome" scope="col" aria-sort="none" tabindex="0">Outcome</th>
+                            </tr>
+                        </thead>
+                        <tbody id="data-table-body">
+                            <!-- Table rows will be populated by JS -->
+                        </tbody>
+                    </table>
+                 </div>
+                 <div class="data-table-actions" style="display: flex; justify-content: space-between; align-items: center; margin-top: calc(var(--spacing-unit) * 2);">
+                     <div class="pagination-controls" role="navigation" aria-label="Pagination">
+                        <button id="prev-page" disabled aria-label="Previous Page">Previous</button>
+                        <span id="page-info" aria-live="polite">Page 1 of 1</span>
+                        <button id="next-page" disabled aria-label="Next Page">Next</button>
+                     </div>
+                     <button class="secondary" id="export-csv" aria-label="Export Data Table as CSV">Export CSV</button>
+                 </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Report Modal -->
+    <div class="modal-overlay" id="report-modal" role="dialog" aria-modal="true" aria-labelledby="report-modal-title">
+        <div class="modal-content">
+            <h3 id="report-modal-title">Generate Report</h3>
+            <p>Select charts and data to include in your report:</p>
+            <div class="report-options">
+                <label><input type="checkbox" value="kpis" checked aria-label="Include KPIs in report"> Include KPIs</label><br>
+                <label><input type="checkbox" value="visitTrendsChart" checked aria-label="Include Visit Trends Chart in report"> Visit Trends Over Time Chart</label><br>
+                <label><input type="checkbox" value="diagnosisFreqChart" checked aria-label="Include Diagnosis Frequency Chart in report"> Diagnosis Frequency Chart</label><br>
+                <label><input type="checkbox" value="demographicsChart" checked aria-label="Include Demographics Chart in report"> Demographics Distribution Chart</label><br>
+                <label><input type="checkbox" value="appointmentTypeChart" checked aria-label="Include Appointment Type Chart in report"> Appointment Type Distribution Chart</label><br>
+                <label><input type="checkbox" value="treatmentOutcomesChart" checked aria-label="Include Treatment Outcomes Chart in report"> Treatment Outcomes Chart</label><br>
+                <label><input type="checkbox" value="resourceUtilizationChart" checked aria-label="Include Resource Utilization Chart in report"> Resource Utilization (Simulated) Chart</label><br>
+                <label><input type="checkbox" value="dataTable" checked aria-label="Include Filtered Data Table in report"> Filtered Data Table</label><br>
+            </div>
+            <div class="button-group">
+                <button class="secondary" id="cancel-report" aria-label="Cancel Report Generation">Cancel</button>
+                <button class="primary" id="confirm-report" aria-label="Confirm Report Generation">Generate</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Guided Tour Tooltip -->
+    <div class="tour-overlay hidden" id="tour-overlay"></div>
+    <div class="tour-tooltip hidden" id="tour-tooltip" role="tooltip">
+        <h4 id="tour-title"></h4>
+        <p id="tour-content"></p>
+        <div class="tour-buttons">
+            <button id="tour-prev" class="secondary" disabled aria-label="Previous Tour Step">Prev</button>
+            <button id="tour-next" class="primary" aria-label="Next Tour Step">Next</button>
+            <button id="tour-end" class="secondary" aria-label="End Guided Tour">End Tour</button>
+        </div>
+    </div>
+
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+        import 'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js';
+
+
+        // --- Dummy Data Generation ---
+        const diagnoses = ['Flu', 'Diabetes', 'Hypertension', 'Checkup', 'Injury', 'Mental Health', 'Dermatology', 'Asthma', 'Arthritis', 'Migraine', 'Common Cold', 'Back Pain', 'Allergies'];
+        const treatments = ['Medication', 'Therapy', 'Referral', 'Observation', 'Surgery', 'None', 'Physical Therapy', 'Counseling', 'Vaccination', 'Rest'];
+        const appointmentTypes = ['Walk-in', 'Scheduled', 'Telehealth', 'Follow-up', 'Emergency', 'New Patient', 'Procedure'];
+        const outcomes = ['Improved', 'Stable', 'Worsened', 'Resolved', 'Ongoing', 'Completed Treatment'];
+        const ageGroups = ['0-17', '18-35', '36-65', '65+'];
+        const genders = ['Male', 'Female', 'Other', 'Prefer not to say'];
+
+        function getRandomElement(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        function getRandomDate(start, end) {
+            return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+        }
+
+        function generateDummyData(numRecords) {
+            const data = [];
+            const startDate = new Date('2019-01-01');
+            const endDate = new Date('2023-12-31');
+
+            for (let i = 0; i < numRecords; i++) {
+                const date = getRandomDate(startDate, endDate);
+                let age;
+                const ageGroup = getRandomElement(ageGroups);
+                 if (ageGroup === '0-17') age = Math.floor(Math.random() * 18);
+                 else if (ageGroup === '18-35') age = 18 + Math.floor(Math.random() * 18);
+                 else if (ageGroup === '36-65') age = 36 + Math.floor(Math.random() * 30);
+                 else age = 66 + Math.floor(Math.random() * 35); // Max age 100
+
+                data.push({
+                    id: i + 1,
+                    date: date.toISOString().split('T')[0], // YYYY-MM-DD format
+                    age: age,
+                    ageGroup: ageGroup,
+                    gender: getRandomElement(genders),
+                    diagnosis: getRandomElement(diagnoses),
+                    treatment: getRandomElement(treatments),
+                    appointmentType: getRandomElement(appointmentTypes),
+                    outcome: getRandomElement(outcomes),
+                });
+            }
+            return data;
+        }
+
+        let allPatientData = generateDummyData(5000); // Generate 5000 records
+        let filteredPatientData = [...allPatientData]; // Start with all data
+
+        // --- DOM Elements ---
+        const body = document.body;
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const themeToggle = document.getElementById('theme-toggle');
+
+        const dateStartInput = document.getElementById('date-start');
+        const dateEndInput = document.getElementById('date-end');
+        const ageRangeInput = document.getElementById('age-range');
+        const ageRangeDisplay = document.getElementById('age-range-display');
+        const genderSelect = document.getElementById('gender');
+        const diagnosisFiltersDiv = document.getElementById('diagnosis-filters');
+        const treatmentFiltersDiv = document.getElementById('treatment-filters');
+        const appointmentFiltersDiv = document.getElementById('appointment-filters');
+        const applyFiltersButton = document.getElementById('apply-filters');
+        const clearFiltersButton = document.getElementById('clear-filters');
+        const dataUploadInput = document.getElementById('data-upload');
+        const processUploadButton = document.getElementById('process-upload');
+
+
+        const kpiTotalVisits = document.getElementById('kpi-total-visits');
+        const kpiCommonDiagnosis = document.getElementById('kpi-common-diagnosis');
+        const kpiAvgAge = document.getElementById('kpi-avg-age');
+        const kpiVisitsLastMonth = document.getElementById('kpi-visits-last-month');
+
+        const visitTrendsChartCanvas = document.getElementById('visitTrendsChart');
+        const diagnosisFreqChartCanvas = document.getElementById('diagnosisFreqChart');
+        const demographicsChartCanvas = document.getElementById('demographicsChart');
+        const appointmentTypeChartCanvas = document.getElementById('appointmentTypeChart');
+        const treatmentOutcomesChartCanvas = document.getElementById('treatmentOutcomesChart');
+        const resourceUtilizationChartCanvas = document.getElementById('resourceUtilizationChart'); // Simulated
+
+        const dataTableBody = document.getElementById('data-table-body');
+        const dataTableHeaders = document.querySelectorAll('.data-table th');
+        const prevPageButton = document.getElementById('prev-page');
+        const nextPageButton = document.getElementById('next-page');
+        const pageInfoSpan = document.getElementById('page-info');
+        const exportCsvButton = document.getElementById('export-csv');
+
+
+        const reportModal = document.getElementById('report-modal');
+        const generateReportButton = document.getElementById('generate-report');
+        const cancelReportButton = document.getElementById('cancel-report');
+        const confirmReportButton = document.getElementById('confirm-report');
+        const reportOptionsDiv = reportModal.querySelector('.report-options');
+
+
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const startTourButton = document.getElementById('start-tour');
+        const tourOverlay = document.getElementById('tour-overlay');
+        const tourTooltip = document.getElementById('tour-tooltip');
+        const tourTitle = document.getElementById('tour-title');
+        const tourContent = document.getElementById('tour-content');
+        const tourPrevButton = document.getElementById('tour-prev');
+        const tourNextButton = document.getElementById('tour-next');
+        const tourEndButton = document.getElementById('tour-end');
+
+        // --- Chart Instances & Configs ---
+        let visitTrendsChart, diagnosisFreqChart, demographicsChart, appointmentTypeChart, treatmentOutcomesChart, resourceUtilizationChart;
+
+        // Store chart instances by ID for easy access
+        const chartInstances = {};
+
+        // Base color palette for charts
+        const chartColors = {
+            primary: "rgba(0, 122, 204, 0.8)", // primary-color with alpha
+            primarySolid: "#007acc",
+            secondary: "rgba(240, 240, 240, 0.8)", // secondary-color with alpha
+            success: "rgba(76, 175, 80, 0.8)", // success-color with alpha
+            successSolid: "#4CAF50",
+            error: "rgba(244, 67, 108, 0.8)", // error-color with alpha (adjusted)
+            errorSolid: "#f4436c", // Adjusted
+            warning: "rgba(255, 152, 0, 0.8)", // warning-color with alpha
+            warningSolid: "#ff9800",
+            info: "rgba(33, 150, 243, 0.8)", // info-color with alpha
+            infoSolid: "#2196F3",
+            gray: "rgba(150, 150, 150, 0.8)",
+            graySolid: "#969696",
+            pastel: [
+                "rgba(255, 182, 193, 0.8)", // Pink
+                "rgba(144, 238, 144, 0.8)", // LightGreen
+                "rgba(173, 216, 230, 0.8)", // LightBlue
+                "rgba(255, 228, 181, 0.8)", // Moccasin
+                "rgba(240, 230, 140, 0.8)", // Khaki
+                "rgba(221, 160, 221, 0.8)", // Plum
+                "rgba(127, 255, 212, 0.8)",  // Aquamarine
+                "rgba(218, 112, 214, 0.8)", // Orchid
+                "rgba(100, 149, 237, 0.8)", // CornflowerBlue
+                "rgba(250, 128, 114, 0.8)",  // Salmon
+                 "rgba(192, 192, 192, 0.8)", // Silver
+                 "rgba(255, 255, 0, 0.8)", // Yellow
+                 "rgba(0, 128, 0, 0.8)" // Green
+            ],
+             vibrant: [
+                "rgba(255, 99, 132, 0.8)", // Red
+                "rgba(54, 162, 235, 0.8)", // Blue
+                "rgba(255, 206, 86, 0.8)", // Yellow
+                "rgba(75, 192, 192, 0.8)", // Green
+                "rgba(153, 102, 255, 0.8)", // Purple
+                "rgba(255, 159, 64, 0.8)", // Orange
+                "rgba(201, 203, 207, 0.8)",  // Grey
+                "rgba(255, 0, 0, 0.8)",     // Bright Red
+                "rgba(0, 0, 255, 0.8)",     // Bright Blue
+                "rgba(0, 255, 0, 0.8)",      // Bright Green
+                 "rgba(128, 0, 128, 0.8)", // Purple
+                 "rgba(0, 128, 128, 0.8)", // Teal
+                 "rgba(128, 128, 0, 0.8)" // Olive
+            ],
+             // Solid versions for borders
+             pastelSolid: [
+                 "#FFB6C1", "#90EE90", "#ADD8E6", "#FFE4B5", "#F0E68C", "#DDA0DD", "#7FFFD4", "#DA70D6", "#6495ED", "#FA8072", "#C0C0C0", "#FFFF00", "#008000"
+             ],
+             vibrantSolid: [
+                "#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966CC", "#FF9F40", "#C9CBCF", "#FF0000", "#0000FF", "#00FF00", "#800080", "#008080", "#808000"
+             ]
+        };
+
+        // --- Data Processing & Filtering ---
+        function applyFilters() {
+            showLoading();
+            const startDate = dateStartInput.value ? new Date(dateStartInput.value + 'T00:00:00') : null; // Ensure date comparison is consistent
+            const endDate = dateEndInput.value ? new Date(dateEndInput.value + 'T23:59:59') : null; // Include end of day
+            const maxAge = parseInt(ageRangeInput.value, 10);
+            const selectedGender = genderSelect.value;
+            const selectedDiagnoses = Array.from(diagnosisFiltersDiv.querySelectorAll('input:checked')).map(input => input.value);
+            const selectedTreatments = Array.from(treatmentFiltersDiv.querySelectorAll('input:checked')).map(input => input.value);
+            const selectedAppointmentTypes = Array.from(appointmentFiltersDiv.querySelectorAll('input:checked')).map(input => input.value);
+
+             // Basic date validation
+            if (startDate && endDate && startDate > endDate) {
+                alert('Start date cannot be after end date.');
+                hideLoading();
+                return;
+            }
+
+
+            filteredPatientData = allPatientData.filter(visit => {
+                const visitDate = new Date(visit.date + 'T00:00:00'); // Ensure date comparison is consistent
+                const dateMatch = (!startDate || visitDate >= startDate) && (!endDate || visitDate <= endDate);
+                const ageMatch = visit.age <= maxAge;
+                const genderMatch = !selectedGender || visit.gender === selectedGender;
+                const diagnosisMatch = selectedDiagnoses.length === 0 || selectedDiagnoses.includes(visit.diagnosis);
+                const treatmentMatch = selectedTreatments.length === 0 || selectedTreatments.includes(visit.treatment);
+                const appointmentMatch = selectedAppointmentTypes.length === 0 || selectedAppointmentTypes.includes(visit.appointmentType);
+
+                return dateMatch && ageMatch && genderMatch && diagnosisMatch && treatmentMatch && appointmentMatch;
+            });
+
+            updateDashboard();
+            hideLoading();
+        }
+
+        function clearFilters() {
+            dateStartInput.value = '';
+            dateEndInput.value = '';
+            ageRangeInput.value = ageRangeInput.max; // Reset age slider to max
+            ageRangeDisplay.textContent = `0 - ${ageRangeInput.max}`;
+            genderSelect.value = '';
+            diagnosisFiltersDiv.querySelectorAll('input').forEach(input => input.checked = false);
+            treatmentFiltersDiv.querySelectorAll('input').forEach(input => input.checked = false);
+            appointmentFiltersDiv.querySelectorAll('input').forEach(input => input.checked = false);
+            applyFilters(); // Re-apply filters with cleared values
+        }
+
+        function updateDashboard() {
+            updateKPIs();
+            updateCharts();
+            renderDataTable(filteredPatientData); // Render table with filtered data
+        }
+
+        function updateKPIs() {
+            kpiTotalVisits.textContent = allPatientData.length.toLocaleString(); // Total visits is always from all data, formatted
+
+            const now = new Date();
+            // Get the first day of the current month
+            const firstDayOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            // Get the last day of the previous month
+            const lastDayOfLastMonth = new Date(firstDayOfCurrentMonth.getTime() - 1);
+            // Get the first day of the previous month
+            const firstDayOfLastMonth = new Date(lastDayOfLastMonth.getFullYear(), lastDayOfLastMonth.getMonth(), 1);
+
+
+            kpiVisitsLastMonth.textContent = filteredPatientData.filter(visit => {
+                const visitDate = new Date(visit.date + 'T00:00:00'); // Ensure date comparison is consistent
+                return visitDate >= firstDayOfLastMonth && visitDate <= lastDayOfLastMonth;
+            }).length.toLocaleString();
+
+
+            if (filteredPatientData.length > 0) {
+                const diagnosisCounts = filteredPatientData.reduce((acc, visit) => {
+                    acc[visit.diagnosis] = (acc[visit.diagnosis] || 0) + 1;
+                    return acc;
+                }, {});
+                // Find the diagnosis with the highest count, handling ties arbitrarily
+                const mostCommonDiagnosis = Object.entries(diagnosisCounts).reduce((a, b) => a[1] > b[1] ? a : b, [null, 0])[0];
+                kpiCommonDiagnosis.textContent = mostCommonDiagnosis || 'N/A';
+
+                const totalAge = filteredPatientData.reduce((sum, visit) => sum + visit.age, 0);
+                kpiAvgAge.textContent = (totalAge / filteredPatientData.length).toFixed(1);
+            } else {
+                 kpiCommonDiagnosis.textContent = 'N/A';
+                 kpiAvgAge.textContent = 'N/A';
+                 kpiVisitsLastMonth.textContent = 0;
+            }
+        }
+
+        // --- Chart Rendering and Updates ---
+        function updateCharts() {
+            // Destroy existing charts before creating new ones
+            Object.values(chartInstances).forEach(chart => {
+                if (chart) chart.destroy();
+            });
+            // Clear the instances map
+            for (const key in chartInstances) {
+                delete chartInstances[key];
+            }
+
+            renderVisitTrendsChart();
+            renderDiagnosisFreqChart();
+            renderDemographicsChart();
+            renderAppointmentTypeChart();
+            renderTreatmentOutcomesChart();
+            renderResourceUtilizationChart(); // Simulated
+        }
+
+        function renderVisitTrendsChart() {
+            const visitsByDate = filteredPatientData.reduce((acc, visit) => {
+                const date = visit.date;
+                acc[date] = (acc[date] || 0) + 1;
+                return acc;
+            }, {});
+
+            const sortedDates = Object.keys(visitsByDate).sort();
+            const visitCounts = sortedDates.map(date => visitsByDate[date]);
+
+            const ctx = visitTrendsChartCanvas.getContext('2d');
+            const chartType = document.getElementById('visitTrendsChart-chartType').value; // Use selected type
+            const lineColor = document.getElementById('visitTrendsChart-lineColor').value;
+
+            visitTrendsChart = new Chart(ctx, {
+                type: chartType,
+                data: {
+                    labels: sortedDates,
+                    datasets: [{
+                        label: 'Number of Visits',
+                        data: visitCounts,
+                        borderColor: lineColor,
+                        backgroundColor: lineColor + '33', // Add alpha for light fill
+                        tension: chartType === 'line' ? 0.1 : 0,
+                        fill: chartType === 'line' ? true : false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, labels: { color: "var('--text-color')" } },
+                        tooltip: { mode: 'index', intersect: false },
+                         // datalabels: { display: false } // Hide datalabels by default
+                    },
+                    scales: {
+                        x: { type: 'time', time: { unit: 'month' }, title: { display: true, text: 'Date', color: "var('--text-light')" }, ticks: { color: "var('--text-light')" }, grid: { color: "var('--border-color')" } },
+                        y: { beginAtZero: true, title: { display: true, text: 'Visits', color: "var('--text-light')" }, ticks: { color: "var('--text-light')" }, grid: { color: "var('--border-color')" } }
+                    },
+                     onClick: (e) => toggleFloatingControls('visitTrendsChart-controls')
+                }
+            });
+             chartInstances['visitTrendsChart'] = visitTrendsChart;
+             setupFloatingControls('visitTrendsChart', visitTrendsChart);
+        }
+
+        function renderDiagnosisFreqChart() {
+            const diagnosisCounts = filteredPatientData.reduce((acc, visit) => {
+                acc[visit.diagnosis] = (acc[visit.diagnosis] || 0) + 1;
+                return acc;
+            }, {});
+
+            const labels = Object.keys(diagnosisCounts).sort(); // Sort labels alphabetically
+            const data = labels.map(label => diagnosisCounts[label]);
+
+            const ctx = diagnosisFreqChartCanvas.getContext('2d');
+            const selectedChartType = document.getElementById('diagnosisFreqChart-chartType').value;
+            const barColor = document.getElementById('diagnosisFreqChart-barColor').value;
+
+            diagnosisFreqChart = new Chart(ctx, {
+                type: selectedChartType,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Frequency',
+                        data: data,
+                        backgroundColor: selectedChartType === 'bar' ? barColor : chartColors.vibrant.slice(0, labels.length), // Use vibrant for pie
+                        borderColor: selectedChartType === 'bar' ? barColor : "var('--surface-color')", // Use solid color for bar border, surface for pie
+                        borderWidth: selectedChartType === 'bar' ? 1 : 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: selectedChartType !== 'bar', position: selectedChartType === 'pie' ? 'right' : 'top', labels: { color: "var('--text-color')" } },
+                        tooltip: { mode: 'index', intersect: false },
+                         datalabels: { display: selectedChartType === 'pie', color: "var('--surface-color')", formatter: (value, context) => {
+                             const total = context.chart.data.datasets[0].data.reduce((sum, val) => sum + val, 0);
+                             if (total === 0) return '';
+                             const percentage = ((value / total) * 100).toFixed(1) + '%';
+                             return percentage;
+                         }}
+                    },
+                    scales: selectedChartType === 'bar' ? {
+                        x: { title: { display: true, text: 'Diagnosis', color: "var('--text-light')" }, ticks: { color: "var('--text-light')" }, grid: { color: "var('--border-color')" } },
+                        y: { beginAtZero: true, title: { display: true, text: 'Count', color: "var('--text-light')" }, ticks: { color: "var('--text-light')" }, grid: { color: "var('--border-color')" } }
+                    } : {},
+                    onClick: (e, elements) => {
+                         if (selectedChartType === 'bar' && elements.length > 0) {
+                            const clickedIndex = elements[0].index;
+                            const clickedDiagnosis = labels[clickedIndex];
+                             // Simulate filtering by diagnosis - update diagnosis filter checkboxes
+                             const checkbox = diagnosisFiltersDiv.querySelector(`input[value="${clickedDiagnosis}"]`);
+                             if (checkbox) {
+                                 checkbox.checked = !checkbox.checked; // Toggle selection
+                             }
+                             applyFilters(); // Re-apply filters
+                        } else {
+                            toggleFloatingControls('diagnosisFreqChart-controls');
+                        }
+                    }
+                }
+            });
+             chartInstances['diagnosisFreqChart'] = diagnosisFreqChart;
+             setupFloatingControls('diagnosisFreqChart', diagnosisFreqChart);
+        }
+
+         function renderDemographicsChart() {
+             const selectedChartType = document.getElementById('demographicsChart-chartType').value;
+             const selectedColorScheme = document.getElementById('demographicsChart-colorScheme').value;
+             const colors = selectedColorScheme === 'pastel' ? chartColors.pastel : selectedColorScheme === 'vibrant' ? chartColors.vibrant : [chartColors.primary, chartColors.info, chartColors.warning, chartColors.success];
+             const solidColors = selectedColorScheme === 'pastel' ? chartColors.pastelSolid : selectedColorScheme === 'vibrant' ? chartColors.vibrantSolid : [chartColors.primarySolid, chartColors.infoSolid, chartColors.warningSolid, chartColors.successSolid];
+
+
+             let labels, data, type, datasets;
+
+             if (selectedChartType === 'bar') { // Age Group Bar Chart
+                 type = 'bar';
+                 const ageGroupCounts = filteredPatientData.reduce((acc, visit) => {
+                     acc[visit.ageGroup] = (acc[visit.ageGroup] || 0) + 1;
+                     return acc;
+                 }, {});
+                 labels = ageGroups; // Ensure consistent order
+                 data = ageGroups.map(group => ageGroupCounts[group] || 0);
+                 datasets = [{
+                     label: 'Number of Patients',
+                     data: data,
+                     backgroundColor: colors.slice(0, labels.length),
+                     borderColor: solidColors.slice(0, labels.length),
+                     borderWidth: 1
+                 }];
+             } else { // Pie Chart (Gender)
+                 type = 'pie';
+                 const genderCounts = filteredPatientData.reduce((acc, visit) => {
+                     acc[visit.gender] = (acc[visit.gender] || 0) + 1;
+                     return acc;
+                 }, {});
+                 labels = genders; // Ensure consistent order
+                 data = genders.map(gender => genderCounts[gender] || 0);
+                 datasets = [{
+                     label: 'Number of Patients',
+                     data: data,
+                     backgroundColor: colors.slice(0, genders.length),
+                     borderColor: "var('--surface-color')",
+                     borderWidth: 2
+                 }];
+             }
+
+
+            const ctx = demographicsChartCanvas.getContext('2d');
+            demographicsChart = new Chart(ctx, {
+                type: type,
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, position: type === 'pie' ? 'right' : 'top', labels: { color: "var('--text-color')" } },
+                        tooltip: { mode: 'index', intersect: false },
+                         datalabels: { display: type === 'pie', color: "var('--surface-color')", formatter: (value, context) => {
+                             const total = context.chart.data.datasets[0].data.reduce((sum, val) => sum + val, 0);
+                              if (total === 0) return '';
+                             const percentage = ((value / total) * 100).toFixed(1) + '%';
+                             return percentage;
+                         }}
+                    },
+                    scales: type === 'bar' ? {
+                        x: { title: { display: true, text: 'Age Group' }, ticks: { color: "var('--text-light')" }, grid: { color: "var('--border-color')" } },
+                        y: { beginAtZero: true, title: { display: true, text: 'Count', color: "var('--text-light')" }, ticks: { color: "var('--text-light')" }, grid: { color: "var('--border-color')" } }
+                    } : {},
+                    onClick: (e) => toggleFloatingControls('demographicsChart-controls')
+                }
+            });
+             chartInstances['demographicsChart'] = demographicsChart;
+             setupFloatingControls('demographicsChart', demographicsChart);
+         }
+
+        function renderAppointmentTypeChart() {
+             const selectedChartType = document.getElementById('appointmentTypeChart-chartType').value;
+             const selectedColorScheme = document.getElementById('appointmentTypeChart-colorScheme').value;
+             const colors = selectedColorScheme === 'pastel' ? chartColors.pastel : selectedColorScheme === 'vibrant' ? chartColors.vibrant : [chartColors.primary, chartColors.info, chartColors.warning, chartColors.success, chartColors.error, chartColors.gray]; // Added more colors
+              const solidColors = selectedColorScheme === 'pastel' ? chartColors.pastelSolid : selectedColorScheme === 'vibrant' ? chartColors.vibrantSolid : [chartColors.primarySolid, chartColors.infoSolid, chartColors.warningSolid, chartColors.successSolid, chartColors.errorSolid, chartColors.graySolid];
+
+
+            const apptTypeCounts = filteredPatientData.reduce((acc, visit) => {
+                acc[visit.appointmentType] = (acc[visit.appointmentType] || 0) + 1;
+                return acc;
+            }, {});
+
+            const labels = appointmentTypes; // Ensure consistent order
+            const data = appointmentTypes.map(type => apptTypeCounts[type] || 0);
+
+            const ctx = appointmentTypeChartCanvas.getContext('2d');
+            appointmentTypeChart = new Chart(ctx, {
+                type: selectedChartType,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Number of Appointments',
+                        data: data,
+                        backgroundColor: colors.slice(0, appointmentTypes.length),
+                        borderColor: selectedChartType === 'bar' ? solidColors.slice(0, appointmentTypes.length) : "var('--surface-color')",
+                        borderWidth: selectedChartType === 'bar' ? 1 : 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, position: selectedChartType === 'bar' ? 'top' : 'right', labels: { color: "var('--text-color')" } },
+                        tooltip: { mode: 'index', intersect: false },
+                        datalabels: { display: selectedChartType !== 'bar', color: "var('--surface-color')", formatter: (value, context) => {
+                             const total = context.chart.data.datasets[0].data.reduce((sum, val) => sum + val, 0);
+                             if (total === 0) return '';
+                             const percentage = ((value / total) * 100).toFixed(1) + '%';
+                             return percentage;
+                         }}
+                    },
+                     scales: selectedChartType === 'bar' ? {
+                        x: { title: { display: true, text: 'Appointment Type', color: "var('--text-light')" }, ticks: { color: "var('--text-light')" }, grid: { color: "var('--border-color')" } },
+                        y: { beginAtZero: true, title: { display: true, text: 'Count', color: "var('--text-light')" }, ticks: { color: "var('--text-light')" }, grid: { color: "var('--border-color')" } }
+                    } : {},
+                    onClick: (e) => toggleFloatingControls('appointmentTypeChart-controls')
+                }
+            });
+             chartInstances['appointmentTypeChart'] = appointmentTypeChart;
+             setupFloatingControls('appointmentTypeChart', appointmentTypeChart);
+        }
+
+        function renderTreatmentOutcomesChart() {
+             const selectedChartType = document.getElementById('treatmentOutcomesChart-chartType').value;
+             const barColor = document.getElementById('treatmentOutcomesChart-barColor').value;
+
+            const outcomeCounts = filteredPatientData.reduce((acc, visit) => {
+                acc[visit.outcome] = (acc[visit.outcome] || 0) + 1;
+                return acc;
+            }, {});
+
+            const labels = outcomes; // Ensure consistent order
+            const data = outcomes.map(outcome => outcomeCounts[outcome] || 0);
+
+            const ctx = treatmentOutcomesChartCanvas.getContext('2d');
+            treatmentOutcomesChart = new Chart(ctx, {
+                type: selectedChartType,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Number of Outcomes',
+                        data: data,
+                        backgroundColor: selectedChartType === 'bar' ? barColor : [chartColors.success, chartColors.gray, chartColors.error, chartColors.info, chartColors.warning, chartColors.primary], // Use specific colors for outcomes in pie
+                        borderColor: selectedChartType === 'bar' ? barColor : "var('--surface-color')",
+                        borderWidth: selectedChartType === 'bar' ? 1 : 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, position: selectedChartType === 'bar' ? 'top' : 'right', labels: { color: "var('--text-color')" } },
+                        tooltip: { mode: 'index', intersect: false },
+                         datalabels: { display: selectedChartType !== 'bar', color: "var('--surface-color')", formatter: (value, context) => {
+                             const total = context.chart.data.datasets[0].data.reduce((sum, val) => sum + val, 0);
+                              if (total === 0) return '';
+                             const percentage = ((value / total) * 100).toFixed(1) + '%';
+                             return percentage;
+                         }}
+                    },
+                    scales: selectedChartType === 'bar' ? {
+                        x: { title: { display: true, text: 'Outcome', color: "var('--text-light')" }, ticks: { color: "var('--text-light')" }, grid: { color: "var('--border-color')" } },
+                        y: { beginAtZero: true, title: { display: true, text: 'Count', color: "var('--text-light')" }, ticks: { color: "var('--text-light')" }, grid: { color: "var('--border-color')" } }
+                    } : {},
+                    onClick: (e) => toggleFloatingControls('treatmentOutcomesChart-controls')
+                }
+            });
+             chartInstances['treatmentOutcomesChart'] = treatmentOutcomesChart;
+             setupFloatingControls('treatmentOutcomesChart', treatmentOutcomesChart);
+        }
+
+         function renderResourceUtilizationChart() {
+             // This is a simulated chart as we don't have actual resource data
+             const selectedChartType = document.getElementById('resourceUtilizationChart-chartType').value;
+             const barColor = document.getElementById('resourceUtilizationChart-barColor').value;
+
+             const labels = ['Exam Room A', 'Exam Room B', 'Provider 1', 'Provider 2', 'Lab', 'Consult Room'];
+             const data = [
+                 Math.floor(filteredPatientData.length * 0.15),
+                 Math.floor(filteredPatientData.length * 0.12),
+                 Math.floor(filteredPatientData.length * 0.2),
+                 Math.floor(filteredPatientData.length * 0.18),
+                 Math.floor(filteredPatientData.length * 0.08),
+                 Math.floor(filteredPatientData.length * 0.05)
+             ]; // Simulated counts based on filtered data size
+
+             const ctx = resourceUtilizationChartCanvas.getContext('2d');
+            resourceUtilizationChart = new Chart(ctx, {
+                type: selectedChartType,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Simulated Utilization Count',
+                        data: data,
+                        backgroundColor: selectedChartType === 'bar' ? barColor : chartColors.vibrant.slice(0, labels.length),
+                        borderColor: selectedChartType === 'bar' ? barColor : "var('--surface-color')",
+                        borderWidth: selectedChartType === 'bar' ? 1 : 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, position: selectedChartType === 'bar' ? 'top' : 'right', labels: { color: "var('--text-color')" } },
+                        tooltip: { mode: 'index', intersect: false },
+                         datalabels: { display: selectedChartType !== 'bar', color: "var('--surface-color')", formatter: (value, context) => {
+                             const total = context.chart.data.datasets[0].data.reduce((sum, val) => sum + val, 0);
+                              if (total === 0) return '';
+                             const percentage = ((value / total) * 100).toFixed(1) + '%';
+                             return percentage;
+                         }}
+                    },
+                    scales: selectedChartType === 'bar' ? {
+                        x: { title: { display: true, text: 'Resource', color: "var('--text-light')" }, ticks: { color: "var('--text-light')" }, grid: { color: "var('--border-color')" } },
+                        y: { beginAtZero: true, title: { display: true, text: 'Count', color: "var('--text-light')" }, ticks: { color: "var('--text-light')" }, grid: { color: "var('--border-color')" } }
+                    } : {},
+                    onClick: (e) => toggleFloatingControls('resourceUtilizationChart-controls')
+                }
+            });
+             chartInstances['resourceUtilizationChart'] = resourceUtilizationChart;
+             setupFloatingControls('resourceUtilizationChart', resourceUtilizationChart);
+         }
+
+        // --- Floating Controls ---
+         function toggleFloatingControls(controlsId) {
+             const controls = document.getElementById(controlsId);
+             // Hide all other active controls
+             document.querySelectorAll('.floating-controls.active').forEach(ctrl => {
+                 if (ctrl.id !== controlsId) {
+                     ctrl.classList.remove('active');
+                 }
+             });
+             // Toggle the clicked controls
+             controls.classList.toggle('active');
+         }
+
+         function setupFloatingControls(chartCanvasId, chartInstance) {
+             const controlsId = `${chartCanvasId}-controls`;
+             const controls = document.getElementById(controlsId);
+             const chartContainer = document.getElementById(`${chartCanvasId}Container`);
+
+             // Show controls when clicking the chart container or pressing Enter/Space when focused
+             chartContainer.addEventListener('click', (e) => {
+                 // Only toggle if the click target is the container or canvas, not a control inside
+                 if (e.target === chartContainer || e.target === chartContainer.querySelector('canvas')) {
+                     toggleFloatingControls(controlsId);
+                 }
+             });
+             chartContainer.addEventListener('keydown', (e) => {
+                 if ((e.key === 'Enter' || e.key === ' ') && e.target === chartContainer) {
+                      e.preventDefault(); // Prevent default spacebar action
+                      toggleFloatingControls(controlsId);
+                 }
+             });
+
+
+             // Close panel when clicking outside any chart container or control
+             document.addEventListener('click', (e) => {
+                 const isChartContainerClick = e.target.closest('.chart-container');
+                 const isControlClick = e.target.closest('.floating-controls');
+
+                 if (!isChartContainerClick && !isControlClick) {
+                     document.querySelectorAll('.floating-controls.active').forEach(ctrl => {
+                        ctrl.classList.remove('active');
+                    });
+                 }
+             });
+
+             // Add event listeners for controls within this specific panel
+             controls.querySelectorAll('input, select').forEach(element => {
+                 element.addEventListener('change', () => updateSpecificChart(chartCanvasId, chartInstance));
+             });
+
+             // Add event listeners for export buttons within this specific panel
+             controls.querySelectorAll('.export-png').forEach(button => {
+                button.addEventListener('click', () => exportChartPNG(chartInstance, chartCanvasId));
+             });
+         }
+
+         function updateSpecificChart(chartCanvasId, chartInstance) {
+             const controlsId = `${chartCanvasId}-controls`;
+             const controls = document.getElementById(controlsId);
+
+             // Get values from controls
+             const newChartType = controls.querySelector(`#${chartCanvasId}-chartType`)?.value;
+             const newColor = controls.querySelector(`#${chartCanvasId}-lineColor, #${chartCanvasId}-barColor`)?.value;
+             const newColorScheme = controls.querySelector(`#${chartCanvasId}-colorScheme`)?.value;
+
+             // Destroy and recreate the chart if type or color scheme changes significantly
+             // This is simpler than trying to update config for drastic changes
+             if (newChartType && chartInstance.config.type !== newChartType) {
+                 chartInstance.destroy();
+                 // Re-render the specific chart based on its ID
+                 if (chartCanvasId === 'visitTrendsChart') renderVisitTrendsChart();
+                 else if (chartCanvasId === 'diagnosisFreqChart') renderDiagnosisFreqChart();
+                 else if (chartCanvasId === 'demographicsChart') renderDemographicsChart();
+                 else if (chartCanvasId === 'appointmentTypeChart') renderAppointmentTypeChart();
+                 else if (chartCanvasId === 'treatmentOutcomesChart') renderTreatmentOutcomesChart();
+                 else if (chartCanvasId === 'resourceUtilizationChart') renderResourceUtilizationChart();
+
+                 return; // Exit as chart was recreated
+             }
+
+             // Handle color or color scheme updates for existing chart type
+             if (newColor) {
+                 // Update color for line or bar charts
+                 chartInstance.config.data.datasets.forEach(dataset => {
+                     if (chartInstance.config.type === 'line') {
+                         dataset.borderColor = newColor;
+                         dataset.backgroundColor = newColor + '33'; // Keep light fill
+                     } else if (chartInstance.config.type === 'bar') {
+                         dataset.backgroundColor = newColor;
+                         dataset.borderColor = newColor; // Use solid color for bar border
+                     }
+                 });
+             }
+
+             if (newColorScheme) {
+                  const colors = newColorScheme === 'pastel' ? chartColors.pastel : newColorScheme === 'vibrant' ? chartColors.vibrant : [chartColors.primary, chartColors.info, chartColors.warning, chartColors.success, chartColors.error, chartColors.gray]; // Ensure enough default colors
+                   const solidColors = newColorScheme === 'pastel' ? chartColors.pastelSolid : newColorScheme === 'vibrant' ? chartColors.vibrantSolid : [chartColors.primarySolid, chartColors.infoSolid, chartColors.warningSolid, chartColors.successSolid, chartColors.errorSolid, chartColors.graySolid];
+
+                  chartInstance.config.data.datasets.forEach(dataset => {
+                      // Apply color scheme to charts with multiple colors (pie, doughnut, multi-bar)
+                      if (chartInstance.config.type !== 'line' && chartInstance.config.type !== 'bar') {
+                         dataset.backgroundColor = colors.slice(0, dataset.data.length);
+                         dataset.borderColor = "var('--surface-color')";
+                      } else if (chartInstance.config.type === 'bar' && (chartCanvasId === 'demographicsChart' || chartCanvasId === 'resourceUtilizationChart' || chartCanvasId === 'diagnosisFreqChart' || chartCanvasId === 'treatmentOutcomesChart' || chartCanvasId === 'appointmentTypeChart')) {
+                           // If bar chart uses multiple colors (like age groups or categories)
+                            dataset.backgroundColor = colors.slice(0, dataset.data.length);
+                            dataset.borderColor = solidColors.slice(0, dataset.data.length);
+                      }
+                  });
+             }
+
+             // Re-render the specific chart
+             chartInstance.update();
+         }
+
+        function exportChartPNG(chartInstance, chartId) {
+            const link = document.createElement('a');
+            link.href = chartInstance.toBase64Image();
+            link.download = `${chartId}_chart.png`;
+            link.click();
+        }
+
+
+        // --- Data Table ---
+        let currentPage = 1;
+        const rowsPerPage = 10;
+        let currentSortColumn = null;
+        let currentSortDirection = 'asc';
+
+        function renderDataTable(data, page = 1) {
+            dataTableBody.innerHTML = ''; // Clear current table body
+            currentPage = page;
+
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            const paginatedData = data.slice(start, end);
+
+            if (paginatedData.length === 0) {
+                 dataTableBody.innerHTML = '<tr><td colspan="7" class="text-center">No data available for the selected filters.</td></tr>';
+                 // Disable pagination and CSV export if no data
+                 prevPageButton.disabled = true;
+                 nextPageButton.disabled = true;
+                 exportCsvButton.disabled = true;
+            } else {
+                paginatedData.forEach(visit => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${visit.date}</td>
+                        <td>${visit.age}</td>
+                        <td>${visit.gender}</td>
+                        <td>${visit.diagnosis}</td>
+                        <td>${visit.treatment}</td>
+                        <td>${visit.appointmentType}</td>
+                        <td>${visit.outcome}</td>
+                    `;
+                    dataTableBody.appendChild(row);
+                });
+                 exportCsvButton.disabled = false; // Enable CSV export if data exists
+            }
+
+
+            updatePaginationControls(data.length);
+        }
+
+        function updatePaginationControls(totalRows) {
+            const totalPages = Math.ceil(totalRows / rowsPerPage);
+            pageInfoSpan.textContent = `Page ${currentPage} of ${totalPages || 1}`;
+            pageInfoSpan.setAttribute('aria-label', `Page ${currentPage} of ${totalPages || 1}`);
+
+
+            prevPageButton.disabled = currentPage <= 1;
+            nextPageButton.disabled = currentPage >= totalPages;
+        }
+
+        function sortDataTable(column) {
+            // Reset aria-sort on all headers
+            dataTableHeaders.forEach(header => header.setAttribute('aria-sort', 'none'));
+
+            if (currentSortColumn === column) {
+                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSortColumn = column;
+                currentSortDirection = 'asc';
+            }
+
+            // Update aria-sort for the current column
+            const currentHeader = document.querySelector(`.data-table th[data-sort="${column}"]`);
+            if (currentHeader) {
+                 currentHeader.setAttribute('aria-sort', currentSortDirection);
+            }
+
+            // Remove existing sort indicators (basic example)
+            dataTableHeaders.forEach(header => header.classList.remove('sorted-asc', 'sorted-desc'));
+            // Add indicator to current column
+            if (currentHeader) {
+                 currentHeader.classList.add(`sorted-${currentSortDirection}`);
+            }
+
+
+            filteredPatientData.sort((a, b) => {
+                const valA = a[column];
+                const valB = b[column];
+
+                // Handle date comparison
+                if (column === 'date') {
+                    const dateA = new Date(valA);
+                    const dateB = new Date(valB);
+                    if (dateA < dateB) return currentSortDirection === 'asc' ? -1 : 1;
+                    if (dateA > dateB) return currentSortDirection === 'asc' ? 1 : -1;
+                    return 0;
+                }
+
+                 // Handle numeric comparison (age)
+                 if (column === 'age') {
+                     if (valA < valB) return currentSortDirection === 'asc' ? -1 : 1;
+                     if (valA > valB) return currentSortDirection === 'asc' ? 1 : -1;
+                     return 0;
+                 }
+
+                // Handle string comparison for others
+                const stringA = String(valA).toLowerCase();
+                const stringB = String(valB).toLowerCase();
+                if (stringA < stringB) return currentSortDirection === 'asc' ? -1 : 1;
+                if (stringA > stringB) return currentSortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            renderDataTable(filteredPatientData, 1); // Render first page after sorting
+        }
+
+        function exportDataTableCSV() {
+            if (filteredPatientData.length === 0) {
+                alert("No data to export.");
+                return;
+            }
+
+            const headers = ['Date', 'Age', 'Gender', 'Diagnosis', 'Treatment', 'Appointment Type', 'Outcome'];
+            const rows = filteredPatientData.map(visit => [
+                visit.date,
+                visit.age,
+                visit.gender,
+                visit.diagnosis,
+                visit.treatment,
+                visit.appointmentType,
+                visit.outcome
+            ]);
+
+            let csvContent = headers.join(',') + '\n';
+            rows.forEach(row => {
+                 // Escape double quotes within fields by doubling them, then wrap field in double quotes
+                csvContent += row.map(item => `"${String(item).replace(/"/g, '""')}"`).join(',') + '\n';
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'filtered_patient_data.csv';
+            link.click();
+        }
+
+
+        // --- Modal (Report) ---
+        function showModal(modalElement) {
+            modalElement.classList.add('active');
+             // Trap focus inside modal
+             const focusableElements = modalElement.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+             const firstElement = focusableElements[0];
+             const lastElement = focusableElements[focusableElements.length - 1];
+
+             // Use a small timeout to ensure elements are visible before focusing
+             setTimeout(() => {
+                 if (firstElement) firstElement.focus();
+             }, 50);
+
+
+             const handleKeyDown = function(e) {
+                 let isTabPressed = e.key === 'Tab' || e.keyCode === 9;
+                 if (!isTabPressed) return;
+
+                 if (e.shiftKey) { // Shift + Tab
+                     if (document.activeElement === firstElement) {
+                         lastElement.focus();
+                         e.preventDefault();
+                     }
+                 } else { // Tab
+                     if (document.activeElement === lastElement) {
+                         firstElement.focus();
+                         e.preventDefault();
+                     }
+                 }
+             };
+
+             modalElement.addEventListener('keydown', handleKeyDown);
+             // Store the handler to remove it later
+             modalElement._focusTrapHandler = handleKeyDown;
+        }
+
+        function hideModal(modalElement) {
+            modalElement.classList.remove('active');
+             // Remove focus trap listener
+             if (modalElement._focusTrapHandler) {
+                 modalElement.removeEventListener('keydown', modalElement._focusTrapHandler);
+                 delete modalElement._focusTrapHandler;
+             }
+             // Return focus to the element that opened the modal (optional but good practice)
+             // Requires storing the element that triggered the modal opening.
+        }
+
+        // --- Loading Indicator ---
+        function showLoading() {
+            loadingOverlay.classList.add('active');
+        }
+
+        function hideLoading() {
+            loadingOverlay.classList.remove('active');
+        }
+
+        // --- Guided Tour ---
+        const tourSteps = [
+            { element: '[data-tour-step="1"]', title: 'Key Performance Indicators', content: 'See a quick overview of key clinic metrics here.' },
+            { element: '.sidebar h2', title: 'Filters', content: 'Use these controls to filter the data displayed in the dashboard. Click "Apply Filters" after making changes.' },
+            { element: '#age-range', title: 'Age Filter', content: 'Drag this slider to filter patients by age up to the selected maximum.' },
+            { element: '#apply-filters', title: 'Apply Filters', content: 'Click this button to update the dashboard based on your filter selections.' },
+            { element: '#data-upload', title: 'Data Import', content: 'You can upload a new CSV data file here for analysis. Note: This is client-side only and requires secure handling for real data.' },
+            { element: '[data-tour-step="4"]', title: 'Visit Trends Over Time', content: 'Track patient visit volume to identify peak times and plan staffing. Click the chart area to access controls like changing the chart type or color, and to export the chart image.' },
+            { element: '[data-tour-step="5"]', title: 'Diagnosis Frequency', content: 'Visualize the most common diagnoses. For bar charts, you can click individual bars to filter the dashboard by that diagnosis. Click the chart area to access controls.' },
+            { element: '[data-tour-step="6"]', title: 'Demographics Distribution', content: 'See the breakdown of patients by age group and gender. Click the chart area to access controls.' },
+            { element: '[data-tour-step="7"]', title: 'Appointment Type Distribution', content: 'Understand how patients book appointments. Click the chart area to access controls.' },
+            { element: '[data-tour-step="8"]', title: 'Treatment Outcomes', content: 'Evaluate the effectiveness of different treatments. Click the chart area to access controls.' },
+             { element: '[data-tour-step="9"]', title: 'Resource Utilization (Simulated)', content: 'This simulated chart shows how resources might be utilized based on visit data. Click the chart area to access controls.' },
+            { element: '[data-tour-step="10"]', title: 'Filtered Data Table', content: 'View the raw data based on your applied filters. You can sort columns by clicking headers. Use the pagination controls below the table.' },
+             { element: '#export-csv', title: 'Export Data Table', content: 'Click this button to export the currently filtered data as a CSV file.' },
+             { element: '#generate-report', title: 'Generate Report', content: 'Click here to generate a customizable report based on the current dashboard view. You can select which sections to include.' },
+        ];
+        let currentTourStepIndex = -1;
+
+        function startTour() {
+            currentTourStepIndex = 0;
+            tourOverlay.classList.remove('hidden');
+            tourTooltip.classList.remove('hidden');
+             tourTooltip.classList.add('active');
+            showTourStep(currentTourStepIndex);
+        }
+
+        function endTour() {
+            tourOverlay.classList.add('hidden');
+            tourTooltip.classList.add('hidden');
+             tourTooltip.classList.remove('active');
+             // Remove highlight from the last step
+            document.querySelectorAll('.tour-highlight').forEach(el => {
+                el.classList.remove('tour-highlight');
+                 el.style.position = ''; // Reset styles
+                 el.style.zIndex = '';
+            });
+            currentTourStepIndex = -1;
+        }
+
+        function showTourStep(index) {
+            if (index < 0 || index >= tourSteps.length) {
+                endTour();
+                return;
+            }
+
+            const step = tourSteps[index];
+            const targetElement = document.querySelector(step.element);
+
+            if (!targetElement) {
+                 // Skip step if element not found
+                 console.warn(`Tour element not found for step ${index}: ${step.element}`);
+                 currentTourStepIndex++;
+                 showTourStep(currentTourStepIndex);
+                 return;
+            }
+
+            // Remove highlight from previous step
+            document.querySelectorAll('.tour-highlight').forEach(el => {
+                el.classList.remove('tour-highlight');
+                 el.style.position = ''; // Reset styles
+                 el.style.zIndex = '';
+            });
+            // Add highlight to current step
+            targetElement.classList.add('tour-highlight');
+             // Ensure highlight doesn't interfere with layout/interactions
+             targetElement.style.position = 'relative';
+             targetElement.style.zIndex = 102;
+
+
+            tourTitle.textContent = step.title;
+            tourContent.textContent = step.content;
+
+            // Position the tooltip
+            const rect = targetElement.getBoundingClientRect();
+            const tooltipRect = tourTooltip.getBoundingClientRect();
+
+            let top = rect.top + rect.height + 10; // Position below element
+            let left = rect.left;
+
+             // Adjust if too close to right edge
+             if (left + tooltipRect.width > window.innerWidth - 20) {
+                 left = window.innerWidth - tooltipRect.width - 20;
+             }
+             // Adjust if too close to bottom edge
+             if (top + tooltipRect.height > window.innerHeight - 20) {
+                 top = rect.top - tooltipRect.height - 10; // Position above element
+                 if (top < 10) top = 10; // Prevent going off screen top
+             }
+             // Adjust if too close to left edge
+             if (left < 10) left = 10;
+
+            tourTooltip.style.top = `${top}px`;
+            tourTooltip.style.left = `${left}px`;
+
+            // Update buttons
+            tourPrevButton.disabled = index === 0;
+            tourNextButton.disabled = index === tourSteps.length - 1;
+
+             // Ensure target element is visible (scroll into view)
+             targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function nextTourStep() {
+            currentTourStepIndex++;
+            showTourStep(currentTourStepIndex);
+        }
+
+        function prevTourStep() {
+            currentTourStepIndex--;
+            showTourStep(currentTourStepIndex);
+        }
+
+         // --- Theme Toggle ---
+         function toggleTheme() {
+             body.classList.toggle('dark-mode');
+             const isDarkMode = body.classList.contains('dark-mode');
+             themeToggle.textContent = isDarkMode ? '☀️' : '🌙';
+             themeToggle.setAttribute('aria-label', isDarkMode ? 'Toggle Light Mode' : 'Toggle Dark Mode');
+             localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+             // Update charts to reflect new theme colors
+             updateCharts(); // Re-render charts with new CSS variables
+         }
+
+         // --- Sidebar Toggle ---
+         function toggleSidebar() {
+             body.classList.toggle('sidebar-collapsed');
+             const isCollapsed = body.classList.contains('sidebar-collapsed');
+             sidebarToggle.setAttribute('aria-expanded', !isCollapsed);
+             sidebarToggle.setAttribute('aria-label', isCollapsed ? 'Show Sidebar' : 'Hide Sidebar');
+         }
+
+
+        // --- Initial Population and Event Listeners ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Apply saved theme
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                body.classList.add('dark-mode');
+                themeToggle.textContent = '☀️';
+                themeToggle.setAttribute('aria-label', 'Toggle Light Mode');
+            } else {
+                 themeToggle.textContent = '🌙';
+                 themeToggle.setAttribute('aria-label', 'Toggle Dark Mode');
+            }
+
+
+             // Populate dynamic filter options (checkboxes)
+             const populateFilters = (data, elementId, labelKey) => {
+                 const uniqueValues = [...new Set(data.map(item => item[labelKey]))].filter(value => value != null && value !== '').sort(); // Filter out null/empty
+                 const container = document.getElementById(elementId);
+                 container.innerHTML = ''; // Clear existing
+                 uniqueValues.forEach(value => {
+                     const id = `${elementId}-${value.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '').toLowerCase()}`; // Sanitize ID
+                     container.innerHTML += `
+                         <label for="${id}">
+                             <input type="checkbox" id="${id}" value="${value}" aria-label="Filter by ${value}">
+                             ${value}
+                         </label>
+                     `;
+                 });
+             };
+
+             populateFilters(allPatientData, 'diagnosis-filters', 'diagnosis');
+             populateFilters(allPatientData, 'treatment-filters', 'treatment');
+             populateFilters(allPatientData, 'appointment-filters', 'appointmentType');
+
+            // Age range slider display update
+            ageRangeInput.addEventListener('input', () => {
+                 ageRangeDisplay.textContent = `0 - ${ageRangeInput.value}`;
+            });
+
+
+            // Initial dashboard render
+            applyFilters(); // This will render everything initially
+
+            // Filter button event listeners
+            applyFiltersButton.addEventListener('click', applyFilters);
+            clearFiltersButton.addEventListener('click', clearFilters);
+
+            // Add event listeners to filter controls to trigger applyFilters (optional, or rely on button)
+            // dateStartInput.addEventListener('change', applyFilters);
+            // dateEndInput.addEventListener('change', applyFilters);
+            // ageRangeInput.addEventListener('change', applyFilters); // Use 'change' for range input
+            // genderSelect.addEventListener('change', applyFilters);
+            // diagnosisFiltersDiv.addEventListener('change', applyFilters);
+            // treatmentFiltersDiv.addEventListener('change', applyFilters);
+            // appointmentFiltersDiv.addEventListener('change', applyFilters);
+
+            // Data Upload Listeners
+            dataUploadInput.addEventListener('change', () => {
+                if (dataUploadInput.files.length > 0) {
+                    processUploadButton.disabled = false;
+                    console.log('File selected:', dataUploadInput.files[0].name);
+                } else {
+                    processUploadButton.disabled = true;
+                }
+            });
+            processUploadButton.addEventListener('click', () => {
+                alert('Simulating file processing. In a real app, this would parse and load data.');
+                // Simulate successful load and update dashboard
+                // For demonstration, re-apply filters on existing data
+                applyFilters();
+            });
+
+
+            // Pagination event listeners
+            prevPageButton.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    renderDataTable(filteredPatientData, currentPage - 1);
+                }
+            });
+            nextPageButton.addEventListener('click', () => {
+                const totalPages = Math.ceil(filteredPatientData.length / rowsPerPage);
+                if (currentPage < totalPages) {
+                    renderDataTable(filteredPatientData, currentPage + 1);
+                }
+            });
+
+            // Data table header sort listeners
+            dataTableHeaders.forEach(header => {
+                header.addEventListener('click', () => {
+                    const sortColumn = header.getAttribute('data-sort');
+                    if (sortColumn) {
+                        sortDataTable(sortColumn);
+                    }
+                });
+                 // Add keyboard support for sorting
+                 header.setAttribute('tabindex', '0');
+                 header.setAttribute('role', 'columnheader');
+                 header.addEventListener('keydown', (event) => {
+                     if (event.key === 'Enter' || event.key === ' ') {
+                         event.preventDefault(); // Prevent default spacebar action
+                         const sortColumn = header.getAttribute('data-sort');
+                         if (sortColumn) {
+                             sortDataTable(sortColumn);
+                         }
+                     }
+                 });
+            });
+
+            // Data Table CSV Export Listener
+            exportCsvButton.addEventListener('click', exportDataTableCSV);
+
+
+            // Report modal event listeners
+            generateReportButton.addEventListener('click', () => showModal(reportModal));
+            cancelReportButton.addEventListener('click', () => hideModal(reportModal));
+            confirmReportButton.addEventListener('click', () => {
+                 // Simulate report generation based on selected options
+                 const selectedItems = Array.from(reportOptionsDiv.querySelectorAll('input:checked')).map(input => input.value);
+                 if (selectedItems.length === 0) {
+                     alert("Please select items to include in the report.");
+                     return;
+                 }
+                 alert(`Simulating report generation with: ${selectedItems.join(', ')}`);
+                 // In a real app, you would generate the report content here
+                 hideModal(reportModal);
+            });
+             // Close modal on outside click
+             reportModal.addEventListener('click', (e) => {
+                 if (e.target === reportModal) {
+                     hideModal(reportModal);
+                 }
+             });
+             // Close modal on Escape key
+             document.addEventListener('keydown', (e) => {
+                 if (e.key === 'Escape' && reportModal.classList.contains('active')) {
+                     hideModal(reportModal);
+                 }
+             });
+
+
+             // Guided Tour event listeners
+             startTourButton.addEventListener('click', startTour);
+             tourEndButton.addEventListener('click', endTour);
+             tourNextButton.addEventListener('click', nextTourStep);
+             tourPrevButton.addEventListener('click', prevTourStep);
+
+             // Close tour on Escape key
+             document.addEventListener('keydown', (e) => {
+                 if (e.key === 'Escape' && !tourTooltip.classList.contains('hidden')) {
+                     endTour();
+                 }
+             });
+
+             // Theme toggle listener
+             themeToggle.addEventListener('click', toggleTheme);
+
+             // Sidebar toggle listener
+             sidebarToggle.addEventListener('click', toggleSidebar);
+
+        });
+
+    </script>
+</body>
+</html>

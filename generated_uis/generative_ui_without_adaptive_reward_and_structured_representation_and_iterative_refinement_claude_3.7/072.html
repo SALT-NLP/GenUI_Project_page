@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urban Green Space & Health Research Platform</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet/dist/leaflet.css" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --primary-color: #4CAF50; /* Green */
+            --secondary-color: #2196F3; /* Blue */
+            --accent-color: #FFC107; /* Amber */
+            --background-color: #F4F6F8; /* Light Grey Blue */
+            --surface-color: #FFFFFF; /* White */
+            --text-color-primary: #212121; /* Dark Grey */
+            --text-color-secondary: #757575; /* Medium Grey */
+            --border-color: #E0E0E0; /* Light Grey */
+            --success-color: #8BC34A; /* Light Green */
+            --error-color: #F44336; /* Red */
+            --spacing-unit: 8px;
+            --header-height: 60px;
+            --sidebar-width: 300px;
+            --border-radius: 8px;
+            --shadow-light: 0 2px 4px rgba(0, 0, 0, 0.05);
+            --shadow-medium: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color-primary);
+            background-color: var(--background-color);
+            overflow: hidden; /* Prevent body scroll, main content will scroll */
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-rows: var(--header-height) 1fr;
+            height: 100vh;
+        }
+
+        header {
+            grid-row: 1;
+            background-color: var(--surface-color);
+            box-shadow: var(--shadow-light);
+            padding: 0 calc(var(--spacing-unit) * 3);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: calc(var(--spacing-unit) * 4);
+        }
+
+        nav a {
+            text-decoration: none;
+            color: var(--text-color-secondary);
+            font-weight: 500;
+            padding: calc(var(--spacing-unit) * 2) 0;
+            transition: color 0.2s ease, border-bottom-color 0.2s ease;
+            border-bottom: 2px solid transparent;
+        }
+
+        nav a:hover,
+        nav a.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .main-area {
+            grid-row: 2;
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr;
+            overflow: hidden; /* Prevent main-area scroll */
+        }
+
+        aside {
+            grid-column: 1;
+            background-color: var(--surface-color);
+            border-right: 1px solid var(--border-color);
+            padding: calc(var(--spacing-unit) * 3);
+            overflow-y: auto; /* Enable sidebar scrolling */
+            display: flex;
+            flex-direction: column;
+            gap: calc(var(--spacing-unit) * 4);
+        }
+
+        .content {
+            grid-column: 2;
+            padding: calc(var(--spacing-unit) * 3);
+            overflow-y: auto; /* Enable content scrolling */
+            background-color: var(--background-color);
+        }
+
+        .section {
+            display: none; /* Hidden by default */
+        }
+
+        .section.active {
+            display: block; /* Shown when active */
+        }
+
+        h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            color: var(--text-color-primary);
+        }
+
+        h3 {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            color: var(--text-color-primary);
+        }
+
+        /* --- Component Styles --- */
+
+        .card {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-medium);
+            padding: calc(var(--spacing-unit) * 3);
+            margin-bottom: calc(var(--spacing-unit) * 4);
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 3);
+            font-size: 1rem;
+            font-weight: 500;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: background-color 0.2s ease, opacity 0.2s ease;
+            text-decoration: none;
+        }
+
+        .button-primary {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+        }
+
+        .button-primary:hover {
+            background-color: darken(var(--primary-color), 5%); /* Placeholder for darker shade */
+            opacity: 0.9;
+        }
+
+        .button-secondary {
+            background-color: var(--secondary-color);
+            color: var(--surface-color);
+        }
+
+        .button-secondary:hover {
+             background-color: darken(var(--secondary-color), 5%); /* Placeholder for darker shade */
+             opacity: 0.9;
+        }
+
+         .button-outline {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+         }
+
+         .button-outline:hover {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+         }
+
+
+        .form-group {
+            margin-bottom: calc(var(--spacing-unit) * 3);
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: var(--spacing-unit);
+            color: var(--text-color-secondary);
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group input[type="file"],
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: calc(var(--spacing-unit) * 1.5);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            color: var(--text-color-primary);
+            background-color: var(--background-color);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .form-group input[type="text"]:focus,
+        .form-group input[type="number"]:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(var(--primary-color), 0.2); /* Placeholder for rgba */
+        }
+
+        .checkbox-group {
+            margin-bottom: calc(var(--spacing-unit) * 2);
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            font-size: 1rem;
+            cursor: pointer;
+            color: var(--text-color-primary);
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            margin-right: var(--spacing-unit);
+        }
+
+
+        .drag-drop-area {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--border-radius);
+            padding: calc(var(--spacing-unit) * 4);
+            text-align: center;
+            color: var(--text-color-secondary);
+            cursor: pointer;
+            transition: border-color 0.2s ease, background-color 0.2s ease;
+        }
+
+        .drag-drop-area.dragover {
+            border-color: var(--primary-color);
+            background-color: rgba(var(--primary-color), 0.05); /* Placeholder for rgba */
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: calc(var(--spacing-unit) * 3);
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: calc(var(--spacing-unit) * 2);
+            border-bottom: 1px solid var(--border-color);
+            text-align: left;
+        }
+
+        .data-table th {
+            background-color: var(--background-color);
+            font-weight: 600;
+            color: var(--text-color-primary);
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .data-table th:hover {
+            background-color: darken(var(--background-color), 2%); /* Placeholder for darker shade */
+        }
+
+        .data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table tbody tr:nth-child(even) {
+            background-color: #F9FAFB; /* Very Light Grey */
+        }
+
+        .progress-indicator {
+            width: 100%;
+            height: var(--spacing-unit);
+            background-color: var(--border-color);
+            border-radius: var(--spacing-unit);
+            overflow: hidden;
+            margin-top: calc(var(--spacing-unit) * 2);
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: var(--success-color);
+            transition: width 0.4s ease;
+        }
+
+        .modal-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-container.visible {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background-color: var(--surface-color);
+            padding: calc(var(--spacing-unit) * 4);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-medium);
+            max-width: 600px;
+            width: 90%;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-container.visible .modal-content {
+             transform: translateY(0);
+        }
+
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: calc(var(--spacing-unit) * 3);
+        }
+
+        .modal-header h3 {
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-color-secondary);
+        }
+
+        .visualization-area {
+            width: 100%;
+            height: 500px; /* Example height */
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-medium);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-color-secondary);
+            overflow: hidden; /* Ensure charts/maps stay within bounds */
+            position: relative; /* For floating controls */
+        }
+
+        .analysis-results {
+            /* Style for analysis results panel */
+        }
+
+        .report-preview {
+             /* Style for report preview area */
+        }
+
+        /* Utility Classes */
+        .mb-4 { margin-bottom: calc(var(--spacing-unit) * 4); }
+        .mt-4 { margin-top: calc(var(--spacing-unit) * 4); }
+        .flex-col { display: flex; flex-direction: column; }
+        .gap-4 { gap: calc(var(--spacing-unit) * 4); }
+
+        /* Placeholder for darken function */
+        /* In production, use a CSS preprocessor or JS function */
+        /* Example: background-color: color-mix(in srgb, var(--primary-color) 95%, black); */
+
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div class="header-title">Urban Green Space & Health</div>
+            <nav>
+                <ul>
+                    <li><a href="#" data-section="data" class="active">Data</a></li>
+                    <li><a href="#" data-section="analysis">Analysis</a></li>
+                    <li><a href="#" data-section="visualization">Visualization</a></li>
+                    <li><a href="#" data-section="reports">Reports</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <div class="main-area">
+            <aside>
+                <!-- Data Sidebar -->
+                <div class="section active" data-section="data">
+                    <div class="card">
+                        <h3>Upload Data</h3>
+                        <div id="dragDropArea" class="drag-drop-area">
+                            Drag & Drop files here or click to select
+                        </div>
+                        <input type="file" id="fileInput" multiple accept=".csv, .xlsx, .json" style="display: none;">
+                        <div id="fileList" class="mt-4">
+                            <!-- Uploaded file list will appear here -->
+                        </div>
+                        <div class="progress-indicator mt-4" style="display: none;">
+                            <div id="progressBar" class="progress-bar"></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3>Loaded Datasets</h3>
+                        <ul id="loadedDatasetsList">
+                            <!-- List of loaded datasets -->
+                            <li>No datasets loaded.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Analysis Sidebar -->
+                <div class="section" data-section="analysis">
+                    <div class="card">
+                        <h3>Analysis Configuration</h3>
+                        <div class="form-group">
+                            <label for="selectDatasetAnalysis">Select Dataset</label>
+                            <select id="selectDatasetAnalysis">
+                                <option value="">-- Select --</option>
+                                <!-- Options populated by JS -->
+                            </select>
+                        </div>
+                         <div class="form-group">
+                            <label for="selectModel">Select Statistical Model</label>
+                            <select id="selectModel">
+                                <option value="">-- Select --</option>
+                                <option value="regression">Regression Analysis</option>
+                                <option value="anova">ANOVA</option>
+                                <option value="correlation">Correlation Matrix</option>
+                                <!-- More models -->
+                            </select>
+                        </div>
+                        <div id="modelParameters" class="form-group">
+                            <!-- Model-specific parameters will load here -->
+                            <p>Select a model to configure parameters.</p>
+                        </div>
+                        <button class="button button-primary">Run Analysis</button>
+                    </div>
+                     <div class="card">
+                        <h3>Confounder Adjustment</h3>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" value="age"> Age</label>
+                            <label><input type="checkbox" value="income"> Income Level</label>
+                            <label><input type="checkbox" value="education"> Education Level</label>
+                            <!-- More confounders -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visualization Sidebar -->
+                <div class="section" data-section="visualization">
+                    <div class="card">
+                        <h3>Visualization Controls</h3>
+                         <div class="form-group">
+                            <label for="selectDatasetViz">Select Dataset</label>
+                            <select id="selectDatasetViz">
+                                <option value="">-- Select --</option>
+                                <!-- Options populated by JS -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="selectVizType">Chart Type</label>
+                            <select id="selectVizType">
+                                <option value="">-- Select --</option>
+                                <option value="scatter">Scatter Plot</option>
+                                <option value="bar">Bar Chart</option>
+                                <option value="map">Geographic Map</option>
+                                <!-- More types -->
+                            </select>
+                        </div>
+                         <div id="vizVariableSelectors" class="form-group">
+                            <!-- Variable selectors based on viz type -->
+                             <p>Select a visualization type to choose variables.</p>
+                        </div>
+                        <button class="button button-secondary">Generate Visualization</button>
+                    </div>
+                     <div class="card">
+                        <h3>Filters</h3>
+                        <!-- Filter controls will go here -->
+                         <p>Data filters based on selected dataset/variables.</p>
+                    </div>
+                </div>
+
+                <!-- Reports Sidebar -->
+                <div class="section" data-section="reports">
+                    <div class="card">
+                        <h3>Report Configuration</h3>
+                         <div class="form-group">
+                            <label for="reportTitle">Report Title</label>
+                            <input type="text" id="reportTitle" placeholder="Enter report title">
+                        </div>
+                         <div class="form-group">
+                            <label for="selectAnalysisResults">Include Analysis Results</label>
+                            <select id="selectAnalysisResults" multiple>
+                                <option value="">-- Select Results --</option>
+                                <!-- List available analysis results -->
+                            </select>
+                        </div>
+                         <div class="form-group">
+                            <label for="selectVisualizations">Include Visualizations</label>
+                            <select id="selectVisualizations" multiple>
+                                <option value="">-- Select Visualizations --</option>
+                                <!-- List available visualizations -->
+                            </select>
+                        </div>
+                        <button class="button button-primary">Generate Report Preview</button>
+                    </div>
+                     <div class="card">
+                        <h3>Export Options</h3>
+                        <button class="button button-outline">Export PDF</button>
+                        <button class="button button-outline mt-4">Export Data (CSV)</button>
+                        <button class="button button-outline mt-4">Export Images (PNG)</button>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="content">
+                 <!-- Data Content -->
+                <div class="section active" data-section="data">
+                    <h2>Data Preview</h2>
+                    <div class="card">
+                        <h3>Selected Dataset: <span id="currentDatasetName">None</span></h3>
+                        <div id="dataTableContainer" style="overflow-x: auto;">
+                            <!-- Data table will be rendered here -->
+                            <p>Upload or select a dataset to see a preview.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analysis Content -->
+                <div class="section" data-section="analysis">
+                    <h2>Analysis Results</h2>
+                    <div class="card analysis-results">
+                        <div id="analysisResultsContainer">
+                            <!-- Statistical analysis results will appear here -->
+                             <p>Run an analysis to see results.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visualization Content -->
+                <div class="section" data-section="visualization">
+                    <h2>Interactive Visualization</h2>
+                    <div class="card visualization-area">
+                        <div id="chartContainer" style="width: 100%; height: 100%; display: none;">
+                            <canvas id="myChart"></canvas>
+                        </div>
+                         <div id="mapContainer" style="width: 100%; height: 100%; display: none;">
+                             <!-- Map will be rendered here by Leaflet -->
+                         </div>
+                         <p id="vizPlaceholder">Select a dataset and visualization type to generate.</p>
+                         <!-- Placeholder for floating controls -->
+                         <div id="vizControls" class="floating-controls" style="display: none;">
+                            <!-- Controls for the active visualization -->
+                         </div>
+                    </div>
+                </div>
+
+                <!-- Reports Content -->
+                <div class="section" data-section="reports">
+                    <h2>Report Preview</h2>
+                    <div class="card report-preview">
+                        <div id="reportPreviewContent">
+                            <!-- Generated report preview will appear here -->
+                             <p>Generate a report preview from the sidebar.</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal Structure -->
+    <div id="appModal" class="modal-container">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Modal Title</h3>
+                <button class="modal-close" aria-label="Close modal">&times;</button>
+            </div>
+            <div id="modalBody">
+                <!-- Modal content goes here -->
+                <p>This is the modal body.</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Basic Navigation
+        const navLinks = document.querySelectorAll('nav a');
+        const sections = document.querySelectorAll('.main-area .section');
+        const sidebarSections = document.querySelectorAll('aside .section');
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetSection = link.dataset.section;
+
+                // Deactivate current active links and sections
+                navLinks.forEach(nav => nav.classList.remove('active'));
+                sections.forEach(sec => sec.classList.remove('active'));
+                sidebarSections.forEach(sec => sec.classList.remove('active'));
+
+                // Activate clicked link and corresponding sections
+                link.classList.add('active');
+                document.querySelector(`.content .section[data-section="${targetSection}"]`).classList.add('active');
+                document.querySelector(`aside .section[data-section="${targetSection}"]`).classList.add('active');
+
+                // Handle specific section initializations if needed
+                if (targetSection === 'visualization') {
+                    // Potentially initialize chart/map area if not already
+                }
+            });
+        });
+
+        // --- Data Upload (Placeholder) ---
+        const dragDropArea = document.getElementById('dragDropArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const progressBar = document.getElementById('progressBar');
+        const progressIndicator = document.querySelector('.progress-indicator');
+        const loadedDatasetsList = document.getElementById('loadedDatasetsList');
+        const dataTableContainer = document.getElementById('dataTableContainer');
+        const currentDatasetName = document.getElementById('currentDatasetName');
+        const selectDatasetAnalysis = document.getElementById('selectDatasetAnalysis');
+        const selectDatasetViz = document.getElementById('selectDatasetViz');
+
+        let loadedDatasets = []; // Store loaded dataset info (e.g., { name: 'file.csv', data: [...] })
+
+        dragDropArea.addEventListener('click', () => fileInput.click());
+
+        dragDropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dragDropArea.classList.add('dragover');
+        });
+
+        dragDropArea.addEventListener('dragleave', () => {
+            dragDropArea.classList.remove('dragover');
+        });
+
+        dragDropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dragDropArea.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            if (files.length === 0) return;
+
+            // Display file names
+            fileList.innerHTML = '<h4>Selected Files:</h4>';
+            Array.from(files).forEach(file => {
+                fileList.innerHTML += `<p>${file.name} (${(file.size / 1024).toFixed(2)} KB)</p>`;
+            });
+
+            // Simulate upload progress
+            progressIndicator.style.display = 'block';
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 10;
+                progressBar.style.width = progress + '%';
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    // Simulate processing and loading
+                    setTimeout(() => {
+                        progressIndicator.style.display = 'none';
+                        alert('Files processed and ready for loading (simulated).');
+                        // Simulate adding datasets
+                        Array.from(files).forEach(file => {
+                             const datasetName = file.name.replace(/\..+$/, ''); // Remove extension
+                             loadedDatasets.push({ name: datasetName, file: file, data: null }); // Store file reference, data will be loaded on demand
+                        });
+                        updateLoadedDatasetsList();
+                        fileInput.value = ''; // Clear input
+                        fileList.innerHTML = ''; // Clear file list display
+                    }, 500);
+                }
+            }, 100);
+        }
+
+        function updateLoadedDatasetsList() {
+            if (loadedDatasets.length === 0) {
+                loadedDatasetsList.innerHTML = '<li>No datasets loaded.</li>';
+                selectDatasetAnalysis.innerHTML = '<option value="">-- Select --</option>';
+                selectDatasetViz.innerHTML = '<option value="">-- Select --</option>';
+                currentDatasetName.textContent = 'None';
+                dataTableContainer.innerHTML = '<p>Upload or select a dataset to see a preview.</p>';
+                return;
+            }
+
+            loadedDatasetsList.innerHTML = '';
+            selectDatasetAnalysis.innerHTML = '<option value="">-- Select --</option>';
+            selectDatasetViz.innerHTML = '<option value="">-- Select --</option>';
+
+            loadedDatasets.forEach((dataset, index) => {
+                const listItem = document.createElement('li');
+                listItem.textContent = dataset.name;
+                listItem.style.cursor = 'pointer';
+                listItem.style.textDecoration = 'underline';
+                listItem.style.color = var('--secondary-color');
+                listItem.addEventListener('click', () => displayDatasetPreview(index));
+                loadedDatasetsList.appendChild(listItem);
+
+                const option = document.createElement('option');
+                option.value = index; // Use index as value for simplicity
+                option.textContent = dataset.name;
+                selectDatasetAnalysis.appendChild(option.cloneNode(true));
+                selectDatasetViz.appendChild(option);
+            });
+
+             // Automatically select the first dataset if none is selected
+             if (loadedDatasets.length > 0 && currentDatasetName.textContent === 'None') {
+                 displayDatasetPreview(0);
+             }
+        }
+
+        async function displayDatasetPreview(index) {
+             const dataset = loadedDatasets[index];
+             currentDatasetName.textContent = dataset.name;
+
+             // Simulate loading data if not already loaded
+             if (!dataset.data) {
+                 dataTableContainer.innerHTML = '<p>Loading data preview...</p>';
+                 // In a real app, you'd parse the file here or call a backend API
+                 await new Promise(resolve => setTimeout(resolve, 500)); // Simulate async load
+                 // Simulate some data structure
+                 dataset.data = [
+                     { id: 1, city: 'City A', green_space_ha: 150, health_score: 75, income_usd: 45000 },
+                     { id: 2, city: 'City B', green_space_ha: 220, health_score: 88, income_usd: 60000 },
+                     { id: 3, city: 'City A', green_space_ha: 160, health_score: 78, income_usd: 48000 },
+                     { id: 4, city: 'City C', green_space_ha: 100, health_score: 65, income_usd: 35000 },
+                 ];
+                 console.log(`Simulated data loaded for ${dataset.name}`, dataset.data);
+             }
+
+             renderDataTable(dataset.data);
+        }
+
+        function renderDataTable(data) {
+            if (!data || data.length === 0) {
+                dataTableContainer.innerHTML = '<p>No data available for preview.</p>';
+                return;
+            }
+
+            const table = document.createElement('table');
+            table.classList.add('data-table');
+
+            // Create table header
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            const headers = Object.keys(data[0]);
+            headers.forEach(headerText => {
+                const th = document.createElement('th');
+                th.textContent = headerText;
+                th.dataset.column = headerText; // For sorting
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            // Create table body
+            const tbody = document.createElement('tbody');
+            data.forEach(rowData => {
+                const tr = document.createElement('tr');
+                headers.forEach(header => {
+                    const td = document.createElement('td');
+                    td.textContent = rowData[header];
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+
+            dataTableContainer.innerHTML = '';
+            dataTableContainer.appendChild(table);
+
+            // Add sorting functionality (placeholder)
+            thead.querySelectorAll('th').forEach(th => {
+                th.addEventListener('click', () => {
+                    const column = th.dataset.column;
+                    console.log(`Simulating sort by column: ${column}`);
+                    // Implement actual sorting logic here
+                    // For now, just a log
+                });
+            });
+        }
+
+
+        // --- Analysis Configuration (Placeholder) ---
+        const selectModel = document.getElementById('selectModel');
+        const modelParameters = document.getElementById('modelParameters');
+
+        selectModel.addEventListener('change', (e) => {
+            const modelType = e.target.value;
+            modelParameters.innerHTML = ''; // Clear previous parameters
+            if (modelType === 'regression') {
+                modelParameters.innerHTML = `
+                    <div class="form-group">
+                        <label for="dependentVariable">Dependent Variable</label>
+                        <select id="dependentVariable">
+                            <option value="">-- Select --</option>
+                            <!-- Variables from selected dataset -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="independentVariables">Independent Variables</label>
+                        <select id="independentVariables" multiple>
+                            <option value="">-- Select --</option>
+                            <!-- Variables from selected dataset -->
+                        </select>
+                    </div>
+                `;
+                 // Populate variable selectors based on selectDatasetAnalysis value
+                 populateVariableSelectors(selectDatasetAnalysis.value, ['dependentVariable', 'independentVariables']);
+
+            } else if (modelType === 'correlation') {
+                 modelParameters.innerHTML = `
+                    <div class="form-group">
+                        <label for="correlationVariables">Variables for Correlation</label>
+                        <select id="correlationVariables" multiple>
+                            <option value="">-- Select --</option>
+                             <!-- Variables from selected dataset -->
+                        </select>
+                    </div>
+                 `;
+                 // Populate variable selectors based on selectDatasetAnalysis value
+                 populateVariableSelectors(selectDatasetAnalysis.value, ['correlationVariables']);
+            } else {
+                 modelParameters.innerHTML = '<p>Select a model to configure parameters.</p>';
+            }
+        });
+
+        selectDatasetAnalysis.addEventListener('change', (e) => {
+             const datasetIndex = e.target.value;
+             // Re-populate variable selectors for the currently selected model
+             const currentModel = selectModel.value;
+             if (currentModel === 'regression') {
+                  populateVariableSelectors(datasetIndex, ['dependentVariable', 'independentVariables']);
+             } else if (currentModel === 'correlation') {
+                  populateVariableSelectors(datasetIndex, ['correlationVariables']);
+             }
+        });
+
+        function populateVariableSelectors(datasetIndex, selectorIds) {
+            selectorIds.forEach(selectorId => {
+                const selector = document.getElementById(selectorId);
+                if (selector) {
+                    selector.innerHTML = '<option value="">-- Select --</option>';
+                    if (datasetIndex !== "" && loadedDatasets[datasetIndex] && loadedDatasets[datasetIndex].data && loadedDatasets[datasetIndex].data.length > 0) {
+                         const headers = Object.keys(loadedDatasets[datasetIndex].data[0]);
+                         headers.forEach(header => {
+                             const option = document.createElement('option');
+                             option.value = header;
+                             option.textContent = header;
+                             selector.appendChild(option);
+                         });
+                    }
+                }
+            });
+        }
+
+
+        // --- Visualization (Placeholder) ---
+        const selectVizType = document.getElementById('selectVizType');
+        const vizVariableSelectors = document.getElementById('vizVariableSelectors');
+        const chartContainer = document.getElementById('chartContainer');
+        const mapContainer = document.getElementById('mapContainer');
+        const vizPlaceholder = document.getElementById('vizPlaceholder');
+        const vizControls = document.getElementById('vizControls');
+
+        selectVizType.addEventListener('change', (e) => {
+            const vizType = e.target.value;
+            vizVariableSelectors.innerHTML = ''; // Clear previous selectors
+            chartContainer.style.display = 'none';
+            mapContainer.style.display = 'none';
+            vizPlaceholder.style.display = 'block';
+            vizControls.style.display = 'none'; // Hide controls initially
+
+            if (vizType === 'scatter') {
+                vizVariableSelectors.innerHTML = `
+                    <div class="form-group">
+                        <label for="scatterX">X-axis Variable</label>
+                        <select id="scatterX">
+                            <option value="">-- Select --</option>
+                             <!-- Variables from selected dataset -->
+                        </select>
+                    </div>
+                     <div class="form-group">
+                        <label for="scatterY">Y-axis Variable</label>
+                        <select id="scatterY">
+                            <option value="">-- Select --</option>
+                             <!-- Variables from selected dataset -->
+                        </select>
+                    </div>
+                `;
+                populateVariableSelectors(selectDatasetViz.value, ['scatterX', 'scatterY']);
+                 vizPlaceholder.style.display = 'none';
+                 chartContainer.style.display = 'block'; // Show chart area
+                 // Simulate chart initialization here
+                 // initChart('myChart', 'scatter', dataset.data, {x: 'green_space_ha', y: 'health_score'});
+            } else if (vizType === 'bar') {
+                 vizVariableSelectors.innerHTML = `
+                    <div class="form-group">
+                        <label for="barCategory">Category Variable</label>
+                        <select id="barCategory">
+                            <option value="">-- Select --</option>
+                             <!-- Variables from selected dataset -->
+                        </select>
+                    </div>
+                     <div class="form-group">
+                        <label for="barValue">Value Variable</label>
+                        <select id="barValue">
+                            <option value="">-- Select --</option>
+                             <!-- Variables from selected dataset -->
+                        </select>
+                    </div>
+                 `;
+                 populateVariableSelectors(selectDatasetViz.value, ['barCategory', 'barValue']);
+                 vizPlaceholder.style.display = 'none';
+                 chartContainer.style.display = 'block'; // Show chart area
+                 // Simulate chart initialization here
+                 // initChart('myChart', 'bar', dataset.data, {category: 'city', value: 'green_space_ha'});
+            } else if (vizType === 'map') {
+                 vizVariableSelectors.innerHTML = `
+                    <div class="form-group">
+                        <label for="mapLocation">Location Variable (Lat/Lon or GeoJSON)</label>
+                        <select id="mapLocation">
+                            <option value="">-- Select --</option>
+                             <!-- Variables from selected dataset -->
+                        </select>
+                    </div>
+                     <div class="form-group">
+                        <label for="mapData">Data Variable (for coloring/sizing)</label>
+                        <select id="mapData">
+                            <option value="">-- Select --</option>
+                             <!-- Variables from selected dataset -->
+                        </select>
+                    </div>
+                 `;
+                 populateVariableSelectors(selectDatasetViz.value, ['mapLocation', 'mapData']);
+                 vizPlaceholder.style.display = 'none';
+                 mapContainer.style.display = 'block'; // Show map area
+                 // Simulate map initialization here
+                 // initMap('mapContainer', dataset.data, {location: 'coordinates', data: 'health_score'});
+            } else {
+                 vizVariableSelectors.innerHTML = '<p>Select a visualization type to choose variables.</p>';
+            }
+        });
+
+        selectDatasetViz.addEventListener('change', (e) => {
+            const datasetIndex = e.target.value;
+             // Re-populate variable selectors for the currently selected viz type
+             const currentVizType = selectVizType.value;
+             if (currentVizType === 'scatter') {
+                  populateVariableSelectors(datasetIndex, ['scatterX', 'scatterY']);
+             } else if (currentVizType === 'bar') {
+                  populateVariableSelectors(datasetIndex, ['barCategory', 'barValue']);
+             } else if (currentVizType === 'map') {
+                  populateVariableSelectors(datasetIndex, ['mapLocation', 'mapData']);
+             }
+        });
+
+
+        // Placeholder functions for Chart.js and Leaflet initialization
+        // These would require actual data and configuration based on selected variables
+        async function initChart(canvasId, type, data, variables) {
+             const { Chart } = await import("https://esm.sh/chart.js/auto");
+             const ctx = document.getElementById(canvasId).getContext('2d');
+             // Destroy existing chart if it exists
+             if (window.myChartInstance) {
+                 window.myChartInstance.destroy();
+             }
+
+             // Basic placeholder config
+             const config = {
+                 type: type, // 'scatter', 'bar', etc.
+                 data: {
+                     labels: data.map(row => row[variables.category] || row[variables.x]), // Example labels
+                     datasets: [{
+                         label: variables.value || variables.y, // Example label
+                         data: data.map(row => ({
+                             x: row[variables.x] || row[variables.category], // Example data points
+                             y: row[variables.y] || row[variables.value]
+                         })),
+                         backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                         borderColor: 'rgba(75, 192, 192, 1)',
+                         borderWidth: 1
+                     }]
+                 },
+                 options: {
+                     responsive: true,
+                     maintainAspectRatio: false,
+                     plugins: {
+                         tooltip: {
+                             callbacks: {
+                                 label: function(context) {
+                                     let label = context.dataset.label || '';
+                                     if (label) {
+                                         label += ': ';
+                                     }
+                                     if (context.raw !== null) {
+                                         if (type === 'scatter') {
+                                              label += `(${context.raw.x}, ${context.raw.y})`;
+                                         } else {
+                                              label += context.raw;
+                                         }
+                                     }
+                                     return label;
+                                 }
+                             }
+                         }
+                     },
+                     scales: {
+                         x: {
+                             title: {
+                                 display: true,
+                                 text: variables.x || variables.category
+                             }
+                         },
+                         y: {
+                             title: {
+                                 display: true,
+                                 text: variables.y || variables.value
+                             }
+                         }
+                     }
+                 }
+             };
+
+             window.myChartInstance = new Chart(ctx, config);
+             vizControls.style.display = 'block'; // Show controls
+             // Populate vizControls with chart-specific controls
+             vizControls.innerHTML = `
+                 <div class="control-group">
+                     <label>Point Color</label>
+                     <input type="color" value="#4bc0c0">
+                 </div>
+                 <div class="control-group">
+                     <label>Show Tooltips</label>
+                     <input type="checkbox" checked>
+                 </div>
+                 <!-- More chart controls -->
+             `;
+        }
+
+        async function initMap(mapId, data, variables) {
+            const L = await import("https://esm.sh/leaflet");
+            // Destroy existing map if it exists
+            if (window.myMapInstance) {
+                window.myMapInstance.remove();
+            }
+
+            const map = L.map(mapId).setView([0, 0], 2); // Default view
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+             // Simulate adding markers or other layers based on data and variables
+             if (data && data.length > 0 && variables.location) {
+                 data.forEach(row => {
+                     // Assuming 'location' variable contains [lat, lon] array or similar
+                     const location = row[variables.location];
+                     if (Array.isArray(location) && location.length === 2) {
+                          const marker = L.marker(location).addTo(map);
+                          if (variables.data) {
+                               marker.bindPopup(`<b>${variables.data}:</b> ${row[variables.data]}`);
+                          } else {
+                               marker.bindPopup(`Location: ${location.join(', ')}`);
+                          }
+                     }
+                 });
+                 // Adjust map view to fit markers (basic example)
+                 if (map.getBounds().isValid()) { // Check if bounds are valid after adding markers
+                     map.fitBounds(map.getBounds());
+                 }
+             }
+
+            window.myMapInstance = map;
+            vizControls.style.display = 'block'; // Show controls
+            // Populate vizControls with map-specific controls
+             vizControls.innerHTML = `
+                 <div class="control-group">
+                     <label>Show Markers</label>
+                     <input type="checkbox" checked>
+                 </div>
+                 <div class="control-group">
+                     <label>Add Layer</label>
+                     <select><option>-- Select Layer --</option></select>
+                 </div>
+                 <!-- More map controls -->
+             `;
+        }
+
+        // --- Modal (Placeholder) ---
+        const appModal = document.getElementById('appModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        const modalCloseButton = appModal.querySelector('.modal-close');
+
+        function showModal(title, content) {
+            modalTitle.textContent = title;
+            modalBody.innerHTML = ''; // Clear previous content
+            modalBody.appendChild(content); // Append new content element
+            appModal.classList.add('visible');
+        }
+
+        function hideModal() {
+            appModal.classList.remove('visible');
+        }
+
+        modalCloseButton.addEventListener('click', hideModal);
+
+        // Close modal when clicking outside content
+        appModal.addEventListener('click', (e) => {
+            if (e.target === appModal) {
+                hideModal();
+            }
+        });
+
+        // Example usage (e.g., show a message)
+        // showModal('Example Modal', document.createElement('p').textContent = 'This is an example modal.');
+
+        // --- Initial Load ---
+        // Simulate loading initial state or project data
+        updateLoadedDatasetsList(); // Initialize dataset list
+
+
+    </script>
+</body>
+</html>

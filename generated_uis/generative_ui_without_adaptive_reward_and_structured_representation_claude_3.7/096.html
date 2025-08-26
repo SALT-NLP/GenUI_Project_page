@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Time Series Visualization</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --background-color: #f8f9fa; /* Light background */
+            --card-background: #ffffff; /* Pure white card */
+            --text-color-primary: #212529; /* Dark text */
+            --text-color-secondary: #495057; /* Muted text */
+            --border-color: #dee2e6; /* Light border */
+            --shadow-color: rgba(0, 0, 0, 0.08); /* Subtle shadow */
+            --primary-color: #007bff; /* Example primary color */
+            --secondary-color: #6c757d; /* Example secondary color */
+            --success-color: #28a745; /* Example success color */
+            --danger-color: #dc3545; /* Example danger color */
+            --warning-color: #ffc107; /* Example warning color */
+            --info-color: #17a2b8; /* Example info color */
+            --spacing-unit: 8px;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: var(--background-color);
+            margin: 0;
+            padding: calc(4 * var(--spacing-unit)); /* 32px padding */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            color: var(--text-color-primary);
+        }
+
+        .card {
+            background: var(--card-background);
+            border-radius: calc(1.5 * var(--spacing-unit)); /* 12px */
+            box-shadow: 0 calc(0.75 * var(--spacing-unit)) calc(1.5 * var(--spacing-unit)) var(--shadow-color); /* 6px 12px */
+            padding: calc(3.75 * var(--spacing-unit)); /* 30px */
+            margin: calc(2.5 * var(--spacing-unit)) auto; /* 20px */
+            max-width: 900px;
+            width: 100%;
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        .card-title {
+            font-size: 1.8em;
+            color: var(--text-color-primary);
+            margin-bottom: calc(3 * var(--spacing-unit)); /* 24px */
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .card-subtitle {
+            text-align: center;
+            color: var(--text-color-secondary);
+            margin-top: calc(-2 * var(--spacing-unit)); /* -16px */
+            margin-bottom: calc(2.5 * var(--spacing-unit)); /* 20px */
+            font-size: 1em;
+        }
+
+        .chart-container {
+            height: 450px; /* Fixed height for chart area */
+            position: relative;
+            cursor: pointer; /* Indicate interactivity */
+        }
+
+        .floating-controls {
+            position: absolute;
+            top: calc(2.5 * var(--spacing-unit)); /* 20px */
+            right: calc(2.5 * var(--spacing-unit)); /* 20px */
+            background: rgba(255, 255, 255, 0.98);
+            padding: calc(1.875 * var(--spacing-unit)) calc(2.5 * var(--spacing-unit)); /* 15px 20px */
+            border-radius: var(--spacing-unit); /* 8px */
+            box-shadow: 0 calc(0.25 * var(--spacing-unit)) calc(1.25 * var(--spacing-unit)) rgba(0, 0, 0, 0.1); /* 2px 10px */
+            opacity: 0;
+            transform: translateY(calc(-1.875 * var(--spacing-unit))); /* -15px */
+            transition: all 0.3s ease-in-out;
+            pointer-events: none;
+            z-index: 10; /* Ensure controls are above chart */
+            min-width: 200px;
+            border: 1px solid var(--border-color);
+            box-sizing: border-box;
+        }
+
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .control-group {
+            margin-bottom: calc(1.875 * var(--spacing-unit)); /* 15px */
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-unit); /* 8px */
+        }
+
+        .control-group label {
+            font-size: 0.9em;
+            color: var(--text-color-secondary);
+            font-weight: 500;
+        }
+
+        .control-group input[type="color"],
+        .control-group input[type="number"],
+        .control-group input[type="checkbox"] {
+            padding: calc(0.75 * var(--spacing-unit)); /* 6px */
+            border: 1px solid var(--border-color);
+            border-radius: calc(0.5 * var(--spacing-unit)); /* 4px */
+            font-size: 0.9em;
+            color: var(--text-color-primary);
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+
+        .control-group input[type="color"] {
+             padding: calc(0.5 * var(--spacing-unit)); /* 4px */
+             height: calc(4.375 * var(--spacing-unit)); /* 35px */
+             cursor: pointer;
+        }
+
+         .control-group input[type="checkbox"] {
+             width: auto; /* Don't stretch checkbox */
+             margin-right: calc(0.625 * var(--spacing-unit)); /* 5px */
+             vertical-align: middle;
+             cursor: pointer;
+         }
+
+        .control-group .checkbox-label {
+             display: flex;
+             align-items: center;
+             font-weight: normal;
+             cursor: pointer;
+             color: var(--text-color-primary); /* Ensure checkbox label is readable */
+             font-size: 0.9em;
+        }
+
+        .control-group input[type="number"] {
+            width: calc(10 * var(--spacing-unit)); /* 80px */
+        }
+
+        /* Chart specific styles */
+        canvas {
+            background-color: transparent; /* Allow card background to show */
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            body {
+                padding: calc(2.5 * var(--spacing-unit)); /* 20px */
+            }
+            .card {
+                padding: calc(2.5 * var(--spacing-unit)); /* 20px */
+            }
+            .card-title {
+                font-size: 1.5em;
+            }
+            .chart-container {
+                height: 350px; /* Adjust height for smaller screens */
+            }
+            .floating-controls {
+                 top: calc(1.25 * var(--spacing-unit)); /* 10px */
+                 right: calc(1.25 * var(--spacing-unit)); /* 10px */
+                 padding: calc(1.25 * var(--spacing-unit)); /* 10px */
+                 min-width: 180px;
+            }
+             .control-group {
+                 margin-bottom: calc(1.25 * var(--spacing-unit)); /* 10px */
+             }
+             .control-group label,
+             .control-group .checkbox-label,
+             .control-group input[type="number"] {
+                 font-size: 0.85em;
+             }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2 class="card-title">📊 Time Series Data Visualization</h2>
+        <p class="card-subtitle">
+            A Line Chart is ideal for showing trends over time. Hover over the chart to see details.
+        </p>
+        <div class="chart-container" id="chartContainer">
+            <canvas id="timeSeriesChart" role="img" aria-label="Time Series Chart showing two datasets over time"></canvas>
+            <!-- Floating control panel -->
+            <div class="floating-controls" id="chartControls">
+                <div class="control-group">
+                    <label for="lineColor1">Dataset 1 Color:</label>
+                    <input type="color" id="lineColor1" value="#4e79a7">
+                </div>
+                 <div class="control-group">
+                    <label for="lineColor2">Dataset 2 Color:</label>
+                    <input type="color" id="lineColor2" value="#f28e2b">
+                </div>
+                 <div class="control-group">
+                    <label>Visibility:</label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="toggleDataset1" checked> Dataset 1
+                    </label>
+                     <label class="checkbox-label">
+                        <input type="checkbox" id="toggleDataset2" checked> Dataset 2
+                    </label>
+                </div>
+                 <div class="control-group">
+                    <label>Display Options:</label>
+                     <label class="checkbox-label">
+                        <input type="checkbox" id="toggleDataset1Fill" checked> Fill Dataset 1 Area
+                    </label>
+                     <label class="checkbox-label">
+                        <input type="checkbox" id="toggleDataset2Fill" checked> Fill Dataset 2 Area
+                    </label>
+                     <label class="checkbox-label">
+                        <input type="checkbox" id="togglePoints" checked> Show Points
+                    </label>
+                </div>
+                 <div class="control-group">
+                    <label for="fontSize">Font Size:</label>
+                    <input type="number" id="fontSize" value="12" min="8" max="20">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        // Sample Time Series Data
+        const data = {
+            labels: [
+                '2023-01-01', '2023-01-02', '2023-01-03', '2023-01-04', '2023-01-05',
+                '2023-01-06', '2023-01-07', '2023-01-08', '2023-01-09', '2023-01-10',
+                '2023-01-11', '2023-01-12', '2023-01-13', '2023-01-14', '2023-01-15'
+            ].map(dateString => new Date(dateString)), // Convert date strings to Date objects
+            datasets: [
+                {
+                    label: 'Series A',
+                    data: [10, 15, 12, 18, 20, 25, 22, 28, 30, 28, 35, 32, 38, 40, 45],
+                    borderColor: '#4e79a7', // Blue
+                    backgroundColor: 'rgba(78, 121, 167, 0.2)', // Light blue fill
+                    tension: 0.3, // Subtle curve
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#4e79a7',
+                    pointHoverBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#4e79a7',
+                    fill: true,
+                    cubicInterpolationMode: 'monotone'
+                },
+                {
+                    label: 'Series B',
+                    data: [5, 8, 7, 10, 12, 15, 14, 18, 20, 19, 22, 20, 25, 28, 30],
+                    borderColor: '#f28e2b', // Orange
+                    backgroundColor: 'rgba(242, 142, 43, 0.2)', // Light orange fill
+                    tension: 0.3, // Subtle curve
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#f28e2b',
+                    pointHoverBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#f28e2b',
+                    fill: true,
+                    cubicInterpolationMode: 'monotone'
+                }
+            ]
+        };
+
+        const ctx = document.getElementById('timeSeriesChart').getContext('2d');
+        const chartControls = document.getElementById('chartControls');
+        const chartContainer = document.getElementById('chartContainer');
+
+        const chartConfig = {
+            type: 'line',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            font: {
+                                size: 12, // Default font size
+                                family: "'Inter', system-ui, sans-serif"
+                            },
+                            usePointStyle: true, // Use point style in legend
+                            padding: 20,
+                            color: "var('--text-color-primary')"
+                        },
+                         onClick: (e, legendItem, legend) => {
+                            const index = legendItem.datasetIndex;
+                            const ci = legend.chart;
+                            const meta = ci.getDatasetMeta(index);
+
+                            // See controller.isDatasetVisible comment
+                            meta.hidden = meta.hidden === null ? !ci.data.datasets[index].hidden : null;
+
+                            // Update the corresponding checkbox
+                            const checkboxId = `toggleDataset${index + 1}`;
+                            const checkbox = document.getElementById(checkboxId);
+                            if (checkbox) {
+                                checkbox.checked = !meta.hidden;
+                            }
+
+                            ci.update();
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: "rgba(33, 37, 41, 0.9)", // Dark background from text-color-primary
+                        titleFont: {
+                            size: 14,
+                            family: "'Inter', system-ui, sans-serif",
+                            weight: '600' // Use 600 for bold
+                        },
+                        bodyFont: {
+                             size: 12,
+                             family: "'Inter', system-ui, sans-serif"
+                        },
+                        bodyColor: "var('--background-color')", // Light text for contrast
+                        titleColor: "var('--background-color')", // Light text for contrast
+                        padding: 10,
+                        caretPadding: 10,
+                        cornerRadius: 4,
+                        displayColors: true,
+                        boxPadding: 5,
+                         callbacks: {
+                            title: function(tooltipItems) {
+                                // Format date nicely
+                                const date = new Date(tooltipItems[0].label);
+                                return date.toLocaleDateString('en-US', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric'
+                                });
+                            },
+                            label: function(tooltipItem) {
+                                let label = tooltipItem.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                // Format value
+                                label += tooltipItem.parsed.y.toFixed(1); // Example: 1 decimal place
+                                return label;
+                            }
+                        }
+                    },
+                },
+                scales: {
+                    x: {
+                        type: 'time', // Use time scale
+                        time: {
+                            unit: 'day', // Display unit as day
+                             tooltipFormat: 'MMM d, yyyy', // Format for tooltip
+                             displayFormats: {
+                                 day: 'MMM d' // Format for axis labels
+                             }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Time',
+                            font: {
+                                size: 14,
+                                family: "'Inter', system-ui, sans-serif",
+                                weight: '600'
+                            },
+                            color: "var('--text-color-secondary')"
+                        },
+                        ticks: {
+                            font: {
+                                size: 12, // Default font size
+                                family: "'Inter', system-ui, sans-serif"
+                            },
+                            color: "var('--text-color-secondary')",
+                             maxRotation: 0, // Prevent rotation on larger screens
+                             autoSkipPadding: 10 // Add padding for auto skipping
+                        },
+                        grid: {
+                            display: false, // Minimal grid lines
+                            drawBorder: false // Remove axis line
+                        },
+                         border: {
+                             display: true,
+                             color: "var('--border-color')",
+                             width: 1
+                         }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Value',
+                             font: {
+                                size: 14,
+                                family: "'Inter', system-ui, sans-serif",
+                                weight: '600'
+                            },
+                             color: "var('--text-color-secondary')"
+                        },
+                        ticks: {
+                             font: {
+                                size: 12, // Default font size
+                                family: "'Inter', system-ui, sans-serif"
+                            },
+                             color: "var('--text-color-secondary')"
+                        },
+                         grid: {
+                            color: "var('--border-color')" // Light grid lines
+                        },
+                         border: {
+                             display: true,
+                             color: "var('--border-color')",
+                             width: 1
+                         }
+                    }
+                },
+                hover: {
+                    mode: 'index',
+                    intersect: false
+                },
+                animation: {
+                    duration: 1000, // Smooth animation on load/update
+                    easing: 'easeInOutQuart',
+                    onComplete: () => {
+                         // Optional: Add a subtle draw animation effect
+                         // This is often handled by default Chart.js line animation
+                    }
+                }
+            }
+        };
+
+        const timeSeriesChart = new Chart(ctx, chartConfig);
+
+        // --- Floating Controls Logic ---
+
+        // Get control elements
+        const lineColor1Input = document.getElementById('lineColor1');
+        const lineColor2Input = document.getElementById('lineColor2');
+        const toggleDataset1Checkbox = document.getElementById('toggleDataset1');
+        const toggleDataset2Checkbox = document.getElementById('toggleDataset2');
+        const toggleDataset1FillCheckbox = document.getElementById('toggleDataset1Fill');
+        const toggleDataset2FillCheckbox = document.getElementById('toggleDataset2Fill');
+        const togglePointsCheckbox = document.getElementById('togglePoints');
+        const fontSizeInput = document.getElementById('fontSize');
+
+        // Show/Hide controls on container click (but not on controls themselves)
+        chartContainer.addEventListener('click', (e) => {
+             // Check if the click target is inside the controls panel
+            const isClickInsideControls = chartControls.contains(e.target);
+
+            // If clicking inside the container and not inside the controls, toggle
+            if (!isClickInsideControls) {
+                 chartControls.classList.toggle('active');
+            }
+        });
+
+        // Hide controls when clicking outside the container and controls
+        document.addEventListener('click', (e) => {
+            const isClickInsideContainer = chartContainer.contains(e.target);
+            const isClickInsideControls = chartControls.contains(e.target);
+
+            if (!isClickInsideContainer && !isClickInsideControls) {
+                chartControls.classList.remove('active');
+            }
+        });
+
+        // Prevent clicks inside controls from closing the panel (handled by stopPropagation implicitly by the check above)
+        // But explicitly add for safety
+        chartControls.addEventListener('click', (e) => {
+             e.stopPropagation();
+        });
+
+        // Sync checkbox state with chart visibility on initial load
+        toggleDataset1Checkbox.checked = timeSeriesChart.isDatasetVisible(0);
+        toggleDataset2Checkbox.checked = timeSeriesChart.isDatasetVisible(1);
+
+
+        // Update chart based on controls
+        const updateChart = () => {
+            const lineColor1 = lineColor1Input.value;
+            const lineColor2 = lineColor2Input.value;
+            const toggleDataset1 = toggleDataset1Checkbox.checked;
+            const toggleDataset2 = toggleDataset2Checkbox.checked;
+            const toggleDataset1Fill = toggleDataset1FillCheckbox.checked;
+            const toggleDataset2Fill = toggleDataset2FillCheckbox.checked;
+            const togglePoints = togglePointsCheckbox.checked;
+            const fontSize = parseInt(fontSizeInput.value);
+
+            // Update colors and fill
+            if (timeSeriesChart.data.datasets[0]) {
+                timeSeriesChart.data.datasets[0].borderColor = lineColor1;
+                timeSeriesChart.data.datasets[0].backgroundColor = toggleDataset1Fill ? lineColor1 + '33' : 'transparent'; // Add transparency or make transparent
+                timeSeriesChart.data.datasets[0].pointBorderColor = lineColor1;
+                timeSeriesChart.data.datasets[0].pointHoverBackgroundColor = lineColor1;
+                 timeSeriesChart.data.datasets[0].fill = toggleDataset1Fill; // Explicitly set fill property
+            }
+
+            if (timeSeriesChart.data.datasets[1]) {
+                timeSeriesChart.data.datasets[1].borderColor = lineColor2;
+                timeSeriesChart.data.datasets[1].backgroundColor = toggleDataset2Fill ? lineColor2 + '33' : 'transparent'; // Add transparency or make transparent
+                timeSeriesChart.data.datasets[1].pointBorderColor = lineColor2;
+                timeSeriesChart.data.datasets[1].pointHoverBackgroundColor = lineColor2;
+                 timeSeriesChart.data.datasets[1].fill = toggleDataset2Fill; // Explicitly set fill property
+            }
+
+
+            // Update visibility
+            timeSeriesChart.setDatasetVisibility(0, toggleDataset1);
+            timeSeriesChart.setDatasetVisibility(1, toggleDataset2);
+
+            // Update point visibility
+             const pointRadius = togglePoints ? 5 : 0;
+             const pointHoverRadius = togglePoints ? 7 : 0;
+             if (timeSeriesChart.data.datasets[0]) {
+                 timeSeriesChart.data.datasets[0].pointRadius = pointRadius;
+                 timeSeriesChart.data.datasets[0].pointHoverRadius = pointHoverRadius;
+             }
+             if (timeSeriesChart.data.datasets[1]) {
+                 timeSeriesChart.data.datasets[1].pointRadius = pointRadius;
+                 timeSeriesChart.data.datasets[1].pointHoverRadius = pointHoverRadius;
+             }
+
+
+            // Update font size
+            const updateFont = (obj) => {
+                if (obj && obj.font) {
+                    obj.font.size = fontSize;
+                }
+            };
+
+            updateFont(timeSeriesChart.options.plugins.legend.labels);
+            updateFont(timeSeriesChart.options.scales.x.ticks);
+            updateFont(timeSeriesChart.options.scales.x.title);
+            updateFont(timeSeriesChart.options.scales.y.ticks);
+            updateFont(timeSeriesChart.options.scales.y.title);
+            updateFont(timeSeriesChart.options.plugins.tooltip.titleFont);
+            updateFont(timeSeriesChart.options.plugins.tooltip.bodyFont);
+
+
+            timeSeriesChart.update();
+        };
+
+        // Add event listeners to controls
+        lineColor1Input.addEventListener('input', updateChart);
+        lineColor2Input.addEventListener('input', updateChart);
+        toggleDataset1Checkbox.addEventListener('change', updateChart);
+        toggleDataset2Checkbox.addEventListener('change', updateChart);
+        toggleDataset1FillCheckbox.addEventListener('change', updateChart);
+        toggleDataset2FillCheckbox.addEventListener('change', updateChart);
+        togglePointsCheckbox.addEventListener('change', updateChart);
+        fontSizeInput.addEventListener('change', updateChart); // Use change for number input
+
+        // Initial update to apply default control values and initial chart state
+        updateChart();
+
+    </script>
+</body>
+</html>

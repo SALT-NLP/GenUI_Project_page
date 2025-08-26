@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding Reinforcement Learning</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0078d4;
+            /* A slightly brighter blue */
+            --accent-color: #4CAF50;
+            /* Green */
+            --danger-color: #e81123;
+            /* Red */
+            --text-color: #333;
+            --background-color: #f4f7f6;
+            /* Light grey background */
+            --card-background: #ffffff;
+            /* Pure white */
+            --border-color: #e0e0e0;
+            /* Light grey border */
+            --shadow-color: rgba(0, 0, 0, 0.04);
+            /* More subtle shadow */
+            --spacing-unit: 16px;
+            --border-radius: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: calc(var(--spacing-unit) * 1.5) var(--spacing-unit);
+            text-align: center;
+            box-shadow: 0 2px 6px var(--shadow-color);
+            /* Subtle shadow */
+            margin-bottom: calc(var(--spacing-unit) * 2);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.5em;
+        }
+
+        main {
+            max-width: 1000px;
+            /* Slightly wider main content */
+            margin: 0 auto;
+            padding: 0 var(--spacing-unit);
+            flex-grow: 1;
+        }
+
+        section {
+            background-color: var(--card-background);
+            padding: calc(var(--spacing-unit) * 2);
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 10px var(--shadow-color);
+            /* Subtle shadow */
+        }
+
+        h2 {
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: var(--spacing-unit);
+            font-size: 1.8em;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: calc(var(--spacing-unit) / 2);
+        }
+
+        p {
+            margin-bottom: var(--spacing-unit);
+        }
+
+        /* Accordion Styling */
+        .accordion {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            /* Space between items */
+        }
+
+        .accordion-item {
+            border: 1px solid var(--border-color);
+            border-radius: calc(var(--border-radius) / 2);
+            /* Smaller radius for items */
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+            /* Very subtle shadow */
+        }
+
+        .accordion-header {
+            background-color: #f8f8f8;
+            /* Lighter grey */
+            color: var(--text-color);
+            padding: var(--spacing-unit);
+            width: 100%;
+            text-align: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+            /* Prevent text selection on header */
+        }
+
+        .accordion-header:hover,
+        .accordion-header:focus {
+            background-color: #e9e9e9;
+            /* Darker grey on hover/focus */
+        }
+
+        .accordion-header::after {
+            content: '+';
+            font-size: 1.2em;
+            transition: transform 0.3s ease;
+        }
+
+        .accordion-header.active {
+            background-color: var(--primary-color);
+            /* Primary color when active */
+            color: white;
+        }
+
+        .accordion-header.active::after {
+            content: '-';
+            transform: rotate(0deg);
+            /* No rotation needed for +/- */
+        }
+
+        .accordion-content {
+            padding: 0 var(--spacing-unit);
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-in-out, padding 0.4s ease-in-out;
+            /* Smooth transition */
+            background-color: var(--card-background);
+        }
+
+        .accordion-content.active {
+            max-height: 1000px;
+            /* Increased max-height for potentially large content */
+            padding: var(--spacing-unit);
+        }
+
+        /* Glossary Term Styling */
+        .glossary-term {
+            text-decoration: underline dotted var(--primary-color);
+            cursor: help;
+            position: relative;
+            outline: none;
+            /* Remove default outline */
+            transition: color 0.2s ease;
+            border-radius: 2px;
+            /* Small radius for focus outline */
+        }
+
+        .glossary-term:focus {
+            outline: 2px solid var(--primary-color);
+            /* Custom focus style */
+            outline-offset: 2px;
+        }
+
+        /* Tooltip Styling */
+        .tooltip {
+            position: absolute;
+            background-color: var(--text-color);
+            color: white;
+            padding: calc(var(--spacing-unit) / 2) var(--spacing-unit);
+            border-radius: 4px;
+            font-size: 0.9em;
+            z-index: 1000;
+            pointer-events: none;
+            /* Allows hovering over text below */
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+            max-width: 280px;
+            /* Slightly wider tooltip */
+            text-align: center;
+            box-shadow: 0 2px 5px var(--shadow-color);
+            /* Subtle shadow */
+            line-height: 1.4;
+        }
+
+
+        /* Diagram Styling */
+        .diagram {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: var(--spacing-unit);
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            padding: var(--spacing-unit);
+            background-color: #eef2f7;
+            /* Lighter background */
+            border-radius: var(--border-radius);
+            box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.03);
+            /* Subtle inner shadow */
+        }
+
+        .diagram-element {
+            background-color: var(--primary-color);
+            color: white;
+            padding: calc(var(--spacing-unit) / 2) var(--spacing-unit);
+            border-radius: 4px;
+            font-weight: bold;
+            text-align: center;
+            min-width: 100px;
+            /* Slightly wider elements */
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            /* Subtle shadow */
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .diagram-element.highlight {
+            background-color: var(--accent-color);
+            /* Highlight color */
+            box-shadow: 0 2px 8px rgba(0, 120, 212, 0.3);
+            /* More prominent shadow on highlight */
+            transform: translateY(-2px);
+        }
+
+        .diagram-arrow {
+            font-size: 1.8em;
+            /* Larger arrows */
+            color: #666;
+            /* Darker arrow color */
+            font-weight: bold;
+            align-self: center;
+            /* Center arrows vertically */
+        }
+
+        .diagram-arrow.loop-arrow {
+            transform: rotate(90deg);
+            margin: var(--spacing-unit) 0;
+            /* Adjust margin for vertical arrow */
+        }
+
+        /* Adjust diagram layout for smaller screens */
+        @media (max-width: 768px) {
+
+            /* Adjust breakpoint */
+            .diagram {
+                flex-direction: column;
+            }
+
+            .diagram-arrow {
+                transform: none !important;
+                /* Override loop arrow rotation */
+                margin: calc(var(--spacing-unit) / 2) 0;
+                /* Vertical margin for all arrows */
+            }
+
+            .diagram-element {
+                width: 100%;
+                /* Full width on small screens */
+                min-width: auto;
+            }
+        }
+
+
+        /* Interactive Demo Styling */
+        .demo-container {
+            display: flex;
+            gap: calc(var(--spacing-unit) * 2);
+            flex-wrap: wrap;
+            /* Allow wrapping on smaller screens */
+            justify-content: center;
+            align-items: flex-start;
+            /* Align items to the top */
+        }
+
+        .grid-world {
+            display: grid;
+            grid-template-columns: repeat(5, 60px);
+            /* Larger grid cells */
+            grid-template-rows: repeat(5, 60px);
+            gap: 3px;
+            /* Slightly larger gap */
+            border: 3px solid var(--border-color);
+            /* Thicker border */
+            background-color: var(--border-color);
+            flex-shrink: 0;
+            /* Prevent shrinking */
+            border-radius: calc(var(--border-radius) / 2);
+            overflow: hidden;
+            /* Hide gap around corners */
+        }
+
+        .grid-cell {
+            width: 60px;
+            height: 60px;
+            background-color: var(--background-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            /* Larger emoji */
+            cursor: default;
+            transition: background-color 0.2s ease;
+            /* Smooth transition */
+            user-select: none;
+            /* Prevent text selection */
+        }
+
+        .grid-cell.start {
+            background-color: #a0d0f0;
+        }
+
+        /* Lighter blue */
+        .grid-cell.goal {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .grid-cell.obstacle {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .grid-cell.agent {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .demo-controls {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-unit);
+            min-width: 250px;
+            /* Wider controls area */
+            flex-grow: 1;
+            /* Allow controls to grow */
+        }
+
+        .control-buttons {
+            display: grid;
+            grid-template-areas:
+                ". up ."
+                "left . right"
+                ". down .";
+            gap: calc(var(--spacing-unit) / 2);
+            max-width: 200px;
+            /* Limit button grid width */
+            margin: 0 auto;
+            /* Center button grid */
+        }
+
+        .control-buttons button {
+            padding: calc(var(--spacing-unit) / 2);
+            font-size: 1.1em;
+            /* Larger button text */
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #e9e9e9;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            min-width: 60px;
+            /* Ensure minimum button size */
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            /* Subtle shadow */
+        }
+
+        .control-buttons button:hover {
+            background-color: #dcdcdc;
+        }
+
+        .control-buttons button:active {
+            transform: scale(0.98);
+            /* Slight press effect */
+        }
+
+        .control-buttons button:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+
+        #moveUp {
+            grid-area: up;
+        }
+
+        #moveLeft {
+            grid-area: left;
+        }
+
+        #moveRight {
+            grid-area: right;
+        }
+
+        #moveDown {
+            grid-area: down;
+        }
+
+        .demo-info {
+            background-color: #f0f0f0;
+            /* Light grey background */
+            padding: var(--spacing-unit);
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: calc(var(--spacing-unit) / 2);
+            box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.03);
+            /* Subtle inner shadow */
+        }
+
+        .demo-info p {
+            margin: 0;
+            font-size: 1em;
+            /* Slightly larger info text */
+        }
+
+        .demo-info span {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        #resetDemo {
+            margin-top: var(--spacing-unit);
+            padding: calc(var(--spacing-unit) / 2);
+            font-size: 1.1em;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: var(--danger-color);
+            color: white;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            width: 100%;
+            /* Full width button */
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            /* Subtle shadow */
+        }
+
+        #resetDemo:hover {
+            background-color: #c0392b;
+        }
+
+        #resetDemo:active {
+            transform: scale(0.98);
+        }
+
+        #resetDemo:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+
+        footer {
+            text-align: center;
+            padding: var(--spacing-unit);
+            margin-top: calc(var(--spacing-unit) * 2);
+            color: #666;
+            font-size: 0.9em;
+            background-color: #e9e9e9;
+            /* Light background for footer */
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Understanding Reinforcement Learning</h1>
+    </header>
+    <main>
+        <section class="intro">
+            <h2>What is Reinforcement Learning?</h2>
+            <p>
+                Reinforcement Learning (RL) is an area of machine learning concerned with how software <span
+                    class="glossary-term"
+                    data-tooltip="An intelligent entity that interacts with an environment and learns by trial and error."
+                    data-diagram-link="agent">agents</span> ought to take <span class="glossary-term"
+                    data-tooltip="A decision or move made by the agent in the environment at a given time step."
+                    data-diagram-link="action">actions</span> in an <span class="glossary-term"
+                    data-tooltip="The external system or world that the agent interacts with. It transitions between states and provides rewards."
+                    data-diagram-link="environment">environment</span> in order to maximize the cumulative <span
+                    class="glossary-term"
+                    data-tooltip="A scalar feedback signal indicating how good or bad the agent's action was in a particular state. The agent seeks to maximize the total reward over time."
+                    data-diagram-link="reward">reward</span>. It's different from supervised learning (which learns from
+                labeled examples) and unsupervised learning (which finds patterns in data). In RL, the agent learns
+                through trial and error, receiving feedback in the form of rewards or penalties.
+            </p>
+            <p>
+                Think of it like training a pet: you give it a treat (positive reward) when it does something right, and
+                perhaps ignore or scold it (negative reward/penalty) when it does something wrong. Over time, the pet
+                learns which actions lead to treats. Similarly, an RL agent learns which actions in a given <span
+                    class="glossary-term"
+                    data-tooltip="The current situation or configuration of the environment at a specific time step. It's the information the agent uses to make decisions."
+                    data-diagram-link="state">state</span> of the environment are most likely to lead to high cumulative
+                rewards.
+            </p>
+        </section>
+
+        <section class="concepts">
+            <h2>Key Concepts</h2>
+            <div class="accordion">
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false" data-diagram-link="agent">Agent</button>
+                    <div class="accordion-content">
+                        <p>
+                            The agent is the learner or decision-maker. It observes the environment, decides on an
+                            action based on its policy, and executes it. The goal of the agent is to learn a behavior
+                            (policy) that maximizes its cumulative reward over time.
+                        </p>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false"
+                        data-diagram-link="environment">Environment</button>
+                    <div class="accordion-content">
+                        <p>
+                            The environment is everything outside the agent. It's the system that the agent interacts
+                            with. The environment receives actions from the agent, transitions to a new state according
+                            to its dynamics, and simultaneously provides a reward signal back to the agent.
+                        </p>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false" data-diagram-link="state">State (S)</button>
+                    <div class="accordion-content">
+                        <p>
+                            A state is a complete description of the environment at a given time step. It encapsulates
+                            all the information the agent needs to decide what action to take. The state changes based
+                            on the agent's action and the environment's dynamics.
+                        </p>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false" data-diagram-link="action">Action
+                        (A)</button>
+                    <div class="accordion-content">
+                        <p>
+                            An action is a move or decision made by the agent in a specific state. The set of possible
+                            actions depends on the environment. The agent selects an action based on its current policy.
+                        </p>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false" data-diagram-link="reward">Reward
+                        (R)</button>
+                    <div class="accordion-content">
+                        <p>
+                            The reward is a scalar feedback signal received from the environment after the agent takes
+                            an action in a state. It quantifies the immediate desirability of the outcome. The agent's
+                            objective is to maximize the sum of future rewards.
+                        </p>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false">Policy (π)</button>
+                    <div class="accordion-content">
+                        <p>
+                            The policy is the agent's strategy or behavior function. It maps states to actions, defining
+                            what action the agent will take in any given state. The goal of RL is to find an optimal
+                            policy that yields the maximum expected cumulative reward.
+                        </p>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false">Value Function (V or Q)</button>
+                    <div class="accordion-content">
+                        <p>
+                            A value function is a prediction of the expected cumulative reward starting from a given
+                            state (Value function, V) or taking a specific action in a given state and then following a
+                            policy (Q-value function, Q). Value functions are used to evaluate how good a state or
+                            action is, and they guide the agent's learning and decision-making process.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="rl-loop">
+            <h2>The Reinforcement Learning Loop</h2>
+            <p>
+                Reinforcement learning operates as a continuous interaction loop:
+            </p>
+            <div class="diagram">
+                <div class="diagram-element agent" data-diagram-element="agent">Agent</div>
+                <div class="diagram-arrow">takes</div>
+                <div class="diagram-element action" data-diagram-element="action">Action (A)</div>
+                <div class="diagram-arrow">in</div>
+                <div class="diagram-element environment" data-diagram-element="environment">Environment</div>
+                <div class="diagram-arrow">results in</div>
+                <div class="diagram-element state" data-diagram-element="state">New State (S')</div>
+                <div class="diagram-arrow">and</div>
+                <div class="diagram-element reward" data-diagram-element="reward">Reward (R)</div>
+                <div class="diagram-arrow loop-arrow" aria-label="Feedback loop to agent"></div>
+                <!-- The loop arrow visually connects back to the Agent -->
+            </div>
+            <p>
+                At each time step, the agent observes the current state (S) of the environment, decides on an action (A)
+                based on its policy (π), and executes the action. The environment then transitions to a new state (S')
+                and provides a corresponding reward (R). This new state and reward are observed by the agent, which uses
+                this feedback to update its understanding (e.g., policy or value function), aiming to improve its future
+                decisions.
+            </p>
+        </section>
+
+        <section class="interactive-demo">
+            <h2>Interactive Grid World Demo</h2>
+            <p>Explore how an agent navigates a simple 5x5 grid world. The agent starts at 'S', tries to reach the 'G'
+                (Goal) while avoiding 'X' (Obstacles). Each step gives a small negative reward (-0.1) to encourage
+                finding shorter paths. Reaching 'G' gives a large positive reward (+10), and hitting 'X' gives a large
+                negative reward (-10) and resets the agent to the start.</p>
+            <div class="demo-container">
+                <div class="grid-world" id="gridWorld">
+                    <!-- Grid cells will be generated by JS -->
+                </div>
+                <div class="demo-controls">
+                    <div class="control-buttons" role="group" aria-label="Agent movement controls">
+                        <button id="moveUp" aria-label="Move Agent Up">Up</button>
+                        <button id="moveLeft" aria-label="Move Agent Left">Left</button>
+                        <button id="moveRight" aria-label="Move Agent Right">Right</button>
+                        <button id="moveDown" aria-label="Move Agent Down">Down</button>
+                    </div>
+                    <div class="demo-info" aria-live="polite"> <!-- ARIA live region for updates -->
+                        <p>Current State: <span id="currentState">(0, 0)</span></p>
+                        <p>Last Reward: <span id="lastReward">0.0</span></p>
+                        <p>Total Reward: <span id="totalReward">0.0</span></p>
+                        <button id="resetDemo" aria-label="Reset Demo">Reset</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="applications">
+            <h2>Applications of RL</h2>
+            <p>
+                Reinforcement learning is used in various fields, including:
+            </p>
+            <ul>
+                <li>Robotics (learning to walk, manipulate objects)</li>
+                <li>Game playing (AlphaGo, Atari games)</li>
+                <li>Autonomous driving</li>
+                <li>Resource management (e.g., data center cooling)</li>
+                <li>Financial trading</li>
+                <li>Personalized recommendations</li>
+            </ul>
+            <p>
+                Its ability to learn complex behaviors through interaction makes it a powerful tool for problems where
+                finding an optimal solution through traditional methods is difficult or impossible.
+            </p>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2023 Understanding RL</p>
+    </footer>
+
+    <div id="tooltip" class="tooltip" aria-hidden="true" role="tooltip"></div>
+
+    <script>
+        // Accordion Functionality
+        document.querySelectorAll('.accordion-header').forEach(button => {
+            button.addEventListener('click', () => {
+                const item = button.parentElement;
+                const content = button.nextElementSibling;
+                const isActive = button.classList.contains('active');
+                const diagramLink = button.getAttribute('data-diagram-link');
+
+                // Close all other accordions and remove highlight
+                document.querySelectorAll('.accordion-item').forEach(otherItem => {
+                    if (otherItem !== item) {
+                        const otherHeader = otherItem.querySelector('.accordion-header');
+                        const otherContent = otherItem.querySelector('.accordion-content');
+                        const otherDiagramLink = otherHeader.getAttribute('data-diagram-link');
+
+                        if (otherHeader && otherContent && otherHeader.classList.contains('active')) {
+                            otherHeader.classList.remove('active');
+                            otherContent.classList.remove('active');
+                            otherContent.style.maxHeight = null;
+                            otherHeader.setAttribute('aria-expanded', 'false');
+                            // Remove highlight from diagram
+                            if (otherDiagramLink) {
+                                document.querySelectorAll(`.diagram-element[data-diagram-element="${otherDiagramLink}"]`).forEach(el => el.classList.remove('highlight'));
+                            }
+                        }
+                    }
+                });
+
+                // Toggle the clicked accordion
+                if (isActive) {
+                    button.classList.remove('active');
+                    content.classList.remove('active');
+                    content.style.maxHeight = null;
+                    button.setAttribute('aria-expanded', 'false');
+                    // Remove highlight from diagram
+                    if (diagramLink) {
+                        document.querySelectorAll(`.diagram-element[data-diagram-element="${diagramLink}"]`).forEach(el => el.classList.remove('highlight'));
+                    }
+                } else {
+                    button.classList.add('active');
+                    content.classList.add('active');
+                    // Set max-height to scrollHeight to enable transition, then potentially set to 'auto' for full content
+                    content.style.maxHeight = content.scrollHeight + 'px';
+                    // Optional: Set to 'auto' after transition for very long content
+                    content.addEventListener('transitionend', function handler() {
+                        if (button.classList.contains('active')) {
+                            // Set to a large value instead of 'none' for smoother closing later
+                            content.style.maxHeight = '1000px'; // Or a value guaranteed to be larger than content
+                        }
+                        content.removeEventListener('transitionend', handler);
+                    });
+                    button.setAttribute('aria-expanded', 'true');
+                    // Add highlight to diagram
+                    if (diagramLink) {
+                        document.querySelectorAll(`.diagram-element[data-diagram-element="${diagramLink}"]`).forEach(el => el.classList.add('highlight'));
+                    }
+                }
+            });
+        });
+
+        // Tooltip Functionality
+        const tooltip = document.getElementById('tooltip');
+        let tooltipTimeout;
+
+        function showTooltip(element, definition) {
+            clearTimeout(tooltipTimeout);
+            tooltip.textContent = definition;
+            tooltip.style.opacity = 1;
+            tooltip.setAttribute('aria-hidden', 'false');
+
+            // Position tooltip
+            const rect = element.getBoundingClientRect();
+            // Temporarily show tooltip to measure
+            tooltip.style.visibility = 'hidden';
+            tooltip.style.display = 'block';
+            const tooltipWidth = tooltip.offsetWidth;
+            const tooltipHeight = tooltip.offsetHeight;
+            tooltip.style.visibility = 'visible';
+            tooltip.style.display = 'block';
+
+
+            let top = rect.bottom + window.scrollY + 8; // 8px below the element
+            let left = rect.left + window.scrollX + (rect.width / 2) - (tooltipWidth / 2); // Centered horizontally
+
+            // Adjust if goes off right edge
+            if (left + tooltipWidth > window.innerWidth + window.scrollX - 10) {
+                left = window.innerWidth + window.scrollX - tooltipWidth - 10;
+            }
+            // Adjust if goes off left edge
+            if (left < window.scrollX + 10) {
+                left = window.scrollX + 10;
+            }
+            // Adjust if goes off bottom edge, position above if space
+            if (top + tooltipHeight > window.innerHeight + window.scrollY && rect.top > tooltipHeight + 10) {
+                top = rect.top + window.scrollY - tooltipHeight - 8;
+            }
+
+
+            tooltip.style.top = `${top}px`;
+            tooltip.style.left = `${left}px`;
+        }
+
+        function hideTooltip() {
+            tooltipTimeout = setTimeout(() => {
+                tooltip.style.opacity = 0;
+                tooltip.setAttribute('aria-hidden', 'true');
+                // Optional: Hide completely after transition
+                tooltip.addEventListener('transitionend', function handler() {
+                    if (tooltip.style.opacity == 0) {
+                        tooltip.style.display = 'none';
+                    }
+                    tooltip.removeEventListener('transitionend', handler);
+                });
+            }, 50); // Short delay
+        }
+
+
+        document.querySelectorAll('.glossary-term').forEach(term => {
+            const definition = term.getAttribute('data-tooltip');
+            if (!definition) return;
+
+            term.addEventListener('mouseover', (e) => {
+                showTooltip(e.target, definition);
+            });
+
+            term.addEventListener('mouseout', hideTooltip);
+
+            term.addEventListener('focus', (e) => {
+                showTooltip(e.target, definition);
+            });
+
+            term.addEventListener('blur', hideTooltip);
+
+            // Optional: Highlight diagram element on hover/focus if linked
+            const diagramLink = term.getAttribute('data-diagram-link');
+            if (diagramLink) {
+                term.addEventListener('mouseover', () => {
+                    document.querySelectorAll(`.diagram-element[data-diagram-element="${diagramLink}"]`).forEach(el => el.classList.add('highlight'));
+                });
+                term.addEventListener('mouseout', () => {
+                    // Only remove highlight if no corresponding accordion is active
+                    if (!document.querySelector(`.accordion-header.active[data-diagram-link="${diagramLink}"]`)) {
+                        document.querySelectorAll(`.diagram-element[data-diagram-element="${diagramLink}"]`).forEach(el => el.classList.remove('highlight'));
+                    }
+                });
+                term.addEventListener('focus', () => {
+                    document.querySelectorAll(`.diagram-element[data-diagram-element="${diagramLink}"]`).forEach(el => el.classList.add('highlight'));
+                });
+                term.addEventListener('blur', () => {
+                    if (!document.querySelector(`.accordion-header.active[data-diagram-link="${diagramLink}"]`)) {
+                        document.querySelectorAll(`.diagram-element[data-diagram-element="${diagramLink}"]`).forEach(el => el.classList.remove('highlight'));
+                    }
+                });
+            }
+        });
+
+        // Grid World Demo Functionality
+        const gridWorld = document.getElementById('gridWorld');
+        const currentStateSpan = document.getElementById('currentState');
+        const lastRewardSpan = document.getElementById('lastReward');
+        const totalRewardSpan = document.getElementById('totalReward');
+        const moveUpButton = document.getElementById('moveUp');
+        const moveDownButton = document.getElementById('moveDown');
+        const moveLeftButton = document.getElementById('moveLeft');
+        const moveRightButton = document.getElementById('moveRight');
+        const resetButton = document.getElementById('resetDemo');
+
+        const GRID_SIZE = 5;
+        const CELL_TYPE = {
+            EMPTY: 'empty',
+            START: 'start',
+            GOAL: 'goal',
+            OBSTACLE: 'obstacle',
+            AGENT: 'agent'
+        };
+
+        // Define the grid layout (0,0 is top-left)
+        const initialGrid = [
+            [CELL_TYPE.START, CELL_TYPE.EMPTY, CELL_TYPE.EMPTY, CELL_TYPE.EMPTY, CELL_TYPE.EMPTY],
+            [CELL_TYPE.EMPTY, CELL_TYPE.OBSTACLE, CELL_TYPE.EMPTY, CELL_TYPE.OBSTACLE, CELL_TYPE.EMPTY],
+            [CELL_TYPE.EMPTY, CELL_TYPE.EMPTY, CELL_TYPE.EMPTY, CELL_TYPE.EMPTY, CELL_TYPE.EMPTY],
+            [CELL_TYPE.EMPTY, CELL_TYPE.OBSTACLE, CELL_TYPE.EMPTY, CELL_TYPE.OBSTACLE, CELL_TYPE.EMPTY],
+            [CELL_TYPE.EMPTY, CELL_TYPE.EMPTY, CELL_TYPE.EMPTY, CELL_TYPE.EMPTY, CELL_TYPE.GOAL]
+        ];
+
+        let currentGrid = JSON.parse(JSON.stringify(initialGrid)); // Deep copy
+        let agentPosition = { row: 0, col: 0 };
+        let totalReward = 0;
+
+        function renderGrid() {
+            gridWorld.innerHTML = ''; // Clear previous grid
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('grid-cell');
+                    let type = currentGrid[r][c];
+                    if (r === agentPosition.row && c === agentPosition.col) {
+                        cell.classList.add(CELL_TYPE.AGENT);
+                        cell.textContent = '🤖'; // Agent emoji
+                        cell.setAttribute('aria-label', `Agent at row ${r + 1}, column ${c + 1}`);
+                    } else {
+                        cell.classList.add(type);
+                        if (type === CELL_TYPE.START) { cell.textContent = 'S'; cell.setAttribute('aria-label', `Start cell at row ${r + 1}, column ${c + 1}`); }
+                        else if (type === CELL_TYPE.GOAL) { cell.textContent = 'G'; cell.setAttribute('aria-label', `Goal cell at row ${r + 1}, column ${c + 1}`); }
+                        else if (type === CELL_TYPE.OBSTACLE) { cell.textContent = 'X'; cell.setAttribute('aria-label', `Obstacle cell at row ${r + 1}, column ${c + 1}`); }
+                        else { cell.setAttribute('aria-label', `Empty cell at row ${r + 1}, column ${c + 1}`); }
+                    }
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    // Add ARIA description for cell type
+                    cell.setAttribute('aria-description', `Type: ${type}`);
+                    gridWorld.appendChild(cell);
+                }
+            }
+        }
+
+        function updateInfo(lastR, totalR) {
+            currentStateSpan.textContent = `(${agentPosition.row}, ${agentPosition.col})`;
+            lastRewardSpan.textContent = lastR.toFixed(1);
+            totalRewardSpan.textContent = totalR.toFixed(1);
+        }
+
+        function moveAgent(direction) {
+            let newRow = agentPosition.row;
+            let newCol = agentPosition.col;
+            let reward = -0.1; // Small penalty for each step
+
+            if (direction === 'up') newRow--;
+            else if (direction === 'down') newRow++;
+            else if (direction === 'left') newCol--;
+            else if (direction === 'right') newCol++;
+
+            // Check bounds
+            if (newRow < 0 || newRow >= GRID_SIZE || newCol < 0 || newCol >= GRID_SIZE) {
+                // Invalid move (out of bounds) - no change in position, small penalty
+                reward = -0.5; // Penalty for hitting wall
+                totalReward += reward;
+                updateInfo(reward, totalReward);
+                // Announce wall hit for screen readers
+                const wallDirection = direction.charAt(0).toUpperCase() + direction.slice(1);
+                announce(`Cannot move ${wallDirection}. Hit a wall.`);
+                return; // Do not move agent or re-render grid
+            }
+
+            // Check obstacle
+            if (currentGrid[newRow][newCol] === CELL_TYPE.OBSTACLE) {
+                reward = -10; // Large penalty for hitting obstacle
+                totalReward += reward;
+                agentPosition = { row: 0, col: 0 }; // Reset to start
+                updateInfo(reward, totalReward);
+                renderGrid(); // Render grid after reset
+                // Announce obstacle hit and reset
+                announce(`Hit an obstacle. Penalty ${reward.toFixed(1)}. Resetting to start.`);
+                return;
+            }
+
+            // Valid move
+            agentPosition = { row: newRow, col: newCol };
+            totalReward += reward;
+
+            // Check goal
+            if (currentGrid[newRow][newCol] === CELL_TYPE.GOAL) {
+                reward = 10; // Large reward for reaching goal
+                totalReward += reward;
+                updateInfo(reward, totalReward); // Update info before reset
+                // Announce goal reached
+                announce(`Goal reached! Reward ${reward.toFixed(1)}. Total reward ${totalReward.toFixed(1)}.`);
+                setTimeout(() => {
+                    alert(`Goal reached! Total Reward: ${totalReward.toFixed(1)}`);
+                    resetDemo();
+                }, 50); // Small delay before alert/reset
+                return; // Prevent rendering grid twice if reset happens
+            }
+
+            updateInfo(reward, totalReward);
+            renderGrid();
+            // Announce move and reward
+            announce(`Moved ${direction}. Current position (${agentPosition.row}, ${agentPosition.col}). Reward ${reward.toFixed(1)}.`);
+        }
+
+        function resetDemo() {
+            currentGrid = JSON.parse(JSON.stringify(initialGrid));
+            agentPosition = { row: 0, col: 0 };
+            totalReward = 0;
+            renderGrid();
+            updateInfo(0, 0);
+            announce("Demo reset. Agent is at start.");
+        }
+
+        // Accessibility: Live region for announcements
+        function announce(message) {
+            // Find the live region element (demo-info has aria-live="polite")
+            const liveRegion = document.querySelector('.demo-info');
+            if (liveRegion) {
+                // Create a temporary element to hold the announcement
+                const announcement = document.createElement('p');
+                announcement.textContent = message;
+                announcement.setAttribute('aria-live', 'polite'); // Ensure polite announcement
+                announcement.style.position = 'absolute'; // Keep it out of flow
+                announcement.style.width = '1px';
+                announcement.style.height = '1px';
+                announcement.style.overflow = 'hidden';
+                announcement.style.clip = 'rect(0, 0, 0, 0)';
+                announcement.style.whiteSpace = 'nowrap';
+                announcement.style.border = '0';
+
+                // Append and remove after a short delay to trigger announcement
+                liveRegion.appendChild(announcement);
+                setTimeout(() => {
+                    liveRegion.removeChild(announcement);
+                }, 1000); // Adjust delay as needed
+            }
+        }
+
+
+        // Add event listeners for buttons
+        moveUpButton.addEventListener('click', () => moveAgent('up'));
+        moveDownButton.addEventListener('click', () => moveAgent('down'));
+        moveLeftButton.addEventListener('click', () => moveAgent('left'));
+        moveRightButton.addEventListener('click', () => moveAgent('right'));
+        resetButton.addEventListener('click', resetDemo);
+
+        // Add keyboard navigation for demo controls
+        document.addEventListener('keydown', (e) => {
+            // Check if focus is within the demo section or body (general navigation)
+            const isFocusInDemo = document.activeElement && document.activeElement.closest('.interactive-demo');
+            const isBodyFocused = document.activeElement === document.body; // Allow general arrow key navigation if nothing specific is focused
+            const isFocusOnControl = document.activeElement && document.activeElement.closest('.control-buttons');
+
+
+            if (isFocusInDemo || isBodyFocused || isFocusOnControl) {
+                switch (e.key) {
+                    case 'ArrowUp':
+                        moveAgent('up');
+                        e.preventDefault(); // Prevent scrolling
+                        break;
+                    case 'ArrowDown':
+                        moveAgent('down');
+                        e.preventDefault(); // Prevent scrolling
+                        break;
+                    case 'ArrowLeft':
+                        moveAgent('left');
+                        e.preventDefault(); // Prevent scrolling
+                        break;
+                    case 'ArrowRight':
+                        moveAgent('right');
+                        e.preventDefault(); // Prevent scrolling
+                        break;
+                    case 'R': // 'R' for reset (Shift+R) - Check if not typing in input/textarea
+                        if (e.shiftKey && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                            resetDemo();
+                            e.preventDefault();
+                        }
+                        break;
+                }
+            }
+        });
+
+
+        // Initial render
+        resetDemo();
+
+    </script>
+</body>
+
+</html>

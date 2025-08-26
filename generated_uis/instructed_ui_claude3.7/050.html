@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare Readmission Prediction Demo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --success: #4cc9f0;
+            --warning: #f72585;
+            --danger: #ff6b6b;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--dark);
+            background: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 30px;
+        }
+        
+        h1, h2, h3 {
+            color: var(--primary);
+            margin-top: 0;
+        }
+        
+        h1 {
+            font-size: 28px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        h2 {
+            font-size: 22px;
+            margin: 30px 0 15px;
+        }
+        
+        h3 {
+            font-size: 18px;
+            margin: 20px 0 10px;
+        }
+        
+        .flex-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            flex: 1;
+            min-width: 300px;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 20px;
+            transition: var(--transition);
+            border-top: 4px solid var(--primary);
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+        }
+        
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+        
+        button:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+        
+        .results {
+            margin-top: 30px;
+            display: none;
+        }
+        
+        .metric {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .metric-label {
+            flex: 1;
+            font-weight: 600;
+        }
+        
+        .metric-value {
+            font-weight: 700;
+            padding: 5px 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            min-width: 60px;
+            text-align: center;
+        }
+        
+        .feature-importance-container {
+            margin-top: 20px;
+            height: 400px;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 30px;
+        }
+        
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+            margin-left: 5px;
+        }
+        
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 250px;
+            background-color: #555;
+            color: #fff;
+            text-align: left;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-weight: normal;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .shap-explanation {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: var(--border-radius);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .prediction-gauge {
+            position: relative;
+            height: 150px;
+            width: 300px;
+            margin: 0 auto;
+        }
+        
+        .gauge-value {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .technique-card {
+            background: #f8f9fa;
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .technique-card h4 {
+            margin-top: 0;
+            color: var(--primary);
+        }
+        
+        .separator {
+            height: 1px;
+            background: #eee;
+            margin: 30px 0;
+        }
+        
+        .metric-high {
+            color: var(--danger);
+        }
+        
+        .metric-medium {
+            color: var(--warning);
+        }
+        
+        .metric-low {
+            color: var(--success);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .card {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Healthcare Readmission Risk Prediction</h1>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="prediction">Prediction Demo</div>
+            <div class="tab" data-tab="methodology">ML Methodology</div>
+            <div class="tab" data-tab="interpretation">Interpretation</div>
+            <div class="tab" data-tab="imbalance">Class Imbalance</div>
+        </div>
+        
+        <!-- Prediction Demo Tab -->
+        <div class="tab-content active" id="prediction">
+            <div class="flex-container">
+                <div class="card">
+                    <h3>Patient Data</h3>
+                    <form id="patient-form">
+                        <div class="form-group">
+                            <label for="age">Age</label>
+                            <input type="number" id="age" min="18" max="100" value="65">
+                        </div>
+                        <div class="form-group">
+                            <label for="gender">Gender</label>
+                            <select id="gender">
+                                <option value="female">Female</option>
+                                <option value="male">Male</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="lengthOfStay">Length of Stay (days)</label>
+                            <input type="number" id="lengthOfStay" min="1" max="30" value="5">
+                        </div>
+                        <div class="form-group">
+                            <label for="numMedications">Number of Medications</label>
+                            <input type="number" id="numMedications" min="0" max="20" value="8">
+                        </div>
+                        <div class="form-group">
+                            <label for="numDiagnoses">Number of Diagnoses</label>
+                            <input type="number" id="numDiagnoses" min="1" max="15" value="3">
+                        </div>
+                        <div class="form-group">
+                            <label for="hba1c">HbA1c Level (%)</label>
+                            <input type="number" id="hba1c" min="4" max="14" step="0.1" value="7.5">
+                        </div>
+                        <div class="form-group">
+                            <label for="bpSystolic">BP Systolic (mmHg)</label>
+                            <input type="number" id="bpSystolic" min="90" max="200" value="135">
+                        </div>
+                        <div class="form-group">
+                            <label for="emergencyAdmit">Emergency Admission</label>
+                            <select id="emergencyAdmit">
+                                <option value="no">No</option>
+                                <option value="yes">Yes</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="previousReadmissions">Previous Readmissions</label>
+                            <input type="number" id="previousReadmissions" min="0" max="10" value="1">
+                        </div>
+                        <button type="button" id="predict-btn">Predict Readmission Risk</button>
+                    </form>
+                </div>
+                
+                <div class="card results" id="results-card">
+                    <h3>Prediction Results</h3>
+                    <div class="prediction-gauge">
+                        <canvas id="gauge-chart"></canvas>
+                        <div class="gauge-value" id="risk-value">--</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Risk Category:</div>
+                        <div class="metric-value" id="risk-category">--</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">30-day Readmission Probability:</div>
+                        <div class="metric-value" id="readmission-prob">--</div>
+                    </div>
+                    <h3>Key Risk Factors</h3>
+                    <div class="feature-importance-container">
+                        <canvas id="feature-importance-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Methodology Tab -->
+        <div class="tab-content" id="methodology">
+            <h2>Machine Learning Approach</h2>
+            <p>For healthcare readmission prediction with interpretability requirements, we recommend using a gradient boosting model with SHAP (SHapley Additive exPlanations) for explainability.</p>
+            
+            <div class="technique-card">
+                <h4>Recommended Primary Model: Gradient Boosting (XGBoost/LightGBM)</h4>
+                <p>Gradient boosting models like XGBoost and LightGBM are excellent choices for healthcare predictive modeling because they:</p>
+                <ul>
+                    <li>Handle mixed data types common in healthcare (numerical lab values, categorical demographics)</li>
+                    <li>Can capture complex non-linear relationships in patient data</li>
+                    <li>Handle missing values natively (common in healthcare records)</li>
+                    <li>Provide excellent predictive performance</li>
+                    <li>Can be made interpretable with proper techniques</li>
+                    <li>Handle class imbalance effectively with proper tuning</li>
+                </ul>
+            </div>
+            
+            <div class="technique-card">
+                <h4>Alternative Approach: Logistic Regression with Regularization</h4>
+                <p>If maximum interpretability is required, a regularized logistic regression model can be used:</p>
+                <ul>
+                    <li>Highly interpretable through odds ratios</li>
+                    <li>Well-established in clinical research</li>
+                    <li>Easily deployable in clinical settings</li>
+                    <li>May miss complex interactions between features</li>
+                </ul>
+            </div>
+            
+            <h3>Data Preprocessing Pipeline</h3>
+            <table>
+                <tr>
+                    <th>Step</th>
+                    <th>Description</th>
+                    <th>Importance</th>
+                </tr>
+                <tr>
+                    <td>Missing Value Imputation</td>
+                    <td>Use advanced imputation methods like MICE (Multiple Imputation by Chained Equations) or KNN imputation</td>
+                    <td>Critical - Healthcare data often has missing values</td>
+                </tr>
+                <tr>
+                    <td>Feature Engineering</td>
+                    <td>Create derived features like "days since last admission", "medication change ratio", etc.</td>
+                    <td>High - Domain-specific features improve performance</td>
+                </tr>
+                <tr>
+                    <td>Outlier Handling</td>
+                    <td>Use capping/winsorization for lab values rather than removing</td>
+                    <td>Medium - Extreme lab values can be clinically meaningful</td>
+                </tr>
+                <tr>
+                    <td>Encoding Categorical Variables</td>
+                    <td>Use target encoding for high-cardinality features like diagnosis codes</td>
+                    <td>High - Proper encoding of medical codes is essential</td>
+                </tr>
+                <tr>
+                    <td>Feature Selection</td>
+                    <td>Use LASSO regularization or feature importance filtering</td>
+                    <td>Medium - Reduces noise and improves interpretability</td>
+                </tr>
+            </table>
+            
+            <h3>Model Evaluation</h3>
+            <p>For healthcare readmission models, standard accuracy metrics are insufficient. Instead, focus on:</p>
+            <ul>
+                <li><strong>AUROC</strong>: Area under the ROC curve - measures discrimination ability</li>
+                <li><strong>AUPRC</strong>: Area under precision-recall curve - better for imbalanced data</li>
+                <li><strong>Calibration curves</strong>: Ensure predicted probabilities match observed frequencies</li>
+                <li><strong>Clinical utility metrics</strong>: Net benefit, Number Needed to Evaluate (NNE)</li>
+            </ul>
+        </div>
+        
+        <!-- Interpretation Tab -->
+        <div class="tab-content" id="interpretation">
+            <h2>Model Interpretation for Clinicians</h2>
+            
+            <div class="technique-card">
+                <h4>SHAP (SHapley Additive exPlanations)</h4>
+                <p>SHAP values provide a unified framework for interpreting predictions. They show how much each feature contributes to pushing the prediction away from the baseline (average prediction):</p>
+                <ul>
+                    <li>Global interpretability: Which features are most important across all patients?</li>
+                    <li>Local interpretability: For a specific patient, which factors are contributing to their readmission risk?</li>
+                    <li>Interaction effects: How do features work together to influence the prediction?</li>
+                </ul>
+                <div class="chart-container">
+                    <canvas id="shap-summary-chart"></canvas>
+                </div>
+            </div>
+            
+            <div class="shap-explanation">
+                <h3>Interpreting SHAP Values for Clinicians</h3>
+                <p>For each patient, the model starts with a baseline readmission risk (e.g., 12% - the population average). Each feature then pushes this risk up or down:</p>
+                <ul>
+                    <li><span style="color: var(--danger);">Red bars (positive SHAP)</span>: Features pushing readmission risk higher</li>
+                    <li><span style="color: var(--success);">Blue bars (negative SHAP)</span>: Features pushing readmission risk lower</li>
+                </ul>
+                <p>Example interpretation: "This patient has a 25% readmission risk. The biggest risk factors are their previous readmissions (+8%), elevated HbA1c (+5%), and emergency admission (+4%). However, their risk is reduced by their younger age (-3%) and shorter length of stay (-1%)."</p>
+            </div>
+            
+            <h3>Integration into Clinical Workflow</h3>
+            <p>For effective implementation in healthcare settings:</p>
+            <ul>
+                <li>Develop a clinical decision support interface that shows both the prediction and contributing factors</li>
+                <li>Include actionable insights (e.g., "Consider medication reconciliation to address polypharmacy")</li>
+                <li>Implement risk thresholds determined in collaboration with clinical teams</li>
+                <li>Provide training to clinicians on how to interpret model outputs</li>
+                <li>Track model usage and outcomes to continuously improve the system</li>
+            </ul>
+        </div>
+        
+        <!-- Class Imbalance Tab -->
+        <div class="tab-content" id="imbalance">
+            <h2>Handling Class Imbalance</h2>
+            <p>Readmission events are typically rare (5-20% of cases), creating class imbalance that can bias models toward the majority class. Here are effective approaches:</p>
+            
+            <div class="flex-container">
+                <div class="card">
+                    <h3>Sampling Techniques</h3>
+                    <div class="technique-card">
+                        <h4>SMOTE (Synthetic Minority Over-sampling Technique)</h4>
+                        <p>Creates synthetic examples of the minority class by interpolating between existing examples.</p>
+                        <ul>
+                            <li><strong>Pros:</strong> Better than simple oversampling, generates realistic synthetic examples</li>
+                            <li><strong>Cons:</strong> May create unrealistic patient profiles if not carefully implemented</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="technique-card">
+                        <h4>ADASYN (Adaptive Synthetic Sampling)</h4>
+                        <p>Similar to SMOTE but focuses on generating samples near difficult-to-classify examples.</p>
+                        <ul>
+                            <li><strong>Pros:</strong> Focuses on the most informative regions of the feature space</li>
+                            <li><strong>Cons:</strong> More complex to implement correctly</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="technique-card">
+                        <h4>Cluster-Based Oversampling</h4>
+                        <p>Clusters minority class examples and generates synthetic samples within each cluster.</p>
+                        <ul>
+                            <li><strong>Pros:</strong> Preserves the distribution of different patient subgroups</li>
+                            <li><strong>Cons:</strong> Requires careful tuning of clustering parameters</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>Algorithm-Level Approaches</h3>
+                    <div class="technique-card">
+                        <h4>Class Weighting</h4>
+                        <p>Assign higher misclassification costs to the minority class during training.</p>
+                        <ul>
+                            <li><strong>Pros:</strong> Easy to implement, doesn't alter the original data</li>
+                            <li><strong>Cons:</strong> Requires tuning to find optimal weights</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="technique-card">
+                        <h4>Scale-Pos-Weight Parameter (XGBoost)</h4>
+                        <p>XGBoost-specific parameter that balances positive and negative weights.</p>
+                        <code>scale_pos_weight = sum(negative_cases) / sum(positive_cases)</code>
+                        <ul>
+                            <li><strong>Pros:</strong> Works well with XGBoost, simple to implement</li>
+                            <li><strong>Cons:</strong> May need adjustment from the default formula</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="technique-card">
+                        <h4>Focal Loss</h4>
+                        <p>Modified loss function that down-weights well-classified examples to focus on hard cases.</p>
+                        <ul>
+                            <li><strong>Pros:</strong> Automatically focuses on difficult examples</li>
+                            <li><strong>Cons:</strong> More complex to implement, requires parameter tuning</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="imbalance-chart"></canvas>
+            </div>
+            
+            <h3>Evaluation Metrics for Imbalanced Data</h3>
+            <p>Use metrics that are robust to class imbalance:</p>
+            <ul>
+                <li><strong>AUPRC (Area Under Precision-Recall Curve)</strong>: More informative than AUROC for imbalanced problems</li>
+                <li><strong>F1 Score</strong>: Harmonic mean of precision and recall</li>
+                <li><strong>Cohen's Kappa</strong>: Measures agreement while accounting for chance</li>
+                <li><strong>Balanced Accuracy</strong>: Average of sensitivity and specificity</li>
+            </ul>
+            
+            <h3>Recommended Approach for Healthcare Readmission</h3>
+            <p>For healthcare readmission prediction, we recommend a combined approach:</p>
+            <ol>
+                <li>Start with algorithm-level approaches (class weights, scale_pos_weight) as they preserve the original data distribution</li>
+                <li>If performance is insufficient, try advanced sampling techniques like SMOTE-ENN or cluster-based oversampling</li>
+                <li>Always validate using cross-validation with stratification to maintain class proportions across folds</li>
+                <li>Focus on metrics like AUPRC and clinical utility metrics rather than accuracy</li>
+            </ol>
+        </div>
+        
+        <script>
+            // Current tab management
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    
+                    // Update active tab
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // Update active content
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                        if (content.id === tabId) {
+                            content.classList.add('active');
+                        }
+                    });
+                });
+            });
+            
+            // Mock data for the demo
+            const featureImportance = {
+                'Previous Readmissions': 100,
+                'Length of Stay': 85,
+                'Number of Medications': 78,
+                'HbA1c Level': 72,
+                'Emergency Admission': 65,
+                'Number of Diagnoses': 58,
+                'Age': 45,
+                'BP Systolic': 30,
+                'Gender': 15
+            };
+            
+            // Initialize charts
+            let gaugeChart;
+            let featureChart;
+            let shapSummaryChart;
+            let imbalanceChart;
+            
+            // Initialize all charts when the page loads
+            document.addEventListener('DOMContentLoaded', function() {
+                initializeGaugeChart();
+                initializeFeatureChart();
+                initializeShapChart();
+                initializeImbalanceChart();
+                
+                // Add event listener for prediction button
+                document.getElementById('predict-btn').addEventListener('click', makePrediction);
+            });
+            
+            function initializeGaugeChart() {
+                const ctx = document.getElementById('gauge-chart').getContext('2d');
+                gaugeChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        datasets: [{
+                            data: [0, 100],
+                            backgroundColor: [
+                                'rgba(244, 67, 54, 0.8)',
+                                'rgba(240, 240, 240, 0.5)'
+                            ],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        circumference: 180,
+                        rotation: 270,
+                        cutout: '70%',
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                enabled: false
+                            }
+                        },
+                        animation: {
+                            animateRotate: true,
+                            animateScale: true
+                        }
+                    }
+                });
+            }
+            
+            function initializeFeatureChart() {
+                const ctx = document.getElementById('feature-importance-chart').getContext('2d');
+                
+                // Convert feature importance to arrays for Chart.js
+                const features = Object.keys(featureImportance);
+                const values = features.map(f => featureImportance[f]);
+                
+                featureChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: features,
+                        datasets: [{
+                            label: 'Feature Importance',
+                            data: values,
+                            backgroundColor: 'rgba(67, 97, 238, 0.7)',
+                            borderColor: 'rgba(67, 97, 238, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Relative Importance'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            }
+            
+            function initializeShapChart() {
+                const ctx = document.getElementById('shap-summary-chart').getContext('2d');
+                
+                shapSummaryChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Previous Readmissions', 'HbA1c Level', 'Emergency Admission', 'Number of Medications', 'Age', 'Length of Stay'],
+                        datasets: [{
+                            label: 'Impact on Readmission Risk',
+                            data: [8, 5, 4, 2, -3, -1],
+                            backgroundColor: [
+                                'rgba(244, 67, 54, 0.7)',
+                                'rgba(244, 67, 54, 0.7)',
+                                'rgba(244, 67, 54, 0.7)',
+                                'rgba(244, 67, 54, 0.7)',
+                                'rgba(76, 201, 240, 0.7)',
+                                'rgba(76, 201, 240, 0.7)'
+                            ],
+                            borderColor: [
+                                'rgba(244, 67, 54, 1)',
+                                'rgba(244, 67, 54, 1)',
+                                'rgba(244, 67, 54, 1)',
+                                'rgba(244, 67, 54, 1)',
+                                'rgba(76, 201, 240, 1)',
+                                'rgba(76, 201, 240, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'SHAP Value (% Impact on Risk)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Example SHAP Values for a Patient'
+                            },
+                            subtitle: {
+                                display: true,
+                                text: 'Baseline risk: 12% → Final risk: 25%',
+                                padding: {
+                                    bottom: 10
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            function initializeImbalanceChart() {
+                const ctx = document.getElementById('imbalance-chart').getContext('2d');
+                
+                imbalanceChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Original Data', 'Class Weighting', 'SMOTE', 'ADASYN', 'Cluster-Based'],
+                        datasets: [
+                            {
+                                label: 'Non-Readmitted',
+                                data: [90, 50, 50, 50, 50],
+                                backgroundColor: 'rgba(76, 201, 240, 0.7)',
+                                borderColor: 'rgba(76, 201, 240, 1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Readmitted',
+                                data: [10, 50, 50, 50, 50],
+                                backgroundColor: 'rgba(244, 67, 54, 0.7)',
+                                borderColor: 'rgba(244, 67, 54, 1)',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                stacked: true,
+                                title: {
+                                    display: true,
+                                    text: 'Rebalancing Method'
+                                }
+                            },
+                            y: {
+                                stacked: true,
+                                title: {
+                                    display: true,
+                                    text: 'Percentage of Samples'
+                                },
+                                max: 100
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Effect of Different Class Balancing Techniques'
+                            }
+                        }
+                    }
+                });
+            }
+            
+            function makePrediction() {
+                // Get form values
+                const age = parseInt(document.getElementById('age').value);
+                const gender = document.getElementById('gender').value;
+                const lengthOfStay = parseInt(document.getElementById('lengthOfStay').value);
+                const numMedications = parseInt(document.getElementById('numMedications').value);
+                const numDiagnoses = parseInt(document.getElementById('numDiagnoses').value);
+                const hba1c = parseFloat(document.getElementById('hba1c').value);
+                const bpSystolic = parseInt(document.getElementById('bpSystolic').value);
+                const emergencyAdmit = document.getElementById('emergencyAdmit').value;
+                const previousReadmissions = parseInt(document.getElementById('previousReadmissions').value);
+                
+                // Simple mockup of risk calculation (in a real system, this would use the trained model)
+                let riskScore = 0;
+                
+                // Previous readmissions have the highest impact
+                riskScore += previousReadmissions * 15;
+                
+                // Emergency admission
+                if (emergencyAdmit === 'yes') {
+                    riskScore += 15;
+                }
+                
+                // Length of stay (longer stays indicate more complex cases)
+                riskScore += lengthOfStay * 2;
+                
+                // Number of medications (polypharmacy increases risk)
+                riskScore += numMedications * 1.5;
+                
+                // Number of diagnoses (comorbidities)
+                riskScore += numDiagnoses * 2;
+                
+                // HbA1c (poor glycemic control increases risk)
+                if (hba1c > 7.0) {
+                    riskScore += (hba1c - 7.0) * 5;
+                }
+                
+                // Age (older patients at higher risk)
+                if (age > 65) {
+                    riskScore += (age - 65) * 0.5;
+                }
+                
+                // BP (hypertension increases risk)
+                if (bpSystolic > 140) {
+                    riskScore += (bpSystolic - 140) * 0.2;
+                }
+                
+                // Scale to 0-100
+                riskScore = Math.min(Math.max(riskScore, 0), 100);
+                
+                // Calculate readmission probability (simplified sigmoid function)
+                const readmissionProb = (1 / (1 + Math.exp(-0.05 * (riskScore - 50)))).toFixed(2);
+                
+                // Determine risk category
+                let riskCategory;
+                let categoryColor;
+                
+                if (riskScore < 30) {
+                    riskCategory = "Low";
+                    categoryColor = "var(--success)";
+                } else if (riskScore < 60) {
+                    riskCategory = "Medium";
+                    categoryColor = "var(--warning)";
+                } else {
+                    riskCategory = "High";
+                    categoryColor = "var(--danger)";
+                }
+                
+                // Update UI
+                document.getElementById('risk-value').textContent = Math.round(riskScore) + '%';
+                document.getElementById('risk-value').style.color = categoryColor;
+                
+                const riskCategoryElement = document.getElementById('risk-category');
+                riskCategoryElement.textContent = riskCategory;
+                riskCategoryElement.className = 'metric-value metric-' + riskCategory.toLowerCase();
+                
+                document.getElementById('readmission-prob').textContent = (readmissionProb * 100).toFixed(0) + '%';
+                
+                // Update gauge chart
+                gaugeChart.data.datasets[0].data = [riskScore, 100 - riskScore];
+                gaugeChart.update();
+                
+                // Show results
+                document.getElementById('results-card').style.display = 'block';
+                
+                // Calculate personalized feature importance for SHAP-like visualization
+                // This is a simplified mock-up - a real system would calculate actual SHAP values
+                const personalizedImportance = {};
+                const baseImportance = featureImportance;
+                
+                // Previous readmissions
+                personalizedImportance['Previous Readmissions'] = baseImportance['Previous Readmissions'] * (previousReadmissions > 0 ? 1 : 0.5);
+                
+                // Length of stay
+                personalizedImportance['Length of Stay'] = baseImportance['Length of Stay'] * (lengthOfStay > 7 ? 1.2 : 0.8);
+                
+                // Number of medications
+                personalizedImportance['Number of Medications'] = baseImportance['Number of Medications'] * (numMedications > 5 ? 1.2 : 0.7);
+                
+                // HbA1c
+                personalizedImportance['HbA1c Level'] = baseImportance['HbA1c Level'] * (hba1c > 7.0 ? 1.3 : 0.6);
+                
+                // Emergency admission
+                personalizedImportance['Emergency Admission'] = baseImportance['Emergency Admission'] * (emergencyAdmit === 'yes' ? 1.2 : 0.3);
+                
+                // Number of diagnoses
+                personalizedImportance['Number of Diagnoses'] = baseImportance['Number of Diagnoses'] * (numDiagnoses > 3 ? 1.1 : 0.8);
+                
+                // Age
+                personalizedImportance['Age'] = baseImportance['Age'] * (age > 65 ? 1.2 : 0.6);
+                
+                // BP
+                personalizedImportance['BP Systolic'] = baseImportance['BP Systolic'] * (bpSystolic > 140 ? 1.1 : 0.7);
+                
+                // Gender (less impact in our demo)
+                personalizedImportance['Gender'] = baseImportance['Gender'] * 0.9;
+                
+                // Update feature chart with personalized importance
+                const features = Object.keys(personalizedImportance);
+                const values = features.map(f => personalizedImportance[f]);
+                
+                // Sort features by importance
+                const sortedIndices = Array.from(Array(features.length).keys())
+                    .sort((a, b) => values[b] - values[a]);
+                    
+                const sortedFeatures = sortedIndices.map(i => features[i]);
+                const sortedValues = sortedIndices.map(i => values[i]);
+                
+                featureChart.data.labels = sortedFeatures;
+                featureChart.data.datasets[0].data = sortedValues;
+                featureChart.update();
+            }
+        </script>
+    </div>
+</body>
+</html>

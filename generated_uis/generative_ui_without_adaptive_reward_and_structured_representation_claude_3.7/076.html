@@ -1,0 +1,1646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroSpeech Analyzer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --primary-color-dark: #0056b3;
+            --secondary-color: #6c757d;
+            --secondary-color-dark: #5a6268;
+            --background-color: #f8f9fa;
+            --surface-color: #ffffff;
+            --text-color: #343a40;
+            --text-light-color: #6c757d;
+            --border-color: #dee2e6;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --spacing-unit: 8px;
+            --border-radius: 8px;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition-speed: 0.2s;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+            display: grid;
+            grid-template-areas:
+                "header header"
+                "sidebar main";
+            grid-template-columns: 250px 1fr;
+            grid-template-rows: auto 1fr;
+            min-height: 100vh;
+            overflow: hidden; /* Prevent body scroll */
+        }
+
+        header {
+            grid-area: header;
+            background-color: var(--surface-color);
+            color: var(--text-color);
+            padding: calc(var(--spacing-unit) * 2) calc(var(--spacing-unit) * 3);
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-title {
+            font-size: 1.5em;
+            font-weight: 500;
+            margin: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .header-title .material-symbols-rounded {
+            margin-right: var(--spacing-unit);
+            color: var(--primary-color);
+            font-size: 28px;
+        }
+
+        .sidebar {
+            grid-area: sidebar;
+            background-color: var(--surface-color);
+            padding: calc(var(--spacing-unit) * 2) 0;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto; /* Allow sidebar content to scroll */
+            height: calc(100vh - 72px); /* Adjust based on header height */
+            transition: transform var(--transition-speed) ease-in-out;
+        }
+
+         .sidebar-nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-nav li {
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 2);
+            color: var(--text-color);
+            text-decoration: none;
+            transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
+            border-left: 4px solid transparent;
+            outline: none; /* Remove default outline */
+        }
+
+        .sidebar-nav a .material-symbols-rounded {
+            margin-right: var(--spacing-unit);
+            font-size: 20px;
+        }
+
+        .sidebar-nav a:hover {
+            background-color: var(--background-color);
+            color: var(--primary-color);
+        }
+
+         .sidebar-nav a:focus {
+             outline: 2px solid var(--primary-color);
+             outline-offset: -2px;
+         }
+
+        .sidebar-nav a.active {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+            border-left-color: var(--primary-color-dark);
+            font-weight: 500;
+        }
+
+        main {
+            grid-area: main;
+            padding: calc(var(--spacing-unit) * 3);
+            overflow-y: auto; /* Allow main content to scroll */
+            height: calc(100vh - 72px); /* Adjust based on header height */
+        }
+
+        .section {
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity var(--transition-speed) ease-out, transform var(--transition-speed) ease-out;
+        }
+
+        .section.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        h2 {
+            font-size: 1.8em;
+            font-weight: 500;
+            margin-top: 0;
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            color: var(--text-color);
+        }
+
+        .card {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            padding: calc(var(--spacing-unit) * 3);
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            box-shadow: var(--shadow-md);
+            transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+        }
+
+         .card:hover {
+             transform: translateY(-2px);
+             box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+         }
+
+        .card-title {
+            font-size: 1.2em;
+            font-weight: 500;
+            margin-top: 0;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            color: var(--text-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: var(--spacing-unit);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: calc(var(--spacing-unit) * 3);
+        }
+
+        .metric-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .metric-value {
+            font-size: 2em;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .metric-label {
+            font-size: 1em;
+            color: var(--text-light-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: calc(var(--spacing-unit) * 3);
+        }
+
+        th, td {
+            padding: calc(var(--spacing-unit) * 1.5);
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--background-color);
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        tbody tr {
+             transition: background-color var(--transition-speed) ease;
+        }
+
+        tbody tr:hover {
+            background-color: var(--background-color);
+            cursor: pointer;
+        }
+
+         tbody tr:focus {
+             outline: 2px solid var(--primary-color);
+             outline-offset: -2px;
+         }
+
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 2.5);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            text-decoration: none;
+            transition: background-color var(--transition-speed) ease, opacity var(--transition-speed) ease, transform var(--transition-speed) ease;
+            border: none;
+            outline: none;
+            min-height: 44px; /* Ensure minimum touch target size */
+            min-width: 44px;
+            justify-content: center;
+        }
+
+        .button .material-symbols-rounded {
+             margin-right: var(--spacing-unit);
+             font-size: 18px;
+        }
+
+        .button-primary {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+        }
+
+        .button-primary:hover {
+            background-color: var(--primary-color-dark);
+            transform: translateY(-1px);
+        }
+         .button-primary:focus {
+             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.5);
+         }
+
+
+        .button-secondary {
+            background-color: var(--secondary-color);
+            color: var(--surface-color);
+        }
+
+        .button-secondary:hover {
+            background-color: var(--secondary-color-dark);
+             transform: translateY(-1px);
+        }
+
+         .button-secondary:focus {
+             box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.5);
+         }
+
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        form label {
+            display: block;
+            margin-bottom: var(--spacing-unit);
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        form input[type="text"],
+        form input[type="number"],
+        form select,
+        form textarea {
+            display: block;
+            width: 100%;
+            padding: calc(var(--spacing-unit) * 1.5);
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            color: var(--text-color);
+            background-color: var(--background-color); /* Use background color for inputs */
+            transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+            outline: none;
+        }
+
+        form input[type="text"]:focus,
+        form input[type="number"]:focus,
+        form select:focus,
+        form textarea:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            background-color: var(--surface-color); /* White background on focus */
+        }
+
+        .form-group {
+            margin-bottom: calc(var(--spacing-unit) * 3);
+        }
+
+        .form-group input:invalid,
+        .form-group select:invalid,
+        .form-group textarea:invalid {
+             border-color: var(--danger-color);
+        }
+
+         .form-group .error-message {
+             color: var(--danger-color);
+             font-size: 0.9em;
+             margin-top: calc(var(--spacing-unit) * -1.5);
+             margin-bottom: calc(var(--spacing-unit) * 2);
+             display: none; /* Hidden by default */
+         }
+
+        .loading-indicator {
+            display: none;
+            align-items: center;
+            color: var(--primary-color);
+            font-weight: 500;
+            margin-top: calc(var(--spacing-unit) * 2);
+        }
+
+        .loading-indicator.active {
+            display: flex;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--primary-color);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin-right: var(--spacing-unit);
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 200; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+
+         .modal.closing {
+             animation: fadeOut 0.3s ease-out forwards;
+         }
+
+        .modal-content {
+            background-color: var(--surface-color);
+            margin: 5% auto; /* 5% from the top and centered */
+            padding: calc(var(--spacing-unit) * 4);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-md);
+            width: 90%; /* Responsive width */
+            max-width: 800px; /* Max width */
+            position: relative;
+            animation: slideInFromTop 0.3s ease-out forwards;
+        }
+
+         .modal.closing .modal-content {
+             animation: slideOutToTop 0.3s ease-out forwards;
+         }
+
+        .close-button {
+            color: var(--text-light-color);
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            top: var(--spacing-unit) * 2;
+            right: var(--spacing-unit) * 2;
+            cursor: pointer;
+            transition: color var(--transition-speed) ease;
+            background: none;
+            border: none;
+            padding: var(--spacing-unit);
+            border-radius: var(--border-radius);
+             outline: none;
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: var(--text-color);
+            background-color: var(--background-color);
+            outline: 2px solid var(--primary-color);
+            outline-offset: -2px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px; /* Fixed height for charts */
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            background-color: var(--background-color); /* Background for chart area */
+            border-radius: var(--border-radius);
+            padding: var(--spacing-unit);
+            cursor: pointer; /* Indicate interactivity */
+        }
+
+         .chart-container canvas {
+             display: block; /* Remove extra space below canvas */
+             width: 100% !important; /* Ensure canvas fills container */
+             height: 100% !important;
+         }
+
+
+        .floating-controls {
+            position: absolute;
+            top: calc(var(--spacing-unit) * 2);
+            right: calc(var(--spacing-unit) * 2);
+            background: rgba(255, 255, 255, 0.95);
+            padding: calc(var(--spacing-unit) * 2);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all var(--transition-speed) ease;
+            pointer-events: none;
+            z-index: 50;
+            min-width: 200px;
+            border: 1px solid var(--border-color);
+        }
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+        .control-group {
+            margin: var(--spacing-unit) 0;
+            display: flex;
+            align-items: flex-start;
+            gap: var(--spacing-unit);
+            flex-direction: column;
+        }
+        .control-group label {
+            font-size: 0.9em;
+            margin-bottom: 0;
+            font-weight: 400;
+        }
+        .control-group input[type="text"],
+        .control-group input[type="number"],
+        .control-group select,
+        .control-group input[type="color"] {
+            padding: calc(var(--spacing-unit) * 1);
+            margin-bottom: 0;
+            font-size: 0.9em;
+            background-color: var(--surface-color); /* White background for controls */
+        }
+         .control-group input[type="checkbox"] {
+             margin-bottom: 0;
+             margin-right: var(--spacing-unit);
+         }
+         .control-group .checkbox-label {
+             display: flex;
+             align-items: center;
+             font-weight: 400;
+         }
+
+
+        /* Tooltip styles */
+        [data-tooltip] {
+            position: relative;
+            cursor: help;
+        }
+        [data-tooltip]:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--text-color);
+            color: var(--surface-color);
+            padding: var(--spacing-unit);
+            border-radius: var(--border-radius);
+            font-size: 0.9em;
+            white-space: nowrap;
+            z-index: 300;
+            margin-bottom: var(--spacing-unit);
+            pointer-events: none; /* Ensure tooltip doesn't block clicks */
+            opacity: 0.95;
+        }
+
+         .visually-hidden {
+             position: absolute;
+             width: 1px;
+             height: 1px;
+             margin: -1px;
+             padding: 0;
+             overflow: hidden;
+             clip: rect(0, 0, 0, 0);
+             border: 0;
+         }
+
+
+        /* Keyframe Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+         @keyframes fadeOut {
+             from { opacity: 1; }
+             to { opacity: 0; }
+         }
+
+        @keyframes slideInFromTop {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+         @keyframes slideOutToTop {
+             from { transform: translateY(0); opacity: 1; }
+             to { transform: translateY(-50px); opacity: 0; }
+         }
+
+
+        /* Basic Responsiveness - Adjust sidebar/layout for smaller screens */
+        @media (max-width: 768px) {
+            body {
+                grid-template-areas:
+                    "header"
+                    "main";
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+            }
+
+            .sidebar {
+                display: none; /* Hide sidebar by default on small screens */
+            }
+
+            .header-title {
+                 font-size: 1.2em;
+            }
+
+            main {
+                padding: calc(var(--spacing-unit) * 2);
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+                padding: calc(var(--spacing-unit) * 3);
+            }
+
+             .close-button {
+                 top: var(--spacing-unit);
+                 right: var(--spacing-unit);
+             }
+
+             .floating-controls {
+                 top: var(--spacing-unit);
+                 right: var(--spacing-unit);
+                 padding: calc(var(--spacing-unit) * 1.5);
+                 min-width: 180px;
+             }
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1 class="header-title">
+            <span class="material-symbols-rounded">mic_external_on</span>
+            NeuroSpeech Analyzer
+        </h1>
+        <!-- Menu toggle for smaller screens could go here -->
+    </header>
+
+    <aside class="sidebar">
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="#dashboard" class="nav-link active" data-section="dashboard" aria-label="Go to Dashboard section">
+                    <span class="material-symbols-rounded">dashboard</span>
+                    Dashboard
+                </a></li>
+                <li><a href="#subjects" class="nav-link" data-section="subjects" aria-label="Go to Subjects and Data section">
+                    <span class="material-symbols-rounded">group</span>
+                    Subjects & Data
+                </a></li>
+                <li><a href="#feature-extraction" class="nav-link" data-section="feature-extraction" aria-label="Go to Feature Extraction section">
+                    <span class="material-symbols-rounded">tune</span>
+                    Feature Extraction
+                </a></li>
+                <li><a href="#model-training" class="nav-link" data-section="model-training" aria-label="Go to Model Training section">
+                    <span class="material-symbols-rounded">model_training</span>
+                    Model Training
+                </a></li>
+                <li><a href="#evaluation" class="nav-link" data-section="evaluation" aria-label="Go to Evaluation section">
+                    <span class="material-symbols-rounded">assessment</span>
+                    Evaluation
+                </a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main>
+        <section id="dashboard" class="section active" role="region" aria-labelledby="dashboard-heading">
+            <h2 id="dashboard-heading">Dashboard</h2>
+            <div class="dashboard-grid">
+                <div class="card metric-card">
+                    <div>
+                        <div class="metric-label">Total Subjects</div>
+                        <div class="metric-value" id="totalSubjectsMetric">200</div>
+                    </div>
+                    <span class="material-symbols-rounded" style="font-size: 48px; color: var(--info-color);" aria-hidden="true">group</span>
+                </div>
+                 <div class="card metric-card">
+                    <div>
+                        <div class="metric-label">Features Extracted</div>
+                        <div class="metric-value" id="featuresExtractedMetric">Pending</div>
+                    </div>
+                     <span class="material-symbols-rounded" style="font-size: 48px; color: var(--warning-color);" aria-hidden="true">tune</span>
+                </div>
+                 <div class="card metric-card">
+                    <div>
+                        <div class="metric-label">Model Status</div>
+                        <div class="metric-value" id="modelStatusMetric">Untrained</div>
+                    </div>
+                     <span class="material-symbols-rounded" style="font-size: 48px; color: var(--secondary-color);" aria-hidden="true">model_training</span>
+                </div>
+                 <div class="card metric-card">
+                    <div>
+                        <div class="metric-label">Last Run</div>
+                        <div class="metric-value" id="lastRunMetric">N/A</div>
+                    </div>
+                     <span class="material-symbols-rounded" style="font-size: 48px; color: var(--text-light-color);" aria-hidden="true">history</span>
+                </div>
+            </div>
+            <!-- Placeholder for recent activity or summary charts -->
+        </section>
+
+        <section id="subjects" class="section" role="region" aria-labelledby="subjects-heading">
+            <h2 id="subjects-heading">Subjects & Data</h2>
+            <div class="card">
+                <h3 class="card-title">Subject List</h3>
+                <table aria-describedby="subject-list-description">
+                    <caption id="subject-list-description" class="visually-hidden">List of subjects in the dataset</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Subject ID</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Group</th>
+                            <th scope="col">Features Extracted</th>
+                            <th scope="col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr data-subject-id="SUB001" tabindex="0" role="button" aria-label="View details for Subject SUB001">
+                            <td>SUB001</td>
+                            <td>Ready</td>
+                            <td>Control</td>
+                            <td>No</td>
+                            <td><button class="button button-secondary view-subject-btn" data-subject-id="SUB001" aria-label="View details for Subject SUB001">View Details</button></td>
+                        </tr>
+                        <tr data-subject-id="SUB002" tabindex="0" role="button" aria-label="View details for Subject SUB002">
+                            <td>SUB002</td>
+                            <td>Ready</td>
+                            <td>Patient</td>
+                            <td>No</td>
+                            <td><button class="button button-secondary view-subject-btn" data-subject-id="SUB002" aria-label="View details for Subject SUB002">View Details</button></td>
+                        </tr>
+                         <tr data-subject-id="SUB003" tabindex="0" role="button" aria-label="View details for Subject SUB003">
+                            <td>SUB003</td>
+                            <td>Ready</td>
+                            <td>Control</td>
+                            <td>No</td>
+                            <td><button class="button button-secondary view-subject-btn" data-subject-id="SUB003" aria-label="View details for Subject SUB003">View Details</button></td>
+                        </tr>
+                        <!-- More rows would be added dynamically -->
+                    </tbody>
+                </table>
+            </div>
+            <!-- Placeholder for data upload/management controls -->
+        </section>
+
+        <section id="feature-extraction" class="section" role="region" aria-labelledby="feature-extraction-heading">
+            <h2 id="feature-extraction-heading">Feature Extraction</h2>
+            <div class="card">
+                <h3 class="card-title">Configuration</h3>
+                <form id="featureExtractionForm" novalidate>
+                    <div class="form-group">
+                        <label for="featureSet">Feature Set:</label>
+                        <select id="featureSet" name="featureSet" required aria-required="true">
+                            <option value="">-- Select Feature Set --</option>
+                            <option value="mfcc">MFCC</option>
+                            <option value="prosodic">Prosodic Features</option>
+                            <option value="spectral">Spectral Features</option>
+                            <option value="combined">Combined</option>
+                        </select>
+                         <div class="error-message" id="featureSetError">Please select a feature set.</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="windowSize" data-tooltip="Window size in milliseconds for frame analysis.">Window Size (ms):</label>
+                        <input type="number" id="windowSize" name="windowSize" value="25" min="10" required aria-required="true">
+                         <div class="error-message" id="windowSizeError">Window size must be a number greater than or equal to 10.</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="stepSize" data-tooltip="Step size in milliseconds between consecutive frames.">Step Size (ms):</label>
+                        <input type="number" id="stepSize" name="stepSize" value="10" min="5" required aria-required="true">
+                         <div class="error-message" id="stepSizeError">Step size must be a number greater than or equal to 5.</div>
+                    </div>
+                    <!-- Add more parameters as needed -->
+                     <div class="form-group">
+                        <label for="subjectsToProcess">Subjects to Process:</label>
+                        <select id="subjectsToProcess" name="subjectsToProcess" required aria-required="true">
+                            <option value="all">All Subjects</option>
+                            <option value="new">Only Subjects Without Features</option>
+                            <!-- Option for specific subjects could be added -->
+                        </select>
+                         <div class="error-message" id="subjectsToProcessError">Please select subjects to process.</div>
+                    </div>
+                    <button type="submit" class="button button-primary" id="runExtractionButton" aria-label="Run Feature Extraction">
+                         <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>
+                        Run Extraction
+                    </button>
+                </form>
+                <div id="extractionLoading" class="loading-indicator" aria-live="polite" aria-hidden="true">
+                    <div class="spinner" role="status" aria-label="Processing features"></div>
+                    Processing features...
+                </div>
+                <div id="extractionStatus" style="margin-top: var(--spacing-unit)*2; color: var(--text-light-color);" aria-live="polite"></div>
+            </div>
+             <!-- Placeholder for feature visualization (e.g., spectrogram viewer or feature plots) -->
+             <div class="card" style="margin-top: calc(var(--spacing-unit)*3);">
+                 <h3 class="card-title">Feature Visualization (Placeholder)</h3>
+                 <p>Select a subject and extracted feature set to visualize data here (e.g., spectrogram, feature plots).</p>
+                 <div style="height: 300px; background-color: var(--background-color); border-radius: var(--border-radius); display: flex; align-items: center; justify-content: center; color: var(--text-light-color);">
+                     Spectrogram / Feature Plot Placeholder
+                 </div>
+             </div>
+        </section>
+
+        <section id="model-training" class="section" role="region" aria-labelledby="model-training-heading">
+            <h2 id="model-training-heading">Model Training</h2>
+             <div class="card">
+                <h3 class="card-title">Configuration</h3>
+                <form id="modelTrainingForm" novalidate>
+                    <div class="form-group">
+                        <label for="modelType">Model Type:</label>
+                        <select id="modelType" name="modelType" required aria-required="true">
+                            <option value="">-- Select Model Type --</option>
+                            <option value="svm">Support Vector Machine (SVM)</option>
+                            <option value="randomForest">Random Forest</option>
+                            <option value="lstm">LSTM (Recurrent Neural Network)</option>
+                             <option value="cnn">CNN (Convolutional Neural Network)</option>
+                        </select>
+                         <div class="error-message" id="modelTypeError">Please select a model type.</div>
+                    </div>
+                     <div class="form-group">
+                        <label for="featureSubset">Feature Subset (Optional):</label>
+                        <input type="text" id="featureSubset" name="featureSubset" placeholder="e.g., mfcc_1-13, pitch_mean" aria-describedby="featureSubsetHelp">
+                         <small id="featureSubsetHelp" style="color: var(--text-light-color); display: block; margin-top: -var(--spacing-unit);">Comma-separated list of feature names or patterns.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="trainRatio" data-tooltip="Proportion of data to use for training (e.g., 0.8 for 80%).">Training Data Ratio:</label>
+                        <input type="number" id="trainRatio" name="trainRatio" value="0.8" min="0.1" max="0.9" step="0.05" required aria-required="true">
+                         <div class="error-message" id="trainRatioError">Training ratio must be between 0.1 and 0.9.</div>
+                    </div>
+                    <!-- Add more hyperparameters based on model type -->
+                    <div class="form-group">
+                        <label for="hyperparameters">Hyperparameters (JSON format):</label>
+                        <textarea id="hyperparameters" name="hyperparameters" rows="4" placeholder='{"C": 1, "kernel": "rbf"}' aria-describedby="hyperparametersHelp"></textarea>
+                         <small id="hyperparametersHelp" style="color: var(--text-light-color); display: block; margin-top: -var(--spacing-unit);">Enter model-specific hyperparameters in JSON format.</small>
+                         <div class="error-message" id="hyperparametersError">Invalid JSON format.</div>
+                    </div>
+                    <button type="submit" class="button button-primary" id="trainModelButton" aria-label="Train Model">
+                        <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>
+                        Train Model
+                    </button>
+                </form>
+                 <div id="trainingLoading" class="loading-indicator" aria-live="polite" aria-hidden="true">
+                    <div class="spinner" role="status" aria-label="Training model"></div>
+                    Training model...
+                </div>
+                <div id="trainingStatus" style="margin-top: var(--spacing-unit)*2; color: var(--text-light-color);" aria-live="polite"></div>
+            </div>
+        </section>
+
+        <section id="evaluation" class="section" role="region" aria-labelledby="evaluation-heading">
+            <h2 id="evaluation-heading">Evaluation</h2>
+             <div class="card">
+                <h3 class="card-title">Model Performance Metrics</h3>
+                <div id="evaluationMetrics" aria-live="polite">
+                    <p>Run model training first to see evaluation results here.</p>
+                    <!-- Placeholder for metrics like Accuracy, Precision, Recall, F1-score -->
+                </div>
+            </div>
+
+             <div class="card">
+                <h3 class="card-title">Confusion Matrix</h3>
+                 <div class="chart-container" role="img" aria-label="Confusion Matrix Chart">
+                     <canvas id="confusionMatrixChart"></canvas>
+                     <div class="floating-controls" id="confusionMatrixControls" aria-hidden="true">
+                          <h4 style="margin-top:0; margin-bottom: var(--spacing-unit); font-size: 1em;">Chart Controls</h4>
+                         <div class="control-group">
+                             <label for="confusionMatrixChartType">Chart Type:</label>
+                             <select id="confusionMatrixChartType" aria-label="Select Confusion Matrix Chart Type">
+                                 <option value="bar">Bar</option>
+                                 <option value="doughnut">Doughnut</option>
+                             </select>
+                         </div>
+                          <div class="control-group">
+                             <label for="confusionMatrixColorScheme">Color Scheme:</label>
+                             <select id="confusionMatrixColorScheme" aria-label="Select Confusion Matrix Color Scheme">
+                                 <option value="default">Default</option>
+                                 <option value="green-red">Green/Red</option>
+                             </select>
+                         </div>
+                          <div class="control-group">
+                             <label for="confusionMatrixShowValues" class="checkbox-label">
+                                 <input type="checkbox" id="confusionMatrixShowValues" aria-label="Show values on Confusion Matrix Chart">
+                                 Show Values
+                             </label>
+                         </div>
+                     </div>
+                 </div>
+            </div>
+
+             <div class="card">
+                <h3 class="card-title">ROC Curve</h3>
+                 <div class="chart-container" role="img" aria-label="ROC Curve Chart">
+                     <canvas id="rocCurveChart"></canvas>
+                      <div class="floating-controls" id="rocCurveControls" aria-hidden="true">
+                           <h4 style="margin-top:0; margin-bottom: var(--spacing-unit); font-size: 1em;">Chart Controls</h4>
+                         <div class="control-group">
+                             <label for="rocCurveShowAuc" class="checkbox-label">
+                                 <input type="checkbox" id="rocCurveShowAuc" checked aria-label="Show AUC on ROC Curve Chart">
+                                 Show AUC
+                             </label>
+                         </div>
+                          <div class="control-group">
+                             <label for="rocCurveLineColor">Line Color:</label>
+                             <input type="color" id="rocCurveLineColor" value="#007bff" aria-label="Change ROC Curve Line Color">
+                         </div>
+                          <div class="control-group">
+                             <label for="rocCurvePointSize">Point Size:</label>
+                             <input type="number" id="rocCurvePointSize" value="3" min="0" max="10" step="1" aria-label="Change ROC Curve Point Size">
+                         </div>
+                     </div>
+                 </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Subject Details Modal -->
+    <div id="subjectDetailsModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-hidden="true">
+        <div class="modal-content">
+            <button class="close-button" aria-label="Close Modal">&times;</button>
+            <h3 id="modalTitle">Subject Details: <span id="modalSubjectId"></span></h3>
+            <div id="modalSubjectContent">
+                <p><strong>Status:</strong> <span id="modalSubjectStatus"></span></p>
+                <p><strong>Group:</strong> <span id="modalSubjectGroup"></span></p>
+                 <p><strong>Features Extracted:</strong> <span id="modalSubjectFeatures"></span></p>
+                <h4>Audio Files (Placeholder)</h4>
+                <ul>
+                    <li>Interview 1.wav</li>
+                    <li>Interview 2.wav</li>
+                </ul>
+                <h4>Extracted Features (Placeholder)</h4>
+                <p>Select feature set to view details or visualize.</p>
+                 <div class="card" style="margin-top: var(--spacing-unit)*2; padding: var(--spacing-unit)*2; background-color: var(--background-color);">
+                     <h5 style="margin-top:0; margin-bottom:var(--spacing-unit);">MFCC Features (Example)</h5>
+                     <p>Mean MFCC1: 12.34</p>
+                     <p>Mean MFCC2: -5.67</p>
+                     <!-- ... more features ... -->
+                     <button class="button button-secondary" style="margin-top: var(--spacing-unit)*2;">Visualize MFCCs</button>
+                 </div>
+                 <div class="card" style="margin-top: var(--spacing-unit)*2; padding: var(--spacing-unit)*2; background-color: var(--background-color);">
+                     <h5 style="margin-top:0; margin-bottom:var(--spacing-unit);">Prosodic Features (Example)</h5>
+                     <p>Mean Pitch: 150 Hz</p>
+                     <p>Jitter: 0.01</p>
+                      <!-- ... more features ... -->
+                      <button class="button button-secondary" style="margin-top: var(--spacing-unit)*2;">Visualize Prosody</button>
+                 </div>
+                <!-- Placeholder for detailed feature data table or visualization -->
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+        // Import datalabels plugin if needed for chart values
+        // import ChartDataLabels from 'https://esm.sh/chartjs-plugin-datalabels';
+        // Chart.register(ChartDataLabels); // Register the plugin
+
+        // --- UI State Management ---
+        const uiState = {
+            activeSection: 'dashboard',
+            loading: {
+                extraction: false,
+                training: false
+            },
+            modalOpen: false,
+            charts: {}, // Store Chart.js instances
+            evaluationMetrics: null, // Placeholder for evaluation results
+            // Simulate subject data structure
+            subjects: [
+                { id: 'SUB001', status: 'Ready', group: 'Control', featuresExtracted: false },
+                { id: 'SUB002', status: 'Ready', group: 'Patient', featuresExtracted: false },
+                { id: 'SUB003', status: 'Ready', group: 'Control', featuresExtracted: false },
+                // ... add more subjects up to 200
+                { id: 'SUB200', status: 'Ready', group: 'Patient', featuresExtracted: false },
+            ]
+        };
+
+        // --- DOM Elements ---
+        const navLinks = document.querySelectorAll('.sidebar-nav .nav-link');
+        const sections = document.querySelectorAll('main .section');
+        const subjectDetailsModal = document.getElementById('subjectDetailsModal');
+        const modalSubjectId = document.getElementById('modalSubjectId');
+        const modalSubjectContent = document.getElementById('modalSubjectContent'); // Placeholder for content
+        const modalSubjectStatus = document.getElementById('modalSubjectStatus');
+        const modalSubjectGroup = document.getElementById('modalSubjectGroup');
+        const modalSubjectFeatures = document.getElementById('modalSubjectFeatures');
+        const closeButton = subjectDetailsModal.querySelector('.close-button');
+        const viewSubjectButtons = document.querySelectorAll('.view-subject-btn'); // Initial buttons
+        const subjectTableBody = document.querySelector('#subjects tbody');
+
+        const featureExtractionForm = document.getElementById('featureExtractionForm');
+        const runExtractionButton = document.getElementById('runExtractionButton');
+        const extractionLoadingIndicator = document.getElementById('extractionLoading');
+        const extractionStatus = document.getElementById('extractionStatus');
+        const featureSetSelect = document.getElementById('featureSet');
+        const windowSizeInput = document.getElementById('windowSize');
+        const stepSizeInput = document.getElementById('stepSize');
+        const subjectsToProcessSelect = document.getElementById('subjectsToProcess');
+
+        const modelTrainingForm = document.getElementById('modelTrainingForm');
+        const trainModelButton = document.getElementById('trainModelButton');
+        const trainingLoadingIndicator = document.getElementById('trainingLoading');
+        const trainingStatus = document.getElementById('trainingStatus');
+        const modelTypeSelect = document.getElementById('modelType');
+        const trainRatioInput = document.getElementById('trainRatio');
+        const hyperparametersTextarea = document.getElementById('hyperparameters');
+
+
+        const evaluationMetricsDiv = document.getElementById('evaluationMetrics');
+
+        // Chart Canvases
+        const confusionMatrixCanvas = document.getElementById('confusionMatrixChart');
+        const rocCurveCanvas = document.getElementById('rocCurveChart');
+
+        // Chart Controls
+        const confusionMatrixControls = document.getElementById('confusionMatrixControls');
+        const rocCurveControls = document.getElementById('rocCurveControls');
+        const confusionMatrixChartTypeSelect = document.getElementById('confusionMatrixChartType');
+        const confusionMatrixColorSchemeSelect = document.getElementById('confusionMatrixColorScheme');
+        const confusionMatrixShowValuesCheckbox = document.getElementById('confusionMatrixShowValues');
+        const rocCurveShowAucCheckbox = document.getElementById('rocCurveShowAuc');
+        const rocCurveLineColorInput = document.getElementById('rocCurveLineColor');
+        const rocCurvePointSizeInput = document.getElementById('rocCurvePointSize');
+
+
+        // --- Functions ---
+
+        function renderUI() {
+            // Update navigation active state
+            navLinks.forEach(link => {
+                if (link.dataset.section === uiState.activeSection) {
+                    link.classList.add('active');
+                    link.setAttribute('aria-current', 'page');
+                } else {
+                    link.classList.remove('active');
+                    link.removeAttribute('aria-current');
+                }
+            });
+
+            // Show/hide sections
+            sections.forEach(section => {
+                if (section.id === uiState.activeSection) {
+                    section.classList.add('active');
+                    section.setAttribute('aria-hidden', 'false');
+                } else {
+                    section.classList.remove('active');
+                    section.setAttribute('aria-hidden', 'true');
+                }
+            });
+
+            // Update dashboard metrics (placeholders)
+            document.getElementById('totalSubjectsMetric').textContent = uiState.subjects.length;
+            const featuresExtractedCount = uiState.subjects.filter(s => s.featuresExtracted).length;
+            document.getElementById('featuresExtractedMetric').textContent = featuresExtractedCount > 0 ? `${featuresExtractedCount} / ${uiState.subjects.length}` : 'Pending';
+            document.getElementById('modelStatusMetric').textContent = uiState.evaluationMetrics ? 'Trained' : 'Untrained';
+             // Last run metric is updated in simulateLoading
+
+            // Update loading indicators
+            extractionLoadingIndicator.classList.toggle('active', uiState.loading.extraction);
+            runExtractionButton.disabled = uiState.loading.extraction;
+            runExtractionButton.setAttribute('aria-disabled', uiState.loading.extraction);
+
+
+            trainingLoadingIndicator.classList.toggle('active', uiState.loading.training);
+            trainModelButton.disabled = uiState.loading.training;
+            trainModelButton.setAttribute('aria-disabled', uiState.loading.training);
+
+
+            // Update modal visibility
+            if (uiState.modalOpen) {
+                 subjectDetailsModal.style.display = 'block';
+                 subjectDetailsModal.classList.remove('closing');
+                 subjectDetailsModal.setAttribute('aria-hidden', 'false');
+                 // Focus the modal content or a specific element inside for accessibility
+                 subjectDetailsModal.querySelector('.modal-content').focus();
+            } else {
+                 subjectDetailsModal.classList.add('closing');
+                 subjectDetailsModal.setAttribute('aria-hidden', 'true');
+                 // Hide after animation
+                 setTimeout(() => {
+                     if (!uiState.modalOpen) { // Ensure state hasn't changed back
+                         subjectDetailsModal.style.display = 'none';
+                     }
+                 }, parseInt(getComputedStyle(subjectDetailsModal).animationDuration) * 1000);
+            }
+
+
+            // Update evaluation metrics display
+            if (uiState.evaluationMetrics) {
+                evaluationMetricsDiv.innerHTML = `
+                    <p><strong>Accuracy:</strong> ${uiState.evaluationMetrics.accuracy.toFixed(3)}</p>
+                    <p><strong>Precision (Macro Avg):</strong> ${uiState.evaluationMetrics.precision.toFixed(3)}</p>
+                    <p><strong>Recall (Macro Avg):</strong> ${uiState.evaluationMetrics.recall.toFixed(3)}</p>
+                    <p><strong>F1-Score (Macro Avg):</strong> ${uiState.evaluationMetrics.f1score.toFixed(3)}</p>
+                    <h4>Class-wise Metrics:</h4>
+                    <ul>
+                        <li><strong>Control:</strong> Precision=${uiState.evaluationMetrics.classMetrics.control.precision.toFixed(3)}, Recall=${uiState.evaluationMetrics.classMetrics.control.recall.toFixed(3)}, F1=${uiState.evaluationMetrics.classMetrics.control.f1score.toFixed(3)}</li>
+                         <li><strong>Patient:</strong> Precision=${uiState.evaluationMetrics.classMetrics.patient.precision.toFixed(3)}, Recall=${uiState.evaluationMetrics.classMetrics.patient.recall.toFixed(3)}, F1=${uiState.evaluationMetrics.classMetrics.patient.f1score.toFixed(3)}</li>
+                    </ul>
+                `;
+            } else {
+                 evaluationMetricsDiv.innerHTML = '<p>Run model training first to see evaluation results here.</p>';
+            }
+
+            // Hide chart controls if not on evaluation page
+             if (uiState.activeSection !== 'evaluation') {
+                confusionMatrixControls.classList.remove('active');
+                rocCurveControls.classList.remove('active');
+                confusionMatrixControls.setAttribute('aria-hidden', 'true');
+                rocCurveControls.setAttribute('aria-hidden', 'true');
+             } else {
+                 // Chart controls become potentially visible when section is active
+                 // They are toggled active by clicking the chart canvas
+                  confusionMatrixControls.setAttribute('aria-hidden', !confusionMatrixControls.classList.contains('active'));
+                  rocCurveControls.setAttribute('aria-hidden', !rocCurveControls.classList.contains('active'));
+             }
+
+             // Update subject table (simple example)
+             renderSubjectTable();
+        }
+
+        function renderSubjectTable() {
+            subjectTableBody.innerHTML = ''; // Clear existing rows
+            uiState.subjects.forEach(subject => {
+                const row = document.createElement('tr');
+                row.dataset.subjectId = subject.id;
+                row.setAttribute('tabindex', '0'); // Make row focusable
+                row.setAttribute('role', 'button'); // Indicate it's clickable
+                row.setAttribute('aria-label', `View details for Subject ${subject.id}`);
+
+                row.innerHTML = `
+                    <td>${subject.id}</td>
+                    <td>${subject.status}</td>
+                    <td>${subject.group}</td>
+                    <td>${subject.featuresExtracted ? 'Yes' : 'No'}</td>
+                    <td><button class="button button-secondary view-subject-btn" data-subject-id="${subject.id}" aria-label="View details for Subject ${subject.id}">View Details</button></td>
+                `;
+                subjectTableBody.appendChild(row);
+            });
+             // Re-attach event listeners to new buttons/rows
+            attachSubjectTableListeners();
+        }
+
+        function attachSubjectTableListeners() {
+             // Remove old listeners first if they were attached to buttons directly
+             // (Better approach is event delegation on the table body)
+             subjectTableBody.removeEventListener('click', handleSubjectRowClick);
+             subjectTableBody.removeEventListener('keydown', handleSubjectRowKeydown);
+
+             subjectTableBody.addEventListener('click', handleSubjectRowClick);
+             subjectTableBody.addEventListener('keydown', handleSubjectRowKeydown);
+        }
+
+        function handleSubjectRowClick(e) {
+             const row = e.target.closest('tr[data-subject-id]');
+             const button = e.target.closest('.view-subject-btn');
+             if (row) {
+                 const subjectId = row.dataset.subjectId;
+                 openSubjectDetailsModal(subjectId);
+             } else if (button) {
+                  // Handle button click specifically if needed, though row click covers it
+                  const subjectId = button.dataset.subjectId;
+                  openSubjectDetailsModal(subjectId);
+             }
+        }
+
+         function handleSubjectRowKeydown(e) {
+             const row = e.target.closest('tr[data-subject-id]');
+              if (row && (e.key === 'Enter' || e.key === ' ')) {
+                 e.preventDefault();
+                 const subjectId = row.dataset.subjectId;
+                 openSubjectDetailsModal(subjectId);
+             }
+         }
+
+
+        function openSubjectDetailsModal(subjectId) {
+            // Find the subject in state (simulate fetching data)
+            const subject = uiState.subjects.find(s => s.id === subjectId);
+
+            if (subject) {
+                modalSubjectId.textContent = subject.id;
+                modalSubjectStatus.textContent = subject.status;
+                modalSubjectGroup.textContent = subject.group;
+                modalSubjectFeatures.textContent = subject.featuresExtracted ? 'Yes' : 'No';
+
+                // Placeholder for more detailed content - could load dynamic data here
+                // modalSubjectContent.innerHTML = `... detailed content ...`;
+
+                uiState.modalOpen = true;
+                renderUI();
+            } else {
+                console.error(`Subject with ID ${subjectId} not found.`);
+                // Optionally show an error message
+            }
+        }
+
+        function closeSubjectDetailsModal() {
+            uiState.modalOpen = false;
+            renderUI();
+        }
+
+        function validateForm(form) {
+            let isValid = true;
+            const errorMessages = form.querySelectorAll('.error-message');
+            errorMessages.forEach(msg => msg.style.display = 'none'); // Hide all messages first
+
+            form.querySelectorAll('input, select, textarea').forEach(input => {
+                // Check HTML5 validity
+                if (!input.checkValidity()) {
+                    isValid = false;
+                    // Find the corresponding error message element
+                    const errorElement = document.getElementById(input.id + 'Error');
+                    if (errorElement) {
+                        errorElement.textContent = input.validationMessage || 'Invalid input.';
+                        errorElement.style.display = 'block';
+                    }
+                } else {
+                     // Specific custom validation (e.g., JSON format)
+                     if (input.id === 'hyperparameters' && input.value.trim() !== '') {
+                         try {
+                             JSON.parse(input.value);
+                         } catch (e) {
+                             isValid = false;
+                             const errorElement = document.getElementById(input.id + 'Error');
+                             if (errorElement) {
+                                 errorElement.textContent = 'Invalid JSON format.';
+                                 errorElement.style.display = 'block';
+                             }
+                         }
+                     }
+                }
+            });
+
+            return isValid;
+        }
+
+
+        function simulateLoading(process, duration = 2000, success = true) {
+            uiState.loading[process] = true;
+            renderUI();
+            // Placeholder status message
+            const statusElement = process === 'extraction' ? extractionStatus : trainingStatus;
+            statusElement.style.color = 'var(--text-light-color)';
+            statusElement.textContent = `Starting ${process}...`;
+
+            setTimeout(() => {
+                uiState.loading[process] = false;
+                if (success) {
+                     statusElement.style.color = 'var(--success-color)';
+                    // Placeholder success/completion message
+                     if (process === 'extraction') {
+                         statusElement.textContent = 'Feature extraction complete.';
+                          // Simulate updating subject data
+                         uiState.subjects.forEach(s => s.featuresExtracted = true);
+                          // Update dashboard metric placeholder
+                         document.getElementById('featuresExtractedMetric').textContent = `${uiState.subjects.length} / ${uiState.subjects.length}`;
+                         document.getElementById('lastRunMetric').textContent = new Date().toLocaleDateString();
+                     }
+                     if (process === 'training') {
+                         statusElement.textContent = 'Model training complete. See Evaluation section.';
+                          // Update dashboard metric placeholder
+                         document.getElementById('modelStatusMetric').textContent = 'Trained';
+                         document.getElementById('lastRunMetric').textContent = new Date().toLocaleDateString();
+                         // Simulate evaluation results
+                         uiState.evaluationMetrics = {
+                            accuracy: parseFloat((Math.random() * (0.95 - 0.75) + 0.75).toFixed(3)),
+                            precision: parseFloat((Math.random() * (0.9 - 0.7) + 0.7).toFixed(3)),
+                            recall: parseFloat((Math.random() * (0.9 - 0.7) + 0.7).toFixed(3)),
+                            f1score: parseFloat((Math.random() * (0.9 - 0.7) + 0.7).toFixed(3)),
+                            classMetrics: {
+                                control: { precision: parseFloat(Math.random().toFixed(3)), recall: parseFloat(Math.random().toFixed(3)), f1score: parseFloat(Math.random().toFixed(3)) },
+                                patient: { precision: parseFloat(Math.random().toFixed(3)), recall: parseFloat(Math.random().toFixed(3)), f1score: parseFloat(Math.random().toFixed(3)) }
+                            }
+                         };
+                         // Re-initialize charts with new data (or update existing ones)
+                         initCharts();
+                     }
+                } else {
+                    statusElement.style.color = 'var(--danger-color)';
+                    statusElement.textContent = `${process} failed. Check logs for details.`; // Simulate error message
+                }
+                renderUI();
+            }, duration);
+        }
+
+         function initCharts() {
+             // Destroy existing charts if they exist
+             if (uiState.charts.confusionMatrix) uiState.charts.confusionMatrix.destroy();
+             if (uiState.charts.rocCurve) uiState.charts.rocCurve.destroy();
+
+             // Placeholder data for charts (can be updated based on simulated evaluationMetrics)
+             let confusionMatrixData = {
+                 labels: ['Predicted Control', 'Predicted Patient'],
+                 datasets: [{
+                     label: 'Actual Control',
+                     data: [80, 20], // True Negatives, False Positives (Placeholder)
+                     backgroundColor: ["var('--success-color')", "var('--danger-color')"],
+                     borderColor: "var('--surface-color')",
+                     borderWidth: 2
+                 }, {
+                     label: 'Actual Patient',
+                     data: [15, 85], // False Negatives, True Positives (Placeholder)
+                      backgroundColor: ["var('--danger-color')", "var('--success-color')"],
+                     borderColor: "var('--surface-color')",
+                     borderWidth: 2
+                 }]
+             };
+
+              let rocCurveData = {
+                 labels: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1], // False Positive Rate
+                 datasets: [{
+                     label: 'ROC Curve (AUC: N/A)', // Placeholder AUC
+                     data: [0, 0.3, 0.6, 0.75, 0.85, 0.9, 0.94, 0.96, 0.98, 0.99, 1], // True Positive Rate
+                     borderColor: "var('--primary-color')",
+                     borderWidth: 2,
+                     fill: false,
+                     tension: 0.1,
+                     pointRadius: 3,
+                     pointBackgroundColor: "var('--primary-color')"
+                 },
+                 {
+                     label: 'Random (AUC: 0.5)',
+                     data: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1], // Diagonal line
+                     borderColor: "var('--secondary-color')",
+                     borderWidth: 1,
+                     borderDash: [5, 5],
+                     fill: false,
+                     pointRadius: 0
+                 }
+                ]
+             };
+
+             // If evaluation metrics are available, update chart data placeholders
+             if (uiState.evaluationMetrics) {
+                 // Simple placeholder logic based on metrics
+                 const total = uiState.subjects.length;
+                 // Assuming ~50/50 split for simplicity in simulation
+                 const patientCount = Math.round(total / 2);
+                 const controlCount = total - patientCount;
+                 const accuracy = uiState.evaluationMetrics.accuracy;
+
+                 // Simulate confusion matrix counts based on accuracy and class balance
+                 // This is a very rough simulation and won't perfectly match the metrics
+                 const totalCorrect = Math.round(accuracy * total);
+                 const totalIncorrect = total - totalCorrect;
+
+                 // Distribute correct/incorrect based on class balance and simulated recall/precision
+                 const tp = Math.round(uiState.evaluationMetrics.classMetrics.patient.recall * patientCount);
+                 const fn = patientCount - tp;
+                 const tn = Math.round(uiState.evaluationMetrics.classMetrics.control.recall * controlCount);
+                 const fp = controlCount - tn;
+
+
+                 confusionMatrixData.datasets[0].data = [tn, fp]; // Actual Control: TN, FP
+                 confusionMatrixData.datasets[1].data = [fn, tp]; // Actual Patient: FN, TP
+
+                 // Update ROC AUC label
+                 rocCurveData.datasets[0].label = `ROC Curve (AUC: ${uiState.evaluationMetrics.accuracy.toFixed(2)})`;
+             }
+
+
+             // Confusion Matrix Chart
+             const confusionMatrixConfig = {
+                 type: confusionMatrixChartTypeSelect.value, // Use current control value
+                 data: confusionMatrixData,
+                 options: {
+                     responsive: true,
+                     maintainAspectRatio: false,
+                     plugins: {
+                         title: {
+                             display: true,
+                             text: 'Confusion Matrix',
+                             font: { size: 16, weight: 'bold' },
+                             padding: { bottom: 20 }
+                         },
+                         tooltip: {
+                             mode: 'index',
+                             intersect: false,
+                         },
+                         legend: {
+                             position: 'bottom',
+                         },
+                         datalabels: { // Placeholder for potential datalabels plugin
+                             display: confusionMatrixShowValuesCheckbox.checked, // Initially hidden
+                             color: "var('--surface-color')", // White text on colored bars
+                             formatter: Math.round,
+                             font: {
+                                 weight: 'bold'
+                             }
+                         }
+                     },
+                     scales: {
+                         x: {
+                             title: {
+                                 display: true,
+                                 text: 'Predicted Class'
+                             },
+                             stacked: true,
+                         },
+                         y: {
+                             title: {
+                                 display: true,
+                                 text: 'Count'
+                             },
+                             stacked: true,
+                             beginAtZero: true
+                         }
+                     },
+                     onClick: (e) => {
+                         // Only show controls if click is within the chart area, not controls themselves
+                         if (!e.native.target.closest('.floating-controls')) {
+                             confusionMatrixControls.classList.add('active');
+                             confusionMatrixControls.setAttribute('aria-hidden', 'false');
+                         }
+                     },
+                      // Removed onHover/onLeave from canvas itself, handled by chart-container cursor
+                 }
+             };
+             uiState.charts.confusionMatrix = new Chart(confusionMatrixCanvas, confusionMatrixConfig);
+
+             // ROC Curve Chart
+              const rocCurveConfig = {
+                 type: 'line',
+                 data: rocCurveData,
+                 options: {
+                     responsive: true,
+                     maintainAspectRatio: false,
+                     plugins: {
+                         title: {
+                             display: true,
+                             text: 'ROC Curve',
+                             font: { size: 16, weight: 'bold' },
+                             padding: { bottom: 20 }
+                         },
+                         tooltip: {
+                             mode: 'index',
+                             intersect: false,
+                         },
+                         legend: {
+                             position: 'bottom',
+                         }
+                     },
+                     scales: {
+                         x: {
+                             title: {
+                                 display: true,
+                                 text: 'False Positive Rate'
+                             },
+                             type: 'linear',
+                             position: 'bottom',
+                             min: 0,
+                             max: 1
+                         },
+                         y: {
+                             title: {
+                                 display: true,
+                                 text: 'True Positive Rate'
+                             },
+                             min: 0,
+                             max: 1
+                         }
+                     },
+                      onClick: (e) => {
+                         // Only show controls if click is within the chart area, not controls themselves
+                         if (!e.native.target.closest('.floating-controls')) {
+                             rocCurveControls.classList.add('active');
+                             rocCurveControls.setAttribute('aria-hidden', 'false');
+                         }
+                      },
+                       // Removed onHover/onLeave from canvas itself, handled by chart-container cursor
+                 }
+             };
+             uiState.charts.rocCurve = new Chart(rocCurveCanvas, rocCurveConfig);
+
+             // Add event listeners for chart controls - ensure they update the correct chart instance
+             // These listeners only need to be attached once
+         }
+
+         function attachChartControlListeners() {
+             confusionMatrixChartTypeSelect.addEventListener('change', (e) => {
+                 const chart = uiState.charts.confusionMatrix;
+                 if (chart) {
+                     chart.config.type = e.target.value;
+                     // Adjust scales/options if needed for the new type (e.g., stacked for bar)
+                     if (e.target.value === 'bar') {
+                          chart.options.scales.x.stacked = true;
+                          chart.options.scales.y.stacked = true;
+                     } else { // e.g., doughnut
+                          delete chart.options.scales.x;
+                          delete chart.options.scales.y;
+                     }
+                     chart.update();
+                 }
+             });
+
+              confusionMatrixColorSchemeSelect.addEventListener('change', (e) => {
+                 const chart = uiState.charts.confusionMatrix;
+                 if (chart) {
+                     if (e.target.value === 'green-red') {
+                          chart.config.data.datasets[0].backgroundColor = ["var('--success-color')", "var('--danger-color')"];
+                          chart.config.data.datasets[1].backgroundColor = ["var('--danger-color')", "var('--success-color')"];
+                     } else { // default (example colors)
+                          chart.config.data.datasets[0].backgroundColor = ["#4e79a7", "#f28e2c"];
+                          chart.config.data.datasets[1].backgroundColor = ["#e15759", "#76b7b2"];
+                     }
+                     chart.update();
+                 }
+             });
+
+             confusionMatrixShowValuesCheckbox.addEventListener('change', (e) => {
+                 const chart = uiState.charts.confusionMatrix;
+                 if (chart && chart.options.plugins.datalabels) { // Check if datalabels plugin is available/configured
+                     chart.options.plugins.datalabels.display = e.target.checked;
+                     chart.update();
+                 } else if (chart) {
+                     // Simple fallback if plugin isn't used in this example
+                     console.warn("Chart.js Datalabels plugin not available or configured. Cannot show values.");
+                 }
+             });
+
+
+              rocCurveShowAucCheckbox.addEventListener('change', (e) => {
+                 const chart = uiState.charts.rocCurve;
+                 if (chart) {
+                     // Find the dataset for the ROC curve (assuming it's the first one)
+                     const rocDataset = chart.config.data.datasets[0];
+                     if (rocDataset) {
+                         const currentLabel = rocDataset.label;
+                         const aucMatch = currentLabel.match(/\(AUC: .*\)/);
+
+                         if (e.target.checked) {
+                             if (!aucMatch) {
+                                 // Add placeholder AUC or use actual if available
+                                 const aucValue = uiState.evaluationMetrics?.accuracy?.toFixed(2) || 'N/A';
+                                 rocDataset.label = `${currentLabel} (AUC: ${aucValue})`;
+                             }
+                         } else {
+                             if (aucMatch) {
+                                 rocDataset.label = currentLabel.replace(aucMatch[0], '').trim();
+                             }
+                         }
+                         chart.update();
+                     }
+                 }
+             });
+
+              rocCurveLineColorInput.addEventListener('input', (e) => {
+                 const chart = uiState.charts.rocCurve;
+                 if (chart) {
+                     chart.config.data.datasets[0].borderColor = e.target.value;
+                     chart.config.data.datasets[0].pointBackgroundColor = e.target.value;
+                     chart.update();
+                 }
+             });
+
+              rocCurvePointSizeInput.addEventListener('input', (e) => {
+                 const chart = uiState.charts.rocCurve;
+                 if (chart) {
+                     chart.config.data.datasets[0].pointRadius = parseInt(e.target.value);
+                     chart.update();
+                 }
+             });
+
+
+             // Close chart controls when clicking outside
+             document.addEventListener('click', (e) => {
+                 const isClickInsideConfusionControls = e.target.closest('#confusionMatrixControls');
+                 const isClickInsideRocControls = e.target.closest('#rocCurveControls');
+                 const isClickOnConfusionCanvas = e.target.closest('#confusionMatrixChart');
+                 const isClickOnRocCanvas = e.target.closest('#rocCurveChart');
+
+                 if (!isClickInsideConfusionControls && !isClickOnConfusionCanvas) {
+                     confusionMatrixControls.classList.remove('active');
+                     confusionMatrixControls.setAttribute('aria-hidden', 'true');
+                 }
+                  if (!isClickInsideRocControls && !isClickOnRocCanvas) {
+                     rocCurveControls.classList.remove('active');
+                     rocCurveControls.setAttribute('aria-hidden', 'true');
+                 }
+             });
+         }
+
+
+        // --- Event Listeners ---
+
+        // Navigation
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const sectionId = link.dataset.section;
+                switchSection(sectionId);
+            });
+             // Allow keyboard navigation for sidebar links
+             link.addEventListener('keydown', (e) => {
+                 if (e.key === 'Enter' || e.key === ' ') {
+                     e.preventDefault();
+                     const sectionId = link.dataset.section;
+                     switchSection(sectionId);
+                 }
+             });
+        });
+
+        // Subject Details Modal
+        // Event delegation is used for view subject buttons and table rows
+        // Listeners attached in renderSubjectTable -> attachSubjectTableListeners
+
+        closeButton.addEventListener('click', closeSubjectDetailsModal);
+        subjectDetailsModal.addEventListener('click', (e) => {
+            if (e.target === subjectDetailsModal) {
+                closeSubjectDetailsModal();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && uiState.modalOpen) {
+                closeSubjectDetailsModal();
+            }
+        });
+
+        // Feature Extraction Form Submission
+        featureExtractionForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            // Custom form validation check
+            if (!validateForm(featureExtractionForm)) {
+                console.log('Feature Extraction form validation failed.');
+                return;
+            }
+
+            // In a real app, gather form data and send to backend
+            const formData = new FormData(featureExtractionForm);
+            const config = Object.fromEntries(formData.entries());
+            console.log('Feature Extraction form submitted with config:', config);
+
+            // Simulate a process (e.g., 3 seconds, 80% success rate)
+            const success = Math.random() < 0.8;
+            simulateLoading('extraction', 3000, success);
+        });
+
+        // Model Training Form Submission
+        modelTrainingForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+             // Custom form validation check
+            if (!validateForm(modelTrainingForm)) {
+                 console.log('Model Training form validation failed.');
+                return;
+            }
+
+            // In a real app, gather form data and send to backend
+            const formData = new FormData(modelTrainingForm);
+            const config = Object.fromEntries(formData.entries());
+            console.log('Model Training form submitted with config:', config);
+
+            // Simulate a process (e.g., 4 seconds, 90% success rate)
+            const success = Math.random() < 0.9;
+            simulateLoading('training', 4000, success);
+        });
+
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Populate subject list with placeholder data
+            // (Already done in uiState, just need to render the table)
+            renderSubjectTable();
+
+            renderUI(); // Initial render
+            initCharts(); // Initialize charts on page load
+            attachChartControlListeners(); // Attach chart control listeners once
+        });
+
+    </script>
+
+</body>
+</html>

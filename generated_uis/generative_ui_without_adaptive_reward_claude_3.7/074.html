@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coffee Shop Strategy Advisor</title>
+    <style>
+        :root {
+            --primary: #6F4E37;
+            --primary-light: #9C7A5B;
+            --primary-dark: #43302B;
+            --accent: #D4A76A;
+            --accent-light: #E8C9A3;
+            --background: #F9F5F0;
+            --text: #333333;
+            --text-light: #666666;
+            --white: #FFFFFF;
+            --success: #4CAF50;
+            --warning: #FFC107;
+            --danger: #F44336;
+            --radius: 12px;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        header {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 2.4rem;
+        }
+
+        h2 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+        }
+
+        h3 {
+            color: var(--primary-dark);
+            margin-bottom: 10px;
+            font-size: 1.4rem;
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+
+        .card {
+            background: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 24px;
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        .strategy-card {
+            grid-column: 1 / -1;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 20px 0;
+        }
+
+        .floating-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .control-group {
+            margin: 10px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 14px;
+            color: var(--text-light);
+        }
+
+        input, select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            width: 100%;
+            font-size: 14px;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .feature-list {
+            list-style-type: none;
+            margin-left: 0;
+        }
+
+        .feature-list li {
+            position: relative;
+            padding-left: 30px;
+            margin-bottom: 12px;
+        }
+
+        .feature-list li:before {
+            content: "☕";
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+        }
+
+        .pricing-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .pricing-table th, .pricing-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .pricing-table th {
+            background-color: var(--primary-light);
+            color: white;
+        }
+
+        .pricing-table tr:nth-child(even) {
+            background-color: rgba(212, 167, 106, 0.1);
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            font-size: 16px;
+            color: var(--text-light);
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 5px;
+            background-color: var(--accent-light);
+            color: var(--primary-dark);
+        }
+
+        .recommendation {
+            background-color: rgba(76, 175, 80, 0.1);
+            border-left: 4px solid var(--success);
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 var(--radius) var(--radius) 0;
+        }
+
+        .caution {
+            background-color: rgba(255, 193, 7, 0.1);
+            border-left: 4px solid var(--warning);
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 var(--radius) var(--radius) 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Coffee Shop Strategy Advisor</h1>
+            <p>Market positioning and pricing strategies for your specialty coffee shop in a college town</p>
+        </header>
+
+        <div class="card strategy-card">
+            <h2>Market Positioning Strategy</h2>
+            <div class="tabs">
+                <button class="tab active" data-tab="positioning">Positioning</button>
+                <button class="tab" data-tab="competitive">Competitive Analysis</button>
+                <button class="tab" data-tab="target">Target Audience</button>
+            </div>
+
+            <div class="tab-content active" id="positioning">
+                <h3>Recommended Positioning: Educational Coffee Experience</h3>
+                <p>Your direct-trade relationships and educational focus create a perfect opportunity to position your coffee shop as more than just a place to get caffeine - it's a place to learn and connect with global coffee culture.</p>
+                
+                <div class="recommendation">
+                    <h3>Key Positioning Elements</h3>
+                    <ul class="feature-list">
+                        <li><strong>Authentic Connection:</strong> Highlight direct relationships with farmers through photos, stories, and occasional virtual meet-the-farmer events</li>
+                        <li><strong>Transparency:</strong> Display information about where each coffee comes from, how it's processed, and fair compensation practices</li>
+                        <li><strong>Learning Environment:</strong> Create an atmosphere where questions are encouraged and coffee education is accessible</li>
+                        <li><strong>Community Hub:</strong> Position as the local expert on specialty coffee while creating a welcoming space for students</li>
+                    </ul>
+                </div>
+
+                <h3>Visual Identity Recommendations</h3>
+                <p>Your branding should reflect both the educational aspect and the direct connection to coffee origins:</p>
+                <ul class="feature-list">
+                    <li>Use maps, geographical elements, and educational diagrams in your decor</li>
+                    <li>Create informative packaging that tells the story of each coffee</li>
+                    <li>Design menu boards that include educational elements about brewing methods</li>
+                    <li>Develop a cohesive color palette that references coffee-growing regions</li>
+                </ul>
+            </div>
+
+            <div class="tab-content" id="competitive">
+                <h3>Competitive Landscape Analysis</h3>
+                <p>Understanding your competition is crucial for successful positioning:</p>
+                
+                <div class="chart-container">
+                    <canvas id="competitiveChart"></canvas>
+                    <div class="floating-controls" id="competitiveControls">
+                        <div class="control-group">
+                            <label>Chart Type</label>
+                            <select id="competitiveChartType">
+                                <option value="radar">Radar</option>
+                                <option value="bar">Bar</option>
+                                <option value="polarArea">Polar Area</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label>Highlight Category</label>
+                            <select id="highlightCategory">
+                                <option value="all">All Categories</option>
+                                <option value="quality">Coffee Quality</option>
+                                <option value="price">Price Point</option>
+                                <option value="education">Educational Focus</option>
+                                <option value="atmosphere">Atmosphere</option>
+                                <option value="sustainability">Sustainability</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="caution">
+                    <h3>Differentiation Opportunities</h3>
+                    <p>Based on the competitive analysis, here are your key differentiation opportunities:</p>
+                    <ul class="feature-list">
+                        <li><strong>Educational Events:</strong> Offer coffee tastings, brewing classes, and origin stories that chains and other independents don't provide</li>
+                        <li><strong>Transparency:</strong> Create direct-trade storytelling that connects customers to coffee farmers</li>
+                        <li><strong>Student Engagement:</strong> Develop programs specifically designed for the college audience that competitors overlook</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="tab-content" id="target">
+                <h3>Target Audience Segmentation</h3>
+                <p>In a college town, you'll need to appeal to several distinct customer segments:</p>
+                
+                <div class="chart-container">
+                    <canvas id="audienceChart"></canvas>
+                    <div class="floating-controls" id="audienceControls">
+                        <div class="control-group">
+                            <label>Display Format</label>
+                            <select id="audienceChartType">
+                                <option value="doughnut">Doughnut</option>
+                                <option value="pie">Pie</option>
+                                <option value="polarArea">Polar Area</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label>Highlight Segment</label>
+                            <select id="highlightSegment">
+                                <option value="all">All Segments</option>
+                                <option value="students">Students</option>
+                                <option value="faculty">Faculty</option>
+                                <option value="locals">Local Residents</option>
+                                <option value="enthusiasts">Coffee Enthusiasts</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Targeting Strategies for Each Segment</h3>
+                <div class="recommendation">
+                    <h4><span class="badge">Primary</span> Students (40-50% of target market)</h4>
+                    <ul class="feature-list">
+                        <li>Create student ambassador program to build word-of-mouth</li>
+                        <li>Offer study-friendly spaces with ample outlets and reliable WiFi</li>
+                        <li>Develop student loyalty program with educational incentives</li>
+                        <li>Host late-night study events during exam periods</li>
+                    </ul>
+                </div>
+
+                <div class="recommendation">
+                    <h4><span class="badge">Secondary</span> Faculty & Staff (15-20% of target market)</h4>
+                    <ul class="feature-list">
+                        <li>Create faculty discount program or punch card</li>
+                        <li>Host department coffee hours or faculty meetings</li>
+                        <li>Develop quick service options for between-class coffee runs</li>
+                    </ul>
+                </div>
+
+                <div class="recommendation">
+                    <h4><span class="badge">Secondary</span> Local Residents (15-20% of target market)</h4>
+                    <ul class="feature-list">
+                        <li>Create community events and partnerships with local businesses</li>
+                        <li>Offer family-friendly weekend programming</li>
+                        <li>Develop relationships with local offices for catering opportunities</li>
+                    </ul>
+                </div>
+
+                <div class="recommendation">
+                    <h4><span class="badge">Niche</span> Coffee Enthusiasts (10-15% of target market)</h4>
+                    <ul class="feature-list">
+                        <li>Develop advanced tasting events and classes</li>
+                        <li>Create exclusive single-origin subscription program</li>
+                        <li>Host guest speakers from the coffee industry</li>
+                        <li>Offer specialized brewing equipment for sale</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Pricing Strategy</h2>
+            <p>Your pricing strategy needs to balance quality perception with student affordability.</p>
+
+            <h3>Recommended Approach: Tiered Value Pricing</h3>
+            <p>Create a pricing structure that offers multiple entry points while emphasizing the value of your direct-trade relationships and educational components:</p>
+
+            <table class="pricing-table">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Price Range</th>
+                        <th>Positioning</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>House Brew</td>
+                        <td>$2.25 - $2.75</td>
+                        <td>Affordable daily option, still direct-trade</td>
+                    </tr>
+                    <tr>
+                        <td>Specialty Drip</td>
+                        <td>$3.25 - $3.75</td>
+                        <td>Single-origin, rotating selection</td>
+                    </tr>
+                    <tr>
+                        <td>Pour Over</td>
+                        <td>$4.50 - $5.50</td>
+                        <td>Premium experience with education component</td>
+                    </tr>
+                    <tr>
+                        <td>Espresso Drinks</td>
+                        <td>$3.50 - $5.00</td>
+                        <td>Competitive with chains but higher quality</td>
+                    </tr>
+                    <tr>
+                        <td>Signature Drinks</td>
+                        <td>$5.50 - $6.50</td>
+                        <td>Unique offerings highlighting specific origins</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="chart-container">
+                <canvas id="pricingChart"></canvas>
+                <div class="floating-controls" id="pricingControls">
+                    <div class="control-group">
+                        <label>Chart Type</label>
+                        <select id="pricingChartType">
+                            <option value="bar">Bar</option>
+                            <option value="line">Line</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Compare With</label>
+                        <select id="compareWith">
+                            <option value="chains">Chain Cafés</option>
+                            <option value="independents">Independent Competitors</option>
+                            <option value="both">Both</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="recommendation">
+                <h3>Student Affordability Strategies</h3>
+                <ul class="feature-list">
+                    <li><strong>Student Discount Program:</strong> Offer 10% discount with student ID</li>
+                    <li><strong>Study Bundle:</strong> Create affordable coffee + snack combinations for study sessions</li>
+                    <li><strong>Loyalty Program:</strong> Design a program that rewards frequency rather than spending amount</li>
+                    <li><strong>Happy Hour:</strong> Implement reduced prices during non-peak hours to drive traffic</li>
+                    <li><strong>Refill Policy:</strong> Offer discounted refills to encourage longer stays</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Educational Component Implementation</h2>
+            <p>Your educational focus is a key differentiator. Here's how to implement it effectively:</p>
+
+            <h3>In-Store Education</h3>
+            <ul class="feature-list">
+                <li><strong>Tasting Notes:</strong> Include detailed tasting cards with each specialty drink</li>
+                <li><strong>Brewing Demonstrations:</strong> Schedule regular demonstrations of different brewing methods</li>
+                <li><strong>Origin Maps:</strong> Display maps showing where your coffees come from</li>
+                <li><strong>Farmer Profiles:</strong> Create visual displays about the farmers you work with</li>
+                <li><strong>Processing Methods:</strong> Explain different processing methods and how they affect flavor</li>
+            </ul>
+
+            <h3>Educational Events</h3>
+            <ul class="feature-list">
+                <li><strong>Coffee Cupping Sessions:</strong> Weekly tastings comparing different origins</li>
+                <li><strong>Brewing Classes:</strong> Monthly workshops on home brewing techniques</li>
+                <li><strong>Coffee Origin Series:</strong> Quarterly deep dives into specific coffee-growing regions</li>
+                <li><strong>Sustainability Talks:</strong> Partner with environmental studies department for discussions</li>
+                <li><strong>Virtual Farmer Visits:</strong> Organize video calls with your partner farmers</li>
+            </ul>
+
+            <div class="caution">
+                <h3>Educational Content Tips</h3>
+                <p>Make your educational content accessible and engaging:</p>
+                <ul class="feature-list">
+                    <li>Avoid coffee industry jargon when possible, or explain it clearly</li>
+                    <li>Create visual aids that make complex concepts easy to understand</li>
+                    <li>Develop educational content at multiple knowledge levels</li>
+                    <li>Make education participatory rather than lecture-based</li>
+                    <li>Connect coffee education to topics students are studying when possible</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Direct-Trade Storytelling</h2>
+            <p>Your direct relationships with farmers are a powerful differentiator that can justify premium pricing while creating emotional connections with customers.</p>
+
+            <h3>Storytelling Strategies</h3>
+            <ul class="feature-list">
+                <li><strong>Farmer Profiles:</strong> Create visual displays with photos and stories of partner farmers</li>
+                <li><strong>Journey Maps:</strong> Show the journey of coffee from farm to cup</li>
+                <li><strong>Impact Metrics:</strong> Share how direct-trade relationships benefit farming communities</li>
+                <li><strong>QR Codes:</strong> Link to expanded online content about specific origins</li>
+                <li><strong>Packaging:</strong> Include farmer stories on retail coffee bags</li>
+            </ul>
+
+            <div class="recommendation">
+                <h3>Connecting Quality to Price</h3>
+                <p>Help customers understand the relationship between direct trade, quality, and price:</p>
+                <ul class="feature-list">
+                    <li>Create visual comparisons of conventional vs. direct trade supply chains</li>
+                    <li>Explain how direct relationships lead to better quality control</li>
+                    <li>Show how fair pricing to farmers affects final cup quality</li>
+                    <li>Highlight the environmental benefits of your sourcing practices</li>
+                    <li>Connect your pricing to tangible benefits for both customers and producers</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Implementation Timeline</h2>
+            <p>A phased approach to implementing your market positioning and pricing strategy:</p>
+
+            <h3>Phase 1: Pre-Launch (1-3 months)</h3>
+            <ul class="feature-list">
+                <li>Develop visual identity and educational materials</li>
+                <li>Create initial pricing structure based on competitive analysis</li>
+                <li>Build relationships with campus organizations</li>
+                <li>Begin social media storytelling about your direct-trade partnerships</li>
+                <li>Develop educational curriculum for first quarter</li>
+            </ul>
+
+            <h3>Phase 2: Launch (Months 1-3)</h3>
+            <ul class="feature-list">
+                <li>Implement basic educational components in-store</li>
+                <li>Introduce student discount program</li>
+                <li>Host weekly tasting events to build awareness</li>
+                <li>Collect feedback on pricing and adjust if necessary</li>
+                <li>Begin loyalty program enrollment</li>
+            </ul>
+
+            <h3>Phase 3: Growth (Months 4-12)</h3>
+            <ul class="feature-list">
+                <li>Expand educational programming based on customer interest</li>
+                <li>Refine pricing strategy based on first quarter data</li>
+                <li>Develop partnerships with academic departments</li>
+                <li>Implement seasonal specialty drinks with educational components</li>
+                <li>Create more advanced offerings for coffee enthusiasts</li>
+            </ul>
+
+            <div class="caution">
+                <h3>Key Performance Indicators</h3>
+                <p>Track these metrics to evaluate your positioning and pricing strategy:</p>
+                <ul class="feature-list">
+                    <li>Customer segmentation percentages (student vs. non-student)</li>
+                    <li>Average ticket size by customer segment</li>
+                    <li>Attendance at educational events</li>
+                    <li>Specialty coffee sales as percentage of total sales</li>
+                    <li>Customer retention rates</li>
+                    <li>Social media engagement with educational content</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        // Set up competitive analysis chart
+        const competitiveCtx = document.getElementById('competitiveChart').getContext('2d');
+        const competitiveChart = new Chart(competitiveCtx, {
+            type: 'radar',
+            data: {
+                labels: ['Coffee Quality', 'Price Point (Affordability)', 'Educational Focus', 'Atmosphere', 'Sustainability'],
+                datasets: [
+                    {
+                        label: 'Your Shop (Potential)',
+                        data: [9, 6, 10, 8, 9],
+                        backgroundColor: 'rgba(111, 78, 55, 0.2)',
+                        borderColor: 'rgba(111, 78, 55, 1)',
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Chain Cafés',
+                        data: [5, 7, 3, 6, 4],
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Independent Competitors',
+                        data: [8, 5, 5, 9, 7],
+                        backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 2
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 10,
+                        ticks: {
+                            stepSize: 2
+                        }
+                    }
+                },
+                onClick: () => toggleControls('competitiveControls')
+            }
+        });
+
+        // Set up audience chart
+        const audienceCtx = document.getElementById('audienceChart').getContext('2d');
+        const audienceChart = new Chart(audienceCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Students', 'Faculty & Staff', 'Local Residents', 'Coffee Enthusiasts'],
+                datasets: [{
+                    data: [45, 18, 17, 20],
+                    backgroundColor: [
+                        'rgba(111, 78, 55, 0.7)',
+                        'rgba(212, 167, 106, 0.7)',
+                        'rgba(156, 122, 91, 0.7)',
+                        'rgba(67, 48, 43, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(111, 78, 55, 1)',
+                        'rgba(212, 167, 106, 1)',
+                        'rgba(156, 122, 91, 1)',
+                        'rgba(67, 48, 43, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.label + ': ' + context.raw + '%';
+                            }
+                        }
+                    }
+                },
+                onClick: () => toggleControls('audienceControls')
+            }
+        });
+
+        // Set up pricing chart
+        const pricingCtx = document.getElementById('pricingChart').getContext('2d');
+        const pricingChart = new Chart(pricingCtx, {
+            type: 'bar',
+            data: {
+                labels: ['House Brew', 'Specialty Drip', 'Pour Over', 'Espresso Drinks', 'Signature Drinks'],
+                datasets: [
+                    {
+                        label: 'Your Shop',
+                        data: [2.50, 3.50, 5.00, 4.25, 6.00],
+                        backgroundColor: 'rgba(111, 78, 55, 0.7)',
+                        borderColor: 'rgba(111, 78, 55, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Chain Cafés',
+                        data: [2.25, 2.75, 3.50, 4.50, 5.25],
+                        backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Independent Competitors',
+                        data: [2.75, 3.25, 4.75, 4.00, 5.50],
+                        backgroundColor: 'rgba(255, 159, 64, 0.7)',
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Price ($)'
+                        }
+                    }
+                },
+                onClick: () => toggleControls('pricingControls')
+            }
+        });
+
+        // Tab switching functionality
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                // Add active class to clicked tab
+                tab.classList.add('active');
+                
+                // Hide all tab contents
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                // Show the selected tab content
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // Control panel toggle
+        function toggleControls(controlId) {
+            const controls = document.getElementById(controlId);
+            controls.classList.toggle('active');
+        }
+
+        // Close controls when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.floating-controls') && !e.target.closest('canvas')) {
+                document.querySelectorAll('.floating-controls').forEach(control => {
+                    control.classList.remove('active');
+                });
+            }
+        });
+
+        // Competitive chart controls
+        document.getElementById('competitiveChartType').addEventListener('change', (e) => {
+            competitiveChart.config.type = e.target.value;
+            competitiveChart.update();
+        });
+
+        document.getElementById('highlightCategory').addEventListener('change', (e) => {
+            const category = e.target.value;
+            if (category === 'all') {
+                competitiveChart.data.datasets.forEach((dataset, i) => {
+                    dataset.backgroundColor = i === 0 
+                        ? 'rgba(111, 78, 55, 0.2)' 
+                        : i === 1 
+                            ? 'rgba(54, 162, 235, 0.2)' 
+                            : 'rgba(255, 159, 64, 0.2)';
+                });
+            } else {
+                const index = competitiveChart.data.labels.findIndex(label => 
+                    label.toLowerCase().includes(category.toLowerCase()));
+                
+                if (index !== -1) {
+                    competitiveChart.data.datasets.forEach((dataset, i) => {
+                        const backgroundColor = Array(5).fill('rgba(200, 200, 200, 0.1)');
+                        backgroundColor[index] = i === 0 
+                            ? 'rgba(111, 78, 55, 0.7)' 
+                            : i === 1 
+                                ? 'rgba(54, 162, 235, 0.7)' 
+                                : 'rgba(255, 159, 64, 0.7)';
+                        dataset.backgroundColor = backgroundColor;
+                    });
+                }
+            }
+            competitiveChart.update();
+        });
+
+        // Audience chart controls
+        document.getElementById('audienceChartType').addEventListener('change', (e) => {
+            audienceChart.config.type = e.target.value;
+            audienceChart.update();
+        });
+
+        document.getElementById('highlightSegment').addEventListener('change', (e) => {
+            const segment = e.target.value;
+            const originalColors = [
+                'rgba(111, 78, 55, 0.7)',
+                'rgba(212, 167, 106, 0.7)',
+                'rgba(156, 122, 91, 0.7)',
+                'rgba(67, 48, 43, 0.7)'
+            ];
+            
+            if (segment === 'all') {
+                audienceChart.data.datasets[0].backgroundColor = originalColors;
+            } else {
+                const index = {
+                    'students': 0,
+                    'faculty': 1,
+                    'locals': 2,
+                    'enthusiasts': 3
+                }[segment];
+                
+                if (index !== undefined) {
+                    const backgroundColor = Array(4).fill('rgba(200, 200, 200, 0.3)');
+                    backgroundColor[index] = originalColors[index];
+                    audienceChart.data.datasets[0].backgroundColor = backgroundColor;
+                }
+            }
+            audienceChart.update();
+        });
+
+        // Pricing chart controls
+        document.getElementById('pricingChartType').addEventListener('change', (e) => {
+            pricingChart.config.type = e.target.value;
+            pricingChart.update();
+        });
+
+        document.getElementById('compareWith').addEventListener('change', (e) => {
+            const compare = e.target.value;
+            
+            if (compare === 'chains') {
+                pricingChart.data.datasets[1].hidden = false;
+                pricingChart.data.datasets[2].hidden = true;
+            } else if (compare === 'independents') {
+                pricingChart.data.datasets[1].hidden = true;
+                pricingChart.data.datasets[2].hidden = false;
+            } else {
+                pricingChart.data.datasets[1].hidden = false;
+                pricingChart.data.datasets[2].hidden = false;
+            }
+            
+            pricingChart.update();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding CI/CD Pipelines</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400..700,0..1,-50..200" />
+    <style>
+        :root {
+            --primary-color: #007acc;
+            --secondary-color: #28a745;
+            --background-color: #f4f7f6;
+            --surface-color: #ffffff;
+            --text-color: #333;
+            --text-light-color: #666;
+            --border-color: #ddd;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --code-color: #e83e8c;
+            --build-color: #ffc107;
+            --test-color: #17a2b8;
+            --deploy-color: #6f42c1;
+            --monitor-color: #dc3545;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            overflow-x: hidden; /* Prevent horizontal scroll from panel */
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+            padding: 1rem 0;
+            text-align: center;
+            box-shadow: 0 2px 4px var(--shadow-color);
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        section {
+            background-color: var(--surface-color);
+            padding: 30px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px var(--shadow-color);
+        }
+
+        h2 {
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+
+        .pipeline-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .pipeline-container {
+            display: flex;
+            gap: 20px;
+            position: relative; /* Needed for panel positioning */
+        }
+
+        .visualization {
+            flex-grow: 1;
+            min-width: 0; /* Allow shrinking */
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: auto; /* Enable horizontal scroll on smaller screens */
+        }
+
+        .pipeline-svg {
+            width: 100%;
+            min-width: 800px; /* Minimum width for the SVG content */
+            height: 300px; /* Adjust height as needed */
+            overflow: visible; /* Ensure markers are visible */
+        }
+
+        .stage-node {
+            cursor: pointer;
+            transition: transform 0.2s ease-in-out, fill 0.2s ease-in-out;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1));
+        }
+
+        .stage-node:hover {
+            transform: translateY(-5px);
+        }
+
+        .stage-node.active rect,
+        .stage-node.active circle {
+             stroke: var(--primary-color);
+             stroke-width: 4px;
+             filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2));
+        }
+
+        .stage-node rect, .stage-node circle {
+            transition: stroke 0.2s ease-in-out, stroke-width 0.2s ease-in-out;
+        }
+
+        .stage-node text {
+            pointer-events: none; /* Allow clicks to pass through text to the shape */
+            font-size: 14px;
+            fill: var(--text-color);
+            font-weight: 500;
+            text-anchor: middle;
+            dominant-baseline: middle;
+        }
+
+        .stage-icon {
+             pointer-events: none;
+             font-family: 'Material Symbols Rounded';
+             font-size: 24px;
+             fill: var(--text-color);
+             text-anchor: middle;
+             dominant-baseline: middle;
+             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .stage-node.active .stage-icon {
+             font-variation-settings: 'FILL' 1, 'wght' 700, 'GRAD' 0, 'opsz' 24;
+        }
+
+
+        .pipeline-line {
+            stroke: var(--border-color);
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .arrowhead {
+            fill: var(--border-color);
+        }
+
+        .explanation-panel {
+            width: 350px;
+            flex-shrink: 0;
+            background-color: var(--surface-color);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px var(--shadow-color);
+            position: absolute;
+            top: 0;
+            right: -370px; /* Start off-screen */
+            height: 100%; /* Take full height of container */
+            overflow-y: auto;
+            transition: right 0.3s ease-in-out;
+            z-index: 10;
+            border: 1px solid var(--border-color);
+        }
+
+        .explanation-panel.active {
+            right: 0; /* Slide in */
+        }
+
+        .explanation-panel h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .explanation-panel .close-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-light-color);
+            transition: color 0.2s ease;
+        }
+
+        .explanation-panel .close-panel:hover {
+            color: var(--text-color);
+        }
+
+        .explanation-panel .panel-content p {
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .benefit-item {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .benefit-item .material-symbols-rounded {
+            font-size: 48px;
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 48;
+        }
+
+        .benefit-item h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        /* Tooltip styles */
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 20;
+            transform: translate(-50%, -110%); /* Position above the element */
+            white-space: nowrap;
+        }
+
+
+        /* Responsive adjustments */
+        @media (max-width: 992px) {
+            .pipeline-container {
+                flex-direction: column;
+            }
+
+            .explanation-panel {
+                position: static; /* Stack below visualization */
+                width: 100%;
+                height: auto;
+                right: auto;
+                margin-top: 20px;
+                box-shadow: 0 1px 3px var(--shadow-color); /* Re-add shadow */
+                transform: translateX(100%); /* Start off-screen to the right */
+                transition: transform 0.3s ease-in-out;
+            }
+
+            .explanation-panel.active {
+                transform: translateX(0); /* Slide in */
+            }
+
+            .visualization {
+                 overflow-x: auto; /* Ensure horizontal scroll on smaller screens */
+                 justify-content: flex-start; /* Align SVG to the left */
+            }
+        }
+
+        @media (max-width: 768px) {
+            main {
+                padding: 0 10px;
+            }
+
+            section {
+                padding: 20px;
+            }
+
+            h2 {
+                font-size: 1.8rem;
+            }
+
+            .benefit-item {
+                padding: 15px;
+            }
+
+            .benefit-item .material-symbols-rounded {
+                font-size: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Understanding CI/CD Pipelines</h1>
+    </header>
+
+    <main>
+        <section class="intro">
+            <h2>What is CI/CD?</h2>
+            <p>CI/CD stands for Continuous Integration and Continuous Delivery/Deployment. It's a methodology and set of practices that aim to deliver applications more frequently and reliably to customers. It involves automating various stages of the software development lifecycle.</p>
+            <p>A CI/CD pipeline is an automated workflow that takes code changes from version control, builds, tests, and prepares them for release. This process helps teams detect issues early, reduce manual errors, and accelerate the release cycle.</p>
+        </section>
+
+        <section class="pipeline-section">
+            <h2>The CI/CD Pipeline Stages</h2>
+            <div class="pipeline-container">
+                <div class="visualization">
+                    <svg class="pipeline-svg" viewBox="0 0 800 260" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" class="arrowhead" />
+                            </marker>
+                        </defs>
+
+                        <!-- Pipeline Stages -->
+                        <g class="pipeline-stages">
+                            <!-- Code Stage -->
+                            <g class="stage-node" data-stage="code" transform="translate(50, 100)">
+                                <rect x="0" y="0" width="120" height="60" rx="8" ry="8" fill="var(--code-color)"></rect>
+                                <text x="60" y="30" class="stage-text">Code</text>
+                                <text x="60" y="45" class="stage-icon" dy="0.3em">code</text>
+                            </g>
+
+                            <!-- Build Stage -->
+                            <g class="stage-node" data-stage="build" transform="translate(200, 100)">
+                                <rect x="0" y="0" width="120" height="60" rx="8" ry="8" fill="var(--build-color)"></rect>
+                                <text x="60" y="30" class="stage-text">Build</text>
+                                <text x="60" y="45" class="stage-icon" dy="0.3em">build</text>
+                            </g>
+
+                            <!-- Test Stage -->
+                            <g class="stage-node" data-stage="test" transform="translate(350, 100)">
+                                <rect x="0" y="0" width="120" height="60" rx="8" ry="8" fill="var(--test-color)"></rect>
+                                <text x="60" y="30" class="stage-text">Test</text>
+                                <text x="60" y="45" class="stage-icon" dy="0.3em">checklist</text>
+                            </g>
+
+                            <!-- Deploy Stage -->
+                            <g class="stage-node" data-stage="deploy" transform="translate(500, 100)">
+                                <rect x="0" y="0" width="120" height="60" rx="8" ry="8" fill="var(--deploy-color)"></rect>
+                                <text x="60" y="30" class="stage-text">Deploy</text>
+                                <text x="60" y="45" class="stage-icon" dy="0.3em">cloud_upload</text>
+                            </g>
+
+                            <!-- Monitor Stage -->
+                            <g class="stage-node" data-stage="monitor" transform="translate(650, 100)">
+                                <rect x="0" y="0" width="120" height="60" rx="8" ry="8" fill="var(--monitor-color)"></rect>
+                                <text x="60" y="30" class="stage-text">Monitor</text>
+                                <text x="60" y="45" class="stage-icon" dy="0.3em">monitor_heart</text>
+                            </g>
+                        </g>
+
+                        <!-- Pipeline Connections (Arrows) -->
+                        <g class="pipeline-connections">
+                            <line x1="170" y1="130" x2="200" y2="130" class="pipeline-line" marker-end="url(#arrowhead)"></line>
+                            <line x1="320" y1="130" x2="350" y2="130" class="pipeline-line" marker-end="url(#arrowhead)"></line>
+                            <line x1="470" y1="130" x2="500" y2="130" class="pipeline-line" marker-end="url(#arrowhead)"></line>
+                            <line x1="620" y1="130" x2="650" y2="130" class="pipeline-line" marker-end="url(#arrowhead)"></line>
+                        </g>
+                    </svg>
+                     <!-- Tooltip element -->
+                    <div id="tooltip" class="tooltip"></div>
+                </div>
+
+                <aside id="explanationPanel" class="explanation-panel">
+                    <button class="close-panel" aria-label="Close explanation panel">&times;</button>
+                    <h3 id="panelTitle">Select a Stage</h3>
+                    <div id="panelContent" class="panel-content">
+                        <p>Click on any stage in the pipeline diagram to learn more about it.</p>
+                    </div>
+                </aside>
+            </div>
+        </section>
+
+        <section class="benefits">
+            <h2>Benefits of CI/CD</h2>
+            <div class="benefits-grid">
+                <div class="benefit-item">
+                    <span class="material-symbols-rounded">speed</span>
+                    <h4>Faster Release Cycles</h4>
+                    <p>Automated processes significantly reduce the time from code commit to deployment.</p>
+                </div>
+                <div class="benefit-item">
+                    <span class="material-symbols-rounded">security</span>
+                    <h4>Reduced Risk</h4>
+                    <p>Frequent, small changes are easier to manage and troubleshoot than large, infrequent releases.</p>
+                </div>
+                <div class="benefit-item">
+                    <span class="material-symbols-rounded">verified</span>
+                    <h4>Improved Quality</h4>
+                    <p>Automated testing catches bugs early in the development process.</p>
+                </div>
+                <div class="benefit-item">
+                    <span class="material-symbols-rounded">group</span>
+                    <h4>Better Collaboration</h4>
+                    <p>Teams work more efficiently with clear, automated workflows and shared visibility.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const stageNodes = document.querySelectorAll('.stage-node');
+        const explanationPanel = document.getElementById('explanationPanel');
+        const panelTitle = document.getElementById('panelTitle');
+        const panelContent = document.getElementById('panelContent');
+        const closePanelButton = document.querySelector('.close-panel');
+        const tooltip = document.getElementById('tooltip');
+        const pipelineSvg = document.querySelector('.pipeline-svg');
+
+        const stageData = {
+            code: {
+                title: 'Code Stage',
+                content: '<p>This is where developers write and commit code changes to a version control system (like Git). Each commit triggers the start of the pipeline.</p><p>Key activities include writing code, committing to a shared repository, and potentially static code analysis.</p>',
+                icon: 'code'
+            },
+            build: {
+                title: 'Build Stage',
+                content: '<p>In the build stage, the application code is compiled, dependencies are fetched, and the application is packaged into an executable artifact (e.g., a JAR, WAR, Docker image).</p><p>Automated build tools like Maven, Gradle, Webpack, or Docker are commonly used here.</p>',
+                icon: 'build'
+            },
+            test: {
+                title: 'Test Stage',
+                content: '<p>This stage involves running automated tests to verify the quality and functionality of the built artifact. This includes unit tests, integration tests, and potentially end-to-end tests.</p><p>Failing tests break the pipeline, preventing faulty code from moving forward.</p>',
+                icon: 'checklist'
+            },
+            deploy: {
+                title: 'Deploy Stage',
+                content: '<p>The deploy stage automates the release of the verified artifact to various environments, such as staging, production, or specific servers/cloud services.</p><p>Deployment can be fully automated (Continuous Deployment) or require manual approval (Continuous Delivery).</p>',
+                icon: 'cloud_upload'
+            },
+            monitor: {
+                title: 'Monitor Stage',
+                content: '<p>While often considered post-deployment, monitoring is crucial for a complete CI/CD feedback loop. It involves observing the application in production to detect issues, track performance, and gather user feedback.</p><p>Insights from monitoring can trigger new code changes, starting the pipeline again.</p>',
+                icon: 'monitor_heart'
+            }
+        };
+
+        function openPanel(stage) {
+            const data = stageData[stage];
+            if (data) {
+                panelTitle.textContent = data.title;
+                panelContent.innerHTML = data.content; // Use innerHTML for rich content
+                explanationPanel.classList.add('active');
+            }
+        }
+
+        function closePanel() {
+            explanationPanel.classList.remove('active');
+            // Optionally reset panel content or title
+            // panelTitle.textContent = 'Select a Stage';
+            // panelContent.innerHTML = '<p>Click on any stage in the pipeline diagram to learn more about it.</p>';
+            removeActiveStageHighlight();
+        }
+
+        function highlightStage(stageElement) {
+            removeActiveStageHighlight();
+            stageElement.classList.add('active');
+        }
+
+        function removeActiveStageHighlight() {
+            document.querySelectorAll('.stage-node.active').forEach(node => {
+                node.classList.remove('active');
+            });
+        }
+
+        // Add click listeners to stages
+        stageNodes.forEach(node => {
+            const stage = node.dataset.stage;
+            node.addEventListener('click', () => {
+                openPanel(stage);
+                highlightStage(node);
+            });
+
+            // Add hover tooltips
+            let tooltipTimeout;
+            node.addEventListener('mouseover', (event) => {
+                 const stageName = stage.charAt(0).toUpperCase() + stage.slice(1);
+                 tooltip.textContent = stageName;
+                 tooltipTimeout = setTimeout(() => {
+                     tooltip.style.opacity = '1';
+                     // Position tooltip relative to the SVG element, considering scroll
+                     const svgRect = pipelineSvg.getBoundingClientRect();
+                     const nodeRect = node.getBoundingClientRect();
+                     const scrollLeft = pipelineSvg.scrollLeft; // Get horizontal scroll position
+
+                     // Calculate position relative to the scrollable container
+                     const nodeCenterX = nodeRect.left - svgRect.left + nodeRect.width / 2 + scrollLeft;
+                     const nodeTopY = nodeRect.top - svgRect.top + scrollLeft; // Adjust Y if SVG is also scrollable vertically
+
+                     tooltip.style.left = `${nodeCenterX}px`;
+                     tooltip.style.top = `${nodeTopY}px`; // Position relative to the top of the node
+                     tooltip.style.transform = 'translate(-50%, -110%)'; // Adjust for tooltip size
+                 }, 300); // Delay tooltip appearance
+            });
+
+            node.addEventListener('mousemove', (event) => {
+                 // Update tooltip position while moving over the node
+                 const svgRect = pipelineSvg.getBoundingClientRect();
+                 const nodeRect = node.getBoundingClientRect();
+                 const scrollLeft = pipelineSvg.scrollLeft;
+
+                 const nodeCenterX = nodeRect.left - svgRect.left + nodeRect.width / 2 + scrollLeft;
+                 const nodeTopY = nodeRect.top - svgRect.top + scrollLeft;
+
+                 tooltip.style.left = `${nodeCenterX}px`;
+                 tooltip.style.top = `${nodeTopY}px`;
+            });
+
+
+            node.addEventListener('mouseout', () => {
+                clearTimeout(tooltipTimeout);
+                tooltip.style.opacity = '0';
+            });
+
+             // Add keyboard navigation support
+            node.setAttribute('tabindex', '0'); // Make elements focusable
+            node.setAttribute('role', 'button'); // Indicate they are clickable buttons
+            node.setAttribute('aria-label', `Learn more about the ${stage} stage`);
+
+             node.addEventListener('keypress', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    openPanel(stage);
+                    highlightStage(node);
+                }
+            });
+        });
+
+        // Add click listener to close button
+        closePanelButton.addEventListener('click', closePanel);
+
+        // Close panel when clicking outside it (on larger screens)
+        document.addEventListener('click', (event) => {
+            // Check if the click is outside the panel AND not on a stage node
+            if (!explanationPanel.contains(event.target) &&
+                !event.target.closest('.stage-node') &&
+                explanationPanel.classList.contains('active') &&
+                window.innerWidth > 992 // Only apply this behavior on larger screens
+                ) {
+                closePanel();
+            }
+        });
+
+         // Close panel when pressing Escape key
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && explanationPanel.classList.contains('active')) {
+                closePanel();
+            }
+        });
+
+    </script>
+</body>
+</html>

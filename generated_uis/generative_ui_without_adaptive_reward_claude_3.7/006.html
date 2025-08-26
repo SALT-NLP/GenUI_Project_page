@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding Regression Analysis</title>
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #5cb85c;
+            --accent-color: #ff7043;
+            --text-color: #333;
+            --light-bg: #f8f9fa;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: #f5f7fa;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 1.1rem;
+        }
+        
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .explanation-panel, .visualization-panel {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 25px;
+        }
+        
+        .accordion {
+            margin-bottom: 15px;
+        }
+        
+        .accordion-header {
+            background-color: var(--light-bg);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
+        }
+        
+        .accordion-header:hover {
+            background-color: #e9ecef;
+        }
+        
+        .accordion-header h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .accordion-content {
+            padding: 0 15px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .accordion.active .accordion-content {
+            max-height: 1000px;
+            padding: 15px;
+        }
+        
+        .accordion-icon {
+            width: 20px;
+            height: 20px;
+            position: relative;
+        }
+        
+        .accordion-icon:before, .accordion-icon:after {
+            content: '';
+            position: absolute;
+            background-color: var(--primary-color);
+            transition: var(--transition);
+        }
+        
+        .accordion-icon:before {
+            top: 9px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+        }
+        
+        .accordion-icon:after {
+            top: 0;
+            left: 9px;
+            width: 2px;
+            height: 100%;
+        }
+        
+        .accordion.active .accordion-icon:after {
+            transform: rotate(90deg);
+            opacity: 0;
+        }
+        
+        .visualization-panel {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chart-container {
+            flex-grow: 1;
+            position: relative;
+            height: 300px;
+            margin-bottom: 20px;
+        }
+        
+        .controls {
+            background-color: var(--light-bg);
+            padding: 15px;
+            border-radius: var(--border-radius);
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        input[type="range"], select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+        
+        .btn:hover {
+            background-color: #3a5a8c;
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary-color);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #4cae4c;
+        }
+        
+        .regression-info {
+            background-color: var(--light-bg);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin-top: 20px;
+        }
+        
+        .regression-info h3 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .equation {
+            font-family: "Courier New", monospace;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin: 10px 0;
+        }
+        
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .data-point {
+            cursor: pointer;
+            transition: r 0.3s ease;
+        }
+        
+        .data-point:hover {
+            r: 8;
+        }
+        
+        .floating-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            display: none;
+        }
+        
+        .floating-controls.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Understanding Regression Analysis</h1>
+            <p class="subtitle">An interactive guide to linear regression and its applications</p>
+        </header>
+        
+        <div class="content">
+            <div class="explanation-panel">
+                <div class="accordion active">
+                    <div class="accordion-header">
+                        <h3>What is Regression Analysis?</h3>
+                        <div class="accordion-icon"></div>
+                    </div>
+                    <div class="accordion-content">
+                        <p>Regression analysis is a statistical method used to examine the relationship between one dependent variable (Y) and one or more independent variables (X). It helps us understand how the dependent variable changes when any of the independent variables change.</p>
+                        <p>In its simplest form, linear regression establishes a linear relationship between variables, represented by the equation:</p>
+                        <p class="equation">Y = mX + b</p>
+                        <p>Where:</p>
+                        <ul>
+                            <li>Y is the dependent variable (what we're trying to predict)</li>
+                            <li>X is the independent variable (what we use to make predictions)</li>
+                            <li>m is the slope (how much Y changes when X changes)</li>
+                            <li>b is the y-intercept (the value of Y when X is 0)</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="accordion">
+                    <div class="accordion-header">
+                        <h3>How Regression Works</h3>
+                        <div class="accordion-icon"></div>
+                    </div>
+                    <div class="accordion-content">
+                        <p>Linear regression works by finding the line that minimizes the sum of squared differences between observed values and predicted values. This method is called "Ordinary Least Squares" (OLS).</p>
+                        <p>The process involves:</p>
+                        <ol>
+                            <li>Collecting data points (X, Y)</li>
+                            <li>Finding the line that minimizes the sum of squared differences</li>
+                            <li>Calculating the regression coefficients (slope and intercept)</li>
+                            <li>Assessing the fit of the model using metrics like R-squared</li>
+                        </ol>
+                        <p>The R-squared value indicates how well the model fits the data, with values ranging from 0 to 1. A higher R-squared means a better fit.</p>
+                    </div>
+                </div>
+                
+                <div class="accordion">
+                    <div class="accordion-header">
+                        <h3>Types of Regression</h3>
+                        <div class="accordion-icon"></div>
+                    </div>
+                    <div class="accordion-content">
+                        <p>There are several types of regression analysis:</p>
+                        <ul>
+                            <li><strong>Simple Linear Regression:</strong> One independent variable</li>
+                            <li><strong>Multiple Linear Regression:</strong> Two or more independent variables</li>
+                            <li><strong>Polynomial Regression:</strong> Fits a non-linear relationship using polynomial functions</li>
+                            <li><strong>Logistic Regression:</strong> Used when the dependent variable is categorical</li>
+                            <li><strong>Ridge Regression:</strong> A regularization technique for handling multicollinearity</li>
+                            <li><strong>Lasso Regression:</strong> Performs both variable selection and regularization</li>
+                        </ul>
+                        <p>In this interactive guide, we focus on simple linear regression to demonstrate the core concepts.</p>
+                    </div>
+                </div>
+                
+                <div class="accordion">
+                    <div class="accordion-header">
+                        <h3>Applications of Regression</h3>
+                        <div class="accordion-icon"></div>
+                    </div>
+                    <div class="accordion-content">
+                        <p>Regression analysis is widely used across various fields:</p>
+                        <ul>
+                            <li><strong>Economics:</strong> Predicting economic indicators, analyzing demand and supply</li>
+                            <li><strong>Finance:</strong> Stock price prediction, risk assessment</li>
+                            <li><strong>Marketing:</strong> Sales forecasting, customer behavior analysis</li>
+                            <li><strong>Healthcare:</strong> Patient outcomes prediction, epidemiological studies</li>
+                            <li><strong>Environmental Science:</strong> Climate modeling, pollution studies</li>
+                            <li><strong>Sports Analytics:</strong> Player performance prediction</li>
+                        </ul>
+                        <p>The interactive visualization on the right allows you to explore how regression works with different data patterns.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="visualization-panel">
+                <h2>Interactive Regression Visualization</h2>
+                <div class="chart-container">
+                    <canvas id="regressionChart"></canvas>
+                    <div class="floating-controls" id="chartControls">
+                        <div class="control-group">
+                            <label for="chartType">Chart Type</label>
+                            <select id="chartType">
+                                <option value="scatter">Scatter Plot</option>
+                                <option value="line">Line Chart</option>
+                                <option value="bubble">Bubble Chart</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label for="pointColor">Point Color</label>
+                            <input type="color" id="pointColor" value="#4a6fa5">
+                        </div>
+                        <div class="control-group">
+                            <label for="lineColor">Line Color</label>
+                            <input type="color" id="lineColor" value="#ff7043">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="datasetSelect">Example Datasets</label>
+                        <select id="datasetSelect">
+                            <option value="positive">Strong Positive Correlation</option>
+                            <option value="negative">Negative Correlation</option>
+                            <option value="weak">Weak Correlation</option>
+                            <option value="nonlinear">Non-linear Relationship</option>
+                            <option value="custom">Custom Data Points</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="noiseLevel">Noise Level</label>
+                        <input type="range" id="noiseLevel" min="0" max="50" value="10">
+                    </div>
+                    
+                    <div class="control-group">
+                        <button id="addPoint" class="btn">Add Random Point</button>
+                        <button id="resetData" class="btn btn-secondary">Reset Data</button>
+                    </div>
+                </div>
+                
+                <div class="regression-info">
+                    <h3>Regression Results</h3>
+                    <p>Regression Equation: <span class="equation" id="equation">Y = 0.00X + 0.00</span></p>
+                    <p>R-squared: <span id="r-squared">0.00</span></p>
+                    <p>Number of data points: <span id="pointCount">0</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="tooltip" id="tooltip"></div>
+    
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+        
+        // DOM elements
+        const accordions = document.querySelectorAll('.accordion');
+        const datasetSelect = document.getElementById('datasetSelect');
+        const noiseLevel = document.getElementById('noiseLevel');
+        const addPointBtn = document.getElementById('addPoint');
+        const resetDataBtn = document.getElementById('resetData');
+        const equationEl = document.getElementById('equation');
+        const rSquaredEl = document.getElementById('r-squared');
+        const pointCountEl = document.getElementById('pointCount');
+        const chartContainer = document.querySelector('.chart-container');
+        const chartControls = document.getElementById('chartControls');
+        const chartType = document.getElementById('chartType');
+        const pointColor = document.getElementById('pointColor');
+        const lineColor = document.getElementById('lineColor');
+        const tooltip = document.getElementById('tooltip');
+        
+        // Accordion functionality
+        accordions.forEach(accordion => {
+            const header = accordion.querySelector('.accordion-header');
+            header.addEventListener('click', () => {
+                accordion.classList.toggle('active');
+            });
+        });
+        
+        // Chart setup
+        const ctx = document.getElementById('regressionChart').getContext('2d');
+        let regressionChart;
+        let dataPoints = [];
+        let regressionLine = [];
+        
+        // Datasets
+        const datasets = {
+            positive: generateDataset(10, 2, 5, 0.8),
+            negative: generateDataset(10, -2, 50, 0.8),
+            weak: generateDataset(10, 1, 30, 0.3),
+            nonlinear: generateNonlinearDataset(10),
+            custom: []
+        };
+        
+        // Initialize chart
+        function initChart() {
+            const data = {
+                datasets: [
+                    {
+                        type: 'scatter',
+                        label: 'Data Points',
+                        data: dataPoints,
+                        backgroundColor: pointColor.value,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    },
+                    {
+                        type: 'line',
+                        label: 'Regression Line',
+                        data: regressionLine,
+                        borderColor: lineColor.value,
+                        backgroundColor: 'transparent',
+                        pointRadius: 0,
+                        tension: 0
+                    }
+                ]
+            };
+            
+            const options = {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'X (Independent Variable)'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Y (Dependent Variable)'
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const point = context.raw;
+                                return `X: ${point.x.toFixed(2)}, Y: ${point.y.toFixed(2)}`;
+                            }
+                        }
+                    }
+                },
+                onClick: function() {
+                    toggleChartControls();
+                }
+            };
+            
+            if (regressionChart) {
+                regressionChart.destroy();
+            }
+            
+            regressionChart = new Chart(ctx, {
+                data: data,
+                options: options
+            });
+        }
+        
+        // Generate dataset with linear relationship
+        function generateDataset(count, slope, intercept, correlation) {
+            const points = [];
+            const noise = parseFloat(noiseLevel.value);
+            
+            for (let i = 0; i < count; i++) {
+                const x = Math.random() * 100;
+                // Add some randomness based on correlation strength
+                const randomFactor = (Math.random() - 0.5) * 2 * noise * (1 - Math.abs(correlation));
+                const y = slope * x + intercept + randomFactor;
+                points.push({ x, y });
+            }
+            
+            return points;
+        }
+        
+        // Generate non-linear dataset
+        function generateNonlinearDataset(count) {
+            const points = [];
+            const noise = parseFloat(noiseLevel.value);
+            
+            for (let i = 0; i < count; i++) {
+                const x = Math.random() * 100;
+                // Quadratic relationship with noise
+                const randomFactor = (Math.random() - 0.5) * 2 * noise;
+                const y = 0.03 * x * x - 2 * x + 50 + randomFactor;
+                points.push({ x, y });
+            }
+            
+            return points;
+        }
+        
+        // Calculate linear regression
+        function calculateRegression(points) {
+            if (points.length < 2) {
+                return { slope: 0, intercept: 0, rSquared: 0 };
+            }
+            
+            // Calculate means
+            let sumX = 0;
+            let sumY = 0;
+            let sumXY = 0;
+            let sumXX = 0;
+            let sumYY = 0;
+            
+            points.forEach(point => {
+                sumX += point.x;
+                sumY += point.y;
+                sumXY += point.x * point.y;
+                sumXX += point.x * point.x;
+                sumYY += point.y * point.y;
+            });
+            
+            const n = points.length;
+            const meanX = sumX / n;
+            const meanY = sumY / n;
+            
+            // Calculate slope and intercept
+            const numerator = sumXY - n * meanX * meanY;
+            const denominator = sumXX - n * meanX * meanX;
+            
+            if (denominator === 0) {
+                return { slope: 0, intercept: meanY, rSquared: 0 };
+            }
+            
+            const slope = numerator / denominator;
+            const intercept = meanY - slope * meanX;
+            
+            // Calculate R-squared
+            let ssr = 0; // Sum of squared regression
+            let sst = 0; // Total sum of squares
+            
+            points.forEach(point => {
+                const prediction = slope * point.x + intercept;
+                ssr += Math.pow(prediction - meanY, 2);
+                sst += Math.pow(point.y - meanY, 2);
+            });
+            
+            const rSquared = sst === 0 ? 0 : ssr / sst;
+            
+            return { slope, intercept, rSquared };
+        }
+        
+        // Update regression line
+        function updateRegressionLine() {
+            if (dataPoints.length < 2) {
+                regressionLine = [];
+                equationEl.textContent = "Y = 0.00X + 0.00";
+                rSquaredEl.textContent = "0.00";
+                pointCountEl.textContent = dataPoints.length;
+                return;
+            }
+            
+            const { slope, intercept, rSquared } = calculateRegression(dataPoints);
+            
+            // Find min and max x values
+            const xValues = dataPoints.map(p => p.x);
+            const minX = Math.min(...xValues);
+            const maxX = Math.max(...xValues);
+            
+            // Create regression line points
+            regressionLine = [
+                { x: minX, y: slope * minX + intercept },
+                { x: maxX, y: slope * maxX + intercept }
+            ];
+            
+            // Update display
+            equationEl.textContent = `Y = ${slope.toFixed(2)}X + ${intercept.toFixed(2)}`;
+            rSquaredEl.textContent = rSquared.toFixed(2);
+            pointCountEl.textContent = dataPoints.length;
+            
+            updateChart();
+        }
+        
+        // Update chart with new data
+        function updateChart() {
+            regressionChart.data.datasets[0].data = dataPoints;
+            regressionChart.data.datasets[1].data = regressionLine;
+            regressionChart.update();
+        }
+        
+        // Load dataset
+        function loadDataset() {
+            const selected = datasetSelect.value;
+            dataPoints = [...datasets[selected]];
+            updateRegressionLine();
+        }
+        
+        // Add random point
+        function addRandomPoint() {
+            const x = Math.random() * 100;
+            const y = Math.random() * 100;
+            dataPoints.push({ x, y });
+            updateRegressionLine();
+        }
+        
+        // Reset data
+        function resetData() {
+            if (datasetSelect.value === 'custom') {
+                dataPoints = [];
+            } else {
+                loadDataset();
+            }
+            updateRegressionLine();
+        }
+        
+        // Toggle chart controls
+        function toggleChartControls() {
+            chartControls.classList.toggle('active');
+        }
+        
+        // Event listeners
+        datasetSelect.addEventListener('change', loadDataset);
+        noiseLevel.addEventListener('input', function() {
+            // Regenerate datasets with new noise level
+            datasets.positive = generateDataset(10, 2, 5, 0.8);
+            datasets.negative = generateDataset(10, -2, 50, 0.8);
+            datasets.weak = generateDataset(10, 1, 30, 0.3);
+            datasets.nonlinear = generateNonlinearDataset(10);
+            
+            if (datasetSelect.value !== 'custom') {
+                loadDataset();
+            }
+        });
+        addPointBtn.addEventListener('click', addRandomPoint);
+        resetDataBtn.addEventListener('click', resetData);
+        
+        // Chart control events
+        chartType.addEventListener('change', function() {
+            regressionChart.data.datasets[0].type = this.value;
+            regressionChart.update();
+        });
+        
+        pointColor.addEventListener('change', function() {
+            regressionChart.data.datasets[0].backgroundColor = this.value;
+            regressionChart.update();
+        });
+        
+        lineColor.addEventListener('change', function() {
+            regressionChart.data.datasets[1].borderColor = this.value;
+            regressionChart.update();
+        });
+        
+        // Initialize
+        initChart();
+        loadDataset();
+        
+        // First accordion starts open
+        accordions[0].classList.add('active');
+    </script>
+</body>
+</html>

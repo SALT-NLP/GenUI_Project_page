@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding React Hooks</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
+    <style>
+        :root {
+            --primary-color: #61dafb; /* React blue */
+            --secondary-color: #282c34; /* Dark background */
+            --text-color: #333;
+            --background-color: #f4f7f6;
+            --card-background: #ffffff;
+            --border-color: #e0e0e0;
+            --hover-color: #e0f7fa; /* Light blue hover */
+            --active-color: #b2ebf2; /* Slightly darker active */
+            --button-bg: var(--primary-color);
+            --button-text: #fff;
+            --button-hover-bg: #21a1f1;
+            --button-active-bg: #1c88c7;
+            --code-background: #2d2d2d; /* Monaco dark theme background */
+            --code-text: #cccccc;
+            --success-color: #4caf50; /* Green for completed */
+            --success-hover: #388e3c;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            font-size: 1rem; /* Base font size */
+        }
+
+        header {
+            background-color: var(--secondary-color);
+            color: #fff;
+            padding: 1rem 2rem;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem; /* Increased padding */
+            width: 100%;
+            gap: 2rem; /* Gap between sidebar and main content */
+        }
+
+        nav {
+            width: 280px; /* Slightly wider nav */
+            background-color: var(--card-background);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Subtle shadow */
+            padding: 1.5rem 0; /* Increased padding */
+            flex-shrink: 0;
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        nav li {
+            margin-bottom: 0.5rem; /* Increased spacing */
+        }
+
+        nav a {
+            display: flex; /* Use flex for icon/text alignment */
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            text-decoration: none;
+            color: var(--text-color);
+            transition: background-color 0.2s ease, border-left-color 0.2s ease;
+            border-left: 4px solid transparent;
+            font-weight: 400;
+        }
+
+        nav a:hover {
+            background-color: var(--hover-color);
+        }
+
+        nav a.active {
+            background-color: var(--active-color);
+            border-left-color: var(--primary-color);
+            font-weight: 600;
+            color: var(--secondary-color); /* Darker text for active */
+        }
+
+        nav a.completed {
+            /* background-color: var(--success-color); */ /* Optional: change background */
+            color: var(--success-hover); /* Darker green text */
+        }
+
+        nav a.completed::before {
+            content: '✓'; /* Simple checkmark */
+            margin-right: 10px;
+            font-weight: bold;
+            color: var(--success-color);
+        }
+
+
+        main {
+            flex-grow: 1;
+            background-color: var(--card-background);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Subtle shadow */
+            padding: 2rem; /* Increased padding */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content-section {
+            margin-bottom: 2.5rem; /* Increased spacing */
+        }
+
+        .content-section h2 {
+            color: var(--secondary-color);
+            margin-top: 0;
+            margin-bottom: 1.2rem; /* Increased spacing */
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.8rem; /* Increased padding */
+            font-size: 1.6rem;
+            font-weight: 700;
+        }
+
+         .content-section h3 {
+            color: var(--secondary-color);
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+            font-weight: 600;
+         }
+
+        .content-section p {
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+
+        .content-section pre {
+            background-color: #f0f0f0; /* Light background for code blocks */
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .content-section code {
+             font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+             background-color: #f0f0f0;
+             padding: 0.2em 0.4em;
+             border-radius: 3px;
+        }
+
+
+        .code-editor-container {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 1.5rem; /* Increased spacing */
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        #editor {
+            height: 400px; /* Increased height for the editor */
+            width: 100%;
+        }
+
+        .editor-actions {
+            padding: 0.75rem;
+            background-color: #f9f9f9; /* Lighter background */
+            display: flex;
+            gap: 0.75rem; /* Increased gap */
+            justify-content: flex-end;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn {
+            padding: 0.6rem 1.2rem; /* Increased padding */
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.2s ease, opacity 0.2s ease, transform 0.1s ease;
+            font-weight: 600;
+            text-transform: uppercase; /* Uppercase text */
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px); /* Subtle hover effect */
+        }
+
+         .btn:active {
+            transform: translateY(0);
+            opacity: 0.9;
+         }
+
+        .btn-primary {
+            background-color: var(--button-bg);
+            color: var(--button-text);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--button-hover-bg);
+        }
+
+        .btn-primary:active {
+            background-color: var(--button-active-bg);
+        }
+
+        .btn-secondary {
+            background-color: #e0e0e0;
+            color: var(--text-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #d5d5d5;
+        }
+
+        .btn-secondary:active {
+            background-color: #cccccc;
+        }
+
+        .output-area {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            background-color: #f9f9f9;
+            min-height: 100px;
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+            overflow-y: auto;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        #app-output {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px dashed var(--border-color); /* Separator */
+        }
+
+        #console-output {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+            color: #555; /* Slightly lighter text for console */
+        }
+
+         #console-output h4 {
+             margin-top: 0;
+             margin-bottom: 0.5rem;
+             color: var(--secondary-color);
+             font-size: 1rem;
+             font-weight: 600;
+         }
+
+        footer {
+            text-align: center;
+            padding: 1.5rem 2rem;
+            margin-top: 2rem;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        /* Accessibility: Focus states */
+        button:focus,
+        nav a:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        /* Basic Responsiveness */
+        @media (max-width: 992px) { /* Adjusted breakpoint */
+             .container {
+                flex-direction: column;
+                padding: 1rem;
+                gap: 1rem;
+            }
+
+            nav {
+                width: 100%;
+                margin-right: 0;
+                margin-bottom: 1rem;
+                padding: 0.5rem 0;
+                border-radius: 4px; /* Smaller radius for mobile */
+            }
+
+            nav ul {
+                display: flex;
+                overflow-x: auto;
+                padding: 0 1rem;
+                scrollbar-width: none; /* Firefox */
+                -ms-overflow-style: none;  /* Internet Explorer 10+ */
+                scroll-behavior: smooth; /* Smooth scrolling */
+            }
+
+            nav ul::-webkit-scrollbar { /* Webkit */
+                display: none; /* Hide scrollbar */
+            }
+
+            nav li {
+                flex: 0 0 auto;
+                margin-right: 0.75rem; /* Increased spacing */
+                margin-bottom: 0;
+            }
+
+            nav a {
+                padding: 0.5rem 1rem;
+                border-left: none;
+                border-bottom: 4px solid transparent;
+                white-space: nowrap; /* Prevent wrapping */
+            }
+
+             nav a.active {
+                border-left-color: transparent;
+                border-bottom-color: var(--primary-color);
+             }
+
+             nav a.completed::before {
+                 margin-right: 5px; /* Adjust icon spacing */
+             }
+
+            main {
+                padding: 1.5rem;
+                border-radius: 4px; /* Smaller radius for mobile */
+            }
+
+            header {
+                 padding: 1rem;
+            }
+
+            footer {
+                 padding: 1rem;
+                 margin-top: 1rem;
+            }
+        }
+
+         @media (max-width: 576px) { /* Smaller mobile screens */
+             header h1 {
+                font-size: 1.5rem;
+             }
+
+             .container {
+                 padding: 0.5rem;
+             }
+
+             nav ul {
+                 padding: 0 0.5rem;
+             }
+
+             nav li {
+                 margin-right: 0.5rem;
+             }
+
+             nav a {
+                 padding: 0.5rem 0.75rem;
+                 font-size: 0.9rem;
+             }
+
+             main {
+                 padding: 1rem;
+             }
+
+             .content-section h2 {
+                 font-size: 1.4rem;
+                 margin-bottom: 1rem;
+                 padding-bottom: 0.6rem;
+             }
+
+             .content-section h3 {
+                 font-size: 1.1rem;
+                 margin-top: 1rem;
+                 margin-bottom: 0.8rem;
+             }
+
+             .content-section p {
+                 font-size: 0.95rem;
+             }
+
+             .btn {
+                 padding: 0.5rem 1rem;
+                 font-size: 0.9rem;
+             }
+
+             .output-area {
+                 padding: 0.8rem;
+                 font-size: 0.85rem;
+             }
+
+             footer {
+                 padding: 0.8rem;
+                 font-size: 0.8rem;
+             }
+         }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Understanding React Hooks</h1>
+    </header>
+
+    <div class="container">
+        <nav role="navigation" aria-label="React Hooks Topics">
+            <ul>
+                <li><a href="#useState" class="nav-link" data-hook="useState">useState</a></li>
+                <li><a href="#useEffect" class="nav-link" data-hook="useEffect">useEffect</a></li>
+                <li><a href="#useContext" class="nav-link" data-hook="useContext">useContext</a></li>
+                <li><a href="#useRef" class="nav-link" data-hook="useRef">useRef</a></li>
+                <li><a href="#useReducer" class="nav-link" data-hook="useReducer">useReducer</a></li>
+                <li><a href="#useCallback" class="nav-link" data-hook="useCallback">useCallback</a></li>
+                <li><a href="#useMemo" class="nav-link" data-hook="useMemo">useMemo</a></li>
+                <!-- Add more hooks here -->
+            </ul>
+        </nav>
+
+        <main id="main-content">
+            <!-- Content will be loaded here by JavaScript -->
+        </main>
+    </div>
+
+    <footer>
+        &copy; 2023 Understanding React Hooks
+    </footer>
+
+    <script type="module">
+        import loader from 'https://esm.sh/@monaco-editor/loader';
+
+        // Configure Monaco Editor loader
+        loader.config({
+            paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs' }
+        });
+
+        let editor;
+        let currentHook = 'useState'; // Default hook
+        let currentReactRoot = null; // To keep track of the React 18 root
+
+        // Define content for each hook
+        const hookContent = {
+            useState: {
+                title: 'The useState Hook',
+                explanation: `
+                    <p><code>useState</code> is a React Hook that lets you add a state variable to your component. It returns a pair: the current state value and a function that lets you update it.</p>
+                    <p>You can use <code>useState</code> to manage simple state like numbers, strings, booleans, arrays, or objects.</p>
+                    <h3>Basic Usage:</h3>
+                    <p>Call <code>useState</code> at the top level of your component to declare a state variable.</p>
+                    <pre><code class="language-javascript">const [state, setState] = useState(initialState);</code></pre>
+                    <p><code>initialState</code> is the value the state should have on the initial render. It can be any primitive value or object. For complex initial state computation, you can pass a function.</p>
+                    <p>The <code>setState</code> function is used to update the state. When you call <code>setState</code>, React will re-render the component.</p>
+                `,
+                code: `import React, { useState } from 'react';
+import ReactDOMClient from 'react-dom/client'; // Use ReactDOMClient for createRoot
+
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  function handleClick() {
+    setCount(count + 1);
+  }
+
+  return (
+    <div>
+      <p>You clicked {count} times</p>
+      <button onClick={handleClick}>
+        Click me
+      </button>
+    </div>
+  );
+}
+
+// Render the component into the element with id 'app-output'
+const container = document.getElementById('app-output');
+if (container) {
+    const root = ReactDOMClient.createRoot(container);
+    root.render(<Counter />);
+} else {
+    console.error("Container element with id 'app-output' not found!");
+}
+`,
+            },
+            useEffect: {
+                title: 'The useEffect Hook',
+                explanation: `
+                    <p><code>useEffect</code> is a React Hook that lets you synchronize a component with an external system.</p>
+                    <p>It's commonly used for side effects like fetching data, setting up subscriptions, or manually changing the DOM.</p>
+                    <h3>Basic Usage:</h3>
+                    <p>Call <code>useEffect</code> at the top level of your component to declare an effect.</p>
+                     <pre><code class="language-javascript">useEffect(() => {
+  // Code with side effects
+
+  return () => {
+    // Cleanup function (optional)
+  };
+}, [dependencies]); // Dependency array (optional)</code></pre>
+                    <p>The first argument is a function containing the effect logic. The optional cleanup function runs before the effect re-runs or when the component unmounts.</p>
+                    <p>The optional second argument is a dependency array. React will re-run the effect only if any of the values in the dependency array have changed since the last render.</p>
+                    <ul>
+                        <li>If the array is empty <code>[]</code>, the effect runs only once after the initial render and cleans up on unmount.</li>
+                        <li>If the array is omitted, the effect runs after every render.</li>
+                    </ul>
+                `,
+                 code: `import React, { useState, useEffect } from 'react';
+import ReactDOMClient from 'react-dom/client';
+
+function Timer() {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    console.log('Effect ran');
+    const intervalId = setInterval(() => {
+      setCount(prevCount => prevCount + 1);
+    }, 1000);
+
+    // Cleanup function: runs before the next effect or on unmount
+    return () => {
+        console.log('Cleanup ran');
+        clearInterval(intervalId);
+    };
+  }, []); // Empty dependency array: runs only once
+
+  return (
+    <div>
+      <p>Timer: {count} seconds</p>
+      <p>Check the console for effect/cleanup messages.</p>
+    </div>
+  );
+}
+
+// Render the component
+const container = document.getElementById('app-output');
+if (container) {
+    const root = ReactDOMClient.createRoot(container);
+    root.render(<Timer />);
+} else {
+    console.error("Container element with id 'app-output' not found!");
+}
+`,
+            },
+             useContext: {
+                title: 'The useContext Hook',
+                explanation: `
+                    <p><code>useContext</code> is a React Hook that lets you read and subscribe to a context from your component.</p>
+                    <p>Context provides a way to pass data through the component tree without having to pass props down manually at every level.</p>
+                    <h3>Basic Usage:</h3>
+                    <p>First, create a context using <code>React.createContext</code>.</p>
+                    <pre><code class="language-javascript">const MyContext = createContext(defaultValue);</code></pre>
+                    <p>Then, provide the context value higher up in your component tree using <code>MyContext.Provider</code>.</p>
+                    <pre><code class="language-javascript">&lt;MyContext.Provider value={/* some value */}&gt;
+  {/* Components that need to read the context */}
+&lt;/MyContext.Provider&gt;</code></pre>
+                    <p>Finally, use <code>useContext(MyContext)</code> in any descendant component to read the current context value.</p>
+                     <pre><code class="language-javascript">import { useContext } from 'react';
+import { MyContext } from './MyContext'; // Assuming context is defined elsewhere
+
+function MyComponent() {
+  const value = useContext(MyContext);
+  // Use the value...
+  return &lt;p&gt;Context Value: {value}&lt;/p&gt;;
+}</code></pre>
+                `,
+                 code: `import React, { createContext, useContext } from 'react';
+import ReactDOMClient from 'react-dom/client';
+
+// 1. Create a Context outside of components
+const ThemeContext = createContext('light');
+
+// 2. Component that provides the context
+function App() {
+  // You could use state here to change the theme dynamically
+  const theme = 'dark'; // Example: hardcoded theme
+
+  return (
+    <ThemeContext.Provider value={theme}>
+      <Toolbar />
+    </ThemeContext.Provider>
+  );
+}
+
+// 3. Component that consumes the context indirectly
+function Toolbar() {
+  return (
+    <div>
+      <ThemedButton />
+    </div>
+  );
+}
+
+// 4. Component that uses useContext to read the context value
+function ThemedButton() {
+  const theme = useContext(ThemeContext);
+  return (
+    <button style={{
+        background: theme === 'dark' ? '#333' : '#eee',
+        color: theme === 'dark' ? 'white' : 'black',
+        padding: '10px 20px',
+        border: 'none',
+        borderRadius: '4px',
+        cursor: 'pointer'
+    }}>
+      I am a {theme} button
+    </button>
+  );
+}
+
+// Render the component
+const container = document.getElementById('app-output');
+if (container) {
+    const root = ReactDOMClient.createRoot(container);
+    root.render(<App />);
+} else {
+    console.error("Container element with id 'app-output' not found!");
+}
+`,
+            },
+             useRef: {
+                title: 'The useRef Hook',
+                explanation: `
+                    <p><code>useRef</code> is a React Hook that lets you reference a value that’s not needed for rendering.</p>
+                    <p>It returns a mutable ref object whose <code>.current</code> property is initialized to the passed argument (<code>initialValue</code>).</p>
+                    <h3>Basic Usage:</h3>
+                     <pre><code class="language-javascript">const ref = useRef(initialValue);</code></pre>
+                    <p>The returned object will persist for the full lifetime of the component.</p>
+                    <p>Unlike state, changing a ref's <code>.current</code> value does not trigger a re-render.</p>
+                    <p><code>useRef</code> is commonly used to:</p>
+                    <ul>
+                        <li>Access and interact with DOM elements.</li>
+                        <li>Store mutable values that persist across renders without causing re-renders (e.g., timer IDs, previous values).</li>
+                    </ul>
+                `,
+                 code: `import React, { useRef, useEffect } from 'react';
+import ReactDOMClient from 'react-dom/client';
+
+function MyComponent() {
+  // Ref for DOM element
+  const inputRef = useRef(null);
+  // Ref for a mutable value that doesn't cause re-renders
+  const previousValue = useRef('');
+
+  useEffect(() => {
+    // Accessing the DOM element after it's mounted
+    if (inputRef.current) {
+        inputRef.current.focus();
+    }
+  }, []); // Empty dependency array: runs only once after initial render
+
+  useEffect(() => {
+     // Storing previous value whenever input changes (this effect runs after renders)
+     console.log('Previous input value:', previousValue.current);
+     if (inputRef.current) {
+        previousValue.current = inputRef.current.value;
+     }
+  }); // No dependency array: runs after every render
+
+  const handleChange = () => {
+      // No re-render needed when just reading/writing ref.current
+      if (inputRef.current) {
+         console.log('Current input value:', inputRef.current.value);
+      }
+  };
+
+  return (
+    <div>
+      <input ref={inputRef} onChange={handleChange} placeholder="Type something..." style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }} />
+      <p>Check the console for ref values.</p>
+    </div>
+  );
+}
+
+// Render the component
+const container = document.getElementById('app-output');
+if (container) {
+    const root = ReactDOMClient.createRoot(container);
+    root.render(<MyComponent />);
+} else {
+    console.error("Container element with id 'app-output' not found!");
+}
+`,
+            },
+             useReducer: {
+                title: 'The useReducer Hook',
+                explanation: `
+                    <p><code>useReducer</code> is a React Hook that lets you add a reducer to your component.</p>
+                    <p>It's an alternative to <code>useState</code> for managing more complex state logic, especially when the state updates depend on the previous state or involve multiple sub-values.</p>
+                    <h3>Basic Usage:</h3>
+                     <pre><code class="language-javascript">const [state, dispatch] = useReducer(reducer, initialArg, init);</code></pre>
+                    <ul>
+                        <li><code>reducer</code>: A function that takes the current state and an action, and returns the new state.</li>
+                        <li><code>initialArg</code>: The initial value or argument for the state.</li>
+                        <li><code>init</code> (optional): A function to lazily create the initial state from <code>initialArg</code>.</li>
+                    </ul>
+                    <p>It returns the current <code>state</code> and a <code>dispatch</code> function to dispatch actions.</p>
+                    <p>Dispatching an action triggers a re-render with the new state returned by the reducer.</p>
+                `,
+                 code: `import React, { useReducer } from 'react';
+import ReactDOMClient from 'react-dom/client';
+
+// Reducer function: (currentState, action) => newState
+function counterReducer(state, action) {
+  switch (action.type) {
+    case 'increment':
+      return { count: state.count + 1 };
+    case 'decrement':
+      return { count: state.count - 1 };
+    case 'reset':
+      return { count: 0 };
+    default:
+      // It's good practice to throw an error for unknown actions
+      throw new Error('Unknown action type');
+  }
+}
+
+// Component using useReducer
+function Counter() {
+  // useReducer returns the current state and a dispatch function
+  const [state, dispatch] = useReducer(counterReducer, { count: 0 });
+
+  return (
+    <div>
+      <p>Count: {state.count}</p>
+      <button onClick={() => dispatch({ type: 'increment' })} style={{ marginRight: '10px' }}>Increment</button>
+      <button onClick={() => dispatch({ type: 'decrement' })} style={{ marginRight: '10px' }}>Decrement</button>
+      <button onClick={() => dispatch({ type: 'reset' })}>Reset</button>
+    </div>
+  );
+}
+
+// Render the component
+const container = document.getElementById('app-output');
+if (container) {
+    const root = ReactDOMClient.createRoot(container);
+    root.render(<Counter />);
+} else {
+    console.error("Container element with id 'app-output' not found!");
+}
+`,
+            },
+             useCallback: {
+                title: 'The useCallback Hook',
+                explanation: `
+                    <p><code>useCallback</code> is a React Hook that lets you cache a function definition between re-renders.</p>
+                    <p>It's useful when passing callbacks to optimized child components that rely on reference equality to prevent unnecessary re-renders (e.g., using <code>React.memo</code>).</p>
+                    <h3>Basic Usage:</h3>
+                     <pre><code class="language-javascript">const cachedFn = useCallback(fn, [dependencies]);</code></pre>
+                    <ul>
+                        <li><code>fn</code>: The function you want to cache.</li>
+                        <li><code>dependencies</code>: The list of all reactive values referenced inside the <code>fn</code> function.</li>
+                    </ul>
+                    <p><code>useCallback</code> returns a memoized version of the callback function that only changes if one of the dependencies has changed.</p>
+                `,
+                 code: `import React, { useState, useCallback, memo } from 'react';
+import ReactDOMClient from 'react-dom/client';
+
+// Child component that only re-renders if props change (shallow comparison)
+// React.memo is used here to demonstrate the effect of useCallback
+const Button = memo(({ onClick, children }) => {
+  console.log('Button rendered:', children);
+  return <button onClick={onClick} style={{ padding: '10px 20px', border: 'none', borderRadius: '4px', cursor: 'pointer', marginTop: '10px' }}>{children}</button>;
+});
+
+function ParentComponent() {
+  const [count, setCount] = useState(0);
+  const [text, setText] = useState('');
+
+  // This function is recreated on every render if not wrapped in useCallback
+  // const handleClick = () => {
+  //   setCount(count + 1);
+  //   console.log('Button clicked!');
+  // };
+
+  // This function is memoized. It's only recreated when 'count' changes.
+  // The Button component (wrapped in memo) will not re-render when 'text' changes,
+  // because the 'handleClick' prop it receives is the same function instance.
+  const handleClick = useCallback(() => {
+    setCount(count + 1);
+    console.log('Button clicked!');
+  }, [count]); // Dependency: count. If count changes, a new handleClick function is created.
+
+  const handleInputChange = (event) => {
+      setText(event.target.value);
+  };
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <p>Text: {text}</p>
+      <input value={text} onChange={handleInputChange} placeholder="Type here (doesn't affect button memo)" style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc', marginRight: '10px' }} />
+      {/* Button component receives the memoized callback */}
+      <Button onClick={handleClick}>Increment Count</Button>
+      <p style={{ marginTop: '10px' }}>Check console to see when Button re-renders.</p>
+    </div>
+  );
+}
+
+// Render the component
+const container = document.getElementById('app-output');
+if (container) {
+    const root = ReactDOMClient.createRoot(container);
+    root.render(<ParentComponent />);
+} else {
+    console.error("Container element with id 'app-output' not found!");
+}
+`,
+            },
+             useMemo: {
+                title: 'The useMemo Hook',
+                explanation: `
+                    <p><code>useMemo</code> is a React Hook that lets you cache the result of a computation between re-renders.</p>
+                    <p>It's useful for optimizing performance by avoiding expensive calculations on every render.</p>
+                    <h3>Basic Usage:</h3>
+                     <pre><code class="language-javascript">const cachedValue = useMemo(() => computeExpensiveValue(a, b), [a, b]);</code></pre>
+                    <ul>
+                        <li>The first argument is a function that computes the value.</li>
+                        <li>The second argument is a dependency array.</li>
+                    </ul>
+                    <p><code>useMemo</code> returns a memoized value that only re-computes if one of the dependencies has changed.</p>
+                `,
+                 code: `import React, { useState, useMemo } from 'react';
+import ReactDOMClient from 'react-dom/client';
+
+// An expensive computation function
+function computeExpensiveValue(num) {
+  console.log('Computing expensive value...');
+  // Simulate a slow calculation
+  let result = 0;
+  // Warning: This loop can freeze the browser for large numbers or many renders!
+  // Keep the number of iterations reasonable for a live example.
+  for (let i = 0; i < 100000000; i++) { // Reduced iterations for faster example
+    result += num;
+  }
+  return result;
+}
+
+function MyComponent() {
+  const [count, setCount] = useState(0);
+  const [text, setText] = useState('');
+
+  // Without useMemo, computeExpensiveValue runs on every render (when count or text changes)
+  // const expensiveValue = computeExpensiveValue(count);
+
+  // With useMemo, computeExpensiveValue only runs when 'count' changes
+  const expensiveValue = useMemo(() => computeExpensiveValue(count), [count]); // Dependency: count
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={() => setCount(count + 1)} style={{ marginRight: '10px' }}>Increment Count</button>
+
+      <p>Text: {text}</p>
+      <input value={text} onChange={e => setText(e.target.value)} placeholder="Type here (doesn't affect expensive computation)" style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }} />
+
+      <p style={{ marginTop: '10px' }}>Expensive Value (computed based on count): {expensiveValue}</p>
+      <p>Check console to see when the expensive computation runs.</p>
+    </div>
+  );
+}
+
+// Render the component
+const container = document.getElementById('app-output');
+if (container) {
+    const root = ReactDOMClient.createRoot(container);
+    root.render(<MyComponent />);
+} else {
+    console.error("Container element with id 'app-output' not found!");
+}
+`,
+            },
+             // Add more hooks here following the same structure
+        };
+
+        // Function to load Monaco Editor
+        async function loadMonacoEditor() {
+             await loader.init();
+             console.log('Monaco Editor loaded.');
+        }
+
+        // Function to render content for a specific hook
+        function renderContent(hookName) {
+            const content = hookContent[hookName];
+            const mainContent = document.getElementById('main-content');
+
+            if (!content) {
+                mainContent.innerHTML = '<p>Content not found for this hook.</p>';
+                disposeEditor();
+                unmountReactApp();
+                return;
+            }
+
+            // Update main content HTML
+            mainContent.innerHTML = `
+                <div class="content-section">
+                    <h2>${content.title}</h2>
+                    ${content.explanation}
+                </div>
+                <div class="content-section">
+                    <h3>Code Example</h3>
+                    <div class="code-editor-container">
+                        <div id="editor"></div>
+                        <div class="editor-actions">
+                            <button class="btn btn-secondary" id="reset-btn" aria-label="Reset code example">Reset Example</button>
+                            <button class="btn btn-primary" id="run-btn" aria-label="Run code example">Run Code</button>
+                        </div>
+                    </div>
+                </div>
+                 <div class="content-section">
+                    <h3>Output</h3>
+                    <div class="output-area">
+                        <div id="app-output">
+                            <!-- React app output will appear here -->
+                        </div>
+                        <div id="console-output">
+                            <!-- Console logs will appear here -->
+                            <p>Click "Run Code" to see the output.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            currentHook = hookName;
+            initializeEditor(content.code);
+            attachEventListeners(content.code); // Pass initial code for reset
+            unmountReactApp(); // Unmount previous app when rendering new content
+        }
+
+        // Function to initialize or update Monaco Editor
+        function initializeEditor(code) {
+             disposeEditor(); // Dispose any existing editor instance
+
+            editor = monaco.editor.create(document.getElementById('editor'), {
+                value: code,
+                language: 'javascript',
+                theme: 'vs-dark', // Use a dark theme for code
+                minimap: { enabled: false },
+                automaticLayout: true, // Make editor responsive
+                scrollBeyondLastLine: false,
+                fontSize: 14,
+                lineHeight: 24,
+                fontFamily: 'Consolas, Monaco, \'Andale Mono\', \'Ubuntu Mono\', monospace',
+                readOnly: false, // Allow editing
+                tabSize: 2,
+                insertSpaces: true,
+                detectIndentation: false,
+                // Add accessibility features
+                accessibilitySupport: 'auto',
+                ariaContainerElement: document.getElementById('editor')
+            });
+        }
+
+        // Function to dispose the current editor instance
+        function disposeEditor() {
+            if (editor) {
+                editor.dispose();
+                editor = null;
+            }
+        }
+
+        // Function to attach event listeners to buttons
+        function attachEventListeners(initialCode) {
+            const runBtn = document.getElementById('run-btn');
+            const resetBtn = document.getElementById('reset-btn');
+
+            if (runBtn) {
+                runBtn.onclick = () => runCode();
+            }
+            if (resetBtn) {
+                resetBtn.onclick = () => resetCode(initialCode);
+            }
+        }
+
+        // Function to unmount the previous React app (if any)
+        function unmountReactApp() {
+            const appRootContainer = document.getElementById('app-output');
+            if (appRootContainer) {
+                // Use React 18's root API if available
+                // This is tricky without the root instance. Clearing the container is a simpler fallback.
+                // If currentReactRoot is tracked, we could use currentReactRoot.unmount().
+                // For this artifact's structure, clearing the container is more reliable
+                // as the root is created inside the evaluated code string.
+                 appRootContainer.innerHTML = ''; // Clear the DOM content
+                 // React 18's createRoot should handle cleanup when rendering into a non-empty container,
+                 // but explicit unmounting is safer if we could track the root.
+                 currentReactRoot = null; // Reset tracked root
+            }
+        }
+
+
+        // Function to run the code in the editor
+        function runCode() {
+            const code = editor.getValue();
+            const appRootContainer = document.getElementById('app-output');
+            const consoleOutputArea = document.getElementById('console-output');
+
+            if (!appRootContainer || !consoleOutputArea) {
+                 console.error("Output containers not found!");
+                 return;
+            }
+
+            // Clear previous output and unmount previous React app
+            unmountReactApp();
+            consoleOutputArea.innerHTML = 'Running...';
+
+            // --- Basic Sandboxed Execution Simulation ---
+            // This uses Function constructor and overrides console.log/error.
+            // A real production environment would use a more secure sandboxed iframe
+            // or a server-side execution environment.
+
+            let consoleOutput = '';
+            const originalConsoleLog = console.log;
+            const originalConsoleError = console.error;
+
+            // Override console.log and console.error to capture output
+            console.log = (...args) => {
+                const message = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)).join(' ');
+                consoleOutput += message + '\\n';
+                originalConsoleLog.apply(console, args); // Also log to browser console
+            };
+             console.error = (...args) => {
+                const message = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)).join(' ');
+                consoleOutput += `ERROR: ${message}\\n`;
+                originalConsoleError.apply(console, args); // Also log to browser console
+            };
+
+
+            try {
+                // Provide React and ReactDOMClient globally for the executed code
+                const React = window.React;
+                const ReactDOMClient = window.ReactDOMClient;
+
+                // Use Function constructor for execution.
+                // The user's code is expected to call ReactDOMClient.createRoot(document.getElementById('app-output')).render(...)
+                // We pass necessary globals to the function's scope.
+                const runnableCode = new Function('React', 'ReactDOMClient', 'console', code);
+
+                // Execute the code
+                runnableCode(React, ReactDOMClient, console);
+
+                 // Note: If the user's code successfully calls createRoot and renders,
+                 // the output will appear in the #app-output div.
+                 // We don't get the root instance back easily here.
+
+            } catch (error) {
+                console.error('Code execution error:', error);
+                consoleOutput += `EXECUTION ERROR: ${error.message}\\n${error.stack}`;
+            } finally {
+                 // Restore original console methods
+                console.log = originalConsoleLog;
+                console.error = originalConsoleError;
+
+                // Display captured console output
+                if (consoleOutput.trim() !== '' && consoleOutputArea) {
+                     consoleOutputArea.innerHTML = `<h4>Console Output:</h4><pre>${consoleOutput}</pre>`;
+                } else if (consoleOutputArea) {
+                     // If no console output, check if the app-output div has content
+                     if (appRootContainer && appRootContainer.innerHTML.trim() !== '') {
+                         consoleOutputArea.innerHTML = `<h4>Console Output:</h4><p>No console output.</p>`;
+                     } else {
+                         consoleOutputArea.innerHTML = `<h4>Console Output:</h4><p>Code executed. No console output or React render detected.</p>`;
+                     }
+                }
+
+                // Mark the current hook as completed
+                const activeNavLink = document.querySelector(`.nav-link.active`);
+                if (activeNavLink) {
+                    activeNavLink.classList.add('completed');
+                }
+            }
+        }
+
+        // Function to reset the code in the editor
+        function resetCode(initialCode) {
+            if (editor) {
+                editor.setValue(initialCode);
+                 // Clear output areas
+                 const appRootContainer = document.getElementById('app-output');
+                 const consoleOutputArea = document.getElementById('console-output');
+                 unmountReactApp(); // Unmount React app
+                 if (consoleOutputArea) {
+                     consoleOutputArea.innerHTML = '<p>Click "Run Code" to see the output.</p>';
+                 }
+            }
+        }
+
+        // --- Initialization ---
+        // Load Monaco Editor and then set up the UI
+        loadMonacoEditor().then(() => {
+            console.log('UI setup started.');
+
+            // Add event listeners for navigation
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const hook = e.target.dataset.hook;
+
+                    // Update active class
+                    document.querySelectorAll('.nav-link').forEach(nav => {
+                        nav.classList.remove('active');
+                        nav.removeAttribute('aria-current');
+                    });
+                    e.target.classList.add('active');
+                    e.target.setAttribute('aria-current', 'page');
+
+                    // Render content for the selected hook
+                    renderContent(hook);
+
+                    // Update URL hash
+                    history.pushState(null, '', e.target.href);
+
+                    // Scroll navigation item into view on mobile if needed
+                    if (window.innerWidth <= 992) {
+                        e.target.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                    }
+                });
+            });
+
+            // Check URL hash on load to determine initial hook
+            const initialHookFromHash = window.location.hash.substring(1);
+            const hookToRender = hookContent[initialHookFromHash] ? initialHookFromHash : currentHook; // Default to useState if hash is invalid
+
+            // Set initial active navigation link
+            const initialNavLink = document.querySelector(`.nav-link[data-hook="${hookToRender}"]`);
+            if (initialNavLink) {
+                document.querySelectorAll('.nav-link').forEach(nav => nav.classList.remove('active'));
+                initialNavLink.classList.add('active');
+                 initialNavLink.setAttribute('aria-current', 'page');
+            }
+
+            // Render content for the initial hook
+            renderContent(hookToRender);
+
+            // Mark the initial hook as completed immediately (as it's visible)
+            if (initialNavLink) {
+                 initialNavLink.classList.add('completed');
+            }
+
+        }).catch(error => {
+            console.error('Failed to load Monaco Editor:', error);
+            document.getElementById('main-content').innerHTML = '<p style="color: red;">Failed to load the code editor. Please try refreshing the page.</p>';
+        });
+
+        // Handle back/forward button
+        window.addEventListener('popstate', () => {
+            const hookFromHash = window.location.hash.substring(1);
+            const hookToRender = hookContent[hookFromHash] ? hookFromHash : 'useState'; // Default to useState
+
+             // Update active class
+            document.querySelectorAll('.nav-link').forEach(nav => {
+                 nav.classList.remove('active');
+                 nav.removeAttribute('aria-current');
+                 if (nav.dataset.hook === hookToRender) {
+                     nav.classList.add('active');
+                     nav.setAttribute('aria-current', 'page');
+                      // Scroll into view on popstate as well
+                     if (window.innerWidth <= 992) {
+                        nav.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                     }
+                 }
+            });
+
+            renderContent(hookToRender);
+
+            // Mark the hook as completed when navigating back/forward to it
+            document.querySelector(`.nav-link[data-hook="${hookToRender}"]`).classList.add('completed');
+        });
+
+         // --- Include React and ReactDOM from CDN for basic execution simulation ---
+         // IMPORTANT: This is NOT how you'd typically use React with Monaco Editor
+         // in a production app. A proper setup involves bundling or a sandboxed environment.
+         // This is a compromise for a self-contained artifact.
+         // These scripts make React and ReactDOM available globally for the executed code.
+    </script>
+     <!-- React and ReactDOM CDN imports for basic execution simulation -->
+     <!-- These need to be available in the global scope for the Function constructor execution -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom-client.development.js"></script>
+</body>
+</html>

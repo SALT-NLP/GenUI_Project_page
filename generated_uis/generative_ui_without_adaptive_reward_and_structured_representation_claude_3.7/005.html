@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding P-values</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --white-color: #ffffff;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-400: #ced4da;
+            --gray-500: #adb5bd;
+            --gray-600: #6c757d;
+            --gray-700: #495057;
+            --gray-800: #343a40;
+            --gray-900: #212529;
+
+            --background-color: var(--gray-100);
+            --text-color: var(--gray-900);
+            --card-background: var(--white-color);
+            --border-color: var(--gray-300);
+            --heading-color: var(--gray-800);
+            --link-color: var(--primary-color);
+            --hover-color: #0056b3;
+
+            --spacing-unit: 8px;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --tooltip-background: var(--gray-800);
+            --tooltip-text-color: var(--white-color);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            font-display: swap; /* Improve font loading */
+            position: relative; /* Needed for tooltip positioning */
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            padding: calc(var(--spacing-unit) * 3);
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: calc(var(--spacing-unit) * 4);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: calc(var(--spacing-unit) * 4);
+            grid-column: 1 / -1; /* Span across all columns */
+        }
+
+        header h1 {
+            color: var(--heading-color);
+            font-size: 2.5em;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .card {
+            background-color: var(--card-background);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: calc(var(--spacing-unit) * 3);
+            border: 1px solid var(--border-color);
+        }
+
+        h2, h3 {
+            color: var(--heading-color);
+            font-weight: 600;
+            margin-top: 0;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+        }
+
+        p {
+            margin-bottom: calc(var(--spacing-unit) * 2);
+        }
+
+        .explanation-section h3 {
+            margin-top: calc(var(--spacing-unit) * 3);
+        }
+
+        .simulation-section {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: calc(var(--spacing-unit) * 3);
+        }
+
+        .simulation-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: calc(var(--spacing-unit) * 2);
+            margin-bottom: calc(var(--spacing-unit) * 3);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            margin-bottom: var(--spacing-unit);
+            color: var(--gray-700);
+            font-size: 0.9em;
+        }
+
+        .control-group input[type="number"],
+        .control-group select {
+            padding: var(--spacing-unit) 12px;
+            border: 1px solid var(--border-color);
+            border-radius: calc(var(--border-radius) / 2);
+            font-size: 1em;
+            width: 100%;
+            box-sizing: border-box;
+            color: var(--text-color);
+            background-color: var(--white-color);
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: var(--white-color);
+            border: none;
+            border-radius: calc(var(--border-radius) / 2);
+            padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 3);
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            font-weight: 600;
+            justify-self: start; /* Align button to the start of its grid cell */
+            min-width: 150px; /* Ensure a minimum clickable area */
+            text-align: center;
+        }
+
+        button:hover {
+            background-color: var(--hover-color);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:focus-visible {
+             outline: 2px solid var(--primary-color);
+             outline-offset: 2px;
+        }
+
+
+        .simulation-output {
+            margin-top: calc(var(--spacing-unit) * 3);
+            padding: calc(var(--spacing-unit) * 2);
+            background-color: var(--gray-200);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+        }
+
+        .simulation-output p {
+            margin: var(--spacing-unit) 0;
+            font-size: 1.1em;
+        }
+
+        .simulation-output p strong {
+            color: var(--heading-color);
+        }
+
+        .visualization-container {
+            position: relative;
+            height: 400px; /* Fixed height for chart */
+            background-color: var(--white-color); /* Ensure chart area is white */
+            border-radius: var(--border-radius);
+            padding: calc(var(--spacing-unit) * 2);
+            box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.05);
+            cursor: pointer; /* Indicate interactivity */
+        }
+
+        .floating-controls {
+            position: absolute;
+            top: calc(var(--spacing-unit) * 2);
+            right: calc(var(--spacing-unit) * 2);
+            background: rgba(255, 255, 255, 0.95);
+            padding: calc(var(--spacing-unit) * 1.5);
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-unit);
+        }
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+         .floating-controls .control-group {
+             margin: 0;
+             gap: calc(var(--spacing-unit) / 2);
+         }
+         .floating-controls label {
+             font-size: 0.8em;
+             margin-bottom: 0;
+         }
+         .floating-controls input[type="color"],
+         .floating-controls select {
+             padding: calc(var(--spacing-unit) / 2);
+             font-size: 0.8em;
+             height: auto; /* Adjust height for smaller controls */
+         }
+
+
+        .glossary-item {
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: calc(var(--spacing-unit) * 2);
+        }
+
+        .glossary-term {
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--heading-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: color 0.2s ease;
+            padding: var(--spacing-unit) 0; /* Add padding for larger click area */
+        }
+
+        .glossary-term:hover {
+            color: var(--primary-color);
+        }
+
+        .glossary-term:focus-visible {
+             outline: 2px solid var(--primary-color);
+             outline-offset: 2px;
+        }
+
+        .glossary-term .arrow {
+            transition: transform 0.3s ease;
+            margin-left: var(--spacing-unit);
+        }
+
+        .glossary-term.expanded .arrow {
+            transform: rotate(180deg);
+        }
+
+        .glossary-definition {
+            margin-top: var(--spacing-unit);
+            padding-left: calc(var(--spacing-unit) * 2);
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, padding-top 0.3s ease-out;
+            will-change: max-height; /* Performance hint */
+        }
+
+        /* Remove fixed max-height from CSS to rely on JS scrollHeight */
+        .glossary-definition.expanded {
+            padding-top: var(--spacing-unit);
+        }
+
+        @media (min-width: 768px) {
+             .container {
+                grid-template-columns: 2fr 1fr; /* Explanation and Simulation side-by-side */
+                gap: calc(var(--spacing-unit) * 4);
+            }
+            header {
+                 grid-column: 1 / -1; /* Still span full width */
+            }
+            .explanation-section {
+                grid-column: 1 / 2;
+            }
+            .simulation-section {
+                grid-column: 2 / 3;
+                grid-row: 1 / 3; /* Span across explanation and glossary rows */
+            }
+            .glossary-section {
+                grid-column: 1 / 2;
+            }
+             .simulation-controls {
+                grid-template-columns: 1fr; /* Stack controls vertically on medium screens */
+             }
+             button {
+                 width: 100%; /* Make button full width in simulation column */
+                 justify-self: stretch;
+             }
+        }
+
+         @media (min-width: 1024px) {
+             .container {
+                 grid-template-columns: 3fr 2fr; /* Adjust column ratio */
+             }
+             .simulation-controls {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Allow multiple columns again */
+             }
+             button {
+                 width: auto; /* Auto width when multiple columns */
+                 justify-self: start;
+             }
+         }
+
+         /* Chart specific styles */
+         .chart-container {
+            height: 100%;
+            width: 100%;
+            position: relative;
+        }
+         .chart-canvas {
+             width: 100% !important;
+             height: 100% !important;
+         }
+
+         /* Tooltip Styles */
+         .tooltip-trigger {
+             position: relative;
+             cursor: help;
+             border-bottom: 1px dashed var(--gray-500);
+         }
+
+         .tooltip {
+             position: absolute;
+             top: 100%; /* Position below the trigger */
+             left: 50%;
+             transform: translateX(-50%) translateY(10px); /* Center horizontally, slight offset down */
+             background-color: var(--tooltip-background);
+             color: var(--tooltip-text-color);
+             padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+             border-radius: var(--border-radius);
+             font-size: 0.9em;
+             white-space: normal; /* Allow text wrapping */
+             z-index: 20; /* Above other elements */
+             opacity: 0;
+             pointer-events: none; /* Don't block clicks */
+             transition: opacity 0.2s ease, transform 0.2s ease;
+             min-width: 150px;
+             max-width: 300px;
+             text-align: center;
+             box-shadow: var(--box-shadow);
+         }
+
+         .tooltip.visible {
+             opacity: 1;
+             transform: translateX(-50%) translateY(0); /* Move up to final position */
+         }
+
+         .tooltip::before {
+             content: '';
+             position: absolute;
+             bottom: 100%; /* Position above the tooltip */
+             left: 50%;
+             transform: translateX(-50%);
+             border-width: var(--spacing-unit) var(--spacing-unit) 0 0;
+             border-style: solid;
+             border-color: transparent transparent var(--tooltip-background) transparent;
+             /* Rotate to point upwards */
+             transform: translateX(-50%) rotate(45deg);
+             margin-bottom: -calc(var(--spacing-unit) * 0.5); /* Adjust to meet the tooltip */
+         }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Understanding P-values</h1>
+        </header>
+
+        <section class="card explanation-section" aria-labelledby="explanation-heading">
+            <h2 id="explanation-heading">What is a P-value?</h2>
+            <p>In statistical hypothesis testing, a <span class="tooltip-trigger" data-tooltip="The probability of observing data as extreme as, or more extreme than, the observed data, assuming the null hypothesis is true.">p-value</span> (probability value) is a measure of the probability of observing a <span class="tooltip-trigger" data-tooltip="A value calculated from sample data during a statistical test.">test statistic</span> as extreme as, or more extreme than, the observed value, assuming that the <span class="tooltip-trigger" data-tooltip="A statement of no effect or no difference.">null hypothesis</span> is true.</p>
+
+            <h3>Calculation</h3>
+            <p>The calculation of a p-value depends on the test statistic used (e.g., Z-score, t-score, F-score, Chi-square) and the probability distribution of that statistic under the null hypothesis. For example, with a Z-test and a <span class="tooltip-trigger" data-tooltip="A specific normal distribution with a mean of 0 and a standard deviation of 1.">standard normal distribution</span>, the p-value is the area under the curve in the tails beyond the calculated Z-score.</p>
+
+            <h3>Interpretation</h3>
+            <p>A small p-value (typically ≤ <span class="tooltip-trigger" data-tooltip="The threshold probability (commonly 0.05) below which the null hypothesis is rejected.">0.05</span>) suggests that the observed data is unlikely under the null hypothesis, leading to its rejection. A large p-value suggests that the observed data is consistent with the null hypothesis, and we fail to reject it. It's crucial to remember that a p-value does not represent the probability that the null hypothesis is true or false.</p>
+            <ul>
+                <li><strong>Small p-value (e.g., ≤ 0.05):</strong> Indicates strong evidence against the null hypothesis.</li>
+                <li><strong>Large p-value (e.g., > 0.05):</strong> Indicates weak evidence against the null hypothesis.</li>
+            </ul>
+            <p>The <span class="tooltip-trigger" data-tooltip="The threshold probability (commonly 0.05) below which the null hypothesis is rejected.">significance level</span> (<span class="tooltip-trigger" data-tooltip="The threshold probability (commonly 0.05) below which the null hypothesis is rejected.">alpha</span>, α) is a threshold set before conducting the test (commonly 0.05). If the p-value is less than alpha (p ≤ α), we reject the null hypothesis. If the p-value is greater than alpha (p > α), we fail to reject the null hypothesis.</p>
+        </section>
+
+        <section class="card simulation-section" aria-labelledby="simulation-heading">
+            <h2 id="simulation-heading">P-value Simulation (Standard Normal)</h2>
+            <p>Explore how the p-value changes based on the test statistic and the type of hypothesis test using a standard normal distribution (mean=0, std dev=1).</p>
+
+            <div class="simulation-controls">
+                <div class="control-group">
+                    <label for="testStatistic">Test Statistic (Z-score):</label>
+                    <input type="number" id="testStatistic" value="1.96" step="0.01" aria-label="Input for Test Statistic Z-score">
+                </div>
+                <div class="control-group">
+                    <label for="testType">Test Type:</label>
+                    <select id="testType" aria-label="Select Test Type">
+                        <option value="two-tailed">Two-tailed</option>
+                        <option value="right-tailed">Right-tailed</option>
+                        <option value="left-tailed">Left-tailed</option>
+                    </select>
+                </div>
+                 <div class="control-group">
+                    <label for="significanceLevel">Significance Level (α):</label>
+                    <input type="number" id="significanceLevel" value="0.05" step="0.01" min="0.01" max="0.5" aria-label="Input for Significance Level Alpha">
+                </div>
+            </div>
+            <button id="calculatePValue" aria-label="Calculate P-value and Update Chart">Calculate P-value & Update Chart</button>
+
+            <div class="visualization-container" role="img" aria-label="Standard Normal Distribution chart illustrating P-value area">
+                <canvas id="pvalueChart" class="chart-canvas"></canvas>
+                 <div class="floating-controls" id="chartControls">
+                    <div class="control-group">
+                        <label for="shadeColor">Shade Color</label>
+                        <input type="color" id="shadeColor" value="#007bff80" aria-label="Color picker for P-value shaded area">
+                    </div>
+                    <div class="control-group">
+                        <label for="lineColor">Line Color</label>
+                        <input type="color" id="lineColor" value="#007bff" aria-label="Color picker for distribution line">
+                    </div>
+                </div>
+            </div>
+
+            <div class="simulation-output" aria-live="polite">
+                <p><strong>Calculated P-value:</strong> <span id="pValueOutput">--</span></p>
+                <p><strong>Interpretation:</strong> <span id="interpretationOutput">--</span></p>
+            </div>
+        </section>
+
+        <section class="card glossary-section" aria-labelledby="glossary-heading">
+            <h2 id="glossary-heading">Glossary</h2>
+            <div class="glossary-item">
+                <div class="glossary-term" data-term="Null Hypothesis" role="button" aria-expanded="false" tabindex="0">
+                    Null Hypothesis (H₀) <span class="arrow">▼</span>
+                </div>
+                <div class="glossary-definition" aria-hidden="true">
+                    <p>A statement of no effect or no difference. Statistical tests aim to find evidence against the null hypothesis.</p>
+                </div>
+            </div>
+            <div class="glossary-item">
+                <div class="glossary-term" data-term="Alternative Hypothesis" role="button" aria-expanded="false" tabindex="0">
+                    Alternative Hypothesis (H₁) <span class="arrow">▼</span>
+                </div>
+                <div class="glossary-definition" aria-hidden="true">
+                    <p>A statement that contradicts the null hypothesis, suggesting there is an effect or difference.</p>
+                </div>
+            </div>
+            <div class="glossary-item">
+                <div class="glossary-term" data-term="Test Statistic" role="button" aria-expanded="false" tabindex="0">
+                    Test Statistic <span class="arrow">▼</span>
+                </div>
+                <div class="glossary-definition" aria-hidden="true">
+                    <p>A value calculated from sample data during a statistical test. Its magnitude indicates how far the sample results deviate from what is expected under the null hypothesis.</p>
+                </div>
+            </div>
+             <div class="glossary-item">
+                <div class="glossary-term" data-term="Significance Level" role="button" aria-expanded="false" tabindex="0">
+                    Significance Level (α) <span class="arrow">▼</span>
+                </div>
+                <div class="glossary-definition" aria-hidden="true">
+                    <p>The probability of rejecting the null hypothesis when it is actually true (Type I error). Commonly set at 0.05 (5%).</p>
+                </div>
+            </div>
+             <div class="glossary-item">
+                <div class="glossary-term" data-term="Standard Normal Distribution" role="button" aria-expanded="false" tabindex="0">
+                    Standard Normal Distribution <span class="arrow">▼</span>
+                </div>
+                <div class="glossary-definition" aria-hidden="true">
+                    <p>A specific normal distribution with a mean of 0 and a standard deviation of 1. Z-scores are points on this distribution.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div id="globalTooltip" class="tooltip" aria-hidden="true"></div>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        // --- Chart and Simulation Logic ---
+
+        let pValueChart;
+        const chartCanvas = document.getElementById('pvalueChart');
+        const chartControls = document.getElementById('chartControls');
+        const testStatisticInput = document.getElementById('testStatistic');
+        const testTypeSelect = document.getElementById('testType');
+        const significanceLevelInput = document.getElementById('significanceLevel');
+        const calculateButton = document.getElementById('calculatePValue');
+        const pValueOutput = document.getElementById('pValueOutput');
+        const interpretationOutput = document.getElementById('interpretationOutput');
+        const shadeColorInput = document.getElementById('shadeColor');
+        const lineColorInput = document.getElementById('lineColor');
+
+        // Function to calculate Standard Normal CDF (approximation)
+        // Using the Abramowitz and Stegun approximation for erf(x)
+        // Z-score to p-value calculation (area in the tail)
+        function standardNormalCDF(z) {
+            // This is a simplified approximation. For high precision,
+            // a more complex algorithm or lookup table is needed.
+            // This version uses a common approximation based on the error function.
+            const p = 0.2316419;
+            const a1 = 0.319381530;
+            const a2 = -0.356563782;
+            const a3 = 1.781477937;
+            const a4 = -1.821255978;
+            const a5 = 1.330274429;
+
+            const sign = z >= 0 ? 1 : -1;
+            const absZ = Math.abs(z);
+
+            const t = 1.0 / (1.0 + p * absZ);
+            const cdf = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-0.5 * absZ * absZ);
+
+            return z >= 0 ? cdf : 1.0 - cdf;
+        }
+
+        function calculatePValue(z, testType) {
+            const cdf = standardNormalCDF(z);
+            switch (testType) {
+                case 'right-tailed':
+                    return 1 - cdf;
+                case 'left-tailed':
+                    return cdf;
+                case 'two-tailed':
+                    // For two-tailed, we need the area in both tails.
+                    // The area in the right tail is 1 - CDF(abs(z))
+                    // The area in the left tail is CDF(-abs(z)) which is 1 - CDF(abs(z)) due to symmetry
+                    // So the total area is 2 * (1 - CDF(abs(z)))
+                    return 2 * (1 - standardNormalCDF(Math.abs(z)));
+                default:
+                    return NaN;
+            }
+        }
+
+        function updateSimulation() {
+            const z = parseFloat(testStatisticInput.value);
+            const testType = testTypeSelect.value;
+            const alpha = parseFloat(significanceLevelInput.value);
+
+            if (isNaN(z) || isNaN(alpha)) {
+                pValueOutput.textContent = "Invalid input";
+                interpretationOutput.textContent = "Please enter valid numbers.";
+                pValueOutput.style.color = "var(--dark-color)"; // Reset color
+                updateChart(z, testType, NaN); // Clear chart or show error state
+                return;
+            }
+
+            const pValue = calculatePValue(z, testType);
+            pValueOutput.textContent = pValue.toFixed(4);
+
+            let interpretation = `With a test statistic (Z) of ${z.toFixed(2)} and a ${testType} test, the calculated p-value is ${pValue.toFixed(4)}. `;
+
+            if (pValue <= alpha) {
+                interpretation += `Since the p-value (${pValue.toFixed(4)}) is less than or equal to the significance level (α = ${alpha.toFixed(2)}), we reject the null hypothesis.`;
+                 pValueOutput.style.color = "var(--danger-color)";
+            } else {
+                interpretation += `Since the p-value (${pValue.toFixed(4)}) is greater than the significance level (α = ${alpha.toFixed(2)}), we fail to reject the null hypothesis.`;
+                 pValueOutput.style.color = "var(--success-color)";
+            }
+
+            interpretationOutput.textContent = interpretation;
+
+            updateChart(z, testType, pValue);
+        }
+
+        // Helper function for Standard Normal PDF (used for chart drawing)
+        function standardNormalPDF(z) {
+            return Math.exp(-z * z / 2) / Math.sqrt(2 * Math.PI);
+        }
+
+        function createChart() {
+            const ctx = chartCanvas.getContext('2d');
+
+            // Generate data points for a standard normal curve
+            const dataPoints = [];
+            const minZ = -4;
+            const maxZ = 4;
+            const numPoints = 200;
+            const step = (maxZ - minZ) / numPoints;
+
+            for (let i = 0; i <= numPoints; i++) {
+                const z = minZ + i * step;
+                dataPoints.push({ x: z, y: standardNormalPDF(z) });
+            }
+
+            pValueChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: 'Standard Normal Distribution (Z)',
+                        data: dataPoints,
+                        borderColor: lineColorInput.value,
+                        borderWidth: 2,
+                        fill: false,
+                        pointRadius: 0,
+                        tension: 0.4 // Smooth the curve
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'linear', // Use linear scale for Z-scores
+                            position: 'bottom',
+                            title: {
+                                display: true,
+                                text: 'Z-score',
+                                color: "var(--gray-700)"
+                            },
+                            grid: {
+                                color: "var(--gray-300)"
+                            },
+                            ticks: {
+                                color: "var(--gray-700)"
+                            },
+                            min: minZ,
+                            max: maxZ,
+                            stepSize: 1
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Probability Density',
+                                color: "var(--gray-700)"
+                            },
+                            grid: {
+                                color: "var(--gray-300)"
+                            },
+                             ticks: {
+                                color: "var(--gray-700)"
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    label += `Z=${context.parsed.x.toFixed(2)}, Density=${context.parsed.y.toFixed(4)}`;
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                     onClick: (e) => showControls(e),
+                }
+            });
+        }
+
+        function updateChart(z, testType, pValue) {
+             if (!pValueChart) return;
+
+            const dataPoints = pValueChart.data.datasets[0].data;
+            const shadeColor = shadeColorInput.value;
+            const absZ = Math.abs(z);
+
+            // Remove previous shading areas
+            pValueChart.data.datasets = pValueChart.data.datasets.filter(dataset => dataset.label !== 'P-value Area');
+
+            // Add shading based on test type
+            let shadingData = [];
+
+            if (testType === 'right-tailed') {
+                // Add points from the curve where x >= absZ
+                shadingData = dataPoints.filter(point => point.x >= absZ);
+                 // Add boundary point on the curve and x-axis at absZ
+                 shadingData.push({ x: absZ, y: standardNormalPDF(absZ) });
+                 shadingData.push({ x: absZ, y: 0 });
+            } else if (testType === 'left-tailed') {
+                // Add points from the curve where x <= -absZ
+                shadingData = dataPoints.filter(point => point.x <= -absZ);
+                 // Add boundary point on the curve and x-axis at -absZ
+                 shadingData.push({ x: -absZ, y: standardNormalPDF(-absZ) });
+                 shadingData.push({ x: -absZ, y: 0 });
+            } else if (testType === 'two-tailed') {
+                // Add points from the curve where x <= -absZ or x >= absZ
+                const leftTailData = dataPoints.filter(point => point.x <= -absZ);
+                const rightTailData = dataPoints.filter(point => point.x >= absZ);
+
+                shadingData = [...leftTailData, ...rightTailData];
+
+                 // Add boundary points for both tails
+                 shadingData.push({ x: -absZ, y: standardNormalPDF(-absZ) });
+                 shadingData.push({ x: -absZ, y: 0 });
+                 shadingData.push({ x: absZ, y: standardNormalPDF(absZ) });
+                 shadingData.push({ x: absZ, y: 0 });
+            }
+
+            // Sort combined data by x-value to ensure correct polygon drawing
+            shadingData.sort((a, b) => a.x - b.x);
+
+            // Ensure the curve dataset is the first one so shading is layered correctly
+            const curveDataset = pValueChart.data.datasets[0];
+
+            // Add shading dataset if there are points to shade
+            if (shadingData.length > 0) {
+                 pValueChart.data.datasets = [
+                     curveDataset, // Curve first
+                     {
+                        label: 'P-value Area',
+                        data: shadingData,
+                        backgroundColor: shadeColor,
+                        borderColor: 'transparent', // No border for the shaded area
+                        borderWidth: 0,
+                        fill: 'origin', // Fill down to the x-axis
+                        pointRadius: 0,
+                        tension: 0.4 // Match tension of the curve
+                    }
+                 ];
+
+                 // Update line color if changed
+                 curveDataset.borderColor = lineColorInput.value;
+
+            } else {
+                 // If no points to shade (e.g., Z is outside the range -4 to 4 or invalid),
+                 // just update the line color and ensure no shading dataset exists.
+                 pValueChart.data.datasets[0].borderColor = lineColorInput.value;
+                 pValueChart.data.datasets = [pValueChart.data.datasets[0]]; // Keep only the curve dataset
+            }
+
+
+            pValueChart.update();
+        }
+
+
+        // Initial chart creation
+        createChart();
+        // Initial simulation update
+        updateSimulation();
+
+
+        // Event listeners
+        calculateButton.addEventListener('click', updateSimulation);
+        testStatisticInput.addEventListener('change', updateSimulation); // Update on change
+        testTypeSelect.addEventListener('change', updateSimulation); // Update on change
+        significanceLevelInput.addEventListener('change', updateSimulation); // Update on change
+
+        shadeColorInput.addEventListener('input', () => updateChart(parseFloat(testStatisticInput.value), testTypeSelect.value, parseFloat(pValueOutput.textContent)));
+        lineColorInput.addEventListener('input', () => updateChart(parseFloat(testStatisticInput.value), testTypeSelect.value, parseFloat(pValueOutput.textContent)));
+
+        chartCanvas.addEventListener('click', (e) => showControls(e));
+
+
+        // --- Floating Controls Logic ---
+        function showControls(event) {
+            // Check if the click was inside the canvas but not on the controls themselves
+            // Use getBoundingClientRect to check if click was within canvas bounds
+            const rect = chartCanvas.getBoundingClientRect();
+            const isClickInsideCanvas = event.clientX >= rect.left && event.clientX <= rect.right &&
+                                        event.clientY >= rect.top && event.clientY <= rect.bottom;
+
+            const isClickInsideControls = event.target.closest('.floating-controls');
+
+            if (isClickInsideCanvas && !isClickInsideControls) {
+                 chartControls.classList.toggle('active');
+            }
+        }
+
+        // Close panel when clicking outside chart or controls
+        document.addEventListener('click', (e) => {
+            const isClickInsideChartOrControls = e.target.closest('.visualization-container') || e.target.closest('.floating-controls');
+            if (!isClickInsideChartOrControls) {
+                chartControls.classList.remove('active');
+            }
+        });
+
+
+        // --- Glossary Accordion Logic ---
+        document.querySelectorAll('.glossary-term').forEach(term => {
+            term.addEventListener('click', () => {
+                toggleGlossaryItem(term);
+            });
+             term.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault(); // Prevent default space/enter action
+                    toggleGlossaryItem(term);
+                }
+            });
+        });
+
+        function toggleGlossaryItem(term) {
+             const definition = term.nextElementSibling;
+             const isExpanded = definition.classList.contains('expanded');
+
+             // Close all other definitions
+             document.querySelectorAll('.glossary-definition.expanded').forEach(openDef => {
+                 if (openDef !== definition) {
+                     openDef.classList.remove('expanded');
+                     openDef.previousElementSibling.classList.remove('expanded'); // Remove class from term
+                     openDef.previousElementSibling.setAttribute('aria-expanded', 'false');
+                     openDef.setAttribute('aria-hidden', 'true');
+                     openDef.style.maxHeight = 0;
+                     openDef.style.paddingTop = 0;
+                 }
+             });
+
+             // Toggle the clicked definition
+             if (!isExpanded) {
+                 definition.classList.add('expanded');
+                 term.classList.add('expanded'); // Add class to term
+                 term.setAttribute('aria-expanded', 'true');
+                 definition.setAttribute('aria-hidden', 'false');
+                 // Set max-height to allow transition, needs to be large enough
+                 // Use scrollHeight to get the actual content height
+                 definition.style.maxHeight = definition.scrollHeight + 'px';
+                 definition.style.paddingTop = "var(--spacing-unit)";
+             } else {
+                 definition.classList.remove('expanded');
+                 term.classList.remove('expanded'); // Remove class from term
+                 term.setAttribute('aria-expanded', 'false');
+                 definition.setAttribute('aria-hidden', 'true');
+                 definition.style.maxHeight = 0;
+                 definition.style.paddingTop = 0;
+             }
+        }
+
+        // --- Tooltip Logic ---
+        const tooltip = document.getElementById('globalTooltip');
+        let activeTooltipTrigger = null;
+
+        function showTooltip(event) {
+            const trigger = event.target.closest('.tooltip-trigger');
+            if (!trigger) return;
+
+            // Hide any currently active tooltip
+            hideTooltip();
+
+            const tooltipText = trigger.getAttribute('data-tooltip');
+            if (!tooltipText) return;
+
+            activeTooltipTrigger = trigger;
+            tooltip.textContent = tooltipText;
+
+            // Position the tooltip
+            const triggerRect = trigger.getBoundingClientRect();
+            const bodyRect = document.body.getBoundingClientRect();
+
+            // Calculate position relative to the body/viewport
+            // Center horizontally below the trigger
+            const tooltipLeft = triggerRect.left + triggerRect.width / 2 - tooltip.offsetWidth / 2;
+            const tooltipTop = triggerRect.bottom;
+
+            // Adjust for viewport boundaries if necessary (simplified)
+            // This is a basic adjustment. More complex logic might be needed for edge cases.
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            const scrollX = window.scrollX || window.pageXOffset;
+            const scrollY = window.scrollY || window.pageYOffset;
+
+            let finalLeft = tooltipLeft;
+            let finalTop = tooltipTop;
+
+            // Ensure tooltip is not off the right edge
+            if (finalLeft + tooltip.offsetWidth > viewportWidth + scrollX) {
+                finalLeft = viewportWidth + scrollX - tooltip.offsetWidth - varToPx("var(--spacing-unit)"); // Add some padding
+            }
+            // Ensure tooltip is not off the left edge
+            if (finalLeft < scrollX + varToPx("var(--spacing-unit)")) {
+                 finalLeft = scrollX + varToPx("var(--spacing-unit)"); // Add some padding
+            }
+
+             // Ensure tooltip is not off the bottom edge (if positioning below)
+             // If it goes off the bottom, position it above
+             if (finalTop + tooltip.offsetHeight > viewportHeight + scrollY) {
+                  finalTop = triggerRect.top - tooltip.offsetHeight;
+                  // Need to adjust arrow position/rotation if positioning above
+                  // For simplicity, we'll just position above without changing arrow
+                  // A more robust solution would dynamically change the arrow CSS
+             }
+
+
+            tooltip.style.left = finalLeft + 'px';
+            tooltip.style.top = finalTop + 'px';
+
+
+            tooltip.classList.add('visible');
+            tooltip.setAttribute('aria-hidden', 'false');
+        }
+
+        function hideTooltip() {
+            if (tooltip.classList.contains('visible')) {
+                tooltip.classList.remove('visible');
+                tooltip.setAttribute('aria-hidden', 'true');
+                activeTooltipTrigger = null;
+            }
+        }
+
+        // Helper to convert CSS variable to pixel value
+        function varToPx(variableName) {
+             const value = getComputedStyle(document.documentElement).getPropertyValue(variableName);
+             return parseFloat(value) || 0;
+        }
+
+
+        document.addEventListener('mouseover', showTooltip);
+        document.addEventListener('mouseout', (event) => {
+             // Only hide if the mouse leaves the trigger AND is not entering the tooltip itself
+             if (activeTooltipTrigger && !activeTooltipTrigger.contains(event.relatedTarget) && !tooltip.contains(event.relatedTarget)) {
+                 hideTooltip();
+             }
+        });
+
+        document.addEventListener('focusin', showTooltip);
+        document.addEventListener('focusout', (event) => {
+             // Hide if focus moves away from the trigger AND is not moving into the tooltip or another trigger
+             if (activeTooltipTrigger && !activeTooltipTrigger.contains(event.relatedTarget) && !tooltip.contains(event.relatedTarget) && !event.relatedTarget?.closest('.tooltip-trigger')) {
+                 hideTooltip();
+             }
+        });
+
+         // Hide tooltip if clicking anywhere else
+         document.addEventListener('click', (event) => {
+             if (activeTooltipTrigger && !activeTooltipTrigger.contains(event.target) && !tooltip.contains(event.target)) {
+                 hideTooltip();
+             }
+         });
+
+
+    </script>
+</body>
+</html>

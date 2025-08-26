@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Series Visualization</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+            padding: 30px;
+            margin: 20px auto;
+            max-width: 900px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-title {
+            font-size: 1.8em;
+            color: #333;
+            margin-bottom: 25px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .chart-container {
+            height: 450px; /* Fixed height for demonstration */
+            position: relative;
+            cursor: pointer; /* Indicate interactivity */
+            padding: 10px;
+        }
+
+        .floating-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease-out;
+            pointer-events: none;
+            z-index: 10;
+            min-width: 200px;
+        }
+
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-size: 0.9em;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .control-group input[type="color"],
+        .control-group input[type="number"],
+        .control-group select {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 0.9em;
+            width: 100%;
+            box-sizing: border-box; /* Include padding and border in element's total width */
+        }
+
+        .control-group input[type="color"] {
+            padding: 4px;
+            height: 35px;
+        }
+
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Basic styling for the chart canvas */
+        canvas {
+            display: block; /* Prevent extra space below canvas */
+            width: 100% !important; /* Ensure responsiveness */
+            height: 100% !important; /* Ensure responsiveness */
+        }
+
+        /* Tooltip styling (Chart.js default tooltips are styled) */
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2 class="card-title">Understanding Time Series Data: A Line Chart Example</h2>
+        <p style="text-align: center; color: #666; margin-bottom: 30px;">
+            The most effective visualization for time series data is typically a line chart. It excels at showing trends, patterns, seasonality, and anomalies over time. Below is an interactive example demonstrating this.
+        </p>
+        <div class="chart-container" id="timeSeriesChartContainer">
+            <canvas id="timeSeriesChart" aria-label="Time Series Data Visualization" role="img"></canvas>
+            <!-- Floating control panel -->
+            <div class="floating-controls" id="chartControls">
+                <div class="control-group">
+                    <label for="seriesAColor">Series A Color:</label>
+                    <input type="color" id="seriesAColor" value="#4e79a7">
+                </div>
+                <div class="control-group">
+                    <label for="seriesBColor">Series B Color:</label>
+                    <input type="color" id="seriesBColor" value="#f28e2c">
+                </div>
+                 <div class="control-group">
+                    <label for="seriesCColor">Series C Color:</label>
+                    <input type="color" id="seriesCColor" value="#76b7b2">
+                </div>
+                 <div class="control-group">
+                    <label for="fontSize">Label Font Size:</label>
+                    <input type="number" id="fontSize" value="12" min="8" max="20">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        // Sample Time Series Data
+        const labels = [];
+        const dataA = [];
+        const dataB = [];
+        const dataC = [];
+
+        // Generate sample data for 30 days
+        const startDate = new Date('2023-01-01');
+        for (let i = 0; i < 30; i++) {
+            const currentDate = new Date(startDate);
+            currentDate.setDate(startDate.getDate() + i);
+            labels.push(currentDate.toISOString().split('T')[0]); // Format as YYYY-MM-DD
+
+            // Generate some fluctuating data
+            dataA.push(Math.sin(i * 0.5) * 10 + Math.random() * 5 + 20 + i * 0.5);
+            dataB.push(Math.cos(i * 0.3) * 8 + Math.random() * 3 + 15 + i * 0.3);
+            dataC.push(Math.sin(i * 0.4) * 12 + Math.random() * 7 + 10 + i * 0.7);
+        }
+
+        const ctx = document.getElementById('timeSeriesChart').getContext('2d');
+        const controls = document.getElementById('chartControls');
+        const container = document.getElementById('timeSeriesChartContainer');
+
+        const chartConfig = {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Series A (Example Metric)',
+                        data: dataA,
+                        borderColor: '#4e79a7', // Blue
+                        backgroundColor: 'rgba(78, 121, 167, 0.1)', // Subtle fill
+                        tension: 0.4, // Smooth lines
+                        fill: false, // Don't fill area under the line
+                        pointRadius: 3, // Show points
+                        pointHoverRadius: 6,
+                        borderWidth: 2,
+                    },
+                    {
+                        label: 'Series B (Another Metric)',
+                        data: dataB,
+                        borderColor: '#f28e2c', // Orange
+                         backgroundColor: 'rgba(242, 142, 44, 0.1)',
+                        tension: 0.4,
+                        fill: false,
+                        pointRadius: 3,
+                        pointHoverRadius: 6,
+                        borderWidth: 2,
+                    },
+                     {
+                        label: 'Series C (Third Metric)',
+                        data: dataC,
+                        borderColor: '#76b7b2', // Teal
+                         backgroundColor: 'rgba(118, 183, 178, 0.1)',
+                        tension: 0.4,
+                        fill: false,
+                        pointRadius: 3,
+                        pointHoverRadius: 6,
+                        borderWidth: 2,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            font: {
+                                size: 12, // Default size, updated by control
+                                family: "'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif"
+                            },
+                            usePointStyle: true, // Use circle style for legend
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                        titleFont: {
+                            size: 14,
+                            family: "'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif"
+                        },
+                         bodyFont: {
+                            size: 12,
+                             family: "'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif"
+                        },
+                        padding: 10,
+                        caretPadding: 10,
+                        cornerRadius: 4,
+                        displayColors: true, // Show color swatches in tooltip
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Date',
+                            font: {
+                                size: 14, // Default size, updated by control
+                                family: "'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif",
+                                weight: 'bold'
+                            },
+                             color: '#555'
+                        },
+                         ticks: {
+                            font: {
+                                size: 12, // Default size, updated by control
+                                family: "'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif"
+                            },
+                            color: '#666'
+                        },
+                        grid: {
+                            display: false // Minimal grid lines
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Value',
+                            font: {
+                                size: 14, // Default size, updated by control
+                                family: "'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif",
+                                weight: 'bold'
+                            },
+                            color: '#555'
+                        },
+                        ticks: {
+                            font: {
+                                size: 12, // Default size, updated by control
+                                family: "'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif"
+                            },
+                             color: '#666'
+                        },
+                        grid: {
+                             color: '#e0e0e0' // Subtle grid lines
+                        }
+                    }
+                },
+                 hover: {
+                    mode: 'nearest',
+                    intersect: true
+                },
+                animation: {
+                     duration: 1000, // Animation duration
+                     easing: 'easeOutQuart' // Animation easing
+                }
+            }
+        };
+
+        const timeSeriesChart = new Chart(ctx, chartConfig);
+
+        // Toggle controls visibility on chart container click
+        container.addEventListener('click', (e) => {
+             // Prevent closing if clicking inside controls
+            if (!controls.contains(e.target) && !timeSeriesChart.tooltip.getActiveElements().length > 0) {
+                 controls.classList.toggle('active');
+            }
+        });
+
+        // Hide controls when clicking outside the container and controls
+        document.addEventListener('click', (e) => {
+            if (!container.contains(e.target) && !controls.contains(e.target)) {
+                controls.classList.remove('active');
+            }
+        });
+
+        // Update chart based on control changes
+        document.getElementById('seriesAColor').addEventListener('input', updateChart);
+        document.getElementById('seriesBColor').addEventListener('input', updateChart);
+        document.getElementById('seriesCColor').addEventListener('input', updateChart);
+        document.getElementById('fontSize').addEventListener('input', updateChart);
+
+
+        function updateChart() {
+            const seriesAColor = document.getElementById('seriesAColor').value;
+            const seriesBColor = document.getElementById('seriesBColor').value;
+            const seriesCColor = document.getElementById('seriesCColor').value;
+            const fontSize = parseInt(document.getElementById('fontSize').value);
+
+            // Update dataset colors and background colors (with transparency)
+            timeSeriesChart.data.datasets[0].borderColor = seriesAColor;
+            timeSeriesChart.data.datasets[0].backgroundColor = seriesAColor + '1A'; // Add 10% opacity
+            timeSeriesChart.data.datasets[1].borderColor = seriesBColor;
+            timeSeriesChart.data.datasets[1].backgroundColor = seriesBColor + '1A';
+            timeSeriesChart.data.datasets[2].borderColor = seriesCColor;
+            timeSeriesChart.data.datasets[2].backgroundColor = seriesCColor + '1A';
+
+
+            // Update font sizes
+            if (timeSeriesChart.options.plugins.legend.labels.font) {
+                 timeSeriesChart.options.plugins.legend.labels.font.size = fontSize;
+            }
+             if (timeSeriesChart.options.scales.x.title.font) {
+                 timeSeriesChart.options.scales.x.title.font.size = fontSize + 2; // Title slightly larger
+            }
+             if (timeSeriesChart.options.scales.x.ticks.font) {
+                 timeSeriesChart.options.scales.x.ticks.font.size = fontSize;
+            }
+             if (timeSeriesChart.options.scales.y.title.font) {
+                 timeSeriesChart.options.scales.y.title.font.size = fontSize + 2;
+            }
+             if (timeSeriesChart.options.scales.y.ticks.font) {
+                 timeSeriesChart.options.scales.y.ticks.font.size = fontSize;
+            }
+             if (timeSeriesChart.options.plugins.tooltip.titleFont) {
+                 timeSeriesChart.options.plugins.tooltip.titleFont.size = fontSize + 2;
+            }
+             if (timeSeriesChart.options.plugins.tooltip.bodyFont) {
+                 timeSeriesChart.options.plugins.tooltip.bodyFont.size = fontSize;
+            }
+
+
+            timeSeriesChart.update(); // Redraw the chart
+        }
+
+    </script>
+</body>
+</html>

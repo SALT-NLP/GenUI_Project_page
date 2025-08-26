@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mixed-Methods Urban Green Space Research Dashboard</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet/dist/leaflet.css" />
+    <style>
+        :root {
+            --primary: #2e7d32;
+            --primary-light: #60ad5e;
+            --primary-dark: #005005;
+            --secondary: #546e7a;
+            --secondary-light: #819ca9;
+            --secondary-dark: #29434e;
+            --accent: #ffab00;
+            --success: #43a047;
+            --warning: #ff9800;
+            --danger: #e53935;
+            --background: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-primary: #263238;
+            --text-secondary: #546e7a;
+            --text-light: #78909c;
+            --border: #e0e0e0;
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            --radius: 8px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        h1, h2, h3, h4 {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        h1 {
+            font-size: 24px;
+        }
+
+        h2 {
+            font-size: 20px;
+            margin-bottom: 16px;
+        }
+
+        h3 {
+            font-size: 18px;
+            margin-bottom: 12px;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: var(--radius);
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--secondary-dark);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .card-full {
+            grid-column: 1 / -1;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 16px;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: var(--transition);
+        }
+
+        .tab.active {
+            border-bottom: 2px solid var(--primary);
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .tab:hover:not(.active) {
+            border-bottom: 2px solid var(--primary-light);
+        }
+
+        .map-container {
+            height: 500px;
+            width: 100%;
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+
+        .floating-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: var(--transition);
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .control-group {
+            margin: 10px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        input, select, textarea {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-family: inherit;
+            transition: var(--transition);
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.2);
+        }
+
+        .data-upload {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+        }
+
+        .upload-icon {
+            font-size: 36px;
+            color: var(--primary);
+            margin-bottom: 12px;
+        }
+
+        .data-sources {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .data-source {
+            flex: 1;
+            padding: 12px;
+            background-color: rgba(46, 125, 50, 0.1);
+            border-radius: var(--radius);
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .data-source:hover {
+            background-color: rgba(46, 125, 50, 0.2);
+        }
+
+        .data-source.active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+
+        .qualitative-data {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .interview-item {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .interview-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .interview-participant {
+            font-weight: 500;
+        }
+
+        .interview-date {
+            color: var(--text-light);
+            font-size: 14px;
+        }
+
+        .tag {
+            display: inline-block;
+            background-color: rgba(46, 125, 50, 0.1);
+            color: var(--primary);
+            padding: 4px 8px;
+            border-radius: 16px;
+            font-size: 12px;
+            margin-right: 6px;
+            margin-bottom: 6px;
+        }
+
+        .correlation-matrix {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 2px;
+            margin-top: 12px;
+        }
+
+        .correlation-cell {
+            padding: 8px;
+            text-align: center;
+            color: white;
+            font-size: 14px;
+        }
+
+        .correlation-label {
+            background-color: var(--secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .methodology-framework {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .framework-item {
+            padding: 16px;
+            background-color: rgba(84, 110, 122, 0.1);
+            border-radius: var(--radius);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .framework-title {
+            font-weight: 600;
+            color: var(--secondary-dark);
+        }
+
+        .framework-item.recommended {
+            background-color: rgba(46, 125, 50, 0.1);
+            border: 2px solid var(--primary);
+        }
+
+        .framework-item.recommended .framework-title {
+            color: var(--primary-dark);
+        }
+
+        .recommendation-badge {
+            background-color: var(--primary);
+            color: white;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 16px;
+            align-self: flex-start;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Urban Green Space & Community Well-being Research Dashboard</h1>
+            <div>
+                <button class="btn btn-outline">Export Data</button>
+                <button class="btn">Save Project</button>
+            </div>
+        </header>
+
+        <div class="dashboard">
+            <div class="card card-full">
+                <h2>Methodological Framework Recommendations</h2>
+                <p>Based on your mixed-methods study examining urban green space and community well-being with an environmental justice focus, we recommend the following frameworks:</p>
+                
+                <div class="methodology-framework">
+                    <div class="framework-item recommended">
+                        <span class="recommendation-badge">Recommended</span>
+                        <div class="framework-title">Convergent Parallel Mixed Methods Design</div>
+                        <p>Simultaneously collect and analyze quantitative (GIS, health data) and qualitative data (interviews, workshops), then merge results for comprehensive interpretation.</p>
+                        <p>Strengths: Provides complete picture by validating findings across methods; efficient data collection; balances statistical trends with lived experiences.</p>
+                    </div>
+                    <div class="framework-item">
+                        <div class="framework-title">Sequential Explanatory Design</div>
+                        <p>Begin with quantitative spatial analysis, then use qualitative methods to explain patterns found in GIS and health data.</p>
+                        <p>Strengths: Qualitative insights help explain quantitative disparities; structured approach; useful when unexpected results emerge from spatial analysis.</p>
+                    </div>
+                    <div class="framework-item">
+                        <div class="framework-title">Community-Based Participatory Research</div>
+                        <p>Engage community members as research partners throughout the process, from question formulation to data interpretation.</p>
+                        <p>Strengths: Centers environmental justice; builds trust; ensures research addresses community priorities; promotes action-oriented outcomes.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Spatial Analysis</h2>
+                <div class="tabs">
+                    <div class="tab active" onclick="changeTab(event, 'map-gis')">GIS Data</div>
+                    <div class="tab" onclick="changeTab(event, 'map-participatory')">Participatory Mapping</div>
+                </div>
+                <div id="map-gis" class="tab-content">
+                    <div class="data-sources">
+                        <div class="data-source active" onclick="toggleDataSource(this)">Green Space</div>
+                        <div class="data-source" onclick="toggleDataSource(this)">Socioeconomic</div>
+                        <div class="data-source" onclick="toggleDataSource(this)">Health Outcomes</div>
+                        <div class="data-source" onclick="toggleDataSource(this)">Environmental Justice</div>
+                    </div>
+                    <div class="map-container" id="gisMap"></div>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #2e7d32;"></div>
+                            <span>Parks & Green Spaces</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #c8e6c9;"></div>
+                            <span>Tree Canopy</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #ffab00;"></div>
+                            <span>Neighborhood Boundaries</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #e53935;"></div>
+                            <span>Limited Access Areas</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="map-participatory" class="tab-content" style="display:none;">
+                    <p>Community-identified green spaces and accessibility barriers from workshop participants.</p>
+                    <div class="map-container" id="participatoryMap"></div>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #2e7d32;"></div>
+                            <span>Community-valued Green Spaces</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #e53935;"></div>
+                            <span>Perceived Barriers</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #ffab00;"></div>
+                            <span>Desired Green Space</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Health & Well-being Data</h2>
+                <div class="tabs">
+                    <div class="tab active" onclick="changeTab(event, 'health-quantitative')">Quantitative</div>
+                    <div class="tab" onclick="changeTab(event, 'health-correlation')">Correlations</div>
+                </div>
+                <div id="health-quantitative" class="tab-content">
+                    <div class="chart-container">
+                        <canvas id="healthChart"></canvas>
+                        <div class="floating-controls" id="healthChartControls">
+                            <div class="control-group">
+                                <label>Chart Type</label>
+                                <select id="healthChartType">
+                                    <option value="bar">Bar Chart</option>
+                                    <option value="line">Line Chart</option>
+                                    <option value="radar">Radar Chart</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>Data Series</label>
+                                <select id="healthDataSeries">
+                                    <option value="all">All Neighborhoods</option>
+                                    <option value="highSES">High SES Areas</option>
+                                    <option value="lowSES">Low SES Areas</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>Color Scheme</label>
+                                <input type="color" id="healthChartColor" value="#2e7d32">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="health-correlation" class="tab-content" style="display:none;">
+                    <h3>Correlation Matrix: Green Space Access vs. Health Outcomes</h3>
+                    <div class="correlation-matrix">
+                        <div class="correlation-cell correlation-label"></div>
+                        <div class="correlation-cell correlation-label">Green Space Proximity</div>
+                        <div class="correlation-cell correlation-label">Park Size</div>
+                        <div class="correlation-cell correlation-label">Tree Canopy</div>
+                        <div class="correlation-cell correlation-label">Access Score</div>
+                        
+                        <div class="correlation-cell correlation-label">Physical Activity</div>
+                        <div class="correlation-cell" style="background-color: rgba(46, 125, 50, 0.8);">0.72</div>
+                        <div class="correlation-cell" style="background-color: rgba(46, 125, 50, 0.6);">0.58</div>
+                        <div class="correlation-cell" style="background-color: rgba(46, 125, 50, 0.7);">0.65</div>
+                        <div class="correlation-cell" style="background-color: rgba(46, 125, 50, 0.8);">0.79</div>
+                        
+                        <div class="correlation-cell correlation-label">Mental Health</div>
+                        <div class="correlation-cell" style="background-color: rgba(46, 125, 50, 0.6);">0.61</div>
+                        <div class="correlation-cell" style="background-color: rgba(46, 125, 50, 0.4);">0.42</div>
+                        <div class="correlation-cell" style="background-color: rgba(46, 125, 50, 0.7);">0.68</div>
+                        <div class="correlation-cell" style="background-color: rgba(46, 125, 50, 0.6);">0.63</div>
+                        
+                        <div class="correlation-cell correlation-label">Respiratory Health</div>
+                        <div class="correlation-cell" style="background-color: rgba(46, 125, 50, 0.5);">0.49</div>
+                        <div class="correlation-cell" style="background-color: rgba(46, 125, 50, 0.3);">0.36</div>
+                        <div class="correlation-cell" style="background-color: rgba(46, 125, 50, 0.8);">0.74</div>
+                        <div class="correlation-cell" style="background-color: rgba(46, 125, 50, 0.6);">0.57</div>
+                        
+                        <div class="correlation-cell correlation-label">Social Cohesion</div>
+                        <div class="correlation-cell" style="background-color: rgba(46, 125, 50, 0.7);">0.67</div>
+                        <div class="correlation-cell" style="background-color: rgba(46, 125, 50, 0.6);">0.59</div>
+                        <div class="correlation-cell" style="background-color: rgba(46, 125, 50, 0.5);">0.48</div>
+                        <div class="correlation-cell" style="background-color: rgba(46, 125, 50, 0.7);">0.69</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Qualitative Insights</h2>
+                <div class="tabs">
+                    <div class="tab active" onclick="changeTab(event, 'qualitative-interviews')">Interviews</div>
+                    <div class="tab" onclick="changeTab(event, 'qualitative-workshop')">Workshop Notes</div>
+                </div>
+                <div id="qualitative-interviews" class="tab-content">
+                    <div class="qualitative-data">
+                        <div class="interview-item">
+                            <div class="interview-header">
+                                <span class="interview-participant">Participant ID: N-03 (Northside)</span>
+                                <span class="interview-date">2023-06-12</span>
+                            </div>
+                            <p>"The park is only two blocks away, but I don't feel safe walking there because of the busy street with no crosswalk. My children need green space to play, but I have to drive them to a park farther away."</p>
+                            <div>
+                                <span class="tag">Access Barrier</span>
+                                <span class="tag">Safety Concern</span>
+                                <span class="tag">Children's Needs</span>
+                                <span class="tag">Transportation Issue</span>
+                            </div>
+                        </div>
+                        <div class="interview-item">
+                            <div class="interview-header">
+                                <span class="interview-participant">Participant ID: E-07 (Eastside)</span>
+                                <span class="interview-date">2023-06-15</span>
+                            </div>
+                            <p>"We have a community garden that's been transformative for our neighborhood. People from different backgrounds come together to grow food and build relationships. It's small but has had a huge impact on our sense of community."</p>
+                            <div>
+                                <span class="tag">Community Garden</span>
+                                <span class="tag">Social Cohesion</span>
+                                <span class="tag">Cultural Integration</span>
+                                <span class="tag">Food Security</span>
+                            </div>
+                        </div>
+                        <div class="interview-item">
+                            <div class="interview-header">
+                                <span class="interview-participant">Participant ID: S-11 (Southside)</span>
+                                <span class="interview-date">2023-06-18</span>
+                            </div>
+                            <p>"Our neighborhood has almost no trees or green spaces. In summer, it's much hotter here than in wealthier parts of the city. My electricity bills are high from running fans and AC, which many of my neighbors can't afford."</p>
+                            <div>
+                                <span class="tag">Environmental Justice</span>
+                                <span class="tag">Urban Heat Island</span>
+                                <span class="tag">Economic Burden</span>
+                                <span class="tag">Inequality</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="qualitative-workshop" class="tab-content" style="display:none;">
+                    <p>Key themes from participatory mapping workshops:</p>
+                    <div class="qualitative-data">
+                        <div class="interview-item">
+                            <div class="interview-header">
+                                <span class="interview-participant">Northside Workshop</span>
+                                <span class="interview-date">2023-07-05 (12 participants)</span>
+                            </div>
+                            <p>Participants identified several vacant lots that could be converted to pocket parks or community gardens. Major concerns included lack of shade trees along walking routes and poor maintenance of existing green spaces.</p>
+                            <div>
+                                <span class="tag">Vacant Land Opportunity</span>
+                                <span class="tag">Shade Needs</span>
+                                <span class="tag">Maintenance Issues</span>
+                            </div>
+                        </div>
+                        <div class="interview-item">
+                            <div class="interview-header">
+                                <span class="interview-participant">Eastside Workshop</span>
+                                <span class="interview-date">2023-07-12 (15 participants)</span>
+                            </div>
+                            <p>Residents mapped "green deserts" where no public spaces exist within walking distance. They prioritized safe routes to existing parks and expressed interest in street greening projects that could connect fragmented green spaces.</p>
+                            <div>
+                                <span class="tag">Green Deserts</span>
+                                <span class="tag">Connectivity</span>
+                                <span class="tag">Street Greening</span>
+                                <span class="tag">Safe Routes</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Data Integration</h2>
+                <p>Connect qualitative insights with spatial and quantitative data:</p>
+                <div class="chart-container">
+                    <canvas id="integrationChart"></canvas>
+                    <div class="floating-controls" id="integrationChartControls">
+                        <div class="control-group">
+                            <label>Visualization Type</label>
+                            <select id="integrationChartType">
+                                <option value="bubble">Bubble Chart</option>
+                                <option value="scatter">Scatter Plot</option>
+                                <option value="heatmap">Heatmap</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label>X-Axis Data</label>
+                            <select id="integrationXAxis">
+                                <option value="greenAccess">Green Space Access</option>
+                                <option value="ses">Socioeconomic Status</option>
+                                <option value="qualitativeFreq">Qualitative Mention Frequency</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label>Y-Axis Data</label>
+                            <select id="integrationYAxis">
+                                <option value="healthOutcomes">Health Outcomes</option>
+                                <option value="communityWellbeing">Community Wellbeing</option>
+                                <option value="environmentalRisk">Environmental Risk</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Upload & Import Data</h2>
+                <div class="data-upload">
+                    <div class="tabs">
+                        <div class="tab active" onclick="changeTab(event, 'upload-quantitative')">Quantitative</div>
+                        <div class="tab" onclick="changeTab(event, 'upload-qualitative')">Qualitative</div>
+                        <div class="tab" onclick="changeTab(event, 'upload-spatial')">Spatial</div>
+                    </div>
+                    <div id="upload-quantitative" class="tab-content">
+                        <div class="upload-area" id="quantitative-dropzone">
+                            <div class="upload-icon">📊</div>
+                            <p>Drag and drop CSV, Excel, or SPSS files</p>
+                            <p>or</p>
+                            <button class="btn">Browse Files</button>
+                        </div>
+                        <div class="control-group">
+                            <label>Data Type</label>
+                            <select>
+                                <option>Health Statistics</option>
+                                <option>Census Data</option>
+                                <option>Survey Results</option>
+                                <option>Environmental Measures</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="upload-qualitative" class="tab-content" style="display:none;">
+                        <div class="upload-area" id="qualitative-dropzone">
+                            <div class="upload-icon">📝</div>
+                            <p>Drag and drop text files, transcripts, or notes</p>
+                            <p>or</p>
+                            <button class="btn">Browse Files</button>
+                        </div>
+                        <div class="control-group">
+                            <label>Data Type</label>
+                            <select>
+                                <option>Interview Transcripts</option>
+                                <option>Focus Group Notes</option>
+                                <option>Workshop Documentation</option>
+                                <option>Field Observations</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="upload-spatial" class="tab-content" style="display:none;">
+                        <div class="upload-area" id="spatial-dropzone">
+                            <div class="upload-icon">🗺️</div>
+                            <p>Drag and drop GIS files (Shapefile, GeoJSON, KML)</p>
+                            <p>or</p>
+                            <button class="btn">Browse Files</button>
+                        </div>
+                        <div class="control-group">
+                            <label>Data Type</label>
+                            <select>
+                                <option>Green Space Boundaries</option>
+                                <option>Neighborhood Demographics</option>
+                                <option>Environmental Hazards</option>
+                                <option>Participatory Mapping Results</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-full">
+                <h2>Environmental Justice Analysis</h2>
+                <p>Overlay demographic vulnerability with environmental data to identify inequities in green space access and quality:</p>
+                <div class="chart-container">
+                    <canvas id="ejChart"></canvas>
+                    <div class="floating-controls" id="ejChartControls">
+                        <div class="control-group">
+                            <label>Analysis Type</label>
+                            <select id="ejAnalysisType">
+                                <option value="distributive">Distributive Justice</option>
+                                <option value="procedural">Procedural Justice</option>
+                                <option value="recognition">Recognition Justice</option>
+                                <option value="capabilities">Capabilities Approach</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label>Demographic Filters</label>
+                            <div>
+                                <input type="checkbox" id="ejFilterRace" checked>
+                                <label for="ejFilterRace">Race/Ethnicity</label>
+                            </div>
+                            <div>
+                                <input type="checkbox" id="ejFilterIncome" checked>
+                                <label for="ejFilterIncome">Income</label>
+                            </div>
+                            <div>
+                                <input type="checkbox" id="ejFilterAge" checked>
+                                <label for="ejFilterAge">Age</label>
+                            </div>
+                            <div>
+                                <input type="checkbox" id="ejFilterEducation">
+                                <label for="ejFilterEducation">Education</label>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label>Visualization Style</label>
+                            <select id="ejVisualizationStyle">
+                                <option value="matrix">EJ Matrix</option>
+                                <option value="index">EJ Index</option>
+                                <option value="comparison">Neighborhood Comparison</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as L from "https://esm.sh/leaflet";
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        // Initialize maps
+        const gisMap = L.map('gisMap').setView([41.8781, -87.6298], 11);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(gisMap);
+
+        // Sample GIS data - Green spaces
+        const greenSpaces = [
+            { name: "Lincoln Park", coords: [41.9214, -87.6337], type: "large", size: 1200 },
+            { name: "Jackson Park", coords: [41.7831, -87.5800], type: "large", size: 600 },
+            { name: "Humboldt Park", coords: [41.9055, -87.7172], type: "medium", size: 200 },
+            { name: "Douglas Park", coords: [41.8624, -87.6991], type: "medium", size: 180 },
+            { name: "Garfield Park", coords: [41.8825, -87.7172], type: "medium", size: 190 }
+        ];
+
+        // Add green spaces to map
+        greenSpaces.forEach(park => {
+            const size = Math.sqrt(park.size) * 0.1;
+            L.circle(park.coords, {
+                color: '#2e7d32',
+                fillColor: '#2e7d32',
+                fillOpacity: 0.5,
+                radius: size * 100
+            }).addTo(gisMap).bindPopup(`<b>${park.name}</b><br>Size: ${park.size} acres`);
+        });
+
+        // Add neighborhood boundaries
+        const neighborhoods = [
+            { name: "Northside", coords: [[41.9500, -87.6600], [41.9500, -87.7000], [41.9200, -87.7000], [41.9200, -87.6600]] },
+            { name: "Eastside", coords: [[41.8600, -87.6000], [41.8600, -87.5600], [41.8300, -87.5600], [41.8300, -87.6000]] },
+            { name: "Southside", coords: [[41.7800, -87.6300], [41.7800, -87.6700], [41.7500, -87.6700], [41.7500, -87.6300]] }
+        ];
+
+        neighborhoods.forEach(hood => {
+            L.polygon(hood.coords, {
+                color: '#ffab00',
+                fillColor: '#ffab00',
+                fillOpacity: 0.2,
+                weight: 2
+            }).addTo(gisMap).bindPopup(`<b>${hood.name}</b>`);
+        });
+
+        // Limited access areas
+        const limitedAccessAreas = [
+            { name: "Industrial Zone", coords: [[41.8300, -87.6700], [41.8300, -87.7100], [41.8000, -87.7100], [41.8000, -87.6700]] },
+            { name: "Highway Barrier", coords: [[41.9100, -87.6800], [41.9100, -87.6900], [41.8900, -87.6900], [41.8900, -87.6800]] }
+        ];
+
+        limitedAccessAreas.forEach(area => {
+            L.polygon(area.coords, {
+                color: '#e53935',
+                fillColor: '#e53935',
+                fillOpacity: 0.3,
+                weight: 2
+            }).addTo(gisMap).bindPopup(`<b>${area.name}</b><br>Access Barrier`);
+        });
+
+        // Initialize participatory map
+        const participatoryMap = L.map('participatoryMap').setView([41.8781, -87.6298], 11);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(participatoryMap);
+
+        // Community-identified green spaces
+        const communityGreenSpaces = [
+            { name: "Community Garden", coords: [41.8624, -87.6500], type: "small", value: "high" },
+            { name: "School Playground", coords: [41.9100, -87.6800], type: "small", value: "medium" },
+            { name: "Informal Green Space", coords: [41.7900, -87.6400], type: "small", value: "high" }
+        ];
+
+        communityGreenSpaces.forEach(space => {
+            L.circle(space.coords, {
+                color: '#2e7d32',
+                fillColor: '#2e7d32',
+                fillOpacity: 0.5,
+                radius: 200
+            }).addTo(participatoryMap).bindPopup(`<b>${space.name}</b><br>Community Value: ${space.value}`);
+        });
+
+        // Perceived barriers
+        const perceivedBarriers = [
+            { name: "Unsafe Crossing", coords: [41.9200, -87.6700], type: "safety" },
+            { name: "Poor Lighting", coords: [41.8400, -87.6300], type: "safety" },
+            { name: "No Sidewalks", coords: [41.7700, -87.6500], type: "infrastructure" }
+        ];
+
+        perceivedBarriers.forEach(barrier => {
+            L.circle(barrier.coords, {
+                color: '#e53935',
+                fillColor: '#e53935',
+                fillOpacity: 0.5,
+                radius: 150
+            }).addTo(participatoryMap).bindPopup(`<b>${barrier.name}</b><br>Type: ${barrier.type}`);
+        });
+
+        // Desired green spaces
+        const desiredGreenSpaces = [
+            { name: "Vacant Lot Conversion", coords: [41.8500, -87.7000], type: "community garden" },
+            { name: "Rooftop Garden", coords: [41.8800, -87.6400], type: "garden" },
+            { name: "Street Trees", coords: [41.7600, -87.6100], type: "street greening" }
+        ];
+
+        desiredGreenSpaces.forEach(space => {
+            L.circle(space.coords, {
+                color: '#ffab00',
+                fillColor: '#ffab00',
+                fillOpacity: 0.5,
+                radius: 180
+            }).addTo(participatoryMap).bindPopup(`<b>${space.name}</b><br>Type: ${space.type}`);
+        });
+
+        // Health chart
+        const healthCtx = document.getElementById('healthChart').getContext('2d');
+        const healthChart = new Chart(healthCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Physical Activity', 'Mental Health', 'Respiratory Health', 'Social Cohesion', 'Stress Levels'],
+                datasets: [
+                    {
+                        label: 'High Green Space Access',
+                        data: [78, 72, 68, 75, 65],
+                        backgroundColor: 'rgba(46, 125, 50, 0.7)',
+                        borderColor: 'rgba(46, 125, 50, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Low Green Space Access',
+                        data: [52, 48, 42, 45, 38],
+                        backgroundColor: 'rgba(229, 57, 53, 0.7)',
+                        borderColor: 'rgba(229, 57, 53, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Score (0-100)'
+                        }
+                    }
+                },
+                onClick: () => toggleControls('healthChartControls')
+            }
+        });
+
+        // Integration chart
+        const integrationCtx = document.getElementById('integrationChart').getContext('2d');
+        const integrationChart = new Chart(integrationCtx, {
+            type: 'bubble',
+            data: {
+                datasets: [
+                    {
+                        label: 'Northside',
+                        data: [
+                            { x: 82, y: 76, r: 15 }
+                        ],
+                        backgroundColor: 'rgba(46, 125, 50, 0.7)'
+                    },
+                    {
+                        label: 'Eastside',
+                        data: [
+                            { x: 68, y: 65, r: 12 }
+                        ],
+                        backgroundColor: 'rgba(255, 171, 0, 0.7)'
+                    },
+                    {
+                        label: 'Southside',
+                        data: [
+                            { x: 45, y: 48, r: 18 }
+                        ],
+                        backgroundColor: 'rgba(229, 57, 53, 0.7)'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Green Space Access (0-100)'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Health Outcomes (0-100)'
+                        }
+                    }
+                },
+                onClick: () => toggleControls('integrationChartControls')
+            }
+        });
+
+        // Environmental justice chart
+        const ejCtx = document.getElementById('ejChart').getContext('2d');
+        const ejChart = new Chart(ejCtx, {
+            type: 'bar',
+            data: {
+                labels: ['High Income', 'Middle Income', 'Low Income'],
+                datasets: [
+                    {
+                        label: 'Green Space per Capita (sq ft)',
+                        data: [420, 280, 120],
+                        backgroundColor: 'rgba(46, 125, 50, 0.7)',
+                        borderColor: 'rgba(46, 125, 50, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Tree Canopy Coverage (%)',
+                        data: [28, 18, 8],
+                        backgroundColor: 'rgba(84, 110, 122, 0.7)',
+                        borderColor: 'rgba(84, 110, 122, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Park Maintenance Score (0-10)',
+                        data: [7.8, 6.2, 4.1],
+                        backgroundColor: 'rgba(255, 171, 0, 0.7)',
+                        borderColor: 'rgba(255, 171, 0, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                onClick: () => toggleControls('ejChartControls')
+            }
+        });
+
+        // Tab switching function
+        window.changeTab = function(event, tabId) {
+            const tabLinks = event.target.parentElement.querySelectorAll('.tab');
+            const tabContents = event.target.parentElement.parentElement.querySelectorAll('.tab-content');
+            
+            tabLinks.forEach(tab => tab.classList.remove('active'));
+            tabContents.forEach(content => content.style.display = 'none');
+            
+            event.target.classList.add('active');
+            document.getElementById(tabId).style.display = 'block';
+            
+            // Refresh maps if switching to map tabs
+            if (tabId === 'map-gis') {
+                gisMap.invalidateSize();
+            } else if (tabId === 'map-participatory') {
+                participatoryMap.invalidateSize();
+            }
+        };
+
+        // Toggle data source function
+        window.toggleDataSource = function(element) {
+            element.classList.toggle('active');
+        };
+
+        // Toggle chart controls
+        function toggleControls(controlsId) {
+            const controls = document.getElementById(controlsId);
+            controls.classList.toggle('active');
+        }
+
+        // Close controls when clicking outside
+        document.addEventListener('click', (e) => {
+            const controls = document.querySelectorAll('.floating-controls');
+            controls.forEach(control => {
+                if (!e.target.closest('.floating-controls') && !e.target.closest('canvas')) {
+                    control.classList.remove('active');
+                }
+            });
+        });
+
+        // Chart controls event handlers
+        document.getElementById('healthChartType').addEventListener('change', function() {
+            healthChart.config.type = this.value;
+            healthChart.update();
+        });
+
+        document.getElementById('healthDataSeries').addEventListener('change', function() {
+            // Sample implementation - would filter data based on selection
+            if (this.value === 'highSES') {
+                healthChart.data.datasets = [healthChart.data.datasets[0]];
+            } else if (this.value === 'lowSES') {
+                healthChart.data.datasets = [healthChart.data.datasets[1]];
+            } else {
+                healthChart.data.datasets = [
+                    {
+                        label: 'High Green Space Access',
+                        data: [78, 72, 68, 75, 65],
+                        backgroundColor: 'rgba(46, 125, 50, 0.7)',
+                        borderColor: 'rgba(46, 125, 50, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Low Green Space Access',
+                        data: [52, 48, 42, 45, 38],
+                        backgroundColor: 'rgba(229, 57, 53, 0.7)',
+                        borderColor: 'rgba(229, 57, 53, 1)',
+                        borderWidth: 1
+                    }
+                ];
+            }
+            healthChart.update();
+        });
+
+        document.getElementById('healthChartColor').addEventListener('change', function() {
+            const color = this.value;
+            healthChart.data.datasets[0].backgroundColor = `${color}b3`; // Add transparency
+            healthChart.data.datasets[0].borderColor = color;
+            healthChart.update();
+        });
+
+        document.getElementById('integrationChartType').addEventListener('change', function() {
+            if (this.value === 'bubble') {
+                integrationChart.config.type = 'bubble';
+            } else if (this.value === 'scatter') {
+                integrationChart.config.type = 'scatter';
+            } else {
+                // For heatmap, we would need to change more configuration
+                // This is simplified for the example
+                integrationChart.config.type = 'bubble';
+            }
+            integrationChart.update();
+        });
+
+        document.getElementById('ejAnalysisType').addEventListener('change', function() {
+            // Would update data based on analysis type
+            ejChart.update();
+        });
+
+        document.getElementById('ejVisualizationStyle').addEventListener('change', function() {
+            if (this.value === 'matrix') {
+                ejChart.config.type = 'bar';
+            } else if (this.value === 'index') {
+                ejChart.config.type = 'radar';
+            } else {
+                ejChart.config.type = 'line';
+            }
+            ejChart.update();
+        });
+
+        // Make controls accessible
+        window.toggleControls = toggleControls;
+    </script>
+</body>
+</html>

@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React Hooks Guide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #61dafb;
+            --primary-dark: #21a8c7;
+            --primary-light: #a7e8fb;
+            --secondary: #282c34;
+            --text: #333;
+            --text-light: #666;
+            --background: #f8f9fa;
+            --white: #ffffff;
+            --border: #e1e4e8;
+            --success: #28a745;
+            --error: #dc3545;
+            --warning: #ffc107;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background-color: var(--background);
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background-color: var(--white);
+            border-right: 1px solid var(--border);
+            padding: 2rem 0;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: 2px 0 5px var(--shadow);
+            z-index: 10;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 0 1.5rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            fill: var(--primary);
+            transition: transform 0.3s ease;
+        }
+
+        .logo:hover .logo-icon {
+            transform: rotate(20deg);
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--secondary);
+        }
+
+        .description {
+            font-size: 0.875rem;
+            color: var(--text-light);
+        }
+
+        .nav-list {
+            list-style: none;
+            padding: 1.5rem;
+        }
+
+        .nav-category {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-light);
+            margin: 1.5rem 0 0.5rem;
+            font-weight: 600;
+        }
+
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            color: var(--text);
+            font-weight: 500;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(97, 218, 251, 0.1);
+            color: var(--primary-dark);
+            transform: translateX(2px);
+        }
+
+        .nav-link.active {
+            background-color: rgba(97, 218, 251, 0.15);
+            color: var(--primary-dark);
+            font-weight: 600;
+        }
+
+        .nav-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 60%;
+            background-color: var(--primary);
+            border-radius: 0 2px 2px 0;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .hook-header {
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .hook-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+            position: relative;
+            display: inline-block;
+        }
+
+        .hook-title::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 50%;
+            height: 4px;
+            background-color: var(--primary);
+            border-radius: 2px;
+        }
+
+        .hook-description {
+            font-size: 1.125rem;
+            color: var(--text-light);
+        }
+
+        .section {
+            margin-bottom: 3rem;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--secondary);
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary);
+            display: inline-block;
+        }
+
+        .content {
+            line-height: 1.7;
+        }
+
+        .content p {
+            margin-bottom: 1rem;
+        }
+
+        .content ul,
+        .content ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .content li {
+            margin-bottom: 0.5rem;
+        }
+
+        .content code {
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            background-color: #f1f1f1;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-size: 0.9em;
+            color: var(--secondary);
+        }
+
+        .code-editor-container {
+            margin: 1.5rem 0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px var(--shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .code-editor-container:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .code-editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--secondary);
+            padding: 0.75rem 1rem;
+            color: var(--white);
+        }
+
+        .file-name {
+            font-family: monospace;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .file-name::before {
+            content: '';
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background-color: var(--primary);
+            border-radius: 50%;
+        }
+
+        .editor-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .editor-button {
+            background-color: var(--primary);
+            color: var(--secondary);
+            border: none;
+            border-radius: 4px;
+            padding: 0.4rem 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .editor-button:hover {
+            background-color: var(--primary-dark);
+            color: var(--white);
+            transform: translateY(-1px);
+        }
+
+        .editor-button:active {
+            transform: translateY(1px);
+        }
+
+        .editor-button:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(97, 218, 251, 0.5);
+        }
+
+        #editor,
+        #exercise-editor {
+            height: 300px;
+            width: 100%;
+        }
+
+        .output-container {
+            background-color: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .output-container:hover {
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+
+        .output-header {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .output-header::before {
+            content: '▶';
+            color: var(--primary);
+        }
+
+        .output-content {
+            font-family: monospace;
+            white-space: pre-wrap;
+            padding: 1rem;
+            background-color: var(--background);
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            transition: background-color 0.2s ease;
+        }
+
+        .output-content:hover {
+            background-color: #f0f0f0;
+        }
+
+        .exercise-container {
+            background-color: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            box-shadow: 0 2px 8px var(--shadow);
+            transition: transform 0.3s ease;
+        }
+
+        .exercise-container:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .exercise-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .exercise-title::before {
+            content: '✏️';
+        }
+
+        .exercise-description {
+            margin-bottom: 1.5rem;
+            padding-left: 1rem;
+            border-left: 3px solid var(--primary-light);
+        }
+
+        .exercise-steps {
+            margin-bottom: 1.5rem;
+        }
+
+        .exercise-step {
+            margin-bottom: 0.75rem;
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+            padding: 0.5rem;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+        }
+
+        .exercise-step:hover {
+            background-color: rgba(97, 218, 251, 0.05);
+        }
+
+        .step-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background-color: var(--primary);
+            color: var(--white);
+            border-radius: 50%;
+            font-size: 0.875rem;
+            font-weight: 600;
+            flex-shrink: 0;
+            box-shadow: 0 2px 4px rgba(97, 218, 251, 0.3);
+        }
+
+        .progress-container {
+            margin-top: 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background-color: var(--white);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+
+        .progress-button {
+            background-color: var(--primary);
+            color: var(--white);
+            border: none;
+            border-radius: 6px;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .progress-button:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-button:active {
+            transform: translateY(1px);
+        }
+
+        .progress-button:disabled {
+            background-color: var(--border);
+            color: var(--text-light);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .progress-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .progress-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .progress-dot.active {
+            background-color: var(--primary);
+            transform: scale(1.2);
+        }
+
+        /* Tooltip styles */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            border-bottom: 1px dotted var(--primary);
+            cursor: help;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--secondary);
+            color: var(--white);
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s, visibility 0.3s;
+            font-size: 0.8rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .tooltip .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--secondary) transparent transparent transparent;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Mobile menu button */
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 100;
+            background-color: var(--primary);
+            color: var(--white);
+            border: none;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .menu-toggle:hover {
+            background-color: var(--primary-dark);
+            transform: rotate(90deg);
+        }
+
+        /* Theme toggle */
+        .theme-toggle {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            z-index: 100;
+            background-color: var(--secondary);
+            color: var(--white);
+            border: none;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-toggle:hover {
+            transform: rotate(30deg);
+        }
+
+        /* Dark mode styles */
+        body.dark-mode {
+            --primary: #61dafb;
+            --primary-dark: #21a8c7;
+            --primary-light: #a7e8fb;
+            --secondary: #1a1a1a;
+            --text: #e0e0e0;
+            --text-light: #a0a0a0;
+            --background: #121212;
+            --white: #1e1e1e;
+            --border: #333;
+            --shadow: rgba(0, 0, 0, 0.3);
+        }
+
+        body.dark-mode .output-content {
+            background-color: #2a2a2a;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .code-editor-header {
+            background-color: #000;
+        }
+
+        body.dark-mode .content code {
+            background-color: #2a2a2a;
+            color: #e0e0e0;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: fixed;
+                width: 280px;
+                transform: translateX(-100%);
+                z-index: 1000;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                padding: 1.5rem;
+                margin-top: 2rem;
+            }
+
+            .hook-title {
+                font-size: 2rem;
+            }
+
+            .menu-toggle {
+                display: block;
+            }
+
+            .overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 999;
+            }
+
+            .overlay.active {
+                display: block;
+            }
+        }
+
+        /* Keyboard navigation focus styles */
+        a:focus,
+        button:focus,
+        input:focus,
+        [tabindex]:focus {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        /* Scrollbar styles */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--background);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-light);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+    </style>
+</head>
+
+<body>
+    <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">☰</button>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">🌓</button>
+    <div class="overlay" id="overlay"></div>
+
+    <div class="container">
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <svg class="logo-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path
+                            d="M12 10.11c1.03 0 1.87.84 1.87 1.89 0 1-.84 1.85-1.87 1.85s-1.87-.85-1.87-1.85c0-1.05.84-1.89 1.87-1.89M7.37 20c.63.38 2.01-.2 3.6-1.7-.52-.59-1.03-1.23-1.51-1.9-.82-.08-1.63-.2-2.4-.36-.51 2.14-.32 3.61.31 3.96m.71-5.74l-.29-.51c-.11.29-.22.58-.29.86.27.06.57.11.88.16l-.3-.51m6.54-.76l.81-1.5-.81-1.5c-.3-.53-.62-1-.91-1.47C13.17 9.03 12.6 9 12 9c-.6 0-1.17.03-1.71.09-.29.47-.61.94-.91 1.47l-.81 1.5.81 1.5c.3.53.62 1 .91 1.47.54.06 1.11.09 1.71.09.6 0 1.17-.03 1.71-.09.29-.47.61-.94.91-1.47M12 14.29c-.02 0-.04.01-.06.01-.01 0-.03 0-.04.01-.28.11-.53.38-.71.82.34.01.56.01.71.01.15 0 .37 0 .71-.01-.18-.44-.43-.71-.71-.82-.01-.01-.03-.01-.04-.01-.02 0-.04-.01-.06-.01m0-4.58c.02 0 .04.01.06.01.01 0 .03 0 .04.01.28.11.53.38.71.82-.34.01-.56.01-.71.01-.15 0-.37 0-.71-.01.18-.44.43-.71.71-.82.01-.01.03-.01.04-.01.02 0 .04-.01.06-.01m0-2.67c3.31 0 6 2.7 6 6s-2.69 6-6 6-6-2.7-6-6 2.69-6 6-6M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0" />
+                    </svg>
+                    <span class="logo-text">React Hooks</span>
+                </div>
+                <p class="description">Master the fundamentals of React hooks with interactive examples and exercises.
+                </p>
+            </div>
+            <nav class="nav-list" aria-label="React Hooks Navigation">
+                <div class="nav-category" id="basics-category">Basics</div>
+                <ul aria-labelledby="basics-category">
+                    <li class="nav-item">
+                        <a href="#introduction" class="nav-link active" aria-current="page">Introduction to Hooks</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#rules" class="nav-link">Rules of Hooks</a>
+                    </li>
+                </ul>
+                <div class="nav-category" id="state-hooks-category">State Hooks</div>
+                <ul aria-labelledby="state-hooks-category">
+                    <li class="nav-item">
+                        <a href="#usestate" class="nav-link">useState</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#usereducer" class="nav-link">useReducer</a>
+                    </li>
+                </ul>
+                <div class="nav-category" id="effect-hooks-category">Effect Hooks</div>
+                <ul aria-labelledby="effect-hooks-category">
+                    <li class="nav-item">
+                        <a href="#useeffect" class="nav-link">useEffect</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#uselayouteffect" class="nav-link">useLayoutEffect</a>
+                    </li>
+                </ul>
+                <div class="nav-category" id="context-hooks-category">Context Hooks</div>
+                <ul aria-labelledby="context-hooks-category">
+                    <li class="nav-item">
+                        <a href="#usecontext" class="nav-link">useContext</a>
+                    </li>
+                </ul>
+                <div class="nav-category" id="ref-hooks-category">Ref Hooks</div>
+                <ul aria-labelledby="ref-hooks-category">
+                    <li class="nav-item">
+                        <a href="#useref" class="nav-link">useRef</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#useimperativehandle" class="nav-link">useImperativeHandle</a>
+                    </li>
+                </ul>
+                <div class="nav-category" id="performance-hooks-category">Performance Hooks</div>
+                <ul aria-labelledby="performance-hooks-category">
+                    <li class="nav-item">
+                        <a href="#usememo" class="nav-link">useMemo</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#usecallback" class="nav-link">useCallback</a>
+                    </li>
+                </ul>
+                <div class="nav-category" id="custom-hooks-category">Custom Hooks</div>
+                <ul aria-labelledby="custom-hooks-category">
+                    <li class="nav-item">
+                        <a href="#building-custom-hooks" class="nav-link">Building Custom Hooks</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#common-custom-hooks" class="nav-link">Common Custom Hooks</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        <main class="main-content">
+            <header class="hook-header">
+                <h1 class="hook-title" id="introduction">Introduction to React Hooks</h1>
+                <p class="hook-description">Learn what hooks are and why they were introduced to React.</p>
+            </header>
+
+            <section class="section">
+                <h2 class="section-title">What are React Hooks?</h2>
+                <div class="content">
+                    <p>
+                        React Hooks are functions that let you "hook into" React state and lifecycle features from
+                        function components.
+                        They were introduced in React 16.8 as a way to use state and other React features without
+                        writing a class.
+                    </p>
+                    <p>
+                        Before hooks, you had to use <span class="tooltip">class components<span
+                                class="tooltip-text">Components defined using ES6 classes that extend
+                                React.Component</span></span> to manage state or implement lifecycle methods.
+                        With hooks, you can do all of this in functional components, which leads to more concise and
+                        often more readable code.
+                    </p>
+                    <p>Here are the key benefits of using React Hooks:</p>
+                    <ul>
+                        <li><strong>Reuse stateful logic</strong> between components without complex patterns like
+                            render props or higher-order components</li>
+                        <li><strong>Split complex components</strong> into smaller functions based on related pieces,
+                            rather than forcing a split based on lifecycle methods</li>
+                        <li><strong>Use React features</strong> without classes, avoiding the confusion of
+                            <code>this</code> in JavaScript</li>
+                        <li><strong>Simplify component hierarchies</strong> by avoiding prop drilling and using context
+                            more effectively</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section class="section">
+                <h2 class="section-title">Basic Hooks Overview</h2>
+                <div class="content">
+                    <p>React provides several built-in hooks. The three most fundamental ones are:</p>
+                    <ul>
+                        <li>
+                            <strong>useState</strong> - Lets you add state to functional components
+                        </li>
+                        <li>
+                            <strong>useEffect</strong> - Performs side effects in function components (similar to
+                            componentDidMount, componentDidUpdate, and componentWillUnmount combined)
+                        </li>
+                        <li>
+                            <strong>useContext</strong> - Accepts a context object and returns the current context value
+                        </li>
+                    </ul>
+                    <p>
+                        There are also additional hooks like useReducer, useCallback, useMemo, useRef, and more that
+                        help with specific use cases.
+                    </p>
+                </div>
+            </section>
+
+            <section class="section">
+                <h2 class="section-title">Example: useState Hook</h2>
+                <div class="content">
+                    <p>Let's look at a simple example of the <code>useState</code> hook:</p>
+
+                    <div class="code-editor-container">
+                        <div class="code-editor-header">
+                            <span class="file-name">Counter.js</span>
+                            <div class="editor-actions">
+                                <button class="editor-button" id="run-button" aria-label="Run code">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M8 5v14l11-7z" fill="currentColor" />
+                                    </svg>
+                                    Run
+                                </button>
+                                <button class="editor-button" id="reset-button" aria-label="Reset code">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path
+                                            d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
+                                            fill="currentColor" />
+                                    </svg>
+                                    Reset
+                                </button>
+                            </div>
+                        </div>
+                        <div id="editor"></div>
+                    </div>
+
+                    <div class="output-container">
+                        <div class="output-header">
+                            <span>Output:</span>
+                        </div>
+                        <div class="output-content" id="output" tabindex="0" aria-live="polite">
+                            Click "Run" to see the output
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section">
+                <h2 class="section-title">Try it Yourself</h2>
+                <div class="exercise-container">
+                    <h3 class="exercise-title">Exercise: Create a Toggle Component</h3>
+                    <p class="exercise-description">
+                        Create a simple toggle component that switches between "ON" and "OFF" states when clicked.
+                        Use the <code>useState</code> hook to manage the toggle state.
+                    </p>
+                    <div class="exercise-steps">
+                        <div class="exercise-step">
+                            <span class="step-number">1</span>
+                            <span>Initialize a state variable <code>isOn</code> with <code>useState</code> and set it to
+                                <code>false</code></span>
+                        </div>
+                        <div class="exercise-step">
+                            <span class="step-number">2</span>
+                            <span>Create a function <code>toggle</code> that toggles the <code>isOn</code> state</span>
+                        </div>
+                        <div class="exercise-step">
+                            <span class="step-number">3</span>
+                            <span>Render a button that displays "ON" or "OFF" based on the state</span>
+                        </div>
+                        <div class="exercise-step">
+                            <span class="step-number">4</span>
+                            <span>Add an onClick handler to the button that calls the <code>toggle</code>
+                                function</span>
+                        </div>
+                    </div>
+
+                    <div class="code-editor-container">
+                        <div class="code-editor-header">
+                            <span class="file-name">ToggleButton.js</span>
+                            <div class="editor-actions">
+                                <button class="editor-button" id="run-exercise-button" aria-label="Run exercise code">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M8 5v14l11-7z" fill="currentColor" />
+                                    </svg>
+                                    Run
+                                </button>
+                                <button class="editor-button" id="reset-exercise-button"
+                                    aria-label="Reset exercise code">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path
+                                            d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
+                                            fill="currentColor" />
+                                    </svg>
+                                    Reset
+                                </button>
+                                <button class="editor-button" id="show-solution-button" aria-label="Show solution">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path
+                                            d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
+                                            fill="currentColor" />
+                                    </svg>
+                                    Show Solution
+                                </button>
+                            </div>
+                        </div>
+                        <div id="exercise-editor"></div>
+                    </div>
+
+                    <div class="output-container">
+                        <div class="output-header">
+                            <span>Output:</span>
+                        </div>
+                        <div class="output-content" id="exercise-output" tabindex="0" aria-live="polite">
+                            Complete the exercise and click "Run" to see the output
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="progress-container">
+                <button class="progress-button" disabled>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                    Previous
+                </button>
+                <div class="progress-indicator" role="progressbar" aria-valuemin="1" aria-valuemax="5"
+                    aria-valuenow="1">
+                    <div class="progress-dot active" title="Introduction to Hooks"></div>
+                    <div class="progress-dot" title="Rules of Hooks"></div>
+                    <div class="progress-dot" title="useState Hook"></div>
+                    <div class="progress-dot" title="useEffect Hook"></div>
+                    <div class="progress-dot" title="Custom Hooks"></div>
+                </div>
+                <button class="progress-button" id="next-button">
+                    Next
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import loader from 'https://esm.sh/@monaco-editor/loader';
+
+        // Configure Monaco loader
+        loader.config({
+            paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs' }
+        });
+
+        let monacoInstance;
+        let editor;
+        let exerciseEditor;
+
+        // Initialize Monaco editor
+        loader.init().then(monaco => {
+            monacoInstance = monaco;
+
+            // Initialize the main example editor
+            editor = monaco.editor.create(document.getElementById('editor'), {
+                value: `import React, { useState } from 'react';
+
+function Counter() {
+  // Declare a state variable named "count" with initial value of 0
+  const [count, setCount] = useState(0);
+
+  return (
+    <div>
+      <p>You clicked {count} times</p>
+      <button onClick={() => setCount(count + 1)}>
+        Click me
+      </button>
+    </div>
+  );
+}
+
+export default Counter;`,
+                language: 'javascript',
+                theme: 'vs-dark',
+                minimap: { enabled: false },
+                automaticLayout: true,
+                scrollBeyondLastLine: false,
+                fontSize: 14,
+                lineHeight: 22,
+                fontFamily: 'Consolas, "Courier New", monospace',
+                tabSize: 2,
+                renderLineHighlight: 'all',
+                formatOnPaste: true,
+                formatOnType: true
+            });
+
+            // Initialize the exercise editor
+            exerciseEditor = monaco.editor.create(document.getElementById('exercise-editor'), {
+                value: `import React, { useState } from 'react';
+
+function ToggleButton() {
+  // TODO: Initialize a state variable 'isOn' with useState
+  
+  // TODO: Create a toggle function
+  
+  return (
+    // TODO: Create a button that displays the state and toggles on click
+    <div>
+      {/* Your code here */}
+    </div>
+  );
+}
+
+export default ToggleButton;`,
+                language: 'javascript',
+                theme: 'vs-dark',
+                minimap: { enabled: false },
+                automaticLayout: true,
+                scrollBeyondLastLine: false,
+                fontSize: 14,
+                lineHeight: 22,
+                fontFamily: 'Consolas, "Courier New", monospace',
+                tabSize: 2,
+                renderLineHighlight: 'all',
+                formatOnPaste: true,
+                formatOnType: true
+            });
+
+            // Add event listeners to buttons
+            document.getElementById('run-button').addEventListener('click', () => {
+                runCode(editor);
+            });
+
+            document.getElementById('reset-button').addEventListener('click', () => {
+                resetCode(editor);
+            });
+
+            document.getElementById('run-exercise-button').addEventListener('click', () => {
+                runExerciseCode(exerciseEditor);
+            });
+
+            document.getElementById('reset-exercise-button').addEventListener('click', () => {
+                resetExerciseCode(exerciseEditor);
+            });
+
+            document.getElementById('show-solution-button').addEventListener('click', () => {
+                showSolution(exerciseEditor);
+            });
+
+            // Set up keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                // Ctrl+Enter or Cmd+Enter to run code
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    const activeElement = document.activeElement;
+                    if (activeElement.closest('#editor')) {
+                        runCode(editor);
+                    } else if (activeElement.closest('#exercise-editor')) {
+                        runExerciseCode(exerciseEditor);
+                    }
+                }
+            });
+        });
+
+        function runCode(editor) {
+            const code = editor.getValue();
+            const output = document.getElementById('output');
+
+            try {
+                // Simulate React component rendering output
+                output.innerHTML = `
+                <div style="font-family: sans-serif; padding: 16px; background: #f5f5f5; border-radius: 4px;">
+                    <p>You clicked 0 times</p>
+                    <button style="padding: 6px 12px; background: #61dafb; border: none; border-radius: 4px; cursor: pointer; transition: all 0.2s ease;">
+                        Click me
+                    </button>
+                    <p style="margin-top: 12px; color: #666; font-style: italic; font-size: 0.9em;">
+                        (Simulated output - in a real React app, clicking the button would increment the counter)
+                    </p>
+                </div>
+                `;
+
+                // Add a simulated click interaction
+                const button = output.querySelector('button');
+                let clickCount = 0;
+
+                button.addEventListener('click', () => {
+                    clickCount++;
+                    const countDisplay = output.querySelector('p');
+                    countDisplay.textContent = `You clicked ${clickCount} times`;
+                });
+            } catch (error) {
+                output.innerHTML = `<span style="color: var(--error);">Error: ${error.message}</span>`;
+            }
+        }
+
+        function resetCode(editor) {
+            editor.setValue(`import React, { useState } from 'react';
+
+function Counter() {
+  // Declare a state variable named "count" with initial value of 0
+  const [count, setCount] = useState(0);
+
+  return (
+    <div>
+      <p>You clicked {count} times</p>
+      <button onClick={() => setCount(count + 1)}>
+        Click me
+      </button>
+    </div>
+  );
+}
+
+export default Counter;`);
+            document.getElementById('output').innerHTML = 'Click "Run" to see the output';
+        }
+
+        function runExerciseCode(editor) {
+            const code = editor.getValue();
+            const output = document.getElementById('exercise-output');
+
+            // Check if the code contains the required elements
+            const hasUseState = code.includes('useState(');
+            const hasToggleFunction = code.includes('setIsOn') || (code.includes('set') && code.includes('(!'));
+            const hasButton = code.includes('<button');
+            const hasOnClick = code.includes('onClick');
+
+            if (hasUseState && hasToggleFunction && hasButton && hasOnClick) {
+                output.innerHTML = `
+                <div style="font-family: sans-serif; padding: 16px; background: #f5f5f5; border-radius: 4px;">
+                    <button style="padding: 8px 16px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer; transition: all 0.2s ease;">
+                        OFF
+                    </button>
+                    <p style="margin-top: 12px; color: #666; font-style: italic; font-size: 0.9em;">
+                        (Simulated output - in a real React app, clicking the button would toggle between ON and OFF)
+                    </p>
+                </div>
+                `;
+                output.innerHTML += `<p style="color: var(--success); margin-top: 12px;">✓ Great job! Your solution includes all the required elements.</p>`;
+
+                // Add a simulated click interaction
+                const button = output.querySelector('button');
+                let isOn = false;
+
+                button.addEventListener('click', () => {
+                    isOn = !isOn;
+                    button.textContent = isOn ? 'ON' : 'OFF';
+                    button.style.backgroundColor = isOn ? '#4CAF50' : '#f44336';
+                });
+            } else {
+                output.innerHTML = `<p>Your solution is missing some elements:</p><ul>`;
+                if (!hasUseState) output.innerHTML += `<li style="color: var(--error);">Missing useState hook</li>`;
+                if (!hasToggleFunction) output.innerHTML += `<li style="color: var(--error);">Missing toggle function</li>`;
+                if (!hasButton) output.innerHTML += `<li style="color: var(--error);">Missing button element</li>`;
+                if (!hasOnClick) output.innerHTML += `<li style="color: var(--error);">Missing onClick handler</li>`;
+                output.innerHTML += `</ul>`;
+            }
+        }
+
+        function resetExerciseCode(editor) {
+            editor.setValue(`import React, { useState } from 'react';
+
+function ToggleButton() {
+  // TODO: Initialize a state variable 'isOn' with useState
+  
+  // TODO: Create a toggle function
+  
+  return (
+    // TODO: Create a button that displays the state and toggles on click
+    <div>
+      {/* Your code here */}
+    </div>
+  );
+}
+
+export default ToggleButton;`);
+            document.getElementById('exercise-output').innerHTML = 'Complete the exercise and click "Run" to see the output';
+        }
+
+        function showSolution(editor) {
+            editor.setValue(`import React, { useState } from 'react';
+
+function ToggleButton() {
+  // Initialize state with useState hook
+  const [isOn, setIsOn] = useState(false);
+  
+  // Toggle function to switch the state
+  const toggle = () => {
+    setIsOn(!isOn);
+  };
+  
+  return (
+    <div>
+      <button 
+        onClick={toggle}
+        style={{
+          padding: '8px 16px',
+          backgroundColor: isOn ? '#4CAF50' : '#f44336',
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: 'pointer'
+        }}
+      >
+        {isOn ? 'ON' : 'OFF'}
+      </button>
+    </div>
+  );
+}
+
+export default ToggleButton;`);
+        }
+
+        // Navigation functionality
+        const navLinks = document.querySelectorAll('.nav-link');
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                navLinks.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+
+                // If on mobile, close the sidebar
+                if (window.innerWidth <= 768) {
+                    document.getElementById('sidebar').classList.remove('active');
+                    document.getElementById('overlay').classList.remove('active');
+                }
+
+                // In a real app, this would load the appropriate content
+                document.querySelector('.hook-title').textContent = link.textContent;
+            });
+        });
+
+        // Mobile menu toggle
+        document.getElementById('menuToggle').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('overlay').classList.toggle('active');
+        });
+
+        document.getElementById('overlay').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.remove('active');
+            document.getElementById('overlay').classList.remove('active');
+        });
+
+        // Theme toggle
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+
+            // Update Monaco editor theme if initialized
+            if (monacoInstance) {
+                const isDarkMode = document.body.classList.contains('dark-mode');
+                monacoInstance.editor.setTheme(isDarkMode ? 'vs-dark' : 'vs');
+            }
+
+            // Update theme toggle icon
+            document.getElementById('themeToggle').innerHTML = document.body.classList.contains('dark-mode') ? '☀️' : '🌓';
+        });
+
+        // Next button functionality
+        document.getElementById('next-button').addEventListener('click', () => {
+            // In a real app, this would navigate to the next section
+            alert('In a complete app, this would navigate to the next section: Rules of Hooks');
+        });
+
+        // Store editor content in localStorage for persistence
+        window.addEventListener('beforeunload', () => {
+            if (editor && exerciseEditor) {
+                localStorage.setItem('counterEditorContent', editor.getValue());
+                localStorage.setItem('exerciseEditorContent', exerciseEditor.getValue());
+            }
+        });
+
+        // Restore content if available
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedCounterContent = localStorage.getItem('counterEditorContent');
+            const savedExerciseContent = localStorage.getItem('exerciseEditorContent');
+
+            if (savedCounterContent && editor) {
+                editor.setValue(savedCounterContent);
+            }
+
+            if (savedExerciseContent && exerciseEditor) {
+                exerciseEditor.setValue(savedExerciseContent);
+            }
+        });
+
+        // Keyboard accessibility
+        document.addEventListener('keydown', (e) => {
+            // Escape key closes mobile sidebar
+            if (e.key === 'Escape') {
+                document.getElementById('sidebar').classList.remove('active');
+                document.getElementById('overlay').classList.remove('active');
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding Cloud Architecture</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    <style>
+        :root {
+            --primary-color: #007acc; /* VSCode status bar blue */
+            --secondary-color: #f0f0f0; /* Light grey for backgrounds */
+            --text-color: #333;
+            --heading-color: #1e1e1e; /* VSCode dark background */
+            --card-background: #ffffff;
+            --border-color: #ddd;
+            --accent-color: #4CAF50; /* Green for highlights/success */
+            --warning-color: #f4436; /* Red for warnings/errors */
+            --info-color: #2196F3; /* Blue for info */
+            --diagram-ui-color: #bbdefb; /* Light blue */
+            --diagram-service-color: #fff9c4; /* Light yellow */
+            --diagram-database-color: #c8e6c9; /* Light green */
+            --diagram-connection-color: #9e9e9e; /* Grey */
+
+            --spacing-small: 10px;
+            --spacing-medium: 20px;
+            --spacing-large: 40px;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            --transition-speed: 0.3s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--secondary-color);
+            padding: var(--spacing-large) var(--spacing-medium);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            gap: var(--spacing-large);
+            grid-template-areas:
+                "header header"
+                "toc main";
+            grid-template-columns: 250px 1fr; /* Desktop first */
+        }
+
+        @media (max-width: 900px) {
+            .container {
+                grid-template-areas:
+                    "header"
+                    "toc"
+                    "main";
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .header {
+            grid-area: header;
+            text-align: center;
+            margin-bottom: var(--spacing-large);
+        }
+
+        .header h1 {
+            color: var(--heading-color);
+            font-size: 2.5em;
+            font-weight: 700;
+        }
+
+        .table-of-contents {
+            grid-area: toc;
+            background-color: var(--card-background);
+            padding: var(--spacing-medium);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            align-self: start; /* Stick to the top */
+            position: sticky; /* Sticky on desktop */
+            top: var(--spacing-large); /* Stick below the header area */
+        }
+
+        @media (max-width: 900px) {
+             .table-of-contents {
+                position: static; /* Remove sticky on mobile */
+                margin-bottom: var(--spacing-medium); /* Add space below TOC on small screens */
+             }
+        }
+
+
+        .table-of-contents h2 {
+            color: var(--heading-color);
+            font-size: 1.2em;
+            margin-bottom: var(--spacing-medium);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: var(--spacing-small);
+        }
+
+        .table-of-contents ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .table-of-contents li {
+            margin-bottom: var(--spacing-small);
+        }
+
+        .table-of-contents a {
+            text-decoration: none;
+            color: var(--text-color);
+            transition: color var(--transition-speed);
+            display: block;
+            padding: var(--spacing-small) 0;
+        }
+
+        .table-of-contents a:hover,
+        .table-of-contents a:focus {
+            color: var(--primary-color);
+        }
+
+        .main-content {
+            grid-area: main;
+        }
+
+        .section {
+            background-color: var(--card-background);
+            padding: var(--spacing-large);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: var(--spacing-large);
+        }
+
+        .section h2 {
+            color: var(--heading-color);
+            font-size: 2em;
+            margin-bottom: var(--spacing-medium);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: var(--spacing-small);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-small);
+        }
+
+         .section h2 .material-symbols-rounded {
+             font-size: 1.2em;
+             color: var(--primary-color);
+         }
+
+        .section h3 {
+            color: var(--heading-color);
+            font-size: 1.5em;
+            margin-top: var(--spacing-medium);
+            margin-bottom: var(--spacing-small);
+        }
+
+        .card {
+            background-color: var(--secondary-color);
+            padding: var(--spacing-medium);
+            border-radius: var(--border-radius);
+            margin-top: var(--spacing-medium);
+            border-left: 4px solid var(--accent-color);
+            display: flex;
+            gap: var(--spacing-small);
+            align-items: flex-start;
+        }
+
+        .card .material-symbols-rounded {
+            color: var(--accent-color);
+            font-size: 1.8em;
+        }
+
+        .card h3 {
+            margin-top: 0;
+            color: var(--heading-color);
+            flex-grow: 1;
+        }
+         .card p {
+             flex-grow: 1;
+         }
+
+
+        /* Accordion Styles */
+        .accordion-item {
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin-bottom: var(--spacing-small);
+            overflow: hidden;
+        }
+
+        .accordion-header {
+            background-color: var(--secondary-color);
+            color: var(--heading-color);
+            padding: var(--spacing-medium);
+            width: 100%;
+            text-align: left;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: background-color var(--transition-speed);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .accordion-header::after {
+            content: 'expand_more'; /* Material Symbols icon for expand */
+            font-family: 'Material Symbols Rounded';
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: 1.5em;
+            transition: transform var(--transition-speed);
+        }
+
+        .accordion-header:hover,
+        .accordion-header:focus {
+             background-color: #e0e0e0; /* Slightly darker on hover/focus */
+        }
+
+        .accordion-header.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+         .accordion-header.active::after {
+            content: 'expand_less'; /* Material Symbols icon for collapse */
+            font-family: 'Material Symbols Rounded';
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            transform: rotate(0deg); /* Reset rotation */
+        }
+
+
+        .accordion-content {
+            padding: 0 var(--spacing-medium);
+            background-color: var(--card-background);
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height var(--transition-speed) ease-in-out, padding var(--transition-speed) ease-in-out;
+        }
+
+        .accordion-content.active {
+            max-height: 1000px; /* Sufficiently large value */
+            padding: var(--spacing-medium);
+        }
+
+        .accordion-content p {
+            margin-bottom: var(--spacing-medium);
+        }
+
+        .accordion-content p:last-child {
+             margin-bottom: 0;
+        }
+
+
+        /* Diagram Styles */
+        .diagram-container {
+            margin: var(--spacing-medium) 0;
+            padding: var(--spacing-medium);
+            background-color: var(--secondary-color);
+            border-radius: var(--border-radius);
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.05); /* Subtle inner shadow */
+        }
+
+        .service-diagram {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--spacing-small);
+        }
+
+        .service-diagram .layer {
+            width: 80%; /* Default width */
+            max-width: 300px; /* Max width for layers */
+            padding: var(--spacing-small);
+            text-align: center;
+            border: 1px solid var(--border-color);
+            background-color: var(--card-background);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            position: relative;
+            font-size: 0.9em;
+        }
+
+         .service-diagram .layer.managed {
+            background-color: #e0f7fa; /* Light blue for managed */
+            border-color: #b2ebf2;
+        }
+
+        .service-diagram .legend {
+            display: flex;
+            gap: var(--spacing-medium);
+            margin-top: var(--spacing-medium);
+            font-size: 0.9em;
+            flex-wrap: wrap; /* Allow legend to wrap */
+            justify-content: center;
+        }
+
+        .service-diagram .legend-item {
+            display: flex;
+            align-items: center;
+        }
+
+        .service-diagram .legend-item::before {
+            content: '';
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            margin-right: var(--spacing-small);
+            border-radius: 4px;
+            vertical-align: middle;
+            border: 1px solid var(--border-color); /* Default border */
+        }
+
+        .service-diagram .legend-item.managed::before {
+            background-color: #e0f7fa;
+            border-color: #b2ebf2;
+        }
+         .service-diagram .legend-item:not(.managed)::before {
+            background-color: var(--card-background);
+            border-color: var(--border-color);
+        }
+
+        /* Pattern Diagram Styles */
+        .pattern-diagram {
+             display: flex;
+             flex-direction: column;
+             align-items: center;
+             gap: var(--spacing-medium); /* Increased gap for clarity */
+             margin: var(--spacing-medium) 0;
+        }
+
+        .pattern-diagram .component {
+            padding: var(--spacing-small);
+            text-align: center;
+            border: 1px solid var(--border-color);
+            background-color: var(--card-background);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            min-width: 100px;
+            font-size: 0.9em;
+            position: relative; /* Needed for connections */
+        }
+
+         .pattern-diagram .component .material-symbols-rounded {
+             font-size: 1.5em;
+             margin-bottom: var(--spacing-small);
+             display: block;
+             text-align: center;
+         }
+
+
+        .pattern-diagram.monolithic .component {
+            width: 80%;
+            max-width: 400px;
+        }
+
+        .pattern-diagram.monolithic .database {
+             border-top: 2px dashed var(--diagram-connection-color);
+             margin-top: var(--spacing-small);
+             padding-top: var(--spacing-small);
+        }
+
+        .pattern-diagram.microservices,
+        .pattern-diagram.serverless {
+             flex-direction: column;
+             align-items: center;
+        }
+
+         .pattern-diagram .service-group {
+            display: flex;
+            gap: var(--spacing-medium); /* Gap between services */
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: var(--spacing-small) 0;
+         }
+
+        .pattern-diagram .ui {
+            background-color: var(--diagram-ui-color);
+            border-color: #90caf9;
+             display: flex;
+             flex-direction: column;
+             align-items: center;
+        }
+
+        .pattern-diagram .service {
+            background-color: var(--diagram-service-color);
+            border-color: #fbc02d;
+             display: flex;
+             flex-direction: column;
+             align-items: center;
+        }
+
+        .pattern-diagram .function {
+             background-color: var(--diagram-service-color); /* Same as service for simplicity */
+             border-color: #fbc02d;
+             display: flex;
+             flex-direction: column;
+             align-items: center;
+        }
+
+        .pattern-diagram .database {
+             background-color: var(--diagram-database-color);
+             border-color: #81c784;
+             display: flex;
+             flex-direction: column;
+             align-items: center;
+        }
+
+        /* Basic Connection Lines (Example - requires careful positioning) */
+        /* This is a simplified approach and may not work for complex layouts */
+         .pattern-diagram .component::after {
+             content: '';
+             position: absolute;
+             bottom: -10px; /* Position below the box */
+             left: 50%;
+             transform: translateX(-50%);
+             width: 2px;
+             height: 10px; /* Length of the line */
+             background-color: var(--diagram-connection-color);
+         }
+
+         .pattern-diagram.monolithic .component:last-child::after {
+             display: none; /* No line after the last component */
+         }
+
+         .pattern-diagram.microservices .ui::after,
+         .pattern-diagram.serverless .ui::after {
+             content: '';
+             position: absolute;
+             bottom: -20px; /* Line connecting UI to service group */
+             left: 50%;
+             transform: translateX(-50%);
+             width: 2px;
+             height: 20px;
+             background-color: var(--diagram-connection-color);
+         }
+
+         .pattern-diagram .service-group::before {
+             content: '';
+             position: absolute;
+             top: -10px; /* Line connecting service group to database */
+             left: 50%;
+             transform: translateX(-50%);
+             width: 2px;
+             height: 10px;
+             background-color: var(--diagram-connection-color);
+         }
+
+         /* Horizontal line for service group */
+         .pattern-diagram .service-group {
+             position: relative; /* Needed for pseudo-elements */
+             padding-top: 10px; /* Make space for the line above */
+             padding-bottom: 10px; /* Make space for the line below */
+         }
+
+         .pattern-diagram.microservices .service-group::before,
+         .pattern-diagram.serverless .service-group::before {
+              content: '';
+              position: absolute;
+              top: 0; /* Position at the top of the group */
+              left: 50%;
+              transform: translateX(-50%);
+              width: calc(100% + var(--spacing-medium)); /* Cover the width of the group + gap */
+              height: 2px;
+              background-color: var(--diagram-connection-color);
+         }
+
+         .pattern-diagram.microservices .service-group::after,
+         .pattern-diagram.serverless .service-group::after {
+              content: '';
+              position: absolute;
+              bottom: 0; /* Position at the bottom of the group */
+              left: 50%;
+              transform: translateX(-50%);
+              width: calc(100% + var(--spacing-medium)); /* Cover the width of the group + gap */
+              height: 2px;
+              background-color: var(--diagram-connection-color);
+         }
+
+
+         /* Hide vertical lines on components within the service group */
+         .pattern-diagram .service-group .component::after {
+             display: none;
+         }
+
+         /* Add vertical lines connecting service group to database */
+         .pattern-diagram .database::before {
+             content: '';
+             position: absolute;
+             top: -10px; /* Position above the database */
+             left: 50%;
+             transform: translateX(-50%);
+             width: 2px;
+             height: 10px;
+             background-color: var(--diagram-connection-color);
+         }
+
+
+        .diagram-placeholder {
+            background-color: #e0e0e0;
+            color: #757575;
+            padding: var(--spacing-large);
+            text-align: center;
+            border-radius: var(--border-radius);
+            margin-top: var(--spacing-medium);
+            min-height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-style: italic;
+            border: 1px dashed var(--border-color);
+        }
+
+
+        /* Glossary Styles */
+        .glossary {
+            margin-top: var(--spacing-medium);
+        }
+
+        .glossary dt {
+            font-weight: 600;
+            margin-top: var(--spacing-small);
+            color: var(--heading-color);
+        }
+
+        .glossary dd {
+            margin-left: var(--spacing-medium);
+            margin-bottom: var(--spacing-small);
+            padding-left: var(--spacing-small);
+            border-left: 2px solid var(--border-color);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            body {
+                padding: var(--spacing-medium) var(--spacing-small);
+            }
+
+            .container {
+                gap: var(--spacing-medium);
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .section {
+                padding: var(--spacing-medium);
+            }
+
+            .section h2 {
+                font-size: 1.5em;
+                 flex-direction: column;
+                 align-items: flex-start;
+            }
+             .section h2 .material-symbols-rounded {
+                 font-size: 1.5em;
+             }
+
+            .section h3 {
+                font-size: 1.2em;
+            }
+
+             .service-diagram .layer,
+             .pattern-diagram .component {
+                width: 95%; /* Make diagrams wider on small screens */
+                max-width: none; /* Remove max-width on small screens */
+             }
+
+             .pattern-diagram .service-group {
+                flex-direction: column; /* Stack services/functions on small screens */
+                gap: var(--spacing-small);
+             }
+             .pattern-diagram.microservices .service-group::before,
+             .pattern-diagram.serverless .service-group::before,
+             .pattern-diagram.microservices .service-group::after,
+             .pattern-diagram.serverless .service-group::after {
+                display: none; /* Hide horizontal lines on stacked layout */
+             }
+             .pattern-diagram .component::after,
+             .pattern-diagram .database::before {
+                 left: 50%; /* Keep vertical lines centered */
+                 transform: translateX(-50%);
+             }
+             .pattern-diagram.monolithic .component::after:last-child {
+                 display: none;
+             }
+             .pattern-diagram.microservices .ui::after,
+             .pattern-diagram.serverless .ui::after {
+                 bottom: -10px;
+                 height: 10px;
+             }
+             .pattern-diagram.microservices .database::before,
+             .pattern-diagram.serverless .database::before {
+                 top: -10px;
+                 height: 10px;
+             }
+        }
+
+         /* Accessibility - Focus states */
+        a:focus,
+        button:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        /* Smooth scrolling */
+        html {
+          scroll-behavior: smooth;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Understanding Cloud Architecture</h1>
+        </header>
+
+        <nav class="table-of-contents" aria-label="Table of Contents">
+            <h2>Contents</h2>
+            <ul>
+                <li><a href="#introduction">Introduction</a></li>
+                <li><a href="#services">Cloud Service Categories</a></li>
+                <li><a href="#patterns">Architectural Patterns</a></li>
+                <li><a href="#examples">Application Examples</a></li>
+                <li><a href="#glossary">Glossary</a></li>
+            </ul>
+        </nav>
+
+        <main class="main-content">
+            <section id="introduction" class="section" aria-labelledby="introduction-heading">
+                <h2 id="introduction-heading"><span class="material-symbols-rounded">cloud</span> Introduction to Cloud Computing</h2>
+                <p>Cloud computing is the on-demand delivery of IT resources—including computing power, storage, and databases—over the internet with pay-as-you-go pricing. It offers significant benefits like increased flexibility, scalability, and cost-efficiency compared to traditional on-premises infrastructure.</p>
+                <p>Cloud services are typically delivered via three main deployment models: Public Cloud (owned and operated by a third-party cloud service provider), Private Cloud (resources used exclusively by a single organization), and Hybrid Cloud (a combination of public and private clouds).</p>
+                <div class="card">
+                     <span class="material-symbols-rounded">lightbulb</span>
+                     <div>
+                        <h3>Key Takeaway</h3>
+                        <p>Cloud computing transforms IT from a capital expense to an operational expense, enabling businesses to innovate faster and scale globally.</p>
+                     </div>
+                </div>
+            </section>
+
+            <section id="services" class="section" aria-labelledby="services-heading">
+                <h2 id="services-heading"><span class="material-symbols-rounded">category</span> Core Cloud Service Categories</h2>
+                <p>Cloud services are broadly categorized based on the level of management provided by the cloud provider versus the customer. The three main categories are Infrastructure as a Service (IaaS), Platform as a Service (PaaS), and Software as a Service (SaaS).</p>
+                <div class="accordion">
+                    <div class="accordion-item">
+                        <button class="accordion-header" aria-expanded="false" aria-controls="iaas-content">Infrastructure as a Service (IaaS)</button>
+                        <div id="iaas-content" class="accordion-content" aria-hidden="true">
+                            <p>IaaS provides the fundamental building blocks of cloud IT. It gives you access to networking features, computers (virtual or on dedicated hardware), and data storage space. IaaS provides the highest level of flexibility and management control over your IT resources and is most similar to existing IT resources that many IT departments and developers are familiar with.</p>
+                            <p>With IaaS, you manage the operating systems, data, applications, and middleware, while the cloud provider manages the virtualization, servers, storage, and networking.</p>
+                            <div class="diagram-container" aria-label="Infrastructure as a Service diagram">
+                                <div class="service-diagram">
+                                    <div class="layer">Application</div>
+                                    <div class="layer">Data</div>
+                                    <div class="layer">Runtime</div>
+                                    <div class="layer">Middleware</div>
+                                    <div class="layer">OS</div>
+                                    <div class="layer managed">Virtualization</div>
+                                    <div class="layer managed">Servers</div>
+                                    <div class="layer managed">Storage</div>
+                                    <div class="layer managed">Networking</div>
+                                </div>
+                                <div class="legend">
+                                    <span class="legend-item managed">Managed by Cloud Provider</span>
+                                    <span class="legend-item">Managed by You</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header" aria-expanded="false" aria-controls="paas-content">Platform as a Service (PaaS)</button>
+                        <div id="paas-content" class="accordion-content" aria-hidden="true">
+                            <p>PaaS removes the need for you to manage underlying infrastructure (hardware and operating systems) and enables you to focus on the deployment and management of your applications. PaaS provides the building blocks for creating modern applications, such as managed databases, web servers, and development tools.</p>
+                            <p>With PaaS, you manage the applications and data, while the cloud provider manages the runtime, middleware, operating system, virtualization, servers, storage, and networking.</p>
+                            <div class="diagram-container" aria-label="Platform as a Service diagram">
+                                <div class="service-diagram">
+                                    <div class="layer">Application</div>
+                                    <div class="layer">Data</div>
+                                    <div class="layer managed">Runtime</div>
+                                    <div class="layer managed">Middleware</div>
+                                    <div class="layer managed">OS</div>
+                                    <div class="layer managed">Virtualization</div>
+                                    <div class="layer managed">Servers</div>
+                                    <div class="layer managed">Storage</div>
+                                    <div class="layer managed">Networking</div>
+                                </div>
+                                <div class="legend">
+                                    <span class="legend-item managed">Managed by Cloud Provider</span>
+                                    <span class="legend-item">Managed by You</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header" aria-expanded="false" aria-controls="saas-content">Software as a Service (SaaS)</button>
+                        <div id="saas-content" class="accordion-content" aria-hidden="true">
+                            <p>SaaS provides a complete product that is run and managed by the service provider. In most cases, people referring to SaaS are referring to end-user applications. With a SaaS offering, you don't have to think about how the service is maintained or how the underlying infrastructure is managed; you just need to think about how you will use that particular software.</p>
+                             <p>With SaaS, the cloud provider manages everything: the application, data, runtime, middleware, operating system, virtualization, servers, storage, and networking.</p>
+                             <div class="diagram-container" aria-label="Software as a Service diagram">
+                                <div class="service-diagram">
+                                    <div class="layer managed">Application</div>
+                                    <div class="layer managed">Data</div>
+                                    <div class="layer managed">Runtime</div>
+                                    <div class="layer managed">Middleware</div>
+                                    <div class="layer managed">OS</div>
+                                    <div class="layer managed">Virtualization</div>
+                                    <div class="layer managed">Servers</div>
+                                    <div class="layer managed">Storage</div>
+                                    <div class="layer managed">Networking</div>
+                                </div>
+                                <div class="legend">
+                                    <span class="legend-item managed">Managed by Cloud Provider</span>
+                                    <span class="legend-item">Managed by You</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="patterns" class="section" aria-labelledby="patterns-heading">
+                <h2 id="patterns-heading"><span class="material-symbols-rounded">architecture</span> Common Architectural Patterns</h2>
+                <p>Choosing the right architectural pattern is crucial for building scalable, resilient, and maintainable cloud applications. Here are some common patterns:</p>
+                 <div class="accordion">
+                    <div class="accordion-item">
+                        <button class="accordion-header" aria-expanded="false" aria-controls="monolithic-content">Monolithic Architecture</button>
+                        <div id="monolithic-content" class="accordion-content" aria-hidden="true">
+                            <p>In a monolithic architecture, the entire application is built as a single, indivisible unit. All components (UI, business logic, data access) are tightly coupled and run within a single process. This is often simpler to develop and deploy initially but can become complex and difficult to scale or update as the application grows.</p>
+                            <div class="diagram-container" aria-label="Monolithic Architecture diagram">
+                                <div class="pattern-diagram monolithic">
+                                    <div class="component ui"><span class="material-symbols-rounded">monitor</span>User Interface</div>
+                                    <div class="component"><span class="material-symbols-rounded">business_center</span>Business Logic</div>
+                                    <div class="component"><span class="material-symbols-rounded">database</span>Data Access Layer</div>
+                                    <div class="component database"><span class="material-symbols-rounded">storage</span>Database</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header" aria-expanded="false" aria-controls="microservices-content">Microservices Architecture</button>
+                        <div id="microservices-content" class="accordion-content" aria-hidden="true">
+                            <p>Microservices architecture structures an application as a collection of small, autonomous services, modeled around a business domain. Each service is self-contained, can be developed, deployed, and scaled independently, and communicates with other services, typically over a network.</p>
+                             <div class="diagram-container" aria-label="Microservices Architecture diagram">
+                                <div class="pattern-diagram microservices">
+                                    <div class="component ui"><span class="material-symbols-rounded">monitor</span>User Interface</div>
+                                    <div class="service-group">
+                                        <div class="component service"><span class="material-symbols-rounded">settings</span>Service A</div>
+                                        <div class="component service"><span class="material-symbols-rounded">settings</span>Service B</div>
+                                        <div class="component service"><span class="material-symbols-rounded">settings</span>Service C</div>
+                                    </div>
+                                    <div class="component database"><span class="material-symbols-rounded">storage</span>Database</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header" aria-expanded="false" aria-controls="serverless-content">Serverless Architecture</button>
+                        <div id="serverless-content" class="accordion-content" aria-hidden="true">
+                            <p>Serverless architecture allows you to build and run applications and services without thinking about servers. The cloud provider manages the infrastructure, and you only pay for the compute time you consume. This often involves using Function-as-a-Service (FaaS) like AWS Lambda or Azure Functions, triggered by events.</p>
+                             <div class="diagram-container" aria-label="Serverless Architecture diagram">
+                                <div class="pattern-diagram serverless">
+                                    <div class="component ui"><span class="material-symbols-rounded">monitor</span>User Interface</div>
+                                    <div class="service-group">
+                                        <div class="component function"><span class="material-symbols-rounded">flash_on</span>Function 1</div>
+                                        <div class="component function"><span class="material-symbols-rounded">flash_on</span>Function 2</div>
+                                        <div class="component function"><span class="material-symbols-rounded">flash_on</span>Function 3</div>
+                                    </div>
+                                    <div class="component database"><span class="material-symbols-rounded">storage</span>Database</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="examples" class="section" aria-labelledby="examples-heading">
+                <h2 id="examples-heading"><span class="material-symbols-rounded">code</span> Examples of Application Architectures</h2>
+                <p>Understanding theoretical patterns is best complemented by seeing how they are applied in practice. Here are simplified examples:</p>
+                <div class="card">
+                     <span class="material-symbols-rounded" style="color: var(--info-color);">shopping_cart</span>
+                     <div>
+                        <h3>E-commerce Platform (Microservices)</h3>
+                        <p>A typical e-commerce platform using microservices might have separate services for user management, product catalog, order processing, payment gateway integration, and inventory management. These services communicate via APIs or message queues.</p>
+                        <!-- Simple diagram placeholder -->
+                        <div class="diagram-placeholder" aria-label="E-commerce Microservices Example Diagram">Diagram placeholder: UI &rarr; API Gateway &rarr; (User Service, Product Service, Order Service, Payment Service) &rarr; Databases</div>
+                     </div>
+                </div>
+                 <div class="card" style="border-left-color: var(--info-color);">
+                     <span class="material-symbols-rounded" style="color: var(--info-color);">data_object</span>
+                     <div>
+                        <h3>Data Processing Pipeline (Serverless)</h3>
+                        <p>A serverless data processing pipeline could involve uploading a file to cloud storage (triggering an event), which invokes a serverless function to process the file, extract data, and store it in a database or another storage service. Another function might be triggered to send a notification upon completion.</p>
+                         <!-- Simple diagram placeholder -->
+                        <div class="diagram-placeholder" aria-label="Data Processing Serverless Example Diagram">Diagram placeholder: File Upload (Event) &rarr; Serverless Function (Process) &rarr; Database/Storage &rarr; Serverless Function (Notify)</div>
+                     </div>
+                </div>
+            </section>
+
+            <section id="glossary" class="section" aria-labelledby="glossary-heading">
+                <h2 id="glossary-heading"><span class="material-symbols-rounded">book</span> Glossary of Key Terms</h2>
+                <dl class="glossary">
+                    <dt>IaaS</dt>
+                    <dd><strong>Infrastructure as a Service.</strong> A cloud service model providing virtualized computing resources over the internet.</dd>
+                    <dt>PaaS</dt>
+                    <dd><strong>Platform as a Service.</strong> A cloud service model providing a platform for developing, running, and managing applications without managing infrastructure.</dd>
+                    <dt>SaaS</dt>
+                    <dd><strong>Software as a Service.</strong> A cloud service model providing software applications over the internet on a subscription basis.</dd>
+                    <dt>Virtual Machine (VM)</dt>
+                    <dd>An emulation of a computer system. VMs provide the functionality of a physical computer, allowing you to run operating systems and applications.</dd>
+                    <dt>Container</dt>
+                    <dd>A standard unit of software that packages up code and all its dependencies so the application runs quickly and reliably from one computing environment to another.</dd>
+                    <dt>Serverless Function</dt>
+                    <dd>A small, single-purpose piece of code that runs in response to an event, without requiring you to provision or manage servers.</dd>
+                    <dt>Scalability</dt>
+                    <dd>The ability of a system to handle a growing amount of work by adding resources.</dd>
+                     <dt>Resilience</dt>
+                    <dd>The ability of a system to recover from failures and continue to function.</dd>
+                    <dt>API Gateway</dt>
+                    <dd>A server that acts as an entry point for clients to access microservices.</dd>
+                     <dt>Message Queue</dt>
+                    <dd>A component used for asynchronous communication between different parts of an application or different services.</dd>
+                </dl>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Accordion functionality
+            const accordionHeaders = document.querySelectorAll('.accordion-header');
+
+            accordionHeaders.forEach(header => {
+                header.addEventListener('click', () => {
+                    const content = header.nextElementSibling;
+                    const isActive = header.classList.contains('active');
+                    const accordionGroup = header.closest('.accordion'); // Find the parent accordion container
+
+                    // Close all other accordions in the same group
+                    if (accordionGroup) {
+                        accordionGroup.querySelectorAll('.accordion-header').forEach(otherHeader => {
+                            if (otherHeader !== header && otherHeader.classList.contains('active')) {
+                                otherHeader.classList.remove('active');
+                                otherHeader.setAttribute('aria-expanded', 'false');
+                                const otherContent = otherHeader.nextElementSibling;
+                                otherContent.classList.remove('active');
+                                otherContent.setAttribute('aria-hidden', 'true');
+                            }
+                        });
+                    }
+
+
+                    // Toggle the clicked accordion
+                    header.classList.toggle('active');
+                    header.setAttribute('aria-expanded', !isActive);
+                    content.classList.toggle('active');
+                    content.setAttribute('aria-hidden', isActive);
+                });
+
+                 // Add keyboard support for accordion headers
+                header.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault(); // Prevent default space/enter behavior
+                        header.click(); // Trigger the click event
+                    }
+                });
+                 // Add keyboard support for arrow keys
+                header.addEventListener('keydown', (event) => {
+                    const items = Array.from(header.closest('.accordion').querySelectorAll('.accordion-item'));
+                    const currentIndex = items.indexOf(header.parentElement);
+
+                    if (event.key === 'ArrowDown') {
+                        event.preventDefault();
+                        const nextItem = items[currentIndex + 1];
+                        if (nextItem) {
+                            nextItem.querySelector('.accordion-header').focus();
+                        }
+                    } else if (event.key === 'ArrowUp') {
+                        event.preventDefault();
+                        const prevItem = items[currentIndex - 1];
+                        if (prevItem) {
+                            prevItem.querySelector('.accordion-header').focus();
+                        }
+                    }
+                });
+            });
+
+            // Smooth scrolling for navigation links
+            document.querySelectorAll('.table-of-contents a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+
+                    const targetId = this.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+
+                    if (targetElement) {
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth',
+                             block: 'start' // Scroll to the top of the section
+                        });
+                         // Optional: Update URL hash without jumping
+                         // history.pushState(null, null, targetId);
+                    }
+                });
+            });
+
+             // Add keyboard navigation for TOC links
+            document.querySelectorAll('.table-of-contents a').forEach(link => {
+                link.addEventListener('keydown', (event) => {
+                    const listItems = Array.from(link.closest('ul').children);
+                    const currentItem = link.parentElement;
+                    const currentIndex = listItems.indexOf(currentItem);
+
+                    if (event.key === 'ArrowDown') {
+                        event.preventDefault();
+                        const nextItem = listItems[currentIndex + 1];
+                        if (nextItem) {
+                            nextItem.querySelector('a').focus();
+                        }
+                    } else if (event.key === 'ArrowUp') {
+                        event.preventDefault();
+                        const prevItem = listItems[currentIndex - 1];
+                        if (prevItem) {
+                            prevItem.querySelector('a').focus();
+                        }
+                    }
+                });
+            });
+
+        });
+    </script>
+</body>
+</html>

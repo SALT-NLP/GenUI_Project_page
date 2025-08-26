@@ -1,0 +1,3117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Machine Learning Algorithm Visualizer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #4895ef;
+            --primary-dark: #3a0ca3;
+            --secondary: #560bad;
+            --accent: #f72585;
+            --success: #4cc9f0;
+            --warning: #ffd166;
+            --danger: #ef476f;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-400: #ced4da;
+            --gray-500: #adb5bd;
+            --gray-600: #6c757d;
+            --gray-700: #495057;
+            --gray-800: #343a40;
+            --gray-900: #212529;
+            --text: #212529;
+            --text-light: #6c757d;
+            --background: #ffffff;
+            --border-radius: 8px;
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--text);
+            background-color: var(--gray-100);
+            line-height: 1.5;
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            grid-template-rows: 60px 1fr;
+            grid-template-areas:
+                "header header"
+                "sidebar main";
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            grid-area: header;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+            background-color: var(--background);
+            border-bottom: 1px solid var(--gray-200);
+            box-shadow: var(--shadow-sm);
+            z-index: 10;
+        }
+
+        .header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--gray-600);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--gray-100);
+            color: var(--gray-800);
+        }
+
+        .sidebar {
+            grid-area: sidebar;
+            background-color: var(--background);
+            border-right: 1px solid var(--gray-200);
+            padding: 1.5rem 0;
+            overflow-y: auto;
+            transition: var(--transition);
+        }
+
+        .sidebar-title {
+            padding: 0 1.5rem;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-600);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .algorithm-list {
+            list-style: none;
+        }
+
+        .algorithm-item {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+            border-left: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .algorithm-item:hover {
+            background-color: var(--gray-100);
+        }
+
+        .algorithm-item.active {
+            background-color: var(--gray-100);
+            border-left-color: var(--primary);
+            font-weight: 500;
+            color: var(--primary);
+        }
+
+        .algorithm-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            color: var(--gray-600);
+        }
+
+        .algorithm-item.active .algorithm-icon {
+            color: var(--primary);
+        }
+
+        .main-content {
+            grid-area: main;
+            display: grid;
+            grid-template-columns: 1fr;
+            grid-template-rows: 1fr 300px;
+            overflow: hidden;
+        }
+
+        .visualization-container {
+            position: relative;
+            overflow: hidden;
+            background-color: var(--background);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .visualization-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 0.5rem;
+            background-color: var(--background);
+            padding: 0.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            z-index: 5;
+        }
+
+        .control-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: var(--border-radius);
+            background-color: var(--gray-100);
+            color: var(--gray-700);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .control-btn:hover {
+            background-color: var(--gray-200);
+            transform: translateY(-2px);
+        }
+
+        .control-btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.3);
+        }
+
+        .control-btn.primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .control-btn.primary:hover {
+            background-color: var(--primary-light);
+        }
+
+        .speed-dropdown {
+            position: absolute;
+            bottom: 60px;
+            right: -20px;
+            background-color: var(--background);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 0.5rem;
+            display: none;
+            z-index: 10;
+        }
+
+        .speed-dropdown.active {
+            display: block;
+        }
+
+        .speed-option {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            border-radius: 4px;
+        }
+
+        .speed-option:hover {
+            background-color: var(--gray-100);
+        }
+
+        .speed-option.active {
+            background-color: var(--primary-light);
+            color: white;
+        }
+
+        .explanation-container {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            overflow: hidden;
+        }
+
+        .explanation-text {
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .explanation-text h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--gray-800);
+        }
+
+        .explanation-text p {
+            margin-bottom: 1rem;
+            color: var(--gray-700);
+        }
+
+        .explanation-text code {
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            background-color: var(--gray-100);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .explanation-text ol, .explanation-text ul {
+            margin-bottom: 1rem;
+            margin-left: 1.5rem;
+        }
+
+        .explanation-text li {
+            margin-bottom: 0.5rem;
+        }
+
+        .parameters-container {
+            padding: 1.5rem;
+            background-color: var(--gray-100);
+            border-left: 1px solid var(--gray-200);
+            overflow-y: auto;
+        }
+
+        .parameters-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--gray-800);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .parameter-group {
+            margin-bottom: 1.25rem;
+            position: relative;
+        }
+
+        .parameter-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--gray-700);
+        }
+
+        .parameter-input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--border-radius);
+            font-size: 0.875rem;
+            transition: var(--transition);
+            background-color: var(--background);
+        }
+
+        .parameter-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+        }
+
+        .parameter-slider {
+            width: 100%;
+            margin-top: 0.5rem;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+
+        .parameter-value {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            margin-top: 0.25rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .dataset-selector {
+            margin-bottom: 1.5rem;
+        }
+
+        .dataset-select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--border-radius);
+            font-size: 0.875rem;
+            background-color: var(--background);
+            transition: var(--transition);
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%236c757d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.5rem center;
+            background-size: 1rem;
+            padding-right: 2rem;
+        }
+
+        .dataset-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+        }
+
+        /* Tooltip Styles */
+        .tooltip {
+            position: absolute;
+            padding: 0.5rem 0.75rem;
+            background-color: var(--gray-800);
+            color: white;
+            border-radius: var(--border-radius);
+            font-size: 0.75rem;
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s, transform 0.2s;
+            transform: translateY(5px);
+            max-width: 200px;
+            box-shadow: var(--shadow);
+        }
+
+        .tooltip.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Legend Styles */
+        .legend {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background-color: var(--background);
+            padding: 0.75rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            font-size: 0.875rem;
+            z-index: 5;
+            max-width: 200px;
+        }
+
+        .legend-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--gray-700);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            margin-right: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .legend-label {
+            font-size: 0.8125rem;
+            color: var(--gray-700);
+        }
+
+        /* Progress indicator */
+        .progress-indicator {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background-color: var(--background);
+            padding: 0.5rem 0.75rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            z-index: 5;
+        }
+
+        .progress-label {
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .progress-status {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .progress-status.running {
+            background-color: var(--primary-light);
+            color: white;
+        }
+
+        .progress-status.converged {
+            background-color: var(--success);
+            color: white;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 1024px) {
+            .app-container {
+                grid-template-columns: 200px 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .app-container {
+                grid-template-columns: 1fr;
+                grid-template-areas:
+                    "header"
+                    "main";
+            }
+
+            .sidebar {
+                position: fixed;
+                top: 60px;
+                left: 0;
+                bottom: 0;
+                width: 240px;
+                transform: translateX(-100%);
+                z-index: 20;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .menu-toggle {
+                display: flex !important;
+            }
+
+            .explanation-container {
+                grid-template-columns: 1fr;
+            }
+
+            .parameters-container {
+                border-left: none;
+                border-top: 1px solid var(--gray-200);
+            }
+        }
+
+        /* Mobile menu toggle */
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--gray-600);
+            padding: 0.5rem;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+
+        .menu-toggle:hover {
+            background-color: var(--gray-100);
+            color: var(--gray-800);
+        }
+
+        /* Overlay when mobile menu is active */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 15;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+        }
+
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Accessibility improvements */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
+        /* Animation for loading state */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid var(--gray-200);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+
+        /* Dark mode styles */
+        body.dark-mode {
+            --background: #222;
+            --text: #f8f9fa;
+            --text-light: #adb5bd;
+            --gray-100: #343a40;
+            --gray-200: #495057;
+            --gray-300: #6c757d;
+            --gray-700: #dee2e6;
+            --gray-800: #e9ecef;
+            --gray-900: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <button class="menu-toggle" id="menu-toggle" aria-label="Toggle menu">
+                <i class="material-icons">menu</i>
+            </button>
+            <h1>Machine Learning Algorithm Visualizer</h1>
+            <div class="header-actions">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
+                    <i class="material-icons">light_mode</i>
+                </button>
+            </div>
+        </header>
+
+        <div class="overlay" id="overlay"></div>
+
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-title">Algorithms</div>
+            <ul class="algorithm-list">
+                <li class="algorithm-item active" data-algorithm="k-means" tabindex="0" role="button">
+                    <div class="algorithm-icon"><i class="material-icons">bubble_chart</i></div>
+                    K-Means Clustering
+                </li>
+                <li class="algorithm-item" data-algorithm="linear-regression" tabindex="0" role="button">
+                    <div class="algorithm-icon"><i class="material-icons">show_chart</i></div>
+                    Linear Regression
+                </li>
+                <li class="algorithm-item" data-algorithm="decision-tree" tabindex="0" role="button">
+                    <div class="algorithm-icon"><i class="material-icons">account_tree</i></div>
+                    Decision Tree
+                </li>
+                <li class="algorithm-item" data-algorithm="svm" tabindex="0" role="button">
+                    <div class="algorithm-icon"><i class="material-icons">linear_scale</i></div>
+                    Support Vector Machine
+                </li>
+                <li class="algorithm-item" data-algorithm="neural-network" tabindex="0" role="button">
+                    <div class="algorithm-icon"><i class="material-icons">device_hub</i></div>
+                    Neural Network
+                </li>
+                <li class="algorithm-item" data-algorithm="pca" tabindex="0" role="button">
+                    <div class="algorithm-icon"><i class="material-icons">scatter_plot</i></div>
+                    Principal Component Analysis
+                </li>
+                <li class="algorithm-item" data-algorithm="knn" tabindex="0" role="button">
+                    <div class="algorithm-icon"><i class="material-icons">share</i></div>
+                    K-Nearest Neighbors
+                </li>
+                <li class="algorithm-item" data-algorithm="random-forest" tabindex="0" role="button">
+                    <div class="algorithm-icon"><i class="material-icons">park</i></div>
+                    Random Forest
+                </li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <div class="visualization-container">
+                <canvas id="visualization-canvas" class="visualization-canvas" aria-label="Algorithm visualization" role="img"></canvas>
+                
+                <div class="progress-indicator">
+                    <span class="progress-label">Iteration: <span id="iteration-counter">0</span></span>
+                    <span class="progress-status running" id="progress-status">Running</span>
+                </div>
+                
+                <div class="controls">
+                    <button class="control-btn" id="reset-btn" title="Reset" aria-label="Reset visualization">
+                        <i class="material-icons">restart_alt</i>
+                    </button>
+                    <button class="control-btn" id="step-back-btn" title="Step Backward" aria-label="Step backward">
+                        <i class="material-icons">skip_previous</i>
+                    </button>
+                    <button class="control-btn primary" id="play-btn" title="Play/Pause" aria-label="Play or pause visualization">
+                        <i class="material-icons">play_arrow</i>
+                    </button>
+                    <button class="control-btn" id="step-forward-btn" title="Step Forward" aria-label="Step forward">
+                        <i class="material-icons">skip_next</i>
+                    </button>
+                    <div style="position: relative;">
+                        <button class="control-btn" id="speed-btn" title="Speed: 1x" aria-label="Adjust animation speed">
+                            <i class="material-icons">speed</i>
+                        </button>
+                        <div class="speed-dropdown" id="speed-dropdown">
+                            <div class="speed-option" data-speed="0.5" tabindex="0" role="button">0.5x</div>
+                            <div class="speed-option active" data-speed="1" tabindex="0" role="button">1x</div>
+                            <div class="speed-option" data-speed="2" tabindex="0" role="button">2x</div>
+                            <div class="speed-option" data-speed="4" tabindex="0" role="button">4x</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="legend" id="visualization-legend">
+                    <div class="legend-title">Legend</div>
+                    <!-- Legend items will be dynamically added here -->
+                </div>
+
+                <div class="tooltip" id="tooltip" role="tooltip"></div>
+            </div>
+
+            <div class="explanation-container">
+                <div class="explanation-text" id="algorithm-explanation">
+                    <h2>K-Means Clustering</h2>
+                    <p>K-Means is an unsupervised learning algorithm that groups data points into K number of clusters. The algorithm works by iteratively assigning data points to the nearest cluster centroid and then updating the centroids based on the mean of all points assigned to that cluster.</p>
+                    
+                    <p>The algorithm follows these steps:</p>
+                    <ol>
+                        <li>Initialize K cluster centroids randomly</li>
+                        <li>Assign each data point to the nearest centroid</li>
+                        <li>Recalculate the centroids as the mean of all points assigned to that cluster</li>
+                        <li>Repeat steps 2 and 3 until the centroids no longer change significantly</li>
+                    </ol>
+                    
+                    <p>K-Means is widely used for customer segmentation, image compression, document clustering, and anomaly detection. However, it has some limitations:</p>
+                    <ul>
+                        <li>The number of clusters K must be specified in advance</li>
+                        <li>It's sensitive to the initial positions of centroids</li>
+                        <li>It assumes clusters are spherical and of similar size</li>
+                        <li>It can converge to local optima</li>
+                    </ul>
+                    
+                    <p>The algorithm minimizes the within-cluster sum of squares (WCSS), which is the sum of squared distances between each point and its assigned centroid:</p>
+                    
+                    <code>WCSS = Σ Σ ||x_i - c_j||²</code>
+                    
+                    <p>where x_i is a data point and c_j is the centroid of the cluster that x_i belongs to.</p>
+                </div>
+
+                <div class="parameters-container">
+                    <div class="dataset-selector">
+                        <label class="parameter-label" for="dataset-select">Dataset</label>
+                        <select class="dataset-select" id="dataset-select" aria-label="Select dataset">
+                            <option value="blobs">Blobs</option>
+                            <option value="circles">Circles</option>
+                            <option value="moons">Moons</option>
+                            <option value="anisotropic">Anisotropic</option>
+                            <option value="random">Random</option>
+                        </select>
+                    </div>
+
+                    <div class="parameters-title">
+                        <i class="material-icons">tune</i>
+                        Algorithm Parameters
+                    </div>
+                    
+                    <div class="parameter-group">
+                        <label class="parameter-label" for="num-clusters">Number of Clusters (K)</label>
+                        <input type="range" class="parameter-slider" id="num-clusters" min="2" max="10" value="3" aria-valuemin="2" aria-valuemax="10" aria-valuenow="3">
+                        <div class="parameter-value">
+                            <span>2</span>
+                            <span id="num-clusters-value">3</span>
+                            <span>10</span>
+                        </div>
+                    </div>
+                    
+                    <div class="parameter-group">
+                        <label class="parameter-label" for="max-iterations">Max Iterations</label>
+                        <input type="range" class="parameter-slider" id="max-iterations" min="10" max="100" value="50" aria-valuemin="10" aria-valuemax="100" aria-valuenow="50">
+                        <div class="parameter-value">
+                            <span>10</span>
+                            <span id="max-iterations-value">50</span>
+                            <span>100</span>
+                        </div>
+                    </div>
+                    
+                    <div class="parameter-group">
+                        <label class="parameter-label" for="convergence-threshold">Convergence Threshold</label>
+                        <input type="range" class="parameter-slider" id="convergence-threshold" min="0" max="100" value="10" aria-valuemin="0" aria-valuemax="100" aria-valuenow="10">
+                        <div class="parameter-value">
+                            <span>0.0000</span>
+                            <span id="convergence-threshold-value">0.0010</span>
+                            <span>0.0100</span>
+                        </div>
+                    </div>
+                    
+                    <div class="parameter-group">
+                        <label class="parameter-label" for="initialization-method">Initialization Method</label>
+                        <select class="parameter-input" id="initialization-method" aria-label="Select initialization method">
+                            <option value="random">Random</option>
+                            <option value="kmeans++">K-Means++</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        // DOM Elements
+        const algorithmItems = document.querySelectorAll('.algorithm-item');
+        const canvas = document.getElementById('visualization-canvas');
+        const ctx = canvas.getContext('2d');
+        const explanationContainer = document.getElementById('algorithm-explanation');
+        const parametersContainer = document.querySelector('.parameters-container');
+        const tooltip = document.getElementById('tooltip');
+        const legend = document.getElementById('visualization-legend');
+        const iterationCounter = document.getElementById('iteration-counter');
+        const progressStatus = document.getElementById('progress-status');
+        const menuToggle = document.getElementById('menu-toggle');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const themeToggle = document.getElementById('theme-toggle');
+        
+        // Control buttons
+        const playBtn = document.getElementById('play-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const stepBackBtn = document.getElementById('step-back-btn');
+        const stepForwardBtn = document.getElementById('step-forward-btn');
+        const speedBtn = document.getElementById('speed-btn');
+        const speedDropdown = document.getElementById('speed-dropdown');
+        const speedOptions = document.querySelectorAll('.speed-option');
+        
+        // State variables
+        let currentAlgorithm = 'k-means';
+        let isPlaying = false;
+        let animationSpeed = 1;
+        let animationFrame;
+        let currentStep = 0;
+        let maxSteps = 100;
+        let isDarkMode = false;
+        let stepsHistory = [];
+        
+        // Dataset and visualization state
+        let dataPoints = [];
+        let algorithmState = {};
+        
+        // Algorithm data
+        const algorithms = {
+            'k-means': {
+                title: 'K-Means Clustering',
+                icon: 'bubble_chart',
+                description: `
+                    <h2>K-Means Clustering</h2>
+                    <p>K-Means is an unsupervised learning algorithm that groups data points into K number of clusters. The algorithm works by iteratively assigning data points to the nearest cluster centroid and then updating the centroids based on the mean of all points assigned to that cluster.</p>
+                    
+                    <p>The algorithm follows these steps:</p>
+                    <ol>
+                        <li>Initialize K cluster centroids randomly</li>
+                        <li>Assign each data point to the nearest centroid</li>
+                        <li>Recalculate the centroids as the mean of all points assigned to that cluster</li>
+                        <li>Repeat steps 2 and 3 until the centroids no longer change significantly</li>
+                    </ol>
+                    
+                    <p>K-Means is widely used for customer segmentation, image compression, document clustering, and anomaly detection. However, it has some limitations:</p>
+                    <ul>
+                        <li>The number of clusters K must be specified in advance</li>
+                        <li>It's sensitive to the initial positions of centroids</li>
+                        <li>It assumes clusters are spherical and of similar size</li>
+                        <li>It can converge to local optima</li>
+                    </ul>
+                    
+                    <p>The algorithm minimizes the within-cluster sum of squares (WCSS), which is the sum of squared distances between each point and its assigned centroid:</p>
+                    
+                    <code>WCSS = Σ Σ ||x_i - c_j||²</code>
+                    
+                    <p>where x_i is a data point and c_j is the centroid of the cluster that x_i belongs to.</p>
+                `,
+                parameters: [
+                    {
+                        id: 'num-clusters',
+                        label: 'Number of Clusters (K)',
+                        type: 'range',
+                        min: 2,
+                        max: 10,
+                        value: 3
+                    },
+                    {
+                        id: 'max-iterations',
+                        label: 'Max Iterations',
+                        type: 'range',
+                        min: 10,
+                        max: 100,
+                        value: 50
+                    },
+                    {
+                        id: 'convergence-threshold',
+                        label: 'Convergence Threshold',
+                        type: 'range',
+                        min: 0,
+                        max: 100,
+                        value: 10,
+                        displayValue: (value) => (value / 10000).toFixed(4)
+                    },
+                    {
+                        id: 'initialization-method',
+                        label: 'Initialization Method',
+                        type: 'select',
+                        options: [
+                            { value: 'random', label: 'Random' },
+                            { value: 'kmeans++', label: 'K-Means++' }
+                        ],
+                        value: 'random'
+                    }
+                ],
+                legend: [
+                    { color: '#4361ee', label: 'Cluster 1' },
+                    { color: '#f72585', label: 'Cluster 2' },
+                    { color: '#4cc9f0', label: 'Cluster 3' },
+                    { color: '#ffbe0b', label: 'Centroid' }
+                ]
+            },
+            'linear-regression': {
+                title: 'Linear Regression',
+                icon: 'show_chart',
+                description: `
+                    <h2>Linear Regression</h2>
+                    <p>Linear Regression is a supervised learning algorithm used for predicting a continuous target variable based on one or more predictor variables. It assumes a linear relationship between the input variables and the output.</p>
+                    
+                    <p>The algorithm works by finding the best-fitting line (or hyperplane in higher dimensions) that minimizes the sum of squared differences between the predicted and actual values.</p>
+                    
+                    <p>For simple linear regression with one predictor variable, the model can be represented as:</p>
+                    <code>y = mx + b</code>
+                    <p>where y is the predicted value, x is the input feature, m is the slope, and b is the intercept.</p>
+                    
+                    <p>For multiple linear regression with multiple predictor variables, the model can be represented as:</p>
+                    <code>y = β₀ + β₁x₁ + β₂x₂ + ... + βₙxₙ</code>
+                    <p>where β₀ is the intercept and β₁, β₂, ..., βₙ are the coefficients for the input features x₁, x₂, ..., xₙ.</p>
+                    
+                    <p>The coefficients are determined by minimizing the cost function, which is typically the Mean Squared Error (MSE):</p>
+                    <code>MSE = (1/n) Σ(y_i - ŷ_i)²</code>
+                    <p>where y_i is the actual value and ŷ_i is the predicted value for the i-th data point.</p>
+                    
+                    <p>Linear regression is widely used in various fields for prediction and forecasting, such as economics, finance, biology, and social sciences. It's simple to implement and interpret, but it has limitations:</p>
+                    <ul>
+                        <li>It assumes a linear relationship between variables</li>
+                        <li>It's sensitive to outliers</li>
+                        <li>It assumes independence of errors</li>
+                        <li>It assumes homoscedasticity (constant variance of errors)</li>
+                    </ul>
+                `,
+                parameters: [
+                    {
+                        id: 'learning-rate',
+                        label: 'Learning Rate',
+                        type: 'range',
+                        min: 1,
+                        max: 100,
+                        value: 10,
+                        displayValue: (value) => (value / 1000).toFixed(3)
+                    },
+                    {
+                        id: 'regularization',
+                        label: 'Regularization (λ)',
+                        type: 'range',
+                        min: 0,
+                        max: 100,
+                        value: 0,
+                        displayValue: (value) => (value / 100).toFixed(2)
+                    },
+                    {
+                        id: 'polynomial-degree',
+                        label: 'Polynomial Degree',
+                        type: 'range',
+                        min: 1,
+                        max: 5,
+                        value: 1
+                    },
+                    {
+                        id: 'regression-type',
+                        label: 'Regression Type',
+                        type: 'select',
+                        options: [
+                            { value: 'ols', label: 'Ordinary Least Squares' },
+                            { value: 'ridge', label: 'Ridge Regression' },
+                            { value: 'lasso', label: 'Lasso Regression' }
+                        ],
+                        value: 'ols'
+                    }
+                ],
+                legend: [
+                    { color: '#4361ee', label: 'Data Points' },
+                    { color: '#f72585', label: 'Regression Line' },
+                    { color: '#4cc9f0', label: 'Residuals' }
+                ]
+            },
+            'decision-tree': {
+                title: 'Decision Tree',
+                icon: 'account_tree',
+                description: `
+                    <h2>Decision Tree</h2>
+                    <p>Decision Tree is a supervised learning algorithm used for both classification and regression tasks. It creates a model that predicts the value of a target variable by learning simple decision rules inferred from the data features.</p>
+                    
+                    <p>The algorithm works by recursively splitting the dataset based on feature values, creating a tree-like structure of decisions and their possible consequences.</p>
+                    
+                    <p>The key steps in building a decision tree are:</p>
+                    <ol>
+                        <li>Select the best feature to split the data using metrics like Gini impurity, entropy, or information gain</li>
+                        <li>Split the dataset based on the selected feature</li>
+                        <li>Recursively repeat the process for each child node until stopping criteria are met</li>
+                    </ol>
+                    
+                    <p>Stopping criteria typically include:</p>
+                    <ul>
+                        <li>All samples in a node belong to the same class</li>
+                        <li>Maximum depth of the tree is reached</li>
+                        <li>Number of samples in a node is less than a minimum threshold</li>
+                        <li>The improvement in the split criterion is below a threshold</li>
+                    </ul>
+                    
+                    <p>Decision trees have several advantages:</p>
+                    <ul>
+                        <li>Easy to understand and interpret</li>
+                        <li>Require little data preparation</li>
+                        <li>Can handle both numerical and categorical data</li>
+                        <li>Can handle multi-output problems</li>
+                    </ul>
+                    
+                    <p>However, they also have limitations:</p>
+                    <ul>
+                        <li>Prone to overfitting, especially with deep trees</li>
+                        <li>Can be unstable (small variations in data can result in very different trees)</li>
+                        <li>Biased toward features with more levels</li>
+                        <li>May not capture complex relationships without deep trees</li>
+                    </ul>
+                `,
+                parameters: [
+                    {
+                        id: 'max-depth',
+                        label: 'Maximum Depth',
+                        type: 'range',
+                        min: 1,
+                        max: 10,
+                        value: 3
+                    },
+                    {
+                        id: 'min-samples-split',
+                        label: 'Min Samples to Split',
+                        type: 'range',
+                        min: 2,
+                        max: 20,
+                        value: 2
+                    },
+                    {
+                        id: 'criterion',
+                        label: 'Split Criterion',
+                        type: 'select',
+                        options: [
+                            { value: 'gini', label: 'Gini Impurity' },
+                            { value: 'entropy', label: 'Entropy' }
+                        ],
+                        value: 'gini'
+                    },
+                    {
+                        id: 'max-features',
+                        label: 'Max Features',
+                        type: 'range',
+                        min: 1,
+                        max: 10,
+                        value: 2
+                    }
+                ],
+                legend: [
+                    { color: '#4361ee', label: 'Class 1' },
+                    { color: '#f72585', label: 'Class 2' },
+                    { color: '#4cc9f0', label: 'Decision Boundary' }
+                ]
+            },
+            'svm': {
+                title: 'Support Vector Machine',
+                icon: 'linear_scale',
+                description: `
+                    <h2>Support Vector Machine</h2>
+                    <p>Support Vector Machine (SVM) is a supervised learning algorithm used for classification and regression tasks. It's particularly effective in high-dimensional spaces and is widely used in text classification and image recognition.</p>
+                    
+                    <p>The core idea of SVM is to find a hyperplane that best separates different classes with the maximum margin. The margin is the distance between the hyperplane and the closest data points from each class, which are called support vectors.</p>
+                    
+                    <p>For linearly separable data, SVM finds the hyperplane that maximizes the margin between the two classes. For non-linearly separable data, SVM uses a technique called the kernel trick to transform the input space into a higher-dimensional space where the data becomes linearly separable.</p>
+                    
+                    <p>Common kernel functions include:</p>
+                    <ul>
+                        <li>Linear: K(x, y) = x · y</li>
+                        <li>Polynomial: K(x, y) = (γx · y + r)^d</li>
+                        <li>Radial Basis Function (RBF): K(x, y) = exp(-γ||x - y||²)</li>
+                        <li>Sigmoid: K(x, y) = tanh(γx · y + r)</li>
+                    </ul>
+                    
+                    <p>The optimization problem in SVM involves finding the weights w and bias b that define the hyperplane:</p>
+                    <code>f(x) = w · x + b</code>
+                    
+                    <p>The decision function is:</p>
+                    <code>y = sign(w · x + b)</code>
+                    
+                    <p>SVM has several advantages:</p>
+                    <ul>
+                        <li>Effective in high-dimensional spaces</li>
+                        <li>Memory efficient as it uses only a subset of training points (support vectors)</li>
+                        <li>Versatile due to different kernel functions</li>
+                        <li>Robust against overfitting</li>
+                    </ul>
+                    
+                    <p>However, it also has limitations:</p>
+                    <ul>
+                        <li>Not suitable for large datasets due to high training time</li>
+                        <li>Sensitive to the choice of kernel and regularization parameter</li>
+                        <li>Doesn't directly provide probability estimates</li>
+                        <li>Difficult to interpret the model</li>
+                    </ul>
+                `,
+                parameters: [
+                    {
+                        id: 'kernel',
+                        label: 'Kernel',
+                        type: 'select',
+                        options: [
+                            { value: 'linear', label: 'Linear' },
+                            { value: 'poly', label: 'Polynomial' },
+                            { value: 'rbf', label: 'RBF' },
+                            { value: 'sigmoid', label: 'Sigmoid' }
+                        ],
+                        value: 'rbf'
+                    },
+                    {
+                        id: 'c-parameter',
+                        label: 'C (Regularization)',
+                        type: 'range',
+                        min: 1,
+                        max: 100,
+                        value: 10,
+                        displayValue: (value) => value / 10
+                    },
+                    {
+                        id: 'gamma',
+                        label: 'Gamma',
+                        type: 'range',
+                        min: 1,
+                        max: 100,
+                        value: 10,
+                        displayValue: (value) => (value / 1000).toFixed(3)
+                    },
+                    {
+                        id: 'degree',
+                        label: 'Degree (Polynomial)',
+                        type: 'range',
+                        min: 2,
+                        max: 5,
+                        value: 3
+                    }
+                ],
+                legend: [
+                    { color: '#4361ee', label: 'Class 1' },
+                    { color: '#f72585', label: 'Class 2' },
+                    { color: '#4cc9f0', label: 'Support Vectors' },
+                    { color: '#ffbe0b', label: 'Decision Boundary' }
+                ]
+            },
+            'neural-network': {
+                title: 'Neural Network',
+                icon: 'device_hub',
+                description: `
+                    <h2>Neural Network</h2>
+                    <p>Neural Networks are a class of machine learning algorithms inspired by the structure and function of the human brain. They consist of interconnected nodes (neurons) organized in layers that can learn complex patterns from data.</p>
+                    
+                    <p>A basic neural network consists of:</p>
+                    <ul>
+                        <li>Input layer: Receives the input features</li>
+                        <li>Hidden layers: Process the inputs through weighted connections</li>
+                        <li>Output layer: Produces the final prediction</li>
+                    </ul>
+                    
+                    <p>Each neuron applies an activation function to the weighted sum of its inputs plus a bias term:</p>
+                    <code>output = activation(Σ(weight_i * input_i) + bias)</code>
+                    
+                    <p>Common activation functions include:</p>
+                    <ul>
+                        <li>Sigmoid: σ(x) = 1/(1 + e^(-x))</li>
+                        <li>ReLU (Rectified Linear Unit): f(x) = max(0, x)</li>
+                        <li>Tanh: tanh(x) = (e^x - e^(-x))/(e^x + e^(-x))</li>
+                        <li>Softmax: Used for multi-class classification in the output layer</li>
+                    </ul>
+                    
+                    <p>The training process involves:</p>
+                    <ol>
+                        <li>Forward propagation: Input data passes through the network to generate predictions</li>
+                        <li>Calculating the loss: Measuring the error between predictions and actual values</li>
+                        <li>Backpropagation: Computing gradients of the loss with respect to the weights</li>
+                        <li>Optimization: Updating weights using an optimizer like Gradient Descent</li>
+                    </ol>
+                    
+                    <p>Neural networks have several advantages:</p>
+                    <ul>
+                        <li>Can learn complex, non-linear relationships</li>
+                        <li>Highly flexible and adaptable to different types of data</li>
+                        <li>Can handle large amounts of data</li>
+                        <li>Can perform feature learning automatically</li>
+                    </ul>
+                    
+                    <p>However, they also have limitations:</p>
+                    <ul>
+                        <li>Require large amounts of data to train effectively</li>
+                        <li>Computationally intensive and may require specialized hardware</li>
+                        <li>Prone to overfitting without proper regularization</li>
+                        <li>Difficult to interpret (black-box models)</li>
+                        <li>Sensitive to hyperparameter choices</li>
+                    </ul>
+                `,
+                parameters: [
+                    {
+                        id: 'hidden-layers',
+                        label: 'Hidden Layers',
+                        type: 'range',
+                        min: 1,
+                        max: 5,
+                        value: 2
+                    },
+                    {
+                        id: 'neurons-per-layer',
+                        label: 'Neurons per Layer',
+                        type: 'range',
+                        min: 2,
+                        max: 20,
+                        value: 5
+                    },
+                    {
+                        id: 'learning-rate',
+                        label: 'Learning Rate',
+                        type: 'range',
+                        min: 1,
+                        max: 100,
+                        value: 10,
+                        displayValue: (value) => (value / 1000).toFixed(3)
+                    },
+                    {
+                        id: 'activation',
+                        label: 'Activation Function',
+                        type: 'select',
+                        options: [
+                            { value: 'sigmoid', label: 'Sigmoid' },
+                            { value: 'relu', label: 'ReLU' },
+                            { value: 'tanh', label: 'Tanh' }
+                        ],
+                        value: 'relu'
+                    }
+                ],
+                legend: [
+                    { color: '#4361ee', label: 'Class 1' },
+                    { color: '#f72585', label: 'Class 2' },
+                    { color: '#4cc9f0', label: 'Decision Boundary' },
+                    { color: '#ffbe0b', label: 'Neuron' }
+                ]
+            },
+            'pca': {
+                title: 'Principal Component Analysis',
+                icon: 'scatter_plot',
+                description: `
+                    <h2>Principal Component Analysis</h2>
+                    <p>Principal Component Analysis (PCA) is an unsupervised learning algorithm used for dimensionality reduction. It transforms high-dimensional data into a lower-dimensional space while preserving as much variance as possible.</p>
+                    
+                    <p>The key steps in PCA are:</p>
+                    <ol>
+                        <li>Standardize the data (zero mean and unit variance)</li>
+                        <li>Compute the covariance matrix</li>
+                        <li>Calculate the eigenvectors and eigenvalues of the covariance matrix</li>
+                        <li>Sort the eigenvectors by their corresponding eigenvalues in descending order</li>
+                        <li>Select the top k eigenvectors to form a projection matrix</li>
+                        <li>Transform the original data using the projection matrix</li>
+                    </ol>
+                    
+                    <p>The principal components are the eigenvectors of the covariance matrix, and they represent the directions of maximum variance in the data. The corresponding eigenvalues indicate the amount of variance explained by each principal component.</p>
+                    
+                    <p>PCA has several applications:</p>
+                    <ul>
+                        <li>Dimensionality reduction for visualization</li>
+                        <li>Noise reduction and data compression</li>
+                        <li>Feature extraction</li>
+                        <li>Preprocessing step before applying other machine learning algorithms</li>
+                    </ul>
+                    
+                    <p>Advantages of PCA:</p>
+                    <ul>
+                        <li>Reduces dimensionality without much loss of information</li>
+                        <li>Removes correlated features</li>
+                        <li>Improves algorithm performance by reducing computational complexity</li>
+                        <li>Helps visualize high-dimensional data</li>
+                    </ul>
+                    
+                    <p>Limitations of PCA:</p>
+                    <ul>
+                        <li>Assumes linear relationships between variables</li>
+                        <li>Sensitive to scaling of the data</li>
+                        <li>May not preserve important information if the variance is not aligned with the classification task</li>
+                        <li>Difficult to interpret the transformed features</li>
+                    </ul>
+                `,
+                parameters: [
+                    {
+                        id: 'n-components',
+                        label: 'Number of Components',
+                        type: 'range',
+                        min: 1,
+                        max: 10,
+                        value: 2
+                    },
+                    {
+                        id: 'svd-solver',
+                        label: 'SVD Solver',
+                        type: 'select',
+                        options: [
+                            { value: 'auto', label: 'Auto' },
+                            { value: 'full', label: 'Full' },
+                            { value: 'arpack', label: 'ARPACK' },
+                            { value: 'randomized', label: 'Randomized' }
+                        ],
+                        value: 'auto'
+                    },
+                    {
+                        id: 'whiten',
+                        label: 'Whiten',
+                        type: 'select',
+                        options: [
+                            { value: 'true', label: 'True' },
+                            { value: 'false', label: 'False' }
+                        ],
+                        value: 'false'
+                    },
+                    {
+                        id: 'variance-threshold',
+                        label: 'Variance Threshold',
+                        type: 'range',
+                        min: 50,
+                        max: 100,
+                        value: 95,
+                        displayValue: (value) => value + '%'
+                    }
+                ],
+                legend: [
+                    { color: '#4361ee', label: 'Original Data' },
+                    { color: '#f72585', label: 'Transformed Data' },
+                    { color: '#4cc9f0', label: 'Principal Components' }
+                ]
+            },
+            'knn': {
+                title: 'K-Nearest Neighbors',
+                icon: 'share',
+                description: `
+                    <h2>K-Nearest Neighbors</h2>
+                    <p>K-Nearest Neighbors (KNN) is a simple, instance-based learning algorithm used for classification and regression. It makes predictions based on the majority vote (for classification) or average value (for regression) of the K nearest data points in the training set.</p>
+                    
+                    <p>The algorithm works as follows:</p>
+                    <ol>
+                        <li>Store all training examples</li>
+                        <li>For a new data point:</li>
+                        <ul>
+                            <li>Calculate the distance between the new point and all training examples</li>
+                            <li>Select the K nearest neighbors based on the distance metric</li>
+                            <li>For classification: Assign the majority class of the K neighbors</li>
+                            <li>For regression: Assign the average value of the K neighbors</li>
+                        </ul>
+                    </ol>
+                    
+                    <p>Common distance metrics include:</p>
+                    <ul>
+                        <li>Euclidean distance: sqrt(Σ(x_i - y_i)²)</li>
+                        <li>Manhattan distance: Σ|x_i - y_i|</li>
+                        <li>Minkowski distance: (Σ|x_i - y_i|^p)^(1/p)</li>
+                        <li>Hamming distance: Count of positions where corresponding elements differ</li>
+                    </ul>
+                    
+                    <p>Advantages of KNN:</p>
+                    <ul>
+                        <li>Simple to understand and implement</li>
+                        <li>No training phase (lazy learning)</li>
+                        <li>Naturally handles multi-class problems</li>
+                        <li>No assumptions about the data distribution</li>
+                    </ul>
+                    
+                    <p>Limitations of KNN:</p>
+                    <ul>
+                        <li>Computationally expensive for large datasets (need to compute distances to all training examples)</li>
+                        <li>Sensitive to irrelevant features</li>
+                        <li>Sensitive to the scale of the data</li>
+                        <li>Requires feature selection or dimensionality reduction for high-dimensional data</li>
+                        <li>Optimal value of K needs to be determined</li>
+                    </ul>
+                `,
+                parameters: [
+                    {
+                        id: 'n-neighbors',
+                        label: 'Number of Neighbors (K)',
+                        type: 'range',
+                        min: 1,
+                        max: 20,
+                        value: 5
+                    },
+                    {
+                        id: 'weights',
+                        label: 'Weights',
+                        type: 'select',
+                        options: [
+                            { value: 'uniform', label: 'Uniform' },
+                            { value: 'distance', label: 'Distance' }
+                        ],
+                        value: 'uniform'
+                    },
+                    {
+                        id: 'distance-metric',
+                        label: 'Distance Metric',
+                        type: 'select',
+                        options: [
+                            { value: 'euclidean', label: 'Euclidean' },
+                            { value: 'manhattan', label: 'Manhattan' },
+                            { value: 'minkowski', label: 'Minkowski' }
+                        ],
+                        value: 'euclidean'
+                    },
+                    {
+                        id: 'p-value',
+                        label: 'P Value (for Minkowski)',
+                        type: 'range',
+                        min: 1,
+                        max: 10,
+                        value: 2
+                    }
+                ],
+                legend: [
+                    { color: '#4361ee', label: 'Class 1' },
+                    { color: '#f72585', label: 'Class 2' },
+                    { color: '#4cc9f0', label: 'Test Point' },
+                    { color: '#ffbe0b', label: 'Nearest Neighbors' }
+                ]
+            },
+            'random-forest': {
+                title: 'Random Forest',
+                icon: 'park',
+                description: `
+                    <h2>Random Forest</h2>
+                    <p>Random Forest is an ensemble learning method that operates by constructing multiple decision trees during training and outputs the class that is the mode of the classes (for classification) or mean prediction (for regression) of the individual trees.</p>
+                    
+                    <p>The algorithm works as follows:</p>
+                    <ol>
+                        <li>Create multiple random subsets of the training data (bootstrap samples)</li>
+                        <li>For each subset, build a decision tree:</li>
+                        <ul>
+                            <li>At each node, randomly select a subset of features</li>
+                            <li>Split the node using the best feature from the random subset</li>
+                            <li>Continue recursively until stopping criteria are met</li>
+                        </ul>
+                        <li>Combine predictions from all trees:</li>
+                        <ul>
+                            <li>For classification: Majority vote</li>
+                            <li>For regression: Average prediction</li>
+                        </ul>
+                    </ol>
+                    
+                    <p>The random selection of features and data samples helps to decorrelate the trees, reducing variance and making the ensemble more robust than individual decision trees.</p>
+                    
+                    <p>Advantages of Random Forest:</p>
+                    <ul>
+                        <li>Reduces overfitting compared to individual decision trees</li>
+                        <li>Handles high-dimensional data well</li>
+                        <li>Can handle missing values and maintain accuracy</li>
+                        <li>Provides feature importance measures</li>
+                        <li>Works well for both classification and regression</li>
+                    </ul>
+                    
+                    <p>Limitations of Random Forest:</p>
+                    <ul>
+                        <li>Can be computationally intensive for large datasets</li>
+                        <li>Less interpretable than a single decision tree</li>
+                        <li>May overfit on noisy datasets</li>
+                        <li>Biased toward categorical variables with many levels</li>
+                    </ul>
+                `,
+                parameters: [
+                    {
+                        id: 'n-estimators',
+                        label: 'Number of Trees',
+                        type: 'range',
+                        min: 10,
+                        max: 200,
+                        value: 100
+                    },
+                    {
+                        id: 'max-depth',
+                        label: 'Maximum Depth',
+                        type: 'range',
+                        min: 1,
+                        max: 20,
+                        value: 5
+                    },
+                    {
+                        id: 'max-features',
+                        label: 'Max Features',
+                        type: 'select',
+                        options: [
+                            { value: 'sqrt', label: 'sqrt' },
+                            { value: 'log2', label: 'log2' },
+                            { value: 'all', label: 'All' }
+                        ],
+                        value: 'sqrt'
+                    },
+                    {
+                        id: 'bootstrap',
+                        label: 'Bootstrap',
+                        type: 'select',
+                        options: [
+                            { value: 'true', label: 'True' },
+                            { value: 'false', label: 'False' }
+                        ],
+                        value: 'true'
+                    }
+                ],
+                legend: [
+                    { color: '#4361ee', label: 'Class 1' },
+                    { color: '#f72585', label: 'Class 2' },
+                    { color: '#4cc9f0', label: 'Decision Boundary' },
+                    { color: '#ffbe0b', label: 'Tree Splits' }
+                ]
+            }
+        };
+        
+        // Initialize the application
+        function init() {
+            // Set canvas size
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Add event listeners to algorithm items
+            algorithmItems.forEach(item => {
+                // Mouse click event
+                item.addEventListener('click', () => {
+                    selectAlgorithm(item);
+                });
+                
+                // Keyboard event for accessibility
+                item.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        selectAlgorithm(item);
+                    }
+                });
+            });
+            
+            // Add event listeners to control buttons
+            playBtn.addEventListener('click', togglePlay);
+            resetBtn.addEventListener('click', resetVisualization);
+            stepBackBtn.addEventListener('click', stepBackward);
+            stepForwardBtn.addEventListener('click', stepForward);
+            speedBtn.addEventListener('click', toggleSpeedDropdown);
+            
+            // Add event listeners to speed options
+            speedOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    speedOptions.forEach(o => o.classList.remove('active'));
+                    option.classList.add('active');
+                    animationSpeed = parseFloat(option.dataset.speed);
+                    speedBtn.title = `Speed: ${animationSpeed}x`;
+                    speedDropdown.classList.remove('active');
+                });
+                
+                // Keyboard accessibility
+                option.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        speedOptions.forEach(o => o.classList.remove('active'));
+                        option.classList.add('active');
+                        animationSpeed = parseFloat(option.dataset.speed);
+                        speedBtn.title = `Speed: ${animationSpeed}x`;
+                        speedDropdown.classList.remove('active');
+                    }
+                });
+            });
+            
+            // Close speed dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#speed-btn') && !e.target.closest('#speed-dropdown')) {
+                    speedDropdown.classList.remove('active');
+                }
+            });
+            
+            // Initialize tooltip behavior
+            canvas.addEventListener('mousemove', updateTooltip);
+            canvas.addEventListener('mouseout', () => {
+                tooltip.classList.remove('visible');
+            });
+            
+            // Mobile menu toggle
+            menuToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+            });
+            
+            overlay.addEventListener('click', () => {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            });
+            
+            // Theme toggle
+            themeToggle.addEventListener('click', toggleTheme);
+            
+            // Load initial algorithm
+            loadAlgorithm(currentAlgorithm);
+            
+            // Start the animation loop
+            animate();
+            
+            // Add keyboard shortcuts
+            document.addEventListener('keydown', handleKeyboardShortcuts);
+        }
+        
+        // Handle algorithm selection
+        function selectAlgorithm(item) {
+            algorithmItems.forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            currentAlgorithm = item.dataset.algorithm;
+            loadAlgorithm(currentAlgorithm);
+            
+            // Close mobile menu if open
+            if (window.innerWidth <= 768) {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            }
+        }
+        
+        // Keyboard shortcuts
+        function handleKeyboardShortcuts(e) {
+            // Don't trigger shortcuts when typing in inputs
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') {
+                return;
+            }
+            
+            switch (e.key) {
+                case ' ': // Space - Play/Pause
+                    e.preventDefault();
+                    togglePlay();
+                    break;
+                case 'ArrowRight': // Right arrow - Step forward
+                    e.preventDefault();
+                    stepForward();
+                    break;
+                case 'ArrowLeft': // Left arrow - Step backward
+                    e.preventDefault();
+                    stepBackward();
+                    break;
+                case 'r': // R - Reset
+                    e.preventDefault();
+                    resetVisualization();
+                    break;
+                case '+': // + - Increase speed
+                case '=': // = - Increase speed (same key on most keyboards)
+                    e.preventDefault();
+                    increaseSpeed();
+                    break;
+                case '-': // - - Decrease speed
+                    e.preventDefault();
+                    decreaseSpeed();
+                    break;
+                case 'd': // D - Toggle dark mode
+                    e.preventDefault();
+                    toggleTheme();
+                    break;
+            }
+        }
+        
+        // Increase animation speed
+        function increaseSpeed() {
+            const speeds = [0.5, 1, 2, 4];
+            let currentIndex = speeds.indexOf(animationSpeed);
+            if (currentIndex < speeds.length - 1) {
+                animationSpeed = speeds[currentIndex + 1];
+                updateSpeedUI();
+            }
+        }
+        
+        // Decrease animation speed
+        function decreaseSpeed() {
+            const speeds = [0.5, 1, 2, 4];
+            let currentIndex = speeds.indexOf(animationSpeed);
+            if (currentIndex > 0) {
+                animationSpeed = speeds[currentIndex - 1];
+                updateSpeedUI();
+            }
+        }
+        
+        // Update speed UI
+        function updateSpeedUI() {
+            speedOptions.forEach(option => {
+                option.classList.toggle('active', parseFloat(option.dataset.speed) === animationSpeed);
+            });
+            speedBtn.title = `Speed: ${animationSpeed}x`;
+        }
+        
+        // Toggle theme between light and dark
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            document.body.classList.toggle('dark-mode', isDarkMode);
+            
+            themeToggle.innerHTML = isDarkMode ? 
+                '<i class="material-icons">dark_mode</i>' : 
+                '<i class="material-icons">light_mode</i>';
+            
+            // Redraw visualization with new theme
+            drawVisualization();
+        }
+        
+        // Toggle speed dropdown
+        function toggleSpeedDropdown() {
+            speedDropdown.classList.toggle('active');
+        }
+        
+        // Resize canvas to fit container
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            
+            // Redraw visualization when canvas is resized
+            drawVisualization();
+        }
+        
+        // Load algorithm data and update UI
+        function loadAlgorithm(algorithmId) {
+            const algorithm = algorithms[algorithmId];
+            
+            // Update explanation
+            explanationContainer.innerHTML = algorithm.description;
+            
+            // Update parameters
+            let parametersHTML = `
+                <div class="dataset-selector">
+                    <label class="parameter-label" for="dataset-select">Dataset</label>
+                    <select class="dataset-select" id="dataset-select" aria-label="Select dataset">
+                        <option value="blobs">Blobs</option>
+                        <option value="circles">Circles</option>
+                        <option value="moons">Moons</option>
+                        <option value="anisotropic">Anisotropic</option>
+                        <option value="random">Random</option>
+                    </select>
+                </div>
+                <div class="parameters-title">
+                    <i class="material-icons">tune</i>
+                    Algorithm Parameters
+                </div>
+            `;
+            
+            algorithm.parameters.forEach(param => {
+                if (param.type === 'range') {
+                    parametersHTML += `
+                        <div class="parameter-group">
+                            <label class="parameter-label" for="${param.id}">${param.label}</label>
+                            <input type="range" class="parameter-slider" id="${param.id}" 
+                                min="${param.min}" max="${param.max}" value="${param.value}"
+                                aria-valuemin="${param.min}" aria-valuemax="${param.max}" aria-valuenow="${param.value}">
+                            <div class="parameter-value">
+                                <span>${param.min}</span>
+                                <span id="${param.id}-value">${param.displayValue ? param.displayValue(param.value) : param.value}</span>
+                                <span>${param.max}</span>
+                            </div>
+                        </div>
+                    `;
+                } else if (param.type === 'select') {
+                    parametersHTML += `
+                        <div class="parameter-group">
+                            <label class="parameter-label" for="${param.id}">${param.label}</label>
+                            <select class="parameter-input" id="${param.id}" aria-label="Select ${param.label.toLowerCase()}">
+                                ${param.options.map(option => `
+                                    <option value="${option.value}" ${option.value === param.value ? 'selected' : ''}>${option.label}</option>
+                                `).join('')}
+                            </select>
+                        </div>
+                    `;
+                }
+            });
+            
+            parametersContainer.innerHTML = parametersHTML;
+            
+            // Add event listeners to parameter controls
+            document.querySelectorAll('.parameter-slider').forEach(slider => {
+                const valueDisplay = document.getElementById(`${slider.id}-value`);
+                slider.addEventListener('input', () => {
+                    const param = algorithm.parameters.find(p => p.id === slider.id);
+                    if (param && param.displayValue) {
+                        valueDisplay.textContent = param.displayValue(parseInt(slider.value));
+                    } else {
+                        valueDisplay.textContent = slider.value;
+                    }
+                    // Update ARIA attribute
+                    slider.setAttribute('aria-valuenow', slider.value);
+                    updateParameters();
+                });
+            });
+            
+            document.querySelectorAll('.parameter-input').forEach(input => {
+                input.addEventListener('change', updateParameters);
+            });
+            
+            document.getElementById('dataset-select').addEventListener('change', () => {
+                generateDataset();
+                resetVisualization();
+            });
+            
+            // Update legend
+            updateLegend(algorithm.legend);
+            
+            // Reset visualization with new algorithm
+            generateDataset();
+            resetVisualization();
+            
+            // Clear step history
+            stepsHistory = [];
+        }
+        
+        // Update legend display
+        function updateLegend(legendItems) {
+            let legendHTML = '<div class="legend-title">Legend</div>';
+            
+            legendItems.forEach(item => {
+                legendHTML += `
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: ${item.color};"></div>
+                        <div class="legend-label">${item.label}</div>
+                    </div>
+                `;
+            });
+            
+            legend.innerHTML = legendHTML;
+        }
+        
+        // Generate dataset based on selected type
+        function generateDataset() {
+            const datasetType = document.getElementById('dataset-select').value;
+            const width = canvas.width - 100;
+            const height = canvas.height - 100;
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            dataPoints = [];
+            
+            // Generate different dataset patterns
+            switch (datasetType) {
+                case 'blobs':
+                    // Generate 3 clusters of points
+                    for (let i = 0; i < 100; i++) {
+                        const cluster = Math.floor(Math.random() * 3);
+                        let cx, cy;
+                        
+                        if (cluster === 0) {
+                            cx = centerX - width / 4;
+                            cy = centerY - height / 4;
+                        } else if (cluster === 1) {
+                            cx = centerX + width / 4;
+                            cy = centerY - height / 4;
+                        } else {
+                            cx = centerX;
+                            cy = centerY + height / 4;
+                        }
+                        
+                        dataPoints.push({
+                            x: cx + (Math.random() - 0.5) * width / 6,
+                            y: cy + (Math.random() - 0.5) * height / 6,
+                            cluster: -1  // Initial cluster assignment
+                        });
+                    }
+                    break;
+                    
+                case 'circles':
+                    // Generate concentric circles
+                    for (let i = 0; i < 150; i++) {
+                        const angle = Math.random() * Math.PI * 2;
+                        const cluster = Math.random() > 0.5 ? 0 : 1;
+                        const radius = cluster === 0 ? width / 8 : width / 4;
+                        
+                        dataPoints.push({
+                            x: centerX + Math.cos(angle) * radius + (Math.random() - 0.5) * 20,
+                            y: centerY + Math.sin(angle) * radius + (Math.random() - 0.5) * 20,
+                            cluster: -1
+                        });
+                    }
+                    break;
+                    
+                case 'moons':
+                    // Generate two moon shapes
+                    for (let i = 0; i < 150; i++) {
+                        const cluster = Math.random() > 0.5 ? 0 : 1;
+                        let angle, radius, offsetX, offsetY;
+                        
+                        if (cluster === 0) {
+                            angle = Math.PI * Math.random();
+                            radius = width / 6;
+                            offsetX = -width / 8;
+                            offsetY = 0;
+                        } else {
+                            angle = Math.PI * (1 + Math.random());
+                            radius = width / 6;
+                            offsetX = width / 8;
+                            offsetY = height / 8;
+                        }
+                        
+                        dataPoints.push({
+                            x: centerX + Math.cos(angle) * radius + offsetX + (Math.random() - 0.5) * 20,
+                            y: centerY + Math.sin(angle) * radius + offsetY + (Math.random() - 0.5) * 20,
+                            cluster: -1
+                        });
+                    }
+                    break;
+                    
+                case 'anisotropic':
+                    // Generate anisotropic clusters
+                    for (let i = 0; i < 150; i++) {
+                        const cluster = Math.floor(Math.random() * 3);
+                        let cx, cy, sx, sy;
+                        
+                        if (cluster === 0) {
+                            cx = centerX - width / 4;
+                            cy = centerY;
+                            sx = width / 10;
+                            sy = height / 5;
+                        } else if (cluster === 1) {
+                            cx = centerX + width / 4;
+                            cy = centerY;
+                            sx = width / 5;
+                            sy = height / 10;
+                        } else {
+                            cx = centerX;
+                            cy = centerY - height / 4;
+                            sx = width / 8;
+                            sy = height / 8;
+                        }
+                        
+                        dataPoints.push({
+                            x: cx + (Math.random() - 0.5) * sx,
+                            y: cy + (Math.random() - 0.5) * sy,
+                            cluster: -1
+                        });
+                    }
+                    break;
+                    
+                case 'random':
+                default:
+                    // Generate random points
+                    for (let i = 0; i < 200; i++) {
+                        dataPoints.push({
+                            x: 50 + Math.random() * width,
+                            y: 50 + Math.random() * height,
+                            cluster: -1
+                        });
+                    }
+                    break;
+            }
+            
+            // Initialize algorithm state based on the current algorithm
+            initializeAlgorithmState();
+        }
+        
+        // Initialize algorithm state
+        function initializeAlgorithmState() {
+            switch (currentAlgorithm) {
+                case 'k-means':
+                    const numClusters = parseInt(document.getElementById('num-clusters').value);
+                    const centroids = [];
+                    
+                    // Initialize centroids based on the selected method
+                    const initMethod = document.getElementById('initialization-method').value;
+                    
+                    if (initMethod === 'random') {
+                        // Random initialization
+                        for (let i = 0; i < numClusters; i++) {
+                            const randomIndex = Math.floor(Math.random() * dataPoints.length);
+                            centroids.push({
+                                x: dataPoints[randomIndex].x,
+                                y: dataPoints[randomIndex].y,
+                                prevX: null,
+                                prevY: null
+                            });
+                        }
+                    } else if (initMethod === 'kmeans++') {
+                        // K-means++ initialization
+                        // First centroid is chosen randomly
+                        const firstIndex = Math.floor(Math.random() * dataPoints.length);
+                        centroids.push({
+                            x: dataPoints[firstIndex].x,
+                            y: dataPoints[firstIndex].y,
+                            prevX: null,
+                            prevY: null
+                        });
+                        
+                        // Choose remaining centroids
+                        for (let i = 1; i < numClusters; i++) {
+                            let maxDistance = -1;
+                            let farthestPoint = null;
+                            
+                            // For each data point, find the minimum distance to any existing centroid
+                            dataPoints.forEach(point => {
+                                let minDist = Infinity;
+                                centroids.forEach(centroid => {
+                                    const dist = Math.sqrt(
+                                        Math.pow(point.x - centroid.x, 2) + 
+                                        Math.pow(point.y - centroid.y, 2)
+                                    );
+                                    minDist = Math.min(minDist, dist);
+                                });
+                                
+                                // Select the point with the largest minimum distance
+                                if (minDist > maxDistance) {
+                                    maxDistance = minDist;
+                                    farthestPoint = point;
+                                }
+                            });
+                            
+                            if (farthestPoint) {
+                                centroids.push({
+                                    x: farthestPoint.x,
+                                    y: farthestPoint.y,
+                                    prevX: null,
+                                    prevY: null
+                                });
+                            }
+                        }
+                    }
+                    
+                    algorithmState = {
+                        centroids,
+                        iteration: 0,
+                        converged: false
+                    };
+                    
+                    // Save initial state for step back functionality
+                    saveCurrentState();
+                    break;
+                    
+                case 'linear-regression':
+                    // For linear regression, we'll generate a line with some noise
+                    const slope = Math.random() * 2 - 1;  // Random slope between -1 and 1
+                    const intercept = canvas.height / 2;  // Start in the middle
+                    
+                    algorithmState = {
+                        slope,
+                        intercept,
+                        targetSlope: slope + (Math.random() * 0.5 - 0.25),  // Target slope with some variation
+                        targetIntercept: intercept + (Math.random() * 100 - 50),  // Target intercept with some variation
+                        iteration: 0,
+                        converged: false,
+                        mse: 0
+                    };
+                    
+                    // Generate points around the target line with some noise
+                    dataPoints = [];
+                    for (let x = 50; x < canvas.width - 50; x += 20) {
+                        const y = algorithmState.targetSlope * x + algorithmState.targetIntercept + (Math.random() * 50 - 25);
+                        dataPoints.push({ x, y });
+                    }
+                    
+                    // Save initial state
+                    saveCurrentState();
+                    break;
+                    
+                case 'decision-tree':
+                    // For decision tree, we'll generate two classes of points
+                    dataPoints = [];
+                    const maxDepth = parseInt(document.getElementById('max-depth')?.value || 3);
+                    
+                    // Generate two distinct clusters for binary classification
+                    for (let i = 0; i < 100; i++) {
+                        const classLabel = Math.random() > 0.5 ? 0 : 1;
+                        let x, y;
+                        
+                        if (classLabel === 0) {
+                            x = centerX - width / 3 + (Math.random() * width / 3);
+                            y = centerY - height / 3 + (Math.random() * height / 3);
+                        } else {
+                            x = centerX + (Math.random() * width / 3);
+                            y = centerY + (Math.random() * height / 3);
+                        }
+                        
+                        dataPoints.push({
+                            x,
+                            y,
+                            class: classLabel
+                        });
+                    }
+                    
+                    algorithmState = {
+                        tree: {
+                            depth: 0,
+                            splitFeature: null,
+                            splitValue: null,
+                            left: null,
+                            right: null,
+                            prediction: null
+                        },
+                        currentNode: null,
+                        iteration: 0,
+                        maxDepth,
+                        converged: false,
+                        splitHistory: []
+                    };
+                    
+                    // Save initial state
+                    saveCurrentState();
+                    break;
+                    
+                case 'svm':
+                    // For SVM, we'll generate linearly separable data
+                    dataPoints = [];
+                    
+                    // Generate a random line to separate the classes
+                    const svmSlope = Math.random() * 2 - 1;
+                    const svmIntercept = centerY + (Math.random() * 100 - 50);
+                    
+                    for (let i = 0; i < 100; i++) {
+                        const x = 50 + Math.random() * (canvas.width - 100);
+                        const y = 50 + Math.random() * (canvas.height - 100);
+                        
+                        // Determine class based on which side of the line the point falls
+                        const lineY = svmSlope * x + svmIntercept;
+                        const classLabel = y > lineY ? 1 : 0;
+                        
+                        // Add some noise
+                        const noiseY = classLabel === 1 ? -1 : 1;
+                        const finalY = y + (noiseY * Math.random() * 30);
+                        
+                        dataPoints.push({
+                            x,
+                            y: finalY,
+                            class: classLabel
+                        });
+                    }
+                    
+                    // Add some support vectors (points close to the boundary)
+                    for (let i = 0; i < 10; i++) {
+                        const x = 50 + Math.random() * (canvas.width - 100);
+                        const lineY = svmSlope * x + svmIntercept;
+                        
+                        // Points just above and below the line
+                        dataPoints.push({
+                            x,
+                            y: lineY + 10 + (Math.random() * 10),
+                            class: 1,
+                            isSupportVector: true
+                        });
+                        
+                        dataPoints.push({
+                            x,
+                            y: lineY - 10 - (Math.random() * 10),
+                            class: 0,
+                            isSupportVector: true
+                        });
+                    }
+                    
+                    algorithmState = {
+                        slope: 0,
+                        intercept: centerY,
+                        targetSlope: svmSlope,
+                        targetIntercept: svmIntercept,
+                        margin: 0,
+                        supportVectors: [],
+                        iteration: 0,
+                        converged: false,
+                        c: parseFloat(document.getElementById('c-parameter')?.value || 10) / 10
+                    };
+                    
+                    // Save initial state
+                    saveCurrentState();
+                    break;
+                    
+                case 'neural-network':
+                    // For neural network, we'll generate non-linearly separable data
+                    dataPoints = [];
+                    
+                    // Generate XOR-like pattern
+                    for (let i = 0; i < 150; i++) {
+                        let x, y, classLabel;
+                        
+                        if (Math.random() > 0.5) {
+                            // Top-left or bottom-right (class 0)
+                            if (Math.random() > 0.5) {
+                                x = centerX - width / 3 + (Math.random() * width / 4);
+                                y = centerY - height / 3 + (Math.random() * height / 4);
+                            } else {
+                                x = centerX + width / 12 + (Math.random() * width / 4);
+                                y = centerY + height / 12 + (Math.random() * height / 4);
+                            }
+                            classLabel = 0;
+                        } else {
+                            // Top-right or bottom-left (class 1)
+                            if (Math.random() > 0.5) {
+                                x = centerX + width / 12 + (Math.random() * width / 4);
+                                y = centerY - height / 3 + (Math.random() * height / 4);
+                            } else {
+                                x = centerX - width / 3 + (Math.random() * width / 4);
+                                y = centerY + height / 12 + (Math.random() * height / 4);
+                            }
+                            classLabel = 1;
+                        }
+                        
+                        dataPoints.push({
+                            x,
+                            y,
+                            class: classLabel
+                        });
+                    }
+                    
+                    const hiddenLayers = parseInt(document.getElementById('hidden-layers')?.value || 2);
+                    const neuronsPerLayer = parseInt(document.getElementById('neurons-per-layer')?.value || 5);
+                    
+                    // Create a simple neural network structure
+                    const network = {
+                        layers: []
+                    };
+                    
+                    // Input layer (2 neurons for x and y coordinates)
+                    network.layers.push({
+                        neurons: 2,
+                        activations: [],
+                        weights: [],
+                        biases: []
+                    });
+                    
+                    // Hidden layers
+                    for (let i = 0; i < hiddenLayers; i++) {
+                        const prevNeurons = i === 0 ? 2 : neuronsPerLayer;
+                        const layer = {
+                            neurons: neuronsPerLayer,
+                            activations: Array(neuronsPerLayer).fill(0),
+                            weights: [],
+                            biases: Array(neuronsPerLayer).fill(0).map(() => Math.random() * 2 - 1)
+                        };
+                        
+                        // Initialize weights
+                        for (let j = 0; j < neuronsPerLayer; j++) {
+                            layer.weights.push(Array(prevNeurons).fill(0).map(() => Math.random() * 2 - 1));
+                        }
+                        
+                        network.layers.push(layer);
+                    }
+                    
+                    // Output layer (1 neuron for binary classification)
+                    const outputLayer = {
+                        neurons: 1,
+                        activations: [0],
+                        weights: [Array(neuronsPerLayer).fill(0).map(() => Math.random() * 2 - 1)],
+                        biases: [Math.random() * 2 - 1]
+                    };
+                    network.layers.push(outputLayer);
+                    
+                    algorithmState = {
+                        network,
+                        iteration: 0,
+                        converged: false,
+                        learningRate: parseFloat(document.getElementById('learning-rate')?.value || 10) / 1000,
+                        activation: document.getElementById('activation')?.value || 'relu',
+                        accuracy: 0,
+                        decisionBoundary: [],
+                        visibleNeurons: []
+                    };
+                    
+                    // Save initial state
+                    saveCurrentState();
+                    break;
+                    
+                case 'pca':
+                    // For PCA, we'll generate correlated data
+                    dataPoints = [];
+                    
+                    // Generate data along a primary axis with some variance
+                    const angle = Math.random() * Math.PI;
+                    const primaryVector = [Math.cos(angle), Math.sin(angle)];
+                    const secondaryVector = [-primaryVector[1], primaryVector[0]]; // Orthogonal vector
+                    
+                    for (let i = 0; i < 150; i++) {
+                        // Generate point along the primary axis with more variance
+                        const primaryCoord = (Math.random() * 2 - 1) * width / 3;
+                        // Less variance along the secondary axis
+                        const secondaryCoord = (Math.random() * 2 - 1) * width / 10;
+                        
+                        const x = centerX + primaryVector[0] * primaryCoord + secondaryVector[0] * secondaryCoord;
+                        const y = centerY + primaryVector[1] * primaryCoord + secondaryVector[1] * secondaryCoord;
+                        
+                        dataPoints.push({
+                            x,
+                            y,
+                            originalX: x,
+                            originalY: y,
+                            transformedX: null,
+                            transformedY: null
+                        });
+                    }
+                    
+                    algorithmState = {
+                        principalComponents: [
+                            { x: primaryVector[0], y: primaryVector[1] },
+                            { x: secondaryVector[0], y: secondaryVector[1] }
+                        ],
+                        eigenvalues: [1, 0.1], // Simulated eigenvalues
+                        meanX: centerX,
+                        meanY: centerY,
+                        iteration: 0,
+                        converged: false,
+                        showTransformed: false,
+                        nComponents: parseInt(document.getElementById('n-components')?.value || 2)
+                    };
+                    
+                    // Save initial state
+                    saveCurrentState();
+                    break;
+                    
+                case 'knn':
+                    // For KNN, we'll generate clustered data
+                    dataPoints = [];
+                    
+                    // Generate two classes
+                    for (let i = 0; i < 50; i++) {
+                        // Class 0
+                        dataPoints.push({
+                            x: centerX - width / 4 + (Math.random() * width / 3),
+                            y: centerY - height / 4 + (Math.random() * height / 3),
+                            class: 0
+                        });
+                        
+                        // Class 1
+                        dataPoints.push({
+                            x: centerX + (Math.random() * width / 3),
+                            y: centerY + (Math.random() * height / 3),
+                            class: 1
+                        });
+                    }
+                    
+                    // Add a test point
+                    const testPoint = {
+                        x: centerX + (Math.random() * width / 2 - width / 4),
+                        y: centerY + (Math.random() * height / 2 - height / 4),
+                        isTestPoint: true
+                    };
+                    
+                    algorithmState = {
+                        k: parseInt(document.getElementById('n-neighbors')?.value || 5),
+                        testPoint,
+                        neighbors: [],
+                        prediction: null,
+                        iteration: 0,
+                        converged: false,
+                        distanceMetric: document.getElementById('distance-metric')?.value || 'euclidean',
+                        weights: document.getElementById('weights')?.value || 'uniform'
+                    };
+                    
+                    // Save initial state
+                    saveCurrentState();
+                    break;
+                    
+                case 'random-forest':
+                    // For random forest, we'll generate data similar to decision tree
+                    dataPoints = [];
+                    
+                    // Generate two classes with some overlap
+                    for (let i = 0; i < 120; i++) {
+                        const classLabel = Math.random() > 0.5 ? 0 : 1;
+                        let x, y;
+                        
+                        if (classLabel === 0) {
+                            x = centerX - width / 3 + (Math.random() * width / 2);
+                            y = centerY - height / 3 + (Math.random() * height / 2);
+                        } else {
+                            x = centerX - width / 6 + (Math.random() * width / 2);
+                            y = centerY - height / 6 + (Math.random() * height / 2);
+                        }
+                        
+                        dataPoints.push({
+                            x,
+                            y,
+                            class: classLabel
+                        });
+                    }
+                    
+                    const nEstimators = parseInt(document.getElementById('n-estimators')?.value || 100);
+                    const maxDepth = parseInt(document.getElementById('max-depth')?.value || 5);
+                    
+                    algorithmState = {
+                        trees: [],
+                        currentTree: 0,
+                        nEstimators,
+                        maxDepth,
+                        iteration: 0,
+                        converged: false,
+                        accuracy: 0,
+                        featureImportances: [0.5, 0.5], // Simulated importance for x and y
+                        oobScore: 0,
+                        splitHistory: []
+                    };
+                    
+                    // Initialize trees
+                    for (let i = 0; i < nEstimators; i++) {
+                        algorithmState.trees.push({
+                            depth: 0,
+                            splitFeature: null,
+                            splitValue: null,
+                            left: null,
+                            right: null,
+                            prediction: null,
+                            samples: []
+                        });
+                    }
+                    
+                    // Save initial state
+                    saveCurrentState();
+                    break;
+                    
+                // Add other algorithm initializations
+                default:
+                    algorithmState = {
+                        iteration: 0,
+                        converged: false
+                    };
+                    
+                    // Save initial state
+                    saveCurrentState();
+                    break;
+            }
+            
+            // Reset iteration counter and status
+            iterationCounter.textContent = '0';
+            progressStatus.textContent = 'Running';
+            progressStatus.className = 'progress-status running';
+        }
+        
+        // Save current algorithm state for step back functionality
+        function saveCurrentState() {
+            // Create a deep copy of the current state
+            const stateCopy = JSON.parse(JSON.stringify({
+                algorithmState,
+                dataPoints: dataPoints.map(p => ({ ...p }))
+            }));
+            
+            // Add to history
+            stepsHistory.push(stateCopy);
+            
+            // Limit history size to prevent memory issues
+            if (stepsHistory.length > 50) {
+                stepsHistory.shift();
+            }
+        }
+        
+        // Update algorithm parameters from UI controls
+        function updateParameters() {
+            // Reset and reinitialize with new parameters
+            resetVisualization();
+        }
+        
+        // Animation loop
+        function animate() {
+            if (isPlaying && !algorithmState.converged) {
+                // Adjust update frequency based on animation speed
+                if (currentStep % (1 / animationSpeed) < 1) {
+                    updateAlgorithm();
+                }
+                currentStep++;
+            }
+            
+            drawVisualization();
+            
+            animationFrame = requestAnimationFrame(animate);
+        }
+        
+        // Toggle play/pause
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            playBtn.innerHTML = isPlaying ? 
+                '<i class="material-icons">pause</i>' : 
+                '<i class="material-icons">play_arrow</i>';
+            playBtn.setAttribute('aria-label', isPlaying ? 'Pause visualization' : 'Play visualization');
+            playBtn.title = isPlaying ? 'Pause' : 'Play';
+        }
+        
+        // Step forward one iteration
+        function stepForward() {
+            if (!algorithmState.converged) {
+                updateAlgorithm();
+            }
+        }
+        
+        // Step backward one iteration
+        function stepBackward() {
+            if (stepsHistory.length > 1 && algorithmState.iteration > 0) {
+                // Remove current state
+                stepsHistory.pop();
+                
+                // Get previous state
+                const previousState = stepsHistory[stepsHistory.length - 1];
+                
+                // Restore previous state
+                algorithmState = previousState.algorithmState;
+                dataPoints = previousState.dataPoints;
+                
+                // Update UI
+                iterationCounter.textContent = algorithmState.iteration;
+                progressStatus.textContent = algorithmState.converged ? 'Converged' : 'Running';
+                progressStatus.className = algorithmState.converged ? 
+                    'progress-status converged' : 
+                    'progress-status running';
+            }
+        }
+        
+        // Reset visualization
+        function resetVisualization() {
+            // Stop animation if playing
+            if (isPlaying) {
+                togglePlay();
+            }
+            
+            // Cancel any pending animation frame
+            if (animationFrame) {
+                cancelAnimationFrame(animationFrame);
+            }
+            
+            // Reset current step counter
+            currentStep = 0;
+            
+            // Reinitialize algorithm state
+            initializeAlgorithmState();
+            
+            // Clear step history
+            stepsHistory = [];
+            
+            // Save initial state
+            saveCurrentState();
+            
+            // Restart animation loop
+            animationFrame = requestAnimationFrame(animate);
+        }
+        
+        // Update algorithm state for one step
+        function updateAlgorithm() {
+            if (algorithmState.converged) return;
+            
+            // Save current state before updating
+            saveCurrentState();
+            
+            switch (currentAlgorithm) {
+                case 'k-means':
+                    updateKMeans();
+                    break;
+                    
+                case 'linear-regression':
+                    updateLinearRegression();
+                    break;
+                    
+                case 'decision-tree':
+                    updateDecisionTree();
+                    break;
+                    
+                case 'svm':
+                    updateSVM();
+                    break;
+                    
+                case 'neural-network':
+                    updateNeuralNetwork();
+                    break;
+                    
+                case 'pca':
+                    updatePCA();
+                    break;
+                    
+                case 'knn':
+                    updateKNN();
+                    break;
+                    
+                case 'random-forest':
+                    updateRandomForest();
+                    break;
+                    
+                // Add other algorithm updates
+                default:
+                    // Default behavior for algorithms not yet implemented
+                    algorithmState.iteration++;
+                    if (algorithmState.iteration >= maxSteps) {
+                        algorithmState.converged = true;
+                        progressStatus.textContent = 'Converged';
+                        progressStatus.className = 'progress-status converged';
+                    }
+                    break;
+            }
+            
+            iterationCounter.textContent = algorithmState.iteration;
+            
+            if (algorithmState.converged) {
+                progressStatus.textContent = 'Converged';
+                progressStatus.className = 'progress-status converged';
+                
+                // Stop playing
+                if (isPlaying) {
+                    togglePlay();
+                }
+            }
+        }
+        
+        // Update K-Means algorithm
+        function updateKMeans() {
+            const { centroids } = algorithmState;
+            let moved = false;
+            
+            // Save previous centroid positions
+            centroids.forEach(centroid => {
+                centroid.prevX = centroid.x;
+                centroid.prevY = centroid.y;
+            });
+            
+            // Assign each point to nearest centroid
+            dataPoints.forEach(point => {
+                let minDist = Infinity;
+                let closestCentroid = 0;
+                
+                centroids.forEach((centroid, i) => {
+                    const dist = Math.sqrt(
+                        Math.pow(point.x - centroid.x, 2) + 
+                        Math.pow(point.y - centroid.y, 2)
+                    );
+                    
+                    if (dist < minDist) {
+                        minDist = dist;
+                        closestCentroid = i;
+                    }
+                });
+                
+                point.cluster = closestCentroid;
+            });
+            
+            // Update centroids
+            centroids.forEach((centroid, i) => {
+                const clusterPoints = dataPoints.filter(p => p.cluster === i);
+                
+                if (clusterPoints.length > 0) {
+                    const sumX = clusterPoints.reduce((sum, p) => sum + p.x, 0);
+                    const sumY = clusterPoints.reduce((sum, p) => sum + p.y, 0);
+                    
+                    const newX = sumX / clusterPoints.length;
+                    const newY = sumY / clusterPoints.length;
+                    
+                    // Check if centroid moved
+                    if (Math.abs(centroid.x - newX) > 0.5 || Math.abs(centroid.y - newY) > 0.5) {
+                        moved = true;
+                    }
+                    
+                    centroid.x = newX;
+                    centroid.y = newY;
+                }
+            });
+            
+            algorithmState.iteration++;
+            
+            // Check for convergence
+            const maxIterations = parseInt(document.getElementById('max-iterations').value);
+            const convergenceThreshold = parseInt(document.getElementById('convergence-threshold').value) / 10000;
+            
+            if (!moved || algorithmState.iteration >= maxIterations) {
+                algorithmState.converged = true;
+            }
+        }
+        
+        // Update Linear Regression algorithm
+        function updateLinearRegression() {
+            const learningRate = parseInt(document.getElementById('learning-rate')?.value || 10) / 1000;
+            
+            // Compute gradients for slope and intercept
+            let slopeGradient = 0;
+            let interceptGradient = 0;
+            
+            dataPoints.forEach(point => {
+                const predicted = algorithmState.slope * point.x + algorithmState.intercept;
+                const error = predicted - point.y;
+                
+                slopeGradient += error * point.x;
+                interceptGradient += error;
+            });
+            
+            slopeGradient /= dataPoints.length;
+            interceptGradient /= dataPoints.length;
+            
+            // Update parameters
+            algorithmState.slope -= learningRate * slopeGradient;
+            algorithmState.intercept -= learningRate * interceptGradient;
+            
+            // Calculate MSE
+            let mse = 0;
+            dataPoints.forEach(point => {
+                const predicted = algorithmState.slope * point.x + algorithmState.intercept;
+                mse += Math.pow(point.y - predicted, 2);
+            });
+            mse /= dataPoints.length;
+            algorithmState.mse = mse;
+            
+            algorithmState.iteration++;
+            
+            // Check for convergence
+            const maxIterations = 100;
+            const convergenceThreshold = 0.001;
+            
+            const slopeDiff = Math.abs(algorithmState.slope - algorithmState.targetSlope);
+            const interceptDiff = Math.abs(algorithmState.intercept - algorithmState.targetIntercept);
+            
+            if ((slopeDiff < convergenceThreshold && interceptDiff < convergenceThreshold) || 
+                algorithmState.iteration >= maxIterations) {
+                algorithmState.converged = true;
+            }
+        }
+        
+        // Update Decision Tree algorithm
+        function updateDecisionTree() {
+            // Simplified decision tree learning
+            if (algorithmState.iteration === 0) {
+                // Start with all data at the root node
+                algorithmState.currentNode = algorithmState.tree;
+                algorithmState.tree.samples = [...dataPoints];
+            }
+            
+            if (!algorithmState.currentNode || algorithmState.currentNode.depth >= algorithmState.maxDepth) {
+                // Move to next step or finish
+                algorithmState.iteration++;
+                
+                if (algorithmState.iteration >= algorithmState.maxDepth + 1) {
+                    algorithmState.converged = true;
+                }
+                return;
+            }
+            
+            const node = algorithmState.currentNode;
+            const samples = node.samples;
+            
+            // Check if node is pure (all samples have the same class)
+            const class0Count = samples.filter(s => s.class === 0).length;
+            const class1Count = samples.filter(s => s.class === 1).length;
+            
+            if (class0Count === 0 || class1Count === 0) {
+                // Node is pure, set prediction and return
+                node.prediction = class0Count > class1Count ? 0 : 1;
+                algorithmState.currentNode = null;
+                return;
+            }
+            
+            // Find the best split
+            let bestGini = Infinity;
+            let bestSplitFeature = null;
+            let bestSplitValue = null;
+            let bestLeftSamples = [];
+            let bestRightSamples = [];
+            
+            // Try splitting on x coordinate
+            const xValues = samples.map(s => s.x).sort((a, b) => a - b);
+            for (let i = 0; i < xValues.length - 1; i++) {
+                const splitValue = (xValues[i] + xValues[i + 1]) / 2;
+                
+                const leftSamples = samples.filter(s => s.x <= splitValue);
+                const rightSamples = samples.filter(s => s.x > splitValue);
+                
+                const leftClass0 = leftSamples.filter(s => s.class === 0).length;
+                const leftClass1 = leftSamples.filter(s => s.class === 1).length;
+                const rightClass0 = rightSamples.filter(s => s.class === 0).length;
+                const rightClass1 = rightSamples.filter(s => s.class === 1).length;
+                
+                // Calculate Gini impurity
+                const leftGini = 1 - Math.pow(leftClass0 / leftSamples.length, 2) - Math.pow(leftClass1 / leftSamples.length, 2);
+                const rightGini = 1 - Math.pow(rightClass0 / rightSamples.length, 2) - Math.pow(rightClass1 / rightSamples.length, 2);
+                
+                const weightedGini = (leftSamples.length / samples.length) * leftGini + 
+                                    (rightSamples.length / samples.length) * rightGini;
+                
+                if (weightedGini < bestGini) {
+                    bestGini = weightedGini;
+                    bestSplitFeature = 'x';
+                    bestSplitValue = splitValue;
+                    bestLeftSamples = leftSamples;
+                    bestRightSamples = rightSamples;
+                }
+            }
+            
+            // Try splitting on y coordinate
+            const yValues = samples.map(s => s.y).sort((a, b) => a - b);
+            for (let i = 0; i < yValues.length - 1; i++) {
+                const splitValue = (yValues[i] + yValues[i + 1]) / 2;
+                
+                const leftSamples = samples.filter(s => s.y <= splitValue);
+                const rightSamples = samples.filter(s => s.y > splitValue);
+                
+                const leftClass0 = leftSamples.filter(s => s.class === 0).length;
+                const leftClass1 = leftSamples.filter(s => s.class === 1).length;
+                const rightClass0 = rightSamples.filter(s => s.class === 0).length;
+                const rightClass1 = rightSamples.filter(s => s.class === 1).length;
+                
+                // Calculate Gini impurity
+                const leftGini = 1 - Math.pow(leftClass0 / leftSamples.length, 2) - Math.pow(leftClass1 / leftSamples.length, 2);
+                const rightGini = 1 - Math.pow(rightClass0 / rightSamples.length, 2) - Math.pow(rightClass1 / rightSamples.length, 2);
+                
+                const weightedGini = (leftSamples.length / samples.length) * leftGini + 
+                                    (rightSamples.length / samples.length) * rightGini;
+                
+                if (weightedGini < bestGini) {
+                    bestGini = weightedGini;
+                    bestSplitFeature = 'y';
+                    bestSplitValue = splitValue;
+                    bestLeftSamples = leftSamples;
+                    bestRightSamples = rightSamples;
+                }
+            }
+            
+            // Apply the best split
+            node.splitFeature = bestSplitFeature;
+            node.splitValue = bestSplitValue;
+            
+            // Create child nodes
+            node.left = {
+                depth: node.depth + 1,
+                splitFeature: null,
+                splitValue: null,
+                left: null,
+                right: null,
+                prediction: null,
+                samples: bestLeftSamples
+            };
+            
+            node.right = {
+                depth: node.depth + 1,
+                splitFeature: null,
+                splitValue: null,
+                left: null,
+                right: null,
+                prediction: null,
+                samples: bestRightSamples
+            };
+            
+            // Record split for visualization
+            algorithmState.splitHistory.push({
+                feature: bestSplitFeature,
+                value: bestSplitValue,
+                depth: node.depth
+            });
+            
+            // Move to left child in next iteration
+            algorithmState.currentNode = node.left;
+        }
+        
+        // Update SVM algorithm
+        function updateSVM() {
+            const c = parseFloat(document.getElementById('c-parameter')?.value || 10) / 10;
+            const learningRate = 0.01;
+            
+            // Simplified SVM training with gradient descent
+            let slopeGradient = 0;
+            let interceptGradient = 0;
+            
+            // Identify support vectors (points close to the boundary)
+            algorithmState.supportVectors = [];
+            
+            dataPoints.forEach(point => {
+                if (!point.class && point.class !== 0) return; // Skip points without class
+                
+                const predicted = algorithmState.slope * point.x + algorithmState.intercept;
+                const margin = (point.class === 1 ? 1 : -1) * predicted;
+                
+                // Points within the margin are support vectors
+                if (margin < 1) {
+                    algorithmState.supportVectors.push(point);
+                    
+                    // Gradient for points within the margin
+                    slopeGradient -= (point.class === 1 ? 1 : -1) * point.x;
+                    interceptGradient -= (point.class === 1 ? 1 : -1);
+                }
+            });
+            
+            // Regularization term
+            slopeGradient += c * algorithmState.slope;
+            
+            // Update parameters
+            algorithmState.slope -= learningRate * slopeGradient;
+            algorithmState.intercept -= learningRate * interceptGradient;
+            
+            // Calculate margin
+            algorithmState.margin = 2 / Math.sqrt(1 + Math.pow(algorithmState.slope, 2));
+            
+            algorithmState.iteration++;
+            
+            // Check for convergence
+            const maxIterations = 50;
+            const convergenceThreshold = 0.01;
+            
+            const slopeDiff = Math.abs(algorithmState.slope - algorithmState.targetSlope);
+            const interceptDiff = Math.abs(algorithmState.intercept - algorithmState.targetIntercept);
+            
+            if ((slopeDiff < convergenceThreshold && interceptDiff < convergenceThreshold) || 
+                algorithmState.iteration >= maxIterations) {
+                algorithmState.converged = true;
+            }
+        }
+        
+        // Update Neural Network algorithm
+        function updateNeuralNetwork() {
+            const { network, learningRate, activation } = algorithmState;
+            
+            // Forward propagation for all data points
+            let correctPredictions = 0;
+            
+            dataPoints.forEach(point => {
+                if (point.class === undefined) return;
+                
+                // Normalize inputs
+                const inputs = [
+                    (point.x - canvas.width / 2) / (canvas.width / 4),
+                    (point.y - canvas.height / 2) / (canvas.height / 4)
+                ];
+                
+                // Forward pass
+                const activations = forwardPass(network, inputs, activation);
+                
+                // Check prediction
+                const predicted = activations[activations.length - 1][0] > 0.5 ? 1 : 0;
+                if (predicted === point.class) correctPredictions++;
+                
+                // Backward pass (simplified)
+                const target = point.class;
+                const outputError = activations[activations.length - 1][0] - target;
+                
+                // Update output layer weights
+                const outputLayer = network.layers[network.layers.length - 1];
+                const hiddenLayer = network.layers[network.layers.length - 2];
+                
+                for (let i = 0; i < outputLayer.weights[0].length; i++) {
+                    outputLayer.weights[0][i] -= learningRate * outputError * hiddenLayer.activations[i];
+                }
+                outputLayer.biases[0] -= learningRate * outputError;
+                
+                // Calculate hidden layer errors (simplified backpropagation)
+                for (let l = network.layers.length - 2; l > 0; l--) {
+                    const currentLayer = network.layers[l];
+                    const nextLayer = network.layers[l + 1];
+                    
+                    for (let i = 0; i < currentLayer.neurons; i++) {
+                        let error = 0;
+                        
+                        // Sum weighted errors from the next layer
+                        for (let j = 0; j < nextLayer.neurons; j++) {
+                            error += nextLayer.weights[j][i] * (l === network.layers.length - 2 ? outputError : 1);
+                        }
+                        
+                        // Apply activation derivative
+                        if (activation === 'relu') {
+                            error *= currentLayer.activations[i] > 0 ? 1 : 0;
+                        } else if (activation === 'sigmoid') {
+                            error *= currentLayer.activations[i] * (1 - currentLayer.activations[i]);
+                        } else if (activation === 'tanh') {
+                            error *= 1 - Math.pow(currentLayer.activations[i], 2);
+                        }
+                        
+                        // Update weights for this neuron
+                        const prevLayer = network.layers[l - 1];
+                        for (let j = 0; j < prevLayer.neurons; j++) {
+                            const input = l === 1 ? inputs[j] : prevLayer.activations[j];
+                            currentLayer.weights[i][j] -= learningRate * error * input;
+                        }
+                        
+                        // Update bias
+                        currentLayer.biases[i] -= learningRate * error;
+                    }
+                }
+            });
+            
+            // Calculate accuracy
+            algorithmState.accuracy = correctPredictions / dataPoints.filter(p => p.class !== undefined).length;
+            
+            // Generate decision boundary points for visualization
+            algorithmState.decisionBoundary = [];
+            
+            // Sample points across the canvas
+            const gridSize = 20;
+            for (let x = 0; x < canvas.width; x += gridSize) {
+                for (let y = 0; y < canvas.height; y += gridSize) {
+                    // Normalize inputs
+                    const inputs = [
+                        (x - canvas.width / 2) / (canvas.width / 4),
+                        (y - canvas.height / 2) / (canvas.height / 4)
+                    ];
+                    
+                    // Forward pass
+                    const activations = forwardPass(network, inputs, activation);
+                    const output = activations[activations.length - 1][0];
+                    
+                    // Store points near the decision boundary
+                    if (Math.abs(output - 0.5) < 0.05) {
+                        algorithmState.decisionBoundary.push({ x, y });
+                    }
+                }
+            }
+            
+            // Update visible neurons for visualization
+            algorithmState.visibleNeurons = [];
+            
+            // Input layer neurons (positioned at the left)
+            for (let i = 0; i < 2; i++) {
+                algorithmState.visibleNeurons.push({
+                    x: canvas.width * 0.2,
+                    y: canvas.height * (0.3 + i * 0.2),
+                    layer: 0,
+                    index: i,
+                    value: 0
+                });
+            }
+            
+            // Hidden layer neurons
+            const hiddenLayers = network.layers.length - 2;
+            for (let l = 0; l < hiddenLayers; l++) {
+                const layerNeurons = network.layers[l + 1].neurons;
+                for (let i = 0; i < layerNeurons; i++) {
+                    algorithmState.visibleNeurons.push({
+                        x: canvas.width * (0.35 + l * 0.15),
+                        y: canvas.height * (0.2 + i * (0.6 / (layerNeurons - 1))),
+                        layer: l + 1,
+                        index: i,
+                        value: network.layers[l + 1].activations[i] || 0
+                    });
+                }
+            }
+            
+            // Output layer neuron
+            algorithmState.visibleNeurons.push({
+                x: canvas.width * 0.8,
+                y: canvas.height * 0.5,
+                layer: network.layers.length - 1,
+                index: 0,
+                value: network.layers[network.layers.length - 1].activations[0] || 0
+            });
+            
+            algorithmState.iteration++;
+            
+            // Check for convergence
+            if (algorithmState.iteration >= 50 || algorithmState.accuracy > 0.95) {
+                algorithmState.converged = true;
+            }
+        }
+        
+        // Helper function for neural network forward pass
+        function forwardPass(network, inputs, activationType) {
+            const activations = [inputs];
+            
+            // Activation function
+            const activate = (x, type) => {
+                if (type === 'relu') {
+                    return Math.max(0, x);
+                } else if (type === 'sigmoid') {
+                    return 1 / (1 + Math.exp(-x));
+                } else if (type === 'tanh') {
+                    return Math.tanh(x);
+                }
+                return x;
+            };
+            
+            // Forward propagation through each layer
+            for (let l = 1; l < network.layers.length; l++) {
+                const layer = network.layers[l];
+                const prevActivations = activations[l - 1];
+                const layerActivations = [];
+                
+                for (let i = 0; i < layer.neurons; i++) {
+                    let sum = layer.biases[i];
+                    
+                    for (let j = 0; j < prevActivations.length; j++) {
+                        sum += layer.weights[i][j] * prevActivations[j];
+                    }
+                    
+                    // Apply activation function (output layer uses sigmoid)
+                    const activation = l === network.layers.length - 1 ? 
+                        activate(sum, 'sigmoid') : 
+                        activate(sum, activationType);
+                    
+                    layerActivations.push(activation);
+                    layer.activations[i] = activation;
+                }
+                
+                activations.push(layerActivations);
+            }
+            
+            return activations;
+        }
+        
+        // Update PCA algorithm
+        function updatePCA() {
+            if (algorithmState.iteration === 0) {
+                // First step: Standardize data
+                let sumX = 0, sumY = 0;
+                dataPoints.forEach(point => {
+                    sumX += point.x;
+                    sumY += point.y;
+                });
+                
+                algorithmState.meanX = sumX / dataPoints.length;
+                algorithmState.meanY = sumY / dataPoints.length;
+                
+                // Center the data
+                dataPoints.forEach(point => {
+                    point.centeredX = point.x - algorithmState.meanX;
+                    point.centeredY = point.y - algorithmState.meanY;
+                });
+            } else if (algorithmState.iteration === 1) {
+                // Second step: Compute covariance matrix
+                let covXX = 0, covXY = 0, covYY = 0;
+                
+                dataPoints.forEach(point => {
+                    covXX += point.centeredX * point.centeredX;
+                    covXY += point.centeredX * point.centeredY;
+                    covYY += point.centeredY * point.centeredY;
+                });
+                
+                covXX /= dataPoints.length;
+                covXY /= dataPoints.length;
+                covYY /= dataPoints.length;
+                
+                // Simplified eigendecomposition for 2x2 matrix
+                const trace = covXX + covYY;
+                const det = covXX * covYY - covXY * covXY;
+                
+                const lambda1 = (trace + Math.sqrt(trace * trace - 4 * det)) / 2;
+                const lambda2 = (trace - Math.sqrt(trace * trace - 4 * det)) / 2;
+                
+                // First eigenvector
+                let v1x = covXY;
+                let v1y = lambda1 - covXX;
+                const norm1 = Math.sqrt(v1x * v1x + v1y

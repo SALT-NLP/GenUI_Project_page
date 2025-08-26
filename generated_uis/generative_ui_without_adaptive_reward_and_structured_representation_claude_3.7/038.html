@@ -1,0 +1,1823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChemViz: Molecular Structure & Bonding</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4a90e2; /* Vibrant Blue */
+            --secondary-color: #50e3c2; /* Teal */
+            --accent-color: #f5a623; /* Orange */
+            --background-color: #ffffff; /* Pure White */
+            --surface-color: #f8f9fa; /* Light Grey Surface */
+            --text-color: #333; /* Dark Grey Text */
+            --text-light-color: #666; /* Medium Grey Text */
+            --border-color: #e0e0e0; /* Light Grey Border */
+            --success-color: #7ed321; /* Green */
+            --error-color: #d0021b; /* Red */
+            --warning-color: #f8e71c; /* Yellow */
+            --focus-outline-color: rgba(74, 144, 226, 0.4); /* Primary with transparency */
+
+            /* Atom Colors (CPK-like) */
+            --atom-c: #333333; /* Black */
+            --atom-h: #cccccc; /* White */
+            --atom-o: #ff0d0d; /* Red */
+            --atom-n: #3050f8; /* Blue */
+            --atom-cl: #1eff00; /* Green */
+            --atom-default: #ee82ee; /* Violet */
+
+            /* Dark Mode */
+            --dark-primary-color: #7cb342; /* Green */
+            --dark-secondary-color: #66bb6a; /* Light Green */
+            --dark-accent-color: #ffee58; /* Yellow */
+            --dark-background-color: #1e1e1e; /* Dark Grey */
+            --dark-surface-color: #252526; /* Slightly Lighter Dark Grey */
+            --dark-text-color: #d4d4d4; /* Light Grey Text */
+            --dark-text-light-color: #999; /* Medium Grey Text */
+            --dark-border-color: #3a3a3a; /* Darker Grey Border */
+            --dark-focus-outline-color: rgba(124, 179, 66, 0.4); /* Dark Primary with transparency */
+
+            /* Dark Mode Atom Colors */
+            --dark-atom-c: #666666; /* Lighter Black */
+            --dark-atom-h: #eeeeee; /* Lighter White */
+            --dark-atom-o: #ff4d4d; /* Lighter Red */
+            --dark-atom-n: #6a8afc; /* Lighter Blue */
+            --dark-atom-cl: #4eff33; /* Lighter Green */
+            --dark-atom-default: #f2a7f2; /* Lighter Violet */
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            transition: background-color 0.3s ease, color 0.3s ease;
+            display: flex;
+            min-height: 100vh;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        body.dark-mode {
+            --primary-color: var(--dark-primary-color);
+            --secondary-color: var(--dark-secondary-color);
+            --accent-color: var(--dark-accent-color);
+            --background-color: var(--dark-background-color);
+            --surface-color: var(--dark-surface-color);
+            --text-color: var(--dark-text-color);
+            --text-light-color: var(--dark-text-light-color);
+            --border-color: var(--dark-border-color);
+            --focus-outline-color: var(--dark-focus-outline-color);
+            --atom-c: var(--dark-atom-c);
+            --atom-h: var(--dark-atom-h);
+            --atom-o: var(--dark-atom-o);
+            --atom-n: var(--dark-atom-n);
+            --atom-cl: var(--dark-atom-cl);
+            --atom-default: var(--dark-atom-default);
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            z-index: 20; /* Ensure header is above sidebar */
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8em;
+            font-weight: 500;
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            font-size: 1.1em;
+            transition: opacity 0.2s ease;
+            padding: 5px 0; /* Add padding for click area */
+        }
+
+        nav a:hover,
+        nav a:focus {
+            opacity: 0.8;
+            outline: none; /* Remove default outline */
+            box-shadow: 0 2px 0 0 white; /* Custom focus/hover indicator */
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        aside {
+            width: 280px;
+            background-color: var(--surface-color);
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+            transition: width 0.3s ease, transform 0.3s ease;
+            overflow-y: auto;
+            flex-shrink: 0;
+            position: relative; /* Needed for toggle button positioning */
+            z-index: 10; /* Ensure sidebar is above main content */
+        }
+
+        aside.collapsed {
+            width: 60px; /* Reduced width */
+        }
+
+         /* Hide content when collapsed, except toggle button */
+        aside.collapsed .sidebar-content {
+             display: none;
+        }
+
+        .sidebar-toggle {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            width: 100%;
+            text-align: center;
+            font-size: 1em;
+            transition: background-color 0.2s ease, transform 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-toggle:hover,
+        .sidebar-toggle:focus {
+            background-color: var(--secondary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px var(--focus-outline-color);
+        }
+
+        aside.collapsed .sidebar-toggle {
+             width: auto;
+             padding: 10px 15px;
+             margin-bottom: 0;
+             transform: translateX(0); /* Reset transform if used for hiding */
+        }
+
+        aside h2 {
+            margin-top: 20px; /* Add space above first h2 */
+            color: var(--primary-color);
+            font-size: 1.4em;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .molecule-list button,
+        .tool-section button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 8px;
+            background-color: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            text-align: left;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+            color: var(--text-color);
+        }
+
+        .molecule-list button:hover,
+        .tool-section button:hover {
+            background-color: var(--surface-color);
+            border-color: var(--primary-color);
+        }
+
+         .molecule-list button:focus,
+        .tool-section button:focus {
+             outline: none;
+             box-shadow: 0 0 0 3px var(--focus-outline-color);
+        }
+
+
+        .molecule-list button.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .molecule-list button.active:hover,
+        .molecule-list button.active:focus {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            color: white;
+        }
+
+
+        main {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        section {
+            background-color: var(--surface-color);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        section h2 {
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.6em;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        #molecular-viewer {
+            height: 500px;
+            width: 100%;
+            background-color: #eee; /* Placeholder background */
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #viewer-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        #viewer-controls button {
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+            color: var(--text-color);
+        }
+
+        #viewer-controls button:hover {
+            background-color: rgba(255, 255, 255, 1);
+            border-color: var(--primary-color);
+        }
+
+        #viewer-controls button:focus {
+             outline: none;
+             box-shadow: 0 0 0 3px var(--focus-outline-color);
+        }
+
+         body.dark-mode #viewer-controls button {
+             background-color: rgba(37, 37, 38, 0.9);
+             border-color: var(--dark-border-color);
+             color: var(--dark-text-color);
+         }
+
+         body.dark-mode #viewer-controls button:hover {
+             background-color: rgba(37, 37, 38, 1);
+             border-color: var(--dark-primary-color);
+         }
+
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group select {
+            width: calc(100% - 22px);
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            font-size: 1em;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px var(--focus-outline-color);
+        }
+
+        .form-group input.invalid,
+        .form-group select.invalid {
+            border-color: var(--error-color);
+            box-shadow: 0 0 0 3px rgba(208, 2, 27, 0.2);
+        }
+
+        .validation-feedback {
+            font-size: 0.9em;
+            color: var(--error-color);
+            margin-top: 5px;
+            min-height: 1em;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        button:hover {
+            background-color: var(--secondary-color);
+        }
+
+        button:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px var(--focus-outline-color);
+        }
+
+        button:disabled {
+            background-color: var(--border-color);
+            cursor: not-allowed;
+            opacity: 0.6;
+            box-shadow: none;
+        }
+
+        .button-secondary {
+            background-color: var(--surface-color);
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+
+        .button-secondary:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+         .button-secondary:focus {
+             outline: none;
+             box-shadow: 0 0 0 3px var(--focus-outline-color);
+         }
+
+         body.dark-mode .button-secondary {
+             background-color: var(--dark-surface-color);
+             color: var(--dark-primary-color);
+             border-color: var(--dark-primary-color);
+         }
+         body.dark-mode .button-secondary:hover {
+             background-color: var(--dark-primary-color);
+             color: white;
+         }
+
+
+        .simulation-controls button {
+            margin-right: 10px;
+        }
+
+        .simulation-output {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            min-height: 100px;
+            color: var(--text-color);
+        }
+
+        .collapsible-panel-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 0; /* Remove margin-bottom */
+            transition: background-color 0.2s ease, border-bottom-left-radius 0.3s ease, border-bottom-right-radius 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom-left-radius: 5px; /* Default rounded corners */
+            border-bottom-right-radius: 5px;
+        }
+
+        .collapsible-panel-header:hover,
+        .collapsible-panel-header:focus {
+            background-color: var(--secondary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px var(--focus-outline-color);
+            z-index: 1; /* Bring header slightly forward on focus/hover */
+            position: relative;
+        }
+
+         .collapsible-panel-header.expanded {
+             border-bottom-left-radius: 0; /* Straight bottom when expanded */
+             border-bottom-right-radius: 0;
+         }
+
+
+        .collapsible-panel-header h3 {
+            margin: 0;
+            font-size: 1.2em;
+        }
+
+        .collapsible-panel-content {
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-top: none;
+            border-bottom-left-radius: 5px;
+            border-bottom-right-radius: 5px;
+            background-color: var(--background-color);
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out, padding 0.3s ease-out;
+            max-height: 0;
+            opacity: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+
+        .collapsible-panel-content.expanded {
+            max-height: 1000px; /* Arbitrary large value */
+            opacity: 1;
+            padding-top: 15px;
+            padding-bottom: 15px;
+             border-top: 1px solid var(--border-color); /* Add border when expanded */
+        }
+
+        .collapsible-panel-header .arrow {
+            transition: transform 0.3s ease;
+            display: inline-block; /* Ensure transform works */
+        }
+
+        .collapsible-panel-header.expanded .arrow {
+            transform: rotate(180deg);
+        }
+
+        .diagram {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .diagram img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+        }
+
+        .feedback-box {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+
+        .feedback-box.success {
+            background-color: rgba(126, 211, 33, 0.1);
+            border-color: var(--success-color);
+            color: var(--success-color);
+        }
+
+        .feedback-box.error {
+            background-color: rgba(208, 2, 27, 0.1);
+            border-color: var(--error-color);
+            color: var(--error-color);
+        }
+
+         .feedback-box.warning {
+            background-color: rgba(248, 231, 28, 0.1);
+            border-color: var(--warning-color);
+            color: var(--warning-color);
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            background-color: var(--border-color);
+            border-radius: 5px;
+            margin-top: 15px;
+            overflow: hidden; /* Ensure bar stays inside */
+        }
+
+        .progress-bar {
+            height: 15px;
+            background-color: var(--secondary-color);
+            border-radius: 5px;
+            width: 0%;
+            transition: width 0.5s ease;
+            text-align: center;
+            line-height: 15px;
+            color: white;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background-color: var(--background-color);
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 90%;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            position: relative;
+            color: var(--text-color);
+            max-height: 90vh; /* Limit modal height */
+            overflow-y: auto; /* Make modal scrollable */
+        }
+
+        .modal-overlay.visible .modal {
+            transform: scale(1);
+        }
+
+        .modal h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .modal .close-button {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: var(--text-light-color);
+            transition: color 0.2s ease;
+            padding: 5px; /* Increase click area */
+        }
+
+        .modal .close-button:hover {
+            color: var(--text-color);
+        }
+         .modal .close-button:focus {
+             outline: none;
+             box-shadow: 0 0 0 3px var(--focus-outline-color);
+             border-radius: 4px;
+         }
+
+
+        /* Dark Mode Toggle Style */
+        .dark-mode-toggle {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            margin-left: 20px;
+            color: white;
+            font-size: 1em;
+        }
+
+        .dark-mode-toggle input[type="checkbox"] {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+
+        .dark-mode-toggle label {
+            cursor: pointer;
+        }
+
+        /* Context Menu Style */
+        .context-menu {
+            position: fixed;
+            background-color: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2);
+            z-index: 200;
+            padding: 5px 0;
+            display: none; /* Hidden by default */
+            min-width: 150px;
+        }
+
+        .context-menu button {
+            display: block;
+            width: 100%;
+            padding: 8px 15px;
+            border: none;
+            background: none;
+            text-align: left;
+            cursor: pointer;
+            color: var(--text-color);
+            font-size: 1em;
+            border-radius: 0; /* No border radius for menu items */
+            transition: background-color 0.2s ease;
+        }
+
+        .context-menu button:hover {
+            background-color: var(--surface-color);
+        }
+
+         .context-menu button:focus {
+             outline: none;
+             background-color: var(--surface-color); /* Keep highlight on focus */
+         }
+
+        body.dark-mode .context-menu {
+             background-color: var(--dark-surface-color);
+             border-color: var(--dark-border-color);
+        }
+         body.dark-mode .context-menu button {
+             color: var(--dark-text-color);
+         }
+         body.dark-mode .context-menu button:hover {
+             background-color: var(--dark-background-color);
+         }
+
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            aside {
+                width: 100%;
+                height: auto;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+                overflow-y: visible; /* Allow content to push down */
+                padding-bottom: 0;
+            }
+
+            aside.collapsed {
+                 width: 100%;
+                 transform: translateX(0); /* No horizontal transform */
+            }
+
+             aside.collapsed .sidebar-content {
+                 display: none;
+             }
+
+            .sidebar-toggle {
+                width: auto;
+                margin-bottom: 10px;
+                justify-content: flex-start;
+            }
+
+            aside.collapsed .sidebar-toggle {
+                 width: auto;
+                 margin-bottom: 10px;
+                 padding: 10px; /* Reset padding */
+                 justify-content: flex-start;
+            }
+
+            main {
+                padding: 15px;
+            }
+
+            section {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+
+            #molecular-viewer {
+                height: 300px; /* Smaller viewer on mobile */
+            }
+
+            #viewer-controls {
+                flex-direction: column;
+                top: 10px;
+                right: 10px;
+                gap: 5px;
+            }
+
+             #viewer-controls button {
+                 padding: 5px 8px;
+                 font-size: 0.8em;
+             }
+
+            .modal {
+                padding: 20px;
+            }
+
+            .modal h3 {
+                font-size: 1.3em;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>ChemViz</h1>
+        <nav>
+            <a href="#viewer-section">Viewer</a>
+            <a href="#prediction-section">Predict</a>
+            <a href="#simulation-section">Simulate</a>
+            <a href="#explorer-section">Explore</a>
+            <div class="dark-mode-toggle" role="switch" aria-checked="false" tabindex="0">
+                <input type="checkbox" id="darkModeToggle" aria-labelledby="darkModeLabel">
+                <label id="darkModeLabel" for="darkModeToggle">Dark Mode</label>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <aside id="sidebar">
+            <button class="sidebar-toggle" aria-label="Toggle Sidebar" aria-expanded="true">Toggle Sidebar</button>
+            <div class="sidebar-content">
+                <h2>Molecules</h2>
+                <div class="molecule-list" role="list">
+                    <button role="listitem" data-molecule="water" aria-label="Load Water molecule">Water (H₂O)</button>
+                    <button role="listitem" data-molecule="methane" aria-label="Load Methane molecule">Methane (CH₄)</button>
+                    <button role="listitem" data-molecule="ammonia" aria-label="Load Ammonia molecule">Ammonia (NH₃)</button>
+                    <button role="listitem" data-molecule="carb_dioxide" aria-label="Load Carbon Dioxide molecule">Carbon Dioxide (CO₂)</button>
+                    <button role="listitem" data-molecule="ethanol" aria-label="Load Ethanol molecule">Ethanol (C₂H₅OH)</button>
+                </div>
+
+                <h2>Tools</h2>
+                <div class="tool-section" role="list">
+                    <button role="listitem" class="button-secondary" aria-label="Open Bond Angle Predictor tool">Bond Angle Predictor</button>
+                    <button role="listitem" class="button-secondary" aria-label="Open Reaction Balancer tool">Reaction Balancer</button>
+                    <!-- More tools -->
+                </div>
+
+                <h2>Learning Modules</h2>
+                <div class="tool-section" role="list">
+                    <button role="listitem" class="button-secondary" data-modal-target="vsepr-modal" aria-label="Open VSEPR Theory tutorial">VSEPR Theory</button>
+                    <button role="listitem" class="button-secondary" data-modal-target="hybridization-modal" aria-label="Open Hybridization tutorial">Hybridization</button>
+                    <!-- More modules -->
+                </div>
+            </div>
+        </aside>
+
+        <main>
+            <section id="viewer-section" aria-labelledby="viewer-heading">
+                <h2 id="viewer-heading">Interactive 3D Molecular Viewer</h2>
+                <div id="molecular-viewer" aria-label="3D Molecular Viewer">
+                    <!-- Mol* Viewer will be initialized here -->
+                    <div id="viewer-controls">
+                        <button id="style-ball-stick" aria-label="Set viewer style to Ball and Stick">Ball & Stick</button>
+                        <button id="style-spacefill" aria-label="Set viewer style to Spacefill">Spacefill</button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="prediction-section" aria-labelledby="prediction-heading">
+                <h2 id="prediction-heading">Predict Molecular Properties</h2>
+                <p>Predict bond angles and strengths for selected molecules.</p>
+                <div class="form-group">
+                    <label for="molecule-select">Select Molecule:</label>
+                     <select id="molecule-select" aria-required="true">
+                        <option value="">-- Select a molecule --</option>
+                        <option value="water">Water (H₂O)</option>
+                        <option value="methane">Methane (CH₄)</option>
+                        <option value="ammonia">Ammonia (NH₃)</option>
+                        <option value="carb_dioxide">Carbon Dioxide (CO₂)</option>
+                        <option value="ethanol">Ethanol (C₂H₅OH)</option>
+                     </select>
+                </div>
+                 <div class="form-group">
+                    <label for="center-atom">Center Atom (e.g., O in H₂O):</label>
+                    <input type="text" id="center-atom" placeholder="Enter atom symbol" aria-required="true" aria-describedby="center-atom-feedback">
+                    <div class="validation-feedback" id="center-atom-feedback" aria-live="polite"></div>
+                </div>
+                 <div class="form-group">
+                    <label for="predicted-angle">Predict Bond Angle (e.g., H-O-H):</label>
+                    <input type="number" id="predicted-angle" placeholder="Enter angle in degrees" aria-required="true" aria-describedby="predicted-angle-feedback">
+                     <div class="validation-feedback" id="predicted-angle-feedback" aria-live="polite"></div>
+                </div>
+                 <div class="form-group">
+                    <label for="predicted-strength">Predict Bond Strength (e.g., O-H):</label>
+                    <input type="text" id="predicted-strength" placeholder="e.g., High, Medium, Low" aria-required="true" aria-describedby="predicted-strength-feedback">
+                     <div class="validation-feedback" id="predicted-strength-feedback" aria-live="polite"></div>
+                </div>
+                <button id="submit-prediction">Submit Prediction</button>
+                <div class="feedback-box" id="prediction-feedback" style="display: none;" aria-live="polite"></div>
+            </section>
+
+             <section id="simulation-section" aria-labelledby="simulation-heading">
+                <h2 id="simulation-heading">Chemical Reaction Simulator</h2>
+                <p>Visualize simple reactions and observe changes in molecular structure.</p>
+                <div class="simulation-controls">
+                    <button id="sim-start">Start Simulation</button>
+                    <button id="sim-stop" disabled>Stop Simulation</button>
+                    <button id="sim-reset" disabled>Reset</button>
+                </div>
+                <div class="simulation-output" aria-live="polite">
+                    Simulation output and visualization will appear here.
+                </div>
+            </section>
+
+            <section id="explorer-section" aria-labelledby="explorer-heading">
+                <h2 id="explorer-heading">Structure-Property Relationship Explorer</h2>
+
+                <div class="collapsible-panel">
+                    <div class="collapsible-panel-header" role="button" tabindex="0" aria-expanded="false" aria-controls="polarity-content">
+                        <h3>Polarity and Molecular Shape <span class="arrow">▼</span></h3>
+                    </div>
+                    <div class="collapsible-panel-content" id="polarity-content" aria-hidden="true">
+                        <p>The overall polarity of a molecule depends on both the polarity of individual bonds and the molecule's shape. If bond dipoles cancel out due to symmetry, the molecule is nonpolar. If they don't, the molecule is polar.</p>
+                        <div class="diagram">
+                            <img src="https://placehold.co/400x200?text=Polarity+Diagram" alt="Diagram illustrating bond dipoles and molecular polarity">
+                        </div>
+                        <p>Explore the structures of H₂O (polar) and CO₂ (nonpolar) in the viewer to see how shape affects polarity.</p>
+                    </div>
+                </div>
+
+                <div class="collapsible-panel">
+                    <div class="collapsible-panel-header" role="button" tabindex="0" aria-expanded="false" aria-controls="imf-content">
+                        <h3>Intermolecular Forces <span class="arrow">▼</span></h3>
+                    </div>
+                    <div class="collapsible-panel-content" id="imf-content" aria-hidden="true">
+                        <p>The forces between molecules (intermolecular forces) determine many physical properties like boiling point and solubility. These forces depend on the molecule's structure and polarity (London Dispersion, Dipole-Dipole, Hydrogen Bonding).</p>
+                        <div class="diagram">
+                             <img src="https://placehold.co/400x200?text=IMF+Diagram" alt="Diagram illustrating different types of intermolecular forces">
+                        </div>
+                         <p>Compare the boiling points of water (high, Hydrogen Bonding) and methane (low, London Dispersion) and relate them to their structures and IMFs.</p>
+                    </div>
+                </div>
+
+                 <div class="collapsible-panel">
+                    <div class="collapsible-panel-header" role="button" tabindex="0" aria-expanded="false" aria-controls="bond-strength-content">
+                        <h3>Bond Strength and Length <span class="arrow">▼</span></h3>
+                    </div>
+                    <div class="collapsible-panel-content" id="bond-strength-content" aria-hidden="true">
+                        <p>Bond strength (bond energy) is the energy required to break a bond. Bond length is the average distance between the nuclei of two bonded atoms. Generally, shorter bonds are stronger.</p>
+                         <div class="diagram">
+                             <img src="https://placehold.co/400x200?text=Bond+Energy+Diagram" alt="Diagram illustrating bond energy and length concepts">
+                        </div>
+                         <p>Predict and compare the strengths of single, double, and triple bonds. Use the viewer to observe typical bond lengths.</p>
+                    </div>
+                </div>
+
+                <!-- Add simple property comparison chart -->
+                <div class="chart-container" style="height: 300px; margin-top: 20px;">
+                     <canvas id="propertyChart" aria-label="Boiling points of selected molecules chart"></canvas>
+                </div>
+
+            </section>
+
+             <section id="practice-section" aria-labelledby="practice-heading">
+                <h2 id="practice-heading">Practice Exercises</h2>
+                <p>Test your understanding with interactive questions.</p>
+                <button data-modal-target="practice-q1-modal" aria-label="Open Practice Question 1: VSEPR Shape">Question 1: VSEPR Shape</button>
+                <button data-modal-target="practice-q2-modal" aria-label="Open Practice Question 2: Polarity">Question 2: Polarity</button>
+                 <div class="progress-bar-container" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="2" aria-label="Practice questions completion progress">
+                     <div class="progress-bar" id="practice-progress"></div>
+                 </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="vsepr-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="vsepr-modal-title">
+        <div class="modal" id="vsepr-modal" tabindex="-1">
+            <button class="close-button" aria-label="Close Modal">&times;</button>
+            <h3 id="vsepr-modal-title">VSEPR Theory Tutorial</h3>
+            <p>Valence Shell Electron Pair Repulsion (VSEPR) theory predicts the geometry of individual molecules from the number of electron pairs around their central atoms. These electron pairs repel each other and arrange themselves as far apart as possible.</p>
+            <p>Key concepts:</p>
+            <ul>
+                <li>Electron domains (bonding pairs and lone pairs)</li>
+                <li>Electron domain geometry (linear, trigonal planar, tetrahedral, trigonal bipyramidal, octahedral)</li>
+                <li>Molecular geometry (based on lone pairs)</li>
+            </ul>
+            <div class="diagram">
+                 <img src="https://placehold.co/400x300?text=VSEPR+Chart" alt="Chart summarizing VSEPR shapes">
+            </div>
+            <p>Use the viewer to examine molecules like CH₄, NH₃, and H₂O to see examples of tetrahedral electron geometry with different molecular geometries.</p>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="hybridization-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="hybridization-modal-title">
+        <div class="modal" id="hybridization-modal" tabindex="-1">
+            <button class="close-button" aria-label="Close Modal">&times;</button>
+            <h3 id="hybridization-modal-title">Hybridization Tutorial</h3>
+            <p>Atomic orbitals can mix to form new hybrid orbitals, which are involved in sigma bonding and holding lone pairs. This concept helps explain molecular shapes and bond angles.</p>
+            <p>Common hybridizations:</p>
+            <ul>
+                <li>sp (linear, 2 electron domains)</li>
+                <li>sp² (trigonal planar, 3 electron domains)</li>
+                <li>sp³ (tetrahedral, 4 electron domains)</li>
+                <li>sp³d (trigonal bipyramidal, 5 electron domains)</li>
+                <li>sp³d² (octahedral, 6 electron domains)</li>
+            </ul>
+             <div class="diagram">
+                 <img src="https://placehold.co/400x300?text=Hybridization+Diagram" alt="Diagram illustrating orbital hybridization">
+            </div>
+            <p>Consider the carbon atom in methane (CH₄) which is sp³ hybridized, leading to a tetrahedral shape.</p>
+        </div>
+    </div>
+
+     <div class="modal-overlay" id="practice-q1-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="practice-q1-modal-title">
+        <div class="modal" id="practice-q1-modal" tabindex="-1">
+            <button class="close-button" aria-label="Close Modal">&times;</button>
+            <h3 id="practice-q1-modal-title">Practice Question 1: VSEPR Shape</h3>
+            <p>What is the molecular geometry of Ammonia (NH₃)?</p>
+            <div class="form-group">
+                <label for="q1-answer">Your Answer:</label>
+                <input type="text" id="q1-answer" placeholder="e.g., Tetrahedral" aria-required="true" aria-describedby="q1-feedback">
+                 <div class="validation-feedback" id="q1-feedback" aria-live="polite"></div>
+            </div>
+            <button id="submit-q1">Submit Answer</button>
+             <div class="feedback-box" id="q1-result" style="display: none;" aria-live="polite"></div>
+        </div>
+    </div>
+
+     <div class="modal-overlay" id="practice-q2-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="practice-q2-modal-title">
+        <div class="modal" id="practice-q2-modal" tabindex="-1">
+            <button class="close-button" aria-label="Close Modal">&times;</button>
+            <h3 id="practice-q2-modal-title">Practice Question 2: Polarity</h3>
+            <p>Is Carbon Dioxide (CO₂) a polar or nonpolar molecule?</p>
+            <div class="form-group">
+                <label for="q2-answer">Your Answer:</label>
+                <input type="text" id="q2-answer" placeholder="e.g., Polar" aria-required="true" aria-describedby="q2-feedback">
+                 <div class="validation-feedback" id="q2-feedback" aria-live="polite"></div>
+            </div>
+            <button id="submit-q2">Submit Answer</button>
+             <div class="feedback-box" id="q2-result" style="display: none;" aria-live="polite"></div>
+        </div>
+    </div>
+
+    <!-- Custom Context Menu -->
+    <div class="context-menu" id="molecule-context-menu">
+        <button data-action="load">Load in Viewer</button>
+        <button data-action="predict">Predict Properties</button>
+        <!-- Add more actions as needed -->
+    </div>
+
+
+    <script type="module">
+        // Import Mol* Viewer
+        import { Viewer } from 'https://esm.sh/molstar@3.7.0/build/viewer/molstar-viewer.js';
+        import { Color } from 'https://esm.sh/molstar@3.7.0/build/mol-util/color.js';
+        import { Chart } from "https://esm.sh/chart.js@4.4.0"; // Use a specific version
+
+        // --- Global State ---
+        const state = {
+            viewer: null,
+            currentMoleculeKey: null,
+            darkMode: localStorage.getItem('darkMode') === 'enabled',
+            practiceProgress: {
+                total: 2, // Number of practice questions
+                completed: 0
+            },
+            activeModal: null, // Keep track of the currently open modal overlay
+            contextMenuTargetMolecule: null // Track which molecule button was right-clicked
+        };
+
+        // --- DOM Elements ---
+        const elements = {
+            body: document.body,
+            sidebar: document.getElementById('sidebar'),
+            sidebarToggle: document.querySelector('.sidebar-toggle'),
+            moleculeButtons: document.querySelectorAll('.molecule-list button'),
+            molecularViewerDiv: document.getElementById('molecular-viewer'),
+            styleBallStickBtn: document.getElementById('style-ball-stick'),
+            styleSpacefillBtn: document.getElementById('style-spacefill'),
+            moleculeSelect: document.getElementById('molecule-select'),
+            centerAtomInput: document.getElementById('center-atom'),
+            predictedAngleInput: document.getElementById('predicted-angle'),
+            predictedStrengthInput: document.getElementById('predicted-strength'),
+            submitPredictionBtn: document.getElementById('submit-prediction'),
+            predictionFeedback: document.getElementById('prediction-feedback'),
+            centerAtomFeedback: document.getElementById('center-atom-feedback'),
+            predictedAngleFeedback: document.getElementById('predicted-angle-feedback'),
+            predictedStrengthFeedback: document.getElementById('predicted-strength-feedback'),
+            simStartBtn: document.getElementById('sim-start'),
+            simStopBtn: document.getElementById('sim-stop'),
+            simResetBtn: document.getElementById('sim-reset'),
+            collapsibleHeaders: document.querySelectorAll('.collapsible-panel-header'),
+            practiceProgress: document.getElementById('practice-progress'),
+            practiceProgressBarContainer: document.querySelector('.progress-bar-container'),
+            darkModeToggleInput: document.getElementById('darkModeToggle'),
+            darkModeToggleLabel: document.querySelector('.dark-mode-toggle label'),
+            modalOverlays: document.querySelectorAll('.modal-overlay'),
+            modalTriggers: document.querySelectorAll('[data-modal-target]'),
+            q1AnswerInput: document.getElementById('q1-answer'),
+            submitQ1Btn: document.getElementById('submit-q1'),
+            q1ResultDiv: document.getElementById('q1-result'),
+            q1FeedbackDiv: document.getElementById('q1-feedback'),
+            q2AnswerInput: document.getElementById('q2-answer'),
+            submitQ2Btn: document.getElementById('submit-q2'),
+            q2ResultDiv: document.getElementById('q2-result'),
+            q2FeedbackDiv: document.getElementById('q2-feedback'),
+            propertyChartCanvas: document.getElementById('propertyChart'),
+            moleculeContextMenu: document.getElementById('molecule-context-menu')
+        };
+
+        // --- Molecule Data (Simplified SDF-like format or just coordinates) ---
+        // Using a simplified representation. In a real app, fetch SDF/PDB.
+        const moleculeData = {
+            water: {
+                name: 'Water', formula: 'H₂O', center: 'O', angle: 104.5, strength: 'High',
+                coords: `
+3
+H2O
+  0.0000   0.0000   0.0000 O
+  0.7570   0.5860   0.0000 H
+ -0.7570   0.5860   0.0000 H
+` // Simplified XYZ or similar
+            },
+            methane: {
+                name: 'Methane', formula: 'CH₄', center: 'C', angle: 109.5, strength: 'Medium',
+                 coords: `
+5
+CH4
+  0.0000   0.0000   0.0000 C
+  0.6300   0.6300   0.6300 H
+ -0.6300  -0.6300   0.6300 H
+  0.6300  -0.6300  -0.6300 H
+ -0.6300   0.6300  -0.6300 H
+`
+            },
+            ammonia: {
+                name: 'Ammonia', formula: 'NH₃', center: 'N', angle: 107, strength: 'Medium',
+                 coords: `
+4
+NH3
+  0.0000   0.0000   0.0000 N
+  0.0000   0.9400   0.0000 H
+  0.8140  -0.4700   0.0000 H
+ -0.8140  -0.4700   0.0000 H
+`
+            },
+            carb_dioxide: {
+                name: 'Carbon Dioxide', formula: 'CO₂', center: 'C', angle: 180, strength: 'High', // C=O double bonds
+                 coords: `
+3
+CO2
+  0.0000   0.0000   0.0000 C
+  1.1600   0.0000   0.0000 O
+ -1.1600   0.0000   0.0000 O
+`
+            },
+            ethanol: {
+                name: 'Ethanol', formula: 'C₂H₅OH', center: 'C', angle: 109.5, strength: 'Medium', // C-C, C-O, C-H angles ~109.5
+                 coords: `
+9
+Ethanol
+  0.0000   0.0000   0.0000 C
+  1.5200   0.0000   0.0000 C
+  1.9200   1.0200   0.0000 O
+  3.2300   1.0200   0.0000 H
+ -0.3900  -0.9700   0.0000 H
+ -0.3900   0.4800   0.8800 H
+ -0.3900   0.4800  -0.8800 H
+  1.9200  -0.9700   0.0000 H
+  1.9200   0.4800   0.8800 H
+`
+            }
+             // Add more molecules
+        };
+
+        // --- Mol* Viewer Initialization and Functions ---
+        async function initMolstar() {
+            const viewer = new Viewer(elements.molecularViewerDiv, {
+                layoutIsExpanded: false,
+                layoutShowControls: false, // Hide default controls
+                layoutShowRemoteState: false,
+                layoutShowSequence: false,
+                layoutShowLog: false,
+                layoutShowStrucmech: false,
+                layoutShowUtility: false,
+                cssStyling: 'none', // Use minimal styling, rely on our CSS
+                 viewportShowExpand: true, // Keep fullscreen button
+                 viewportShowSelectionMode: false,
+                 viewportShowAnimation: false,
+                 viewportShowControlsInfo: false,
+                 viewportShowSettings: false,
+                 viewportShowStats: false,
+                 viewportShowAnnotations: false,
+                 viewportShowCustomIcon: false,
+                 volumeStreamingServer: 'https://maps.rcsb.org/', // Example server
+            });
+
+            // Define custom atom colors based on CSS variables
+            const customAtomColorTheme = (location) => {
+                const element = location.unit.model.atomicHierarchy.atoms.element.value(location.element);
+                const elementSymbol = location.unit.model.atomicHierarchy.atoms.type_symbol.value(location.element);
+                let colorHex;
+
+                // Map element symbol to CSS variable name
+                const colorVar = `--atom-${elementSymbol.toLowerCase()}`;
+                const defaultColorVar = '--atom-default';
+
+                // Get the color value from CSS variables
+                const computedColor = getComputedStyle(document.documentElement).getPropertyValue(colorVar);
+
+                if (computedColor && computedColor.trim() !== '') {
+                     colorHex = computedColor.trim();
+                } else {
+                     // Fallback to default if specific color not found
+                     colorHex = getComputedStyle(document.documentElement).getPropertyValue(defaultColorVar).trim();
+                }
+
+                 // Convert hex string to Mol* Color object
+                 // Remove '#' and parse as integer
+                 return Color.fromHex(parseInt(colorHex.replace('#', ''), 16));
+            };
+
+
+            // Register the custom color theme
+            viewer.representation.structure.themes.add('element-symbol-custom', customAtomColorTheme);
+
+
+            state.viewer = viewer;
+            console.log('Mol* Viewer initialized');
+
+            // Load a default molecule
+            await loadMolecule('water');
+        }
+
+        async function loadMolecule(moleculeKey) {
+            if (!state.viewer) {
+                console.error('Viewer not initialized');
+                return;
+            }
+
+            const mol = moleculeData[moleculeKey];
+            if (!mol) {
+                console.error('Molecule data not found:', moleculeKey);
+                return;
+            }
+
+            // Clear previous models
+            await state.viewer.clear();
+
+            try {
+                 // Mol* can load from string data if format is specified
+                 const data = {
+                     data: mol.coords,
+                     format: 'xyz' // Assuming XYZ format for simplified coords
+                 };
+                 const model = await state.viewer.loadStructureFromData(data, 'xyz');
+
+                 if (model) {
+                     state.currentMoleculeKey = moleculeKey;
+                     console.log('Loaded molecule:', mol.name);
+
+                     // Set default representation using the custom color theme
+                     await state.viewer.representation.structure.addRepresentation(model, {
+                          type: 'ball-and-stick',
+                          color: { name: 'element-symbol-custom' } // Use custom element colors
+                     });
+
+                      // Update prediction form select
+                     elements.moleculeSelect.value = moleculeKey;
+
+                     // Update sidebar active button
+                     elements.moleculeButtons.forEach(btn => {
+                         btn.classList.remove('active');
+                         btn.setAttribute('aria-selected', 'false');
+                         if (btn.dataset.molecule === moleculeKey) {
+                             btn.classList.add('active');
+                             btn.setAttribute('aria-selected', 'true');
+                         }
+                     });
+
+                 } else {
+                     console.error('Failed to load molecule into Mol*');
+                     state.currentMoleculeKey = null;
+                 }
+
+            } catch (e) {
+                 console.error('Error loading molecule into Mol*:', e);
+                 state.currentMoleculeKey = null;
+            }
+        }
+
+        function setRepresentation(type) {
+            if (!state.viewer || !state.viewer.plugin || !state.viewer.plugin.managers.structure.hierarchy.current.structures.length) {
+                console.warn('No structure loaded to set representation.');
+                return;
+            }
+             // Clear existing representations first
+             state.viewer.plugin.managers.structure.hierarchy.current.structures.forEach(s => {
+                 s.representations.forEach(r => {
+                     state.viewer.plugin.managers.structure.hierarchy.removeRepresentation(r);
+                 });
+             });
+
+            const structure = state.viewer.plugin.managers.structure.hierarchy.current.structures[0];
+            state.viewer.representation.structure.addRepresentation(structure, {
+                type: type,
+                color: { name: 'element-symbol-custom' } // Use custom element colors
+            });
+        }
+
+
+        // --- UI Event Handlers ---
+
+        // Sidebar toggle
+        elements.sidebarToggle.addEventListener('click', () => {
+            const isCollapsed = elements.sidebar.classList.toggle('collapsed');
+            elements.sidebarToggle.textContent = isCollapsed ? '☰' : 'Toggle Sidebar'; // Hamburger icon or text
+            elements.sidebarToggle.setAttribute('aria-expanded', !isCollapsed);
+        });
+
+        // Molecule selection from sidebar (Click)
+        elements.moleculeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const moleculeKey = button.dataset.molecule;
+                loadMolecule(moleculeKey);
+                hideContextMenu(); // Hide context menu if open
+            });
+
+             // Add right-click listener for context menu
+             button.addEventListener('contextmenu', (e) => {
+                 e.preventDefault(); // Prevent default browser context menu
+                 state.contextMenuTargetMolecule = button.dataset.molecule;
+                 showContextMenu(e.clientX, e.clientY);
+             });
+        });
+
+        // Context Menu Actions
+        elements.moleculeContextMenu.addEventListener('click', (e) => {
+            const actionButton = e.target.closest('button');
+            if (!actionButton || !state.contextMenuTargetMolecule) return;
+
+            const action = actionButton.dataset.action;
+            const moleculeKey = state.contextMenuTargetMolecule;
+
+            switch (action) {
+                case 'load':
+                    loadMolecule(moleculeKey);
+                    break;
+                case 'predict':
+                    // Navigate to prediction section and select molecule
+                    document.getElementById('prediction-section').scrollIntoView({ behavior: 'smooth' });
+                    elements.moleculeSelect.value = moleculeKey;
+                    // Optional: Trigger change event on select to update form if needed
+                    const event = new Event('change');
+                    elements.moleculeSelect.dispatchEvent(event);
+                    break;
+                 // Add more actions here
+            }
+            hideContextMenu();
+        });
+
+        // Hide context menu when clicking anywhere else
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.context-menu')) {
+                hideContextMenu();
+            }
+        });
+
+        function showContextMenu(x, y) {
+            elements.moleculeContextMenu.style.display = 'block';
+            elements.moleculeContextMenu.style.left = `${x}px`;
+            elements.moleculeContextMenu.style.top = `${y}px`;
+             // Ensure menu is within viewport
+             const menuWidth = elements.moleculeContextMenu.offsetWidth;
+             const menuHeight = elements.moleculeContextMenu.offsetHeight;
+             const viewportWidth = window.innerWidth;
+             const viewportHeight = window.innerHeight;
+
+             if (x + menuWidth > viewportWidth) {
+                elements.moleculeContextMenu.style.left = `${viewportWidth - menuWidth - 10}px`;
+             }
+             if (y + menuHeight > viewportHeight) {
+                 elements.moleculeContextMenu.style.top = `${viewportHeight - menuHeight - 10}px`;
+             }
+
+             // Focus the first item for keyboard navigation
+             const firstButton = elements.moleculeContextMenu.querySelector('button');
+             if(firstButton) {
+                 firstButton.focus();
+             }
+        }
+
+        function hideContextMenu() {
+            elements.moleculeContextMenu.style.display = 'none';
+            state.contextMenuTargetMolecule = null;
+        }
+
+
+        // Viewer style buttons
+        elements.styleBallStickBtn.addEventListener('click', () => setRepresentation('ball-and-stick'));
+        elements.styleSpacefillBtn.addEventListener('click', () => setRepresentation('spacefill'));
+
+        // Prediction form submission
+        elements.submitPredictionBtn.addEventListener('click', () => {
+            const selectedMolKey = elements.moleculeSelect.value;
+            const centerAtom = elements.centerAtomInput.value.trim().toUpperCase();
+            const predictedAngle = parseFloat(elements.predictedAngleInput.value);
+            const predictedStrength = elements.predictedStrengthInput.value.trim().toLowerCase();
+
+            // Clear previous validation feedback
+            elements.centerAtomInput.classList.remove('invalid');
+            elements.predictedAngleInput.classList.remove('invalid');
+            elements.predictedStrengthInput.classList.remove('invalid');
+            elements.centerAtomFeedback.textContent = '';
+            elements.predictedAngleFeedback.textContent = '';
+            elements.predictedStrengthFeedback.textContent = '';
+            elements.predictionFeedback.style.display = 'none';
+
+
+            if (!selectedMolKey) {
+                 displayPredictionFeedback('Please select a molecule.', 'error');
+                 elements.moleculeSelect.focus();
+                 elements.moleculeSelect.classList.add('invalid');
+                 return;
+            } else {
+                 elements.moleculeSelect.classList.remove('invalid');
+            }
+
+            const molData = moleculeData[selectedMolKey];
+            let isValid = true;
+
+            if (!centerAtom) {
+                 elements.centerAtomInput.classList.add('invalid');
+                 elements.centerAtomFeedback.textContent = 'Center atom required.';
+                 isValid = false;
+            } else if (centerAtom !== molData.center.toUpperCase()) {
+                 elements.centerAtomInput.classList.add('invalid');
+                 elements.centerAtomFeedback.textContent = `Incorrect center atom for ${molData.name}. Expected: ${molData.center.toUpperCase()}.`;
+                 isValid = false;
+            }
+
+            if (isNaN(predictedAngle) || predictedAngle < 0 || predictedAngle > 180) { // Angles are typically 0-180
+                 elements.predictedAngleInput.classList.add('invalid');
+                 elements.predictedAngleFeedback.textContent = 'Enter a valid angle (0-180).';
+                 isValid = false;
+            }
+
+            const validStrengths = ['high', 'medium', 'low'];
+            if (!predictedStrength) {
+                 elements.predictedStrengthInput.classList.add('invalid');
+                 elements.predictedStrengthFeedback.textContent = 'Bond strength required.';
+                 isValid = false;
+            } else if (!validStrengths.includes(predictedStrength)) {
+                 elements.predictedStrengthInput.classList.add('invalid');
+                 elements.predictedStrengthFeedback.textContent = `Strength must be one of: ${validStrengths.join(', ')}.`;
+                 isValid = false;
+            }
+
+
+            if (!isValid) {
+                displayPredictionFeedback('Please fix the errors above.', 'error');
+                return;
+            }
+
+            // Check predictions against actual data
+            let angleCorrect = Math.abs(predictedAngle - molData.angle) < 5; // Allow small tolerance
+            let strengthCorrect = predictedStrength === molData.strength.toLowerCase();
+
+            if (angleCorrect && strengthCorrect) {
+                displayPredictionFeedback(`Correct! The bond angle is approximately ${molData.angle}° and the strength is ${molData.strength}.`, 'success');
+            } else if (angleCorrect) {
+                 displayPredictionFeedback(`Angle is correct (${molData.angle}°), but strength is incorrect. It is ${molData.strength}.`, 'warning');
+            } else if (strengthCorrect) {
+                 displayPredictionFeedback(`Strength is correct (${molData.strength}), but angle is incorrect. It is approximately ${molData.angle}°.`, 'warning');
+            }
+            else {
+                 displayPredictionFeedback(`Incorrect. The bond angle is approximately ${molData.angle}° and the strength is ${molData.strength}.`, 'error');
+            }
+        });
+
+        // Helper to display prediction feedback
+        function displayPredictionFeedback(message, type) {
+            elements.predictionFeedback.textContent = message;
+            elements.predictionFeedback.className = `feedback-box ${type}`;
+            elements.predictionFeedback.style.display = 'block';
+        }
+
+        // Simulation controls (placeholder functionality)
+        elements.simStartBtn.addEventListener('click', () => {
+            console.log('Simulation Started');
+            // Add actual simulation logic here
+            elements.simStartBtn.disabled = true;
+            elements.simStopBtn.disabled = false;
+            elements.simResetBtn.disabled = false;
+            document.querySelector('.simulation-output').textContent = 'Simulation running...';
+        });
+        elements.simStopBtn.addEventListener('click', () => {
+             console.log('Simulation Stopped');
+             // Add actual simulation logic here
+             elements.simStartBtn.disabled = false;
+             elements.simStopBtn.disabled = true;
+             document.querySelector('.simulation-output').textContent = 'Simulation stopped.';
+        });
+        elements.simResetBtn.addEventListener('click', () => {
+             console.log('Simulation Reset');
+             // Add actual simulation logic here
+             elements.simStartBtn.disabled = false;
+             elements.simStopBtn.disabled = true;
+             elements.simResetBtn.disabled = true;
+             document.querySelector('.simulation-output').textContent = 'Simulation output and visualization will appear here.';
+        });
+
+        // Collapsible panels
+        elements.collapsibleHeaders.forEach(header => {
+            header.addEventListener('click', () => toggleCollapsible(header));
+            header.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault(); // Prevent default spacebar action (scrolling)
+                    toggleCollapsible(header);
+                }
+            });
+        });
+
+        function toggleCollapsible(header) {
+             const content = header.nextElementSibling;
+             const isExpanded = header.classList.toggle('expanded');
+             content.classList.toggle('expanded');
+             header.setAttribute('aria-expanded', isExpanded);
+             content.setAttribute('aria-hidden', !isExpanded);
+        }
+
+
+        // Practice question modals
+        elements.modalTriggers.forEach(trigger => {
+            trigger.addEventListener('click', () => {
+                const targetId = trigger.dataset.modalTarget;
+                const modalOverlay = document.getElementById(`${targetId}-overlay`);
+                if (modalOverlay) {
+                    openModal(modalOverlay);
+                     // Reset practice question state if it's a practice modal
+                    if (targetId.startsWith('practice-q')) {
+                        resetPracticeQuestion(targetId);
+                    }
+                }
+            });
+        });
+
+        elements.modalOverlays.forEach(overlay => {
+            // Close if clicking outside the modal content
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    closeModal(overlay);
+                }
+            });
+            // Add close button listener
+            const closeButton = overlay.querySelector('.close-button');
+            if (closeButton) {
+                closeButton.addEventListener('click', () => {
+                    closeModal(overlay);
+                });
+            }
+        });
+
+        function openModal(modalOverlay) {
+             modalOverlay.classList.add('visible');
+             state.activeModal = modalOverlay;
+             const modal = modalOverlay.querySelector('.modal');
+             modal.focus(); // Focus modal for accessibility
+             // Trap focus within the modal
+             document.addEventListener('focusin', trapFocus);
+        }
+
+         function closeModal(modalOverlay) {
+             modalOverlay.classList.remove('visible');
+             state.activeModal = null;
+             // Remove focus trap listener
+             document.removeEventListener('focusin', trapFocus);
+             // Return focus to the element that opened the modal (optional but good practice)
+             // This would require storing the triggering element, which is more complex.
+             // For now, focus returns to body or nearest focusable element.
+         }
+
+         function trapFocus(e) {
+             if (state.activeModal) {
+                 const modal = state.activeModal.querySelector('.modal');
+                 const focusableElements = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+                 const firstFocusable = focusableElements[0];
+                 const lastFocusable = focusableElements[focusableElements.length - 1];
+
+                 if (e.target !== modal && !modal.contains(e.target)) {
+                      // If focus is outside the modal, redirect it to the first focusable element
+                     firstFocusable?.focus();
+                 } else {
+                     // Handle Tab and Shift+Tab to loop focus within the modal
+                     const isTabPressed = e.key === 'Tab' || e.keyCode === 9;
+
+                     if (!isTabPressed) {
+                         return;
+                     }
+
+                     if (e.shiftKey) { // Shift + Tab
+                         if (document.activeElement === firstFocusable) {
+                             lastFocusable?.focus();
+                             e.preventDefault();
+                         }
+                     } else { // Tab
+                         if (document.activeElement === lastFocusable) {
+                             firstFocusable?.focus();
+                             e.preventDefault();
+                         }
+                     }
+                 }
+             }
+         }
+
+
+        // Close modals with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && state.activeModal) {
+                closeModal(state.activeModal);
+            }
+             // Hide context menu with Escape key
+             if (e.key === 'Escape' && elements.moleculeContextMenu.style.display === 'block') {
+                 hideContextMenu();
+             }
+        });
+
+        // Practice Question 1 Logic
+        elements.submitQ1Btn.addEventListener('click', () => {
+            const answer = elements.q1AnswerInput.value.trim().toLowerCase();
+             elements.q1FeedbackDiv.textContent = ''; // Clear feedback
+             elements.q1AnswerInput.classList.remove('invalid');
+             elements.q1ResultDiv.style.display = 'none'; // Hide previous result
+
+            if (!answer) {
+                 elements.q1AnswerInput.classList.add('invalid');
+                 elements.q1FeedbackDiv.textContent = 'Please enter an answer.';
+                 return;
+            }
+
+            const correctAnswer = 'trigonal pyramidal';
+            elements.q1ResultDiv.style.display = 'block';
+            if (answer === correctAnswer) {
+                elements.q1ResultDiv.className = 'feedback-box success';
+                elements.q1ResultDiv.textContent = `Correct! The molecular geometry of NH₃ is ${correctAnswer}.`;
+                 markPracticeComplete('q1');
+            } else {
+                 elements.q1ResultDiv.className = 'feedback-box error';
+                 elements.q1ResultDiv.textContent = `Incorrect. The correct answer is ${correctAnswer}.`;
+            }
+        });
+
+         // Practice Question 2 Logic
+        elements.submitQ2Btn.addEventListener('click', () => {
+            const answer = elements.q2AnswerInput.value.trim().toLowerCase();
+            elements.q2FeedbackDiv.textContent = ''; // Clear feedback
+            elements.q2AnswerInput.classList.remove('invalid');
+            elements.q2ResultDiv.style.display = 'none'; // Hide previous result
+
+            if (!answer) {
+                 elements.q2AnswerInput.classList.add('invalid');
+                 elements.q2FeedbackDiv.textContent = 'Please enter an answer.';
+                 return;
+            }
+
+            const correctAnswer = 'nonpolar';
+            elements.q2ResultDiv.style.display = 'block';
+            if (answer === correctAnswer) {
+                elements.q2ResultDiv.className = 'feedback-box success';
+                elements.q2ResultDiv.textContent = `Correct! CO₂ is a ${correctAnswer} molecule.`;
+                 markPracticeComplete('q2');
+            } else {
+                 elements.q2ResultDiv.className = 'feedback-box error';
+                 elements.q2ResultDiv.textContent = `Incorrect. The correct answer is ${correctAnswer}.`;
+            }
+        });
+
+        function resetPracticeQuestion(questionId) {
+            if (questionId === 'practice-q1-modal') {
+                elements.q1AnswerInput.value = '';
+                elements.q1ResultDiv.style.display = 'none';
+                elements.q1FeedbackDiv.textContent = '';
+                elements.q1AnswerInput.classList.remove('invalid');
+            } else if (questionId === 'practice-q2-modal') {
+                elements.q2AnswerInput.value = '';
+                elements.q2ResultDiv.style.display = 'none';
+                elements.q2FeedbackDiv.textContent = '';
+                elements.q2AnswerInput.classList.remove('invalid');
+            }
+        }
+
+        // Practice Progress Tracking
+        const completedQuestions = new Set(JSON.parse(localStorage.getItem('completedQuestions') || '[]')); // Load from localStorage
+        state.practiceProgress.completed = completedQuestions.size; // Initialize state
+
+        function markPracticeComplete(questionKey) {
+             if (!completedQuestions.has(questionKey)) {
+                 completedQuestions.add(questionKey);
+                 state.practiceProgress.completed = completedQuestions.size;
+                 localStorage.setItem('completedQuestions', JSON.stringify(Array.from(completedQuestions))); // Save to localStorage
+                 updatePracticeProgress();
+             }
+        }
+
+        function updatePracticeProgress() {
+            const percentage = (state.practiceProgress.completed / state.practiceProgress.total) * 100;
+            elements.practiceProgress.style.width = `${percentage}%`;
+            elements.practiceProgress.textContent = percentage > 0 ? `${Math.round(percentage)}%` : ''; // Display percentage if > 0
+             // Update ARIA attributes
+            elements.practiceProgressBarContainer.setAttribute('aria-valuenow', state.practiceProgress.completed);
+            elements.practiceProgressBarContainer.setAttribute('aria-valuetext', `${state.practiceProgress.completed} out of ${state.practiceProgress.total} questions completed`);
+        }
+
+
+        // Dark Mode Toggle
+        function applyDarkMode(isDark) {
+            if (isDark) {
+                elements.body.classList.add('dark-mode');
+                localStorage.setItem('darkMode', 'enabled');
+                elements.darkModeToggleLabel.setAttribute('aria-checked', 'true');
+            } else {
+                elements.body.classList.remove('dark-mode');
+                localStorage.setItem('darkMode', 'disabled');
+                 elements.darkModeToggleLabel.setAttribute('aria-checked', 'false');
+            }
+             // Update chart colors if chart exists
+             if (window.myPropertyChart) {
+                 updateChartColors(window.myPropertyChart);
+             }
+             // Note: Mol* theme updates are handled by using CSS variables in the custom theme function
+        }
+
+        elements.darkModeToggleInput.addEventListener('change', (e) => {
+            applyDarkMode(e.target.checked);
+        });
+
+        // Allow toggling dark mode with keyboard on the label/container
+        elements.darkModeToggleLabel.parentElement.addEventListener('keydown', (e) => {
+             if (e.key === 'Enter' || e.key === ' ') {
+                 e.preventDefault();
+                 elements.darkModeToggleInput.checked = !elements.darkModeToggleInput.checked;
+                 applyDarkMode(elements.darkModeToggleInput.checked);
+             }
+        });
+
+
+        // Initial dark mode check
+        elements.darkModeToggleInput.checked = state.darkMode;
+        applyDarkMode(state.darkMode);
+
+
+        // --- Chart Implementation (Simple Bar Chart) ---
+        let propertyChartInstance = null; // Keep track of the chart instance
+
+        function renderPropertyChart() {
+            if (propertyChartInstance) {
+                 propertyChartInstance.destroy(); // Destroy existing chart if it exists
+            }
+
+            const ctx = elements.propertyChartCanvas.getContext('2d');
+
+            // Example data: Boiling points (approximate)
+            const boilingPoints = {
+                'H₂O': 100, // High (H-bonding)
+                'CH₄': -161.5, // Low (LDF)
+                'NH₃': -33.3, // Medium (H-bonding)
+                'CO₂': -78.5, // Low (LDF) - sublimation point
+                'C₂H₅OH': 78.3 // Medium-High (H-bonding)
+            };
+
+            const labels = Object.keys(boilingPoints);
+            const data = Object.values(boilingPoints);
+
+            // Use CSS variables for chart colors dynamically
+            const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
+            const secondaryColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim();
+            const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim();
+            const borderColor = getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim();
+
+
+            propertyChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Boiling Point (°C)',
+                        data: data,
+                        backgroundColor: primaryColor,
+                        borderColor: borderColor,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: textColor // Use text color variable
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Boiling Points of Selected Molecules',
+                            color: textColor // Use text color variable
+                        },
+                         tooltip: { // Add tooltips
+                             callbacks: {
+                                 label: function(context) {
+                                     let label = context.dataset.label || '';
+                                     if (label) {
+                                         label += ': ';
+                                     }
+                                     if (context.parsed.y !== null) {
+                                         label += context.parsed.y + ' °C';
+                                     }
+                                     return label;
+                                 }
+                             }
+                         }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false, // Boiling points can be negative
+                            ticks: {
+                                color: textColor // Use text color variable
+                            },
+                            grid: {
+                                color: borderColor // Use border color variable for grid lines
+                            }
+                        },
+                        x: {
+                             ticks: {
+                                color: textColor // Use text color variable
+                            },
+                            grid: {
+                                color: borderColor // Use border color variable for grid lines
+                            }
+                        }
+                    }
+                }
+            });
+
+            window.myPropertyChart = propertyChartInstance; // Store globally or in state for access
+        }
+
+        // Function to update chart colors based on current CSS variables (e.g., for dark mode)
+        function updateChartColors(chart) {
+             const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
+             const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim();
+             const borderColor = getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim();
+
+             chart.data.datasets[0].backgroundColor = primaryColor;
+             chart.data.datasets[0].borderColor = borderColor;
+
+             chart.options.plugins.legend.labels.color = textColor;
+             chart.options.plugins.title.color = textColor;
+
+             chart.options.scales.y.ticks.color = textColor;
+             chart.options.scales.y.grid.color = borderColor;
+             chart.options.scales.x.ticks.color = textColor;
+             chart.options.scales.x.grid.color = borderColor;
+
+             chart.update();
+        }
+
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initMolstar();
+            renderPropertyChart(); // Render the chart on load
+            updatePracticeProgress(); // Initialize progress bar
+        });
+
+    </script>
+
+</body>
+</html>

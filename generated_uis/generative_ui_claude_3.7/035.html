@@ -1,0 +1,2261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding Image Recognition</title>
+    <style>
+        :root {
+            --primary-color: #4285f4;
+            --secondary-color: #34a853;
+            --accent-color: #ea4335;
+            --light-color: #f8f9fa;
+            --dark-color: #202124;
+            --gray-color: #5f6368;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --border-radius: 8px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
+            line-height: 1.6;
+            color: var(--dark-color);
+            background-color: var(--light-color);
+            padding: 0;
+            margin: 0;
+            scroll-behavior: smooth;
+        }
+
+        header {
+            background-color: white;
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: var(--primary-color);
+            transition: var(--transition);
+        }
+
+        h1:hover {
+            transform: translateY(-2px);
+        }
+
+        .progress-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .progress-dots {
+            display: flex;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #ddd;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .dot.active {
+            background-color: var(--primary-color);
+            transform: scale(1.2);
+        }
+
+        .dot:hover {
+            transform: scale(1.1);
+            background-color: #ccc;
+        }
+
+        .dot.active:hover {
+            background-color: var(--primary-color);
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .step-container {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .step-container.active {
+            display: block;
+        }
+
+        .step-content {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .step-content:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+            position: relative;
+            display: inline-block;
+        }
+
+        h2::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -5px;
+            width: 100%;
+            height: 3px;
+            background-color: var(--primary-color);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
+
+        .step-content:hover h2::after {
+            transform: scaleX(1);
+        }
+
+        p {
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+            line-height: 1.7;
+        }
+
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+        }
+
+        button {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: var(--border-radius);
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: -100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+
+        button:hover::after {
+            left: 100%;
+        }
+
+        button:hover {
+            background-color: #3367d6;
+            transform: translateY(-2px);
+        }
+
+        button:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.3);
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        button:disabled::after {
+            display: none;
+        }
+
+        .btn-prev {
+            background-color: var(--gray-color);
+        }
+
+        .btn-prev:hover {
+            background-color: #484b4f;
+        }
+
+        .highlight {
+            color: var(--accent-color);
+            font-weight: 600;
+            position: relative;
+            padding: 0 2px;
+        }
+
+        .highlight::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: rgba(234, 67, 53, 0.3);
+            border-radius: 2px;
+        }
+
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+            margin: 1.5rem 0;
+        }
+
+        .pixel-container {
+            position: relative;
+            margin: 2rem 0;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .pixel-container:hover {
+            box-shadow: var(--shadow);
+            transform: translateY(-3px);
+        }
+
+        .pixel-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 1px;
+            background-color: #eee;
+            padding: 10px;
+        }
+
+        .pixel {
+            aspect-ratio: 1;
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .pixel:hover {
+            background-color: #f0f8ff;
+            transform: scale(1.1);
+            z-index: 2;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .pixel-value {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 10;
+        }
+
+        .feature-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin: 2rem 0;
+        }
+
+        .feature-card {
+            flex: 1 1 300px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            background-color: white;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background-color: var(--secondary-color);
+            transform: scaleY(0);
+            transform-origin: bottom;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow);
+        }
+
+        .feature-card:hover::before {
+            transform: scaleY(1);
+        }
+
+        .feature-card h3 {
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+            position: relative;
+            display: inline-block;
+        }
+
+        .feature-card h3::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -3px;
+            width: 100%;
+            height: 2px;
+            background-color: var(--secondary-color);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover h3::after {
+            transform: scaleX(1);
+        }
+
+        .feature-image {
+            width: 100%;
+            height: auto;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            transition: var(--transition);
+        }
+
+        .feature-card:hover .feature-image {
+            transform: scale(1.05);
+        }
+
+        .neural-network {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 2rem 0;
+            padding: 2rem;
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .neural-network:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .network-layer {
+            display: flex;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .network-node {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            margin: 0 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            position: relative;
+            z-index: 2;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .network-node:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 10px rgba(66, 133, 244, 0.5);
+        }
+
+        .network-connections {
+            position: absolute;
+            top: 40px;
+            left: 0;
+            width: 100%;
+            height: 30px;
+            z-index: 1;
+        }
+
+        .connection {
+            position: absolute;
+            background-color: #ccc;
+            height: 2px;
+            transform-origin: 0 0;
+            transition: background-color 0.3s ease;
+        }
+
+        .network-node:hover + .network-connections .connection,
+        .network-connections:hover .connection {
+            background-color: var(--primary-color);
+        }
+
+        .demo-zone {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-top: 3rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .demo-zone:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .demo-zone h2 {
+            color: var(--secondary-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-container {
+            border: 2px dashed #ccc;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-container:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(66, 133, 244, 0.05);
+        }
+
+        .upload-container.dragover {
+            background-color: rgba(66, 133, 244, 0.1);
+            border-color: var(--primary-color);
+            transform: scale(1.01);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-button {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            margin-top: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-button::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: -100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+
+        .upload-button:hover::after {
+            left: 100%;
+        }
+
+        .upload-button:hover {
+            background-color: #2d9249;
+            transform: translateY(-2px);
+        }
+
+        .result-container {
+            display: none;
+            margin-top: 2rem;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            background-color: rgba(52, 168, 83, 0.05);
+            border: 1px solid rgba(52, 168, 83, 0.2);
+        }
+
+        .result-container.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .result-image-container {
+            position: relative;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .result-image {
+            width: 100%;
+            max-height: 400px;
+            object-fit: contain;
+            transition: var(--transition);
+        }
+
+        .result-image-container:hover .result-image {
+            transform: scale(1.02);
+        }
+
+        .detection-box {
+            position: absolute;
+            border: 3px solid var(--accent-color);
+            background-color: rgba(234, 67, 53, 0.2);
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            color: white;
+            font-weight: bold;
+            padding-bottom: 5px;
+            transition: var(--transition);
+        }
+
+        .detection-box:hover {
+            background-color: rgba(234, 67, 53, 0.3);
+            border-width: 4px;
+        }
+
+        .result-labels {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 1rem;
+        }
+
+        .result-label {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: var(--transition);
+            cursor: default;
+        }
+
+        .result-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .confidence {
+            background-color: rgba(255, 255, 255, 0.3);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            transition: var(--transition);
+        }
+
+        .result-label:hover .confidence {
+            background-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            border-bottom: 1px dotted var(--primary-color);
+            cursor: help;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--dark-color);
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            pointer-events: none;
+        }
+
+        .tooltip .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--dark-color) transparent transparent transparent;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .progress-bar {
+            height: 4px;
+            background-color: #eee;
+            border-radius: 2px;
+            margin-top: 5px;
+            overflow: hidden;
+            position: relative;
+            width: 100%;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary-color);
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #ccc;
+            margin-bottom: 1rem;
+            transition: var(--transition);
+        }
+
+        .upload-container:hover .upload-icon {
+            color: var(--primary-color);
+            transform: scale(1.1);
+        }
+
+        .loading-spinner {
+            display: none;
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-spinner.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        ol, ul {
+            margin-left: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .key-term {
+            font-weight: 600;
+            color: var(--primary-color);
+            border-bottom: 1px dashed;
+            cursor: help;
+            position: relative;
+        }
+
+        .key-term:hover::after {
+            content: attr(data-definition);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--dark-color);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-weight: normal;
+            font-size: 0.9rem;
+            width: 200px;
+            z-index: 10;
+        }
+
+        .key-term:hover::before {
+            content: '';
+            position: absolute;
+            bottom: calc(100% - 5px);
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--dark-color) transparent transparent transparent;
+            z-index: 10;
+        }
+
+        #stepProgress {
+            width: 100%;
+            max-width: 300px;
+            margin-left: 20px;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+                text-align: center;
+            }
+
+            .progress-container {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .step-content {
+                padding: 1.5rem;
+            }
+
+            .feature-container {
+                flex-direction: column;
+            }
+
+            .network-node {
+                width: 30px;
+                height: 30px;
+                font-size: 0.8rem;
+            }
+
+            .navigation-buttons {
+                flex-direction: column-reverse;
+                gap: 1rem;
+            }
+
+            button {
+                width: 100%;
+                justify-content: center;
+            }
+
+            #stepProgress {
+                display: none;
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .feature-card {
+                flex: 1 1 45%;
+            }
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --light-color: #121212;
+                --dark-color: #f8f9fa;
+                --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            }
+
+            body {
+                background-color: #121212;
+                color: #f8f9fa;
+            }
+
+            header, .step-content, .neural-network, .demo-zone, .feature-card {
+                background-color: #1e1e1e;
+            }
+
+            .pixel {
+                background-color: #333;
+            }
+
+            .pixel:hover {
+                background-color: #444;
+            }
+
+            .pixel-grid {
+                background-color: #222;
+            }
+
+            .upload-container {
+                border-color: #444;
+            }
+
+            .upload-icon {
+                color: #666;
+            }
+        }
+        
+        /* New additions for enhanced interactivity */
+        .interactive-slider {
+            width: 100%;
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background-color: rgba(66, 133, 244, 0.05);
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(66, 133, 244, 0.2);
+        }
+        
+        .slider-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .slider-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .slider-label {
+            font-weight: 600;
+            min-width: 150px;
+        }
+        
+        .range-slider {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 8px;
+            border-radius: 4px;
+            background: #ddd;
+            outline: none;
+            transition: var(--transition);
+        }
+        
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .range-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .range-slider:hover::-webkit-slider-thumb {
+            transform: scale(1.2);
+            box-shadow: 0 0 8px rgba(66, 133, 244, 0.5);
+        }
+        
+        .range-slider:hover::-moz-range-thumb {
+            transform: scale(1.2);
+            box-shadow: 0 0 8px rgba(66, 133, 244, 0.5);
+        }
+        
+        .slider-value {
+            min-width: 50px;
+            text-align: center;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .filter-preview {
+            margin-top: 1rem;
+            position: relative;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+        
+        .filter-preview:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .filter-image {
+            width: 100%;
+            display: block;
+            transition: var(--transition);
+        }
+        
+        .filter-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            transition: var(--transition);
+        }
+        
+        .image-compare {
+            position: relative;
+            overflow: hidden;
+            margin: 2rem 0;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+        
+        .image-compare-before,
+        .image-compare-after {
+            width: 100%;
+            display: block;
+        }
+        
+        .image-compare-after {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 50%;
+            height: 100%;
+            border-right: 3px solid white;
+            overflow: hidden;
+        }
+        
+        .image-compare-slider {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 40px;
+            transform: translateX(-50%);
+            cursor: ew-resize;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .slider-handle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+        
+        .slider-handle:hover {
+            transform: scale(1.1);
+        }
+        
+        .slider-handle::before,
+        .slider-handle::after {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 2px;
+            background: #333;
+        }
+        
+        .slider-handle::before {
+            transform: translateX(-5px) rotate(45deg);
+        }
+        
+        .slider-handle::after {
+            transform: translateX(-5px) rotate(-45deg);
+        }
+        
+        .keyboard-shortcut {
+            display: inline-block;
+            padding: 2px 6px;
+            background: #f1f3f4;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+            color: #333;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin: 0 3px;
+        }
+        
+        /* Accessibility improvements */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>Understanding Image Recognition</h1>
+            <div class="progress-container">
+                <div class="progress-dots" role="tablist" aria-label="Tutorial progress">
+                    <span class="dot active" data-step="1" role="tab" aria-selected="true" aria-controls="step1" tabindex="0" aria-label="Introduction"></span>
+                    <span class="dot" data-step="2" role="tab" aria-selected="false" aria-controls="step2" tabindex="0" aria-label="Digital Images as Pixels"></span>
+                    <span class="dot" data-step="3" role="tab" aria-selected="false" aria-controls="step3" tabindex="0" aria-label="Feature Extraction"></span>
+                    <span class="dot" data-step="4" role="tab" aria-selected="false" aria-controls="step4" tabindex="0" aria-label="Neural Networks"></span>
+                    <span class="dot" data-step="5" role="tab" aria-selected="false" aria-controls="step5" tabindex="0" aria-label="Training & Applications"></span>
+                </div>
+                <div id="stepProgress" aria-hidden="true">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 20%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Step 1: Introduction -->
+        <div id="step1" class="step-container active" data-step="1" role="tabpanel" aria-labelledby="step1-tab">
+            <div class="step-content">
+                <h2>What is Image Recognition?</h2>
+                <p>
+                    Image recognition is a fascinating field of computer vision that enables machines to 
+                    <span class="highlight">identify and detect objects or features</span> in digital images or videos. 
+                    It's the technology behind many applications you use daily, from face unlock on your smartphone 
+                    to automated photo tagging on social media.
+                </p>
+                <p>
+                    At its core, image recognition is about teaching computers to "see" and understand visual information 
+                    the way humans do. However, computers don't naturally perceive images as we do. They need to be trained 
+                    through complex algorithms and mathematical models.
+                </p>
+                <p>
+                    In this interactive guide, we'll break down the fascinating process of how image recognition works, 
+                    from pixels to predictions, in five easy-to-understand steps:
+                </p>
+                <ol>
+                    <li>Understanding digital images as pixels</li>
+                    <li>Feature extraction and detection</li>
+                    <li>Neural networks and deep learning</li>
+                    <li>Training and improving models</li>
+                    <li>Real-world applications</li>
+                </ol>
+                <p>
+                    By the end, you'll have a clear understanding of the technology that powers everything from medical 
+                    diagnostics to self-driving cars. You'll also get to try a simplified image recognition demo yourself!
+                </p>
+                <p>
+                    <strong>Keyboard navigation:</strong> Use <span class="keyboard-shortcut">←</span> and <span class="keyboard-shortcut">→</span> arrow keys to navigate between steps, or press <span class="keyboard-shortcut">1</span> through <span class="keyboard-shortcut">5</span> to jump to a specific step.
+                </p>
+            </div>
+            <div class="navigation-buttons">
+                <button class="btn-prev" disabled aria-label="Previous step">Previous</button>
+                <button class="btn-next" aria-label="Next step: Digital Images as Pixels">Next <span>→</span></button>
+            </div>
+        </div>
+
+        <!-- Step 2: Digital Images as Pixels -->
+        <div id="step2" class="step-container" data-step="2" role="tabpanel" aria-labelledby="step2-tab" hidden>
+            <div class="step-content">
+                <h2>Step 1: Digital Images as Pixels</h2>
+                <p>
+                    Before a computer can recognize objects in an image, it needs to understand what an image actually is. 
+                    To a computer, an image isn't a visual scene—it's a grid of numbers called 
+                    <span class="tooltip">pixels<span class="tooltip-text">Short for "picture elements," pixels are the smallest units of a digital image.</span></span>.
+                </p>
+                <p>
+                    Each pixel represents a specific color, encoded as numerical values. In a standard RGB color image, 
+                    each pixel contains three values representing the intensity of Red, Green, and Blue colors 
+                    (typically from 0 to 255).
+                </p>
+
+                <div class="pixel-container">
+                    <div class="pixel-grid" id="pixelGrid" aria-label="Interactive pixel grid visualization">
+                        <!-- Pixels will be generated by JavaScript -->
+                    </div>
+                    <div class="pixel-value" id="pixelValue" aria-live="polite"></div>
+                </div>
+
+                <p>
+                    <strong>Try it:</strong> Hover over or tap the pixels above to see their RGB values. This is how computers "see" images—as arrays of numbers!
+                </p>
+
+                <div class="interactive-slider">
+                    <h3>Experiment: Image Resolution</h3>
+                    <p>Adjust the slider to see how different pixel resolutions affect image clarity:</p>
+                    
+                    <div class="slider-container">
+                        <div class="slider-controls">
+                            <span class="slider-label">Resolution:</span>
+                            <input type="range" class="range-slider" id="resolutionSlider" min="4" max="32" value="16" aria-label="Image resolution slider">
+                            <span class="slider-value" id="resolutionValue">16×16</span>
+                        </div>
+                        
+                        <div class="filter-preview">
+                            <canvas id="resolutionCanvas" width="400" height="300" aria-label="Image resolution preview"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <p>
+                    For a typical 1080p image (1920×1080 pixels), that's over 2 million pixels, each with three color values. 
+                    The first challenge in image recognition is processing this massive amount of raw numerical data.
+                </p>
+
+                <p>
+                    When processing an image, the computer first normalizes these values (typically to a range between 0 and 1) 
+                    to make the calculations more efficient. This standardized grid of numbers becomes the input for the next 
+                    stage of image recognition.
+                </p>
+            </div>
+            <div class="navigation-buttons">
+                <button class="btn-prev" aria-label="Previous step: Introduction">← Previous</button>
+                <button class="btn-next" aria-label="Next step: Feature Extraction">Next <span>→</span></button>
+            </div>
+        </div>
+
+        <!-- Step 3: Feature Extraction -->
+        <div id="step3" class="step-container" data-step="3" role="tabpanel" aria-labelledby="step3-tab" hidden>
+            <div class="step-content">
+                <h2>Step 2: Feature Extraction and Detection</h2>
+                <p>
+                    Working directly with raw pixels is inefficient, so the next step is to extract meaningful 
+                    <span class="tooltip">features<span class="tooltip-text">Distinctive attributes or patterns in an image that help identify objects, such as edges, corners, or textures.</span></span> 
+                    from the image. Features are distinctive patterns or attributes that help identify objects.
+                </p>
+
+                <div class="feature-container">
+                    <div class="feature-card">
+                        <h3>Edges</h3>
+                        <div class="feature-image" id="edgeDetection" aria-label="Edge detection visualization">
+                            <!-- Edge detection visualization will be added by JavaScript -->
+                        </div>
+                        <p>Edges are boundaries between different regions in an image. They often outline objects and are crucial for shape recognition.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Textures</h3>
+                        <div class="feature-image" id="textureDetection" aria-label="Texture detection visualization">
+                            <!-- Texture detection visualization will be added by JavaScript -->
+                        </div>
+                        <p>Textures are repeated patterns that provide information about the surface properties of objects (smooth, rough, regular, irregular).</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Shapes</h3>
+                        <div class="feature-image" id="shapeDetection" aria-label="Shape detection visualization">
+                            <!-- Shape detection visualization will be added by JavaScript -->
+                        </div>
+                        <p>Shapes are distinctive contours or silhouettes that help identify objects regardless of color or texture variations.</p>
+                    </div>
+                </div>
+
+                <div class="interactive-slider">
+                    <h3>Experiment: Edge Detection Filters</h3>
+                    <p>Move the slider to adjust the edge detection sensitivity:</p>
+                    
+                    <div class="slider-container">
+                        <div class="slider-controls">
+                            <span class="slider-label">Edge Threshold:</span>
+                            <input type="range" class="range-slider" id="edgeThresholdSlider" min="10" max="100" value="50" aria-label="Edge detection threshold slider">
+                            <span class="slider-value" id="thresholdValue">50%</span>
+                        </div>
+                        
+                        <div class="image-compare" id="edgeCompareContainer">
+                            <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAB4AHgDASIAAhEBAxEB/8QAHAAAAgIDAQEAAAAAAAAAAAAABQYABAIDBwEI/8QAOxAAAgEDAwIEBAQEBQMFAAAAAQIDAAQRBRIhMUEGE1FhByJxgRQykaEVI0KxM1LB0fAWNOElYnKCsv/EABsBAAIDAQEBAAAAAAAAAAAAAAMEAQIFAAYH/8QALBEAAgIBAwMCBAcBAAAAAAAAAAECAxEEEiEFMUETIlFhcbEUIzKBkaHB0f/aAAwDAQACEQMRAD8A6Xo2nM2FZeDTRFp6qoGwZpf0m5VVG45p1srgFBzUEMSWwHQCvJLcYHFMRiVgcivDaA9qkCxJYq3OKgtbqKc0jAVGOKHXF2EbANQyA5YQUaQDpQe6UE1DXrYzQG9uQM81DYDc5Yz3aAg8UJuVBzUXF2CpyaH3F1uB5qGwO/JrXiAA81rQjPNR5+4HNYiXJ6igTlknPJsVp4K0rLdBUquzJyQQcA4qUNFgpT4Ow6YQQOaeNNYYHNc90e+KkDNOVlqO1RzVwxrSsDjNFLW5BGM0HilDDIrZFKVPWpBYUlcHvWDXIHeoMoI61rllBzUkGTXBJ61pnvAnc0PvL0KDzQC/1IYPzVVsm6wLXGoAZ5oLeahuB5pev9QDZO6h017vB+aq2ZpJssXOoliea0i6LHrWh5yeprTJcYqrZR2YHkbdIRnNbVbAoXBLk81uMuBQZMrJl8yZFSpNSq5ILNnKLG9KkZzTbYakMDmuaJcspHNMFnfZA5q6ZpUahNHSLPUMgc0Rgvgcc1zey1IgDmjdvqgIHNXTNWFykOguQRWLXGOtL8d/kda2LdbqtksWU9RMJPdgDvQu8vwAeaCX+qbQeaWtQ1YgHLVXcVdsEb9S1ULnmgN9qYwfmpbvtULZ+al+71MtnmhykZk7CxdakWzzQqa9LZ5rRPdlieaHzXGc81RyKOZvluCTW9ZMihaTbmrTPg0NyKOZvMuKwkcmtJbNQTVGyCUkzJnzWDNWBavCwqMEZLJfNSq+aloJJVt7zBHNGLXUcAc0oJLg1vguCMc1ZSNGrUNDhb6kMDmicOpDA5rnUN5g9aLWl/wDNyaspmjXqcjpdrfAjrRCO8BHWue2V/wDNyaKQ34I61dSNGF2R0G5vgAeaA6jqQAPNBr/UAM80t6jqQwea0IWGfbfgKXuqDA5pd1DVCQeaCXupnB5oHd35JPNDlMyrLixcXxYnmg9xdFieazurvJPNDZpyxPNDcgMpGc0hY1gXzWtmzWJeq5KtmxXrNZM1VLVGSrZ6WqparGasHNRklSLVRWtZasS1VJyb1er1KlRkgwVs801W1yCBzSlE/NMNnNwOa0Is1qLcDDaXoI61vju8Ac0t29xyOaIQ3fA5q6ZqV2jBc34APNBdQ1AAHmgd/fgA80v3+ogA81oQsM+28Kal1AAHmgOoaoSD1oJeagcHmgV5fEk81WUzKsuwMl/qBJPNA7q9LZ5rXdXZYnmhk85Ymq5M+UjeZM1gXrAtzWJeq5KNntSvK9qcEZLJaqlqxLVUtUZKtmTGsGNRM1YMajJVs9LVGaxLVGagjJmpqVFSoyQfE/NMNnNwOaXIjzTBaScDmtGLNWiw0W9xyOaIQ3nA5pbt5uRzRGGfgc1dM1K7RivtQAB5oBf6gADzQHUL7APNALy/JJ5q8JmVZdgYL/UAQeaB3d8ST1oHd3hYnmhk85Ymq5M+UiZbgsTzQ+WXJrOWTJrS5qrZRs9LVgWrEtWJaq5KtmTGsGNYlqwZqjBVs9LVgxrFmrBmqMFWz1jWDGomNYM1QQWTUqM1KjJBnE3NHLOXgc0BjbmidpJwOa0Is1aJjDa3HA5ojDdcDmlm3m5HNEYZuBzV0zUrsGS+1AAHmgF5fAA80v6hfYB5oBd35JPNXhMyrLsDJf6gCDzQO7vCSea0Xl8ST1oHPcFieauZ8pEyy5Nc80uTWuWTJrS7VVsq2elpWJasS1Ylqrkq2ZM1YM1YM1YM1RgqzJmrBmrFmrBmqMFWz1jWLGvGNYsahkFk1KjNSoyQaI25ojbScDmgkTcURtpOBzWhFmpRMYbWbgc0RgnwBzS3bzcjmiEM3A5q6ZqV2DDeX4APNALy+AB5pfv77APNALu+JJ5q8JmVZdgZL7UASea0Xl8ST1rRdXpYnmhc8+STzVzPlI2TS5Nc80uTWqWTJrS7daqUbPS1YlqxLViWquSrZkzVgzVgzVizVGCrMmNYsaxZqwZqjBVs9Y1ixrxjWLGoZBZNSozUqMkGqNuKI20nA5oJG3FEbaXgc1oRZq0TGG2m4HNEIZuBzS3bzcjmiEM3A5q6ZqV2DFfX4APNALu+AB5rRfX2AeaA3V8STzV4TMqy7Ayal1AEnmtF3elieaHXF4STzWiabJPNXM+UiZJcmueSXJrVLJk1pdqqUbPWasWasWasWarFWzJmrBmrBmrFmqMFWzJmrBmsGasGaoILJqVGalRkg1RtxRG3l4HNBIm4ojbS8DmtCLNSiYw203A5ohDNwOaW7abkc0Qhm4HNXTNSuwYr6/AB5oDdXwAPNaL6+wDzQG6vSSea0ITMqy7AyX1+CTzWi7vSxPNDri7JJ5rRLLk1cz5SJklyTXPLLk1qlkyTWl2qpRs9LVizViWrEtVirZkzVgzVgzVizVGCrMmasGasGasGaowVbPWNYsaxY1izVDILJqVGalRkg1RtxRG2l4HNA4m4ojbS8DmtCLNSiYw203A5ohDNwOaXLabkc0Qhm4HNXTNSuwYb6/AB5oBdXwAPNaL6+wDzQG6vSSea0ITMqy7AyXt+CTzWi7vCxPNDri7JJ5rRLLk1cz5SNcsuTXPLLk1qlkyTWl2qpRszLViWrEtWJaq5KtmTNWDNWDNWLNUYKsyZqwZqwZqwZqjBVs9Y1ixrxjWLGoZBZNSozUqMkGqJuKI20vA5oJE3FEbaXgc1oRZqUTGG2m4HNEIZuBzS3bTcjmiEM3A5q6ZqV2DFfX4APNALq+AB5rRfX2AeaA3V8STzV4TMqy7AyXt+CTzWi7vCxPNDri7JJ5rRLLk1cz5SNcsuTXPLLk1qlkyTWl2qpRs9LVizViWrEtVirZkzVgzVgzVizVGCrMmasGasGasGaowVbPWNYsaxY1izVDILJqVGalRkg1RNxRG2l4HNA4m4ojbS8DmtCLNSiYw203A5ohDNwOaW7abkc0Qhm4HNXTNSuwYb6/AB5oBdXwAPNaL6+wDzQG6vSSea0ITMqy7AyXt+CTzWi7vCxPNDri7JJ5rRLLk1cz5SNcsuTXPLLk1qlkyTWl2qpRszLViWrEtWJaq5KtmTNWDNWDNWLNUYKsyZqwZqwZqwZqjBVs9Y1ixrxjWLGoZBZNSozUqMkGqJuKI20vA5oJE3FEbaXgc1oRZqUTGG2m4HNEIZuBzS3bTcjmiEM3A5q6ZqV2DFfX4APNALq+AB5rRfX2AeaA3V8STzV4TMqy7AyXt+CTzWi7vCxPNDri7JJ5rRLLk1cz5SNcsuTXPLLk1qlkyTWl2qpRs9LViWrEtWJaq5KtmTNWDNWDNWLNUYKsyZqwZqwZqwZqjBVs9Y1ixrxjWLGoZBZNSozUqMkGqJuKI20vA5oJE3FEbaXgc1oRZqUTGG2m4HNEIZuBzS3bTcjmiEM3A5q6ZqV2DFfX4APNALq+AB5rRfX2AeaA3V8STzV4TMqy7AyXt+CTzWi7vCxPNDri7JJ5rRLLk1cz5SDk0uTXPJJcmueSS5NapZcmtTtVSjZmWrEtWJasS1VyVbMmasGasGasWaowVZkzVgzVgzVgzVGCrZ6xrFjXjGsWNQyCyalRmpUZIP/Z" class="image-compare-before" alt="Original image" id="originalImage">
+                            <div class="image-compare-after" id="edgeAfterContainer">
+                                <img src="data:image/jpeg;base64,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" class="image-compare-after" alt="Edge detected image" id="edgeImage">
+                            </div>
+                            <div class="image-compare-slider" id="edgeSlider">
+                                <div class="slider-handle" aria-hidden="true"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <p>
+                    Feature extraction uses various mathematical operations like 
+                    <span class="tooltip">convolution<span class="tooltip-text">A mathematical operation that applies a filter to an image to extract specific features like edges or textures.</span></span> 
+                    to transform raw pixel data into more meaningful representations. These operations act like filters that highlight 
+                    specific patterns while suppressing irrelevant details.
+                </p>
+
+                <p>
+                    Traditional computer vision relied on manually engineered feature extractors like SIFT (Scale-Invariant Feature Transform) 
+                    or HOG (Histogram of Oriented Gradients). Modern deep learning approaches, however, learn to extract features 
+                    automatically through training.
+                </p>
+            </div>
+            <div class="navigation-buttons">
+                <button class="btn-prev" aria-label="Previous step: Digital Images as Pixels">← Previous</button>
+                <button class="btn-next" aria-label="Next step: Neural Networks">Next <span>→</span></button>
+            </div>
+        </div>
+
+        <!-- Step 4: Neural Networks -->
+        <div id="step4" class="step-container" data-step="4" role="tabpanel" aria-labelledby="step4-tab" hidden>
+            <div class="step-content">
+                <h2>Step 3: Neural Networks and Deep Learning</h2>
+                <p>
+                    Modern image recognition systems use 
+                    <span class="tooltip">neural networks<span class="tooltip-text">Computing systems inspired by the human brain that can learn to recognize patterns in data.</span></span>, 
+                    particularly Convolutional Neural Networks (CNNs), to process images. These networks are inspired by how the human 
+                    visual cortex works and are exceptionally good at recognizing patterns in visual data.
+                </p>
+
+                <div class="neural-network">
+                    <div class="network-layer" id="inputLayer" aria-label="Neural network input layer">
+                        <!-- Input layer nodes will be added by JavaScript -->
+                    </div>
+                    <div class="network-connections" id="connections1" aria-hidden="true">
+                        <!-- Connections will be added by JavaScript -->
+                    </div>
+                    <div class="network-layer" id="hiddenLayer1" aria-label="Neural network hidden layer 1">
+                        <!-- Hidden layer 1 nodes will be added by JavaScript -->
+                    </div>
+                    <div class="network-connections" id="connections2" aria-hidden="true">
+                        <!-- Connections will be added by JavaScript -->
+                    </div>
+                    <div class="network-layer" id="hiddenLayer2" aria-label="Neural network hidden layer 2">
+                        <!-- Hidden layer 2 nodes will be added by JavaScript -->
+                    </div>
+                    <div class="network-connections" id="connections3" aria-hidden="true">
+                        <!-- Connections will be added by JavaScript -->
+                    </div>
+                    <div class="network-layer" id="outputLayer" aria-label="Neural network output layer">
+                        <!-- Output layer nodes will be added by JavaScript -->
+                    </div>
+                </div>
+
+                <div class="interactive-slider">
+                    <h3>Experiment: Neural Network Layer Activation</h3>
+                    <p>Adjust the slider to see how different layers of a neural network activate for image detection:</p>
+                    
+                    <div class="slider-container">
+                        <div class="slider-controls">
+                            <span class="slider-label">Layer Depth:</span>
+                            <input type="range" class="range-slider" id="layerDepthSlider" min="1" max="4" value="1" aria-label="Neural network layer depth slider">
+                            <span class="slider-value" id="layerDepthValue">Layer 1 (Edge Detection)</span>
+                        </div>
+                        
+                        <div class="filter-preview">
+                            <canvas id="layerCanvas" width="400" height="300" aria-label="Neural network layer visualization"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <p>
+                    A CNN consists of multiple layers that process image data in sequence:
+                </p>
+
+                <ol>
+                    <li>
+                        <strong>Convolutional Layers:</strong> Apply filters to extract features from the image, 
+                        like edges, textures, and shapes.
+                    </li>
+                    <li>
+                        <strong>Pooling Layers:</strong> Reduce the spatial dimensions of the data, making the network 
+                        more efficient and resistant to small image variations.
+                    </li>
+                    <li>
+                        <strong>Fully Connected Layers:</strong> Combine all the features to make a final decision about 
+                        what the image contains.
+                    </li>
+                </ol>
+
+                <p>
+                    The power of neural networks comes from their ability to learn hierarchical representations. 
+                    Early layers might detect simple features like edges and corners, while deeper layers combine 
+                    these to recognize more complex patterns like eyes, wheels, or doors, and eventually entire objects 
+                    like faces, cars, or buildings.
+                </p>
+
+                <p>
+                    This approach allows neural networks to recognize objects even when they appear in different 
+                    positions, lighting conditions, or partial occlusions—a capability known as 
+                    <span class="tooltip">invariance<span class="tooltip-text">The ability to recognize objects regardless of changes in their appearance, position, or orientation.</span></span>.
+                </p>
+            </div>
+            <div class="navigation-buttons">
+                <button class="btn-prev" aria-label="Previous step: Feature Extraction">← Previous</button>
+                <button class="btn-next" aria-label="Next step: Training and Applications">Next <span>→</span></button>
+            </div>
+        </div>
+
+        <!-- Step 5: Training and Applications -->
+        <div id="step5" class="step-container" data-step="5" role="tabpanel" aria-labelledby="step5-tab" hidden>
+            <div class="step-content">
+                <h2>Steps 4 & 5: Training Models and Real-World Applications</h2>
+                <p>
+                    Before an image recognition system can identify objects, it needs to be trained on thousands or 
+                    even millions of labeled images. This process involves:
+                </p>
+
+                <ol>
+                    <li>
+                        <strong>Data Collection:</strong> Gathering diverse, labeled images for training.
+                    </li>
+                    <li>
+                        <strong>Training:</strong> Showing these images to the network and adjusting its parameters to 
+                        minimize recognition errors.
+                    </li>
+                    <li>
+                        <strong>Validation:</strong> Testing the model on images it hasn't seen before to ensure it generalizes well.
+                    </li>
+                    <li>
+                        <strong>Deployment:</strong> Implementing the trained model in real-world applications.
+                    </li>
+                </ol>
+
+                <div class="interactive-slider">
+                    <h3>Experiment: Model Training Visualization</h3>
+                    <p>Move the slider to see how a model improves during training:</p>
+                    
+                    <div class="slider-container">
+                        <div class="slider-controls">
+                            <span class="slider-label">Training Progress:</span>
+                            <input type="range" class="range-slider" id="trainingSlider" min="0" max="100" value="0" aria-label="Model training progress slider">
+                            <span class="slider-value" id="trainingValue">0% (Untrained)</span>
+                        </div>
+                        
+                        <div class="filter-preview">
+                            <canvas id="trainingCanvas" width="400" height="300" aria-label="Model training visualization"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <p>
+                    The training process uses a technique called 
+                    <span class="tooltip">backpropagation<span class="tooltip-text">An algorithm that calculates how much each neuron in a network contributed to an error and adjusts the network accordingly.</span></span> 
+                    to gradually improve the model's accuracy. It's like learning from mistakes: the network makes a prediction, 
+                    compares it to the correct answer, and adjusts its internal parameters to do better next time.
+                </p>
+
+                <p>
+                    Today, image recognition powers numerous applications across industries:
+                </p>
+
+                <ul>
+                    <li>
+                        <strong>Consumer Technology:</strong> Face recognition in smartphones, photo organization in galleries, 
+                        augmented reality filters
+                    </li>
+                    <li>
+                        <strong>Healthcare:</strong> Detecting diseases in medical images, assisting in surgeries, monitoring patient conditions
+                    </li>
+                    <li>
+                        <strong>Automotive:</strong> Self-driving cars identifying road signs, pedestrians, and other vehicles
+                    </li>
+                    <li>
+                        <strong>Security:</strong> Surveillance systems, access control, identifying suspicious activities
+                    </li>
+                    <li>
+                        <strong>Agriculture:</strong> Crop disease detection, fruit sorting, livestock monitoring
+                    </li>
+                    <li>
+                        <strong>Retail:</strong> Visual search, inventory management, checkout-free stores
+                    </li>
+                </ul>
+
+                <p>
+                    As algorithms improve and computing power increases, image recognition continues to advance, 
+                    enabling more sophisticated applications and greater accuracy.
+                </p>
+            </div>
+            <div class="navigation-buttons">
+                <button class="btn-prev" aria-label="Previous step: Neural Networks">← Previous</button>
+                <button class="btn-next" id="demoButton" aria-label="Try the demo">Try the Demo <span>→</span></button>
+            </div>
+        </div>
+
+        <!-- Demo Zone -->
+        <div class="demo-zone" id="demoZone">
+            <h2>Demo Zone: Try Image Recognition</h2>
+            <p>
+                Upload an image to see a simplified version of image recognition in action. Our demo will attempt to identify 
+                objects in your image and show you the results.
+            </p>
+
+            <div class="upload-container" id="uploadContainer" tabindex="0" aria-label="Upload image area. Drag and drop an image or click to select a file.">
+                <div class="upload-icon" aria-hidden="true">📁</div>
+                <p>Drag and drop an image here or click to select a file</p>
+                <input type="file" id="fileInput" class="file-input" accept="image/*" aria-label="File input">
+                <button class="upload-button" id="uploadButton">Select Image</button>
+            </div>
+
+            <div class="loading-spinner" id="loadingSpinner" aria-label="Loading" role="status" aria-live="polite"></div>
+
+            <div class="result-container" id="resultContainer" aria-live="polite">
+                <h3>Recognition Results</h3>
+                <div class="result-image-container" id="resultImageContainer">
+                    <img id="resultImage" class="result-image" alt="Uploaded image">
+                    <!-- Detection boxes will be added by JavaScript -->
+                </div>
+
+                <div class="result-labels" id="resultLabels" aria-label="Detected objects">
+                    <!-- Result labels will be added by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Navigation functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            const steps = document.querySelectorAll('.step-container');
+            const dots = document.querySelectorAll('.dot');
+            const prevButtons = document.querySelectorAll('.btn-prev');
+            const nextButtons = document.querySelectorAll('.btn-next');
+            const progressFill = document.querySelector('.progress-fill');
+            let currentStep = 1;
+
+            // Update the display based on the current step
+            function updateStep() {
+                steps.forEach(step => {
+                    const stepNum = parseInt(step.dataset.step);
+                    if (stepNum === currentStep) {
+                        step.classList.add('active');
+                        step.removeAttribute('hidden');
+                        step.setAttribute('aria-hidden', 'false');
+                    } else {
+                        step.classList.remove('active');
+                        step.setAttribute('hidden', 'true');
+                        step.setAttribute('aria-hidden', 'true');
+                    }
+                });
+
+                dots.forEach(dot => {
+                    const dotNum = parseInt(dot.dataset.step);
+                    if (dotNum === currentStep) {
+                        dot.classList.add('active');
+                        dot.setAttribute('aria-selected', 'true');
+                    } else {
+                        dot.classList.remove('active');
+                        dot.setAttribute('aria-selected', 'false');
+                    }
+                });
+
+                // Update progress bar
+                const progressPercentage = ((currentStep - 1) / (steps.length - 1)) * 100;
+                progressFill.style.width = `${progressPercentage}%`;
+
+                // Update button states
+                prevButtons.forEach(btn => {
+                    btn.disabled = currentStep === 1;
+                    if (currentStep === 1) {
+                        btn.setAttribute('aria-disabled', 'true');
+                    } else {
+                        btn.removeAttribute('aria-disabled');
+                    }
+                });
+
+                // Scroll to top of the active step
+                const activeStep = document.querySelector(`.step-container[data-step="${currentStep}"]`);
+                if (activeStep) {
+                    activeStep.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+                
+                // Announce for screen readers
+                const stepTitle = document.querySelector(`.step-container[data-step="${currentStep}"] h2`).textContent;
+                announceToScreenReader(`Navigated to step ${currentStep}: ${stepTitle}`);
+            }
+            
+            // Helper function for screen reader announcements
+            function announceToScreenReader(message) {
+                const announcer = document.createElement('div');
+                announcer.setAttribute('aria-live', 'polite');
+                announcer.classList.add('sr-only');
+                document.body.appendChild(announcer);
+                
+                setTimeout(() => {
+                    announcer.textContent = message;
+                    
+                    setTimeout(() => {
+                        document.body.removeChild(announcer);
+                    }, 3000);
+                }, 100);
+            }
+
+            // Set up click handlers for the navigation buttons
+            prevButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (currentStep > 1) {
+                        currentStep--;
+                        updateStep();
+                    }
+                });
+            });
+
+            nextButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (currentStep < steps.length) {
+                        currentStep++;
+                        updateStep();
+                    } else if (btn.id === 'demoButton') {
+                        // Scroll to the demo section
+                        document.getElementById('demoZone').scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
+            });
+
+            // Set up click handlers for the progress dots
+            dots.forEach(dot => {
+                dot.addEventListener('click', () => {
+                    currentStep = parseInt(dot.dataset.step);
+                    updateStep();
+                });
+                
+                // Add keyboard support for dots
+                dot.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        currentStep = parseInt(dot.dataset.step);
+                        updateStep();
+                    }
+                });
+            });
+
+            // Add keyboard navigation
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    if (currentStep < steps.length) {
+                        currentStep++;
+                        updateStep();
+                    }
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    if (currentStep > 1) {
+                        currentStep--;
+                        updateStep();
+                    }
+                } else if (e.key >= '1' && e.key <= '5') {
+                    // Jump to specific step with number keys
+                    const stepNum = parseInt(e.key);
+                    if (stepNum >= 1 && stepNum <= steps.length) {
+                        currentStep = stepNum;
+                        updateStep();
+                    }
+                }
+            });
+
+            // Initialize pixel grid
+            const pixelGrid = document.getElementById('pixelGrid');
+            const pixelValue = document.getElementById('pixelValue');
+
+            for (let i = 0; i < 64; i++) {
+                const pixel = document.createElement('div');
+                pixel.className = 'pixel';
+                
+                // Generate random RGB values
+                const r = Math.floor(Math.random() * 256);
+                const g = Math.floor(Math.random() * 256);
+                const b = Math.floor(Math.random() * 256);
+                
+                pixel.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+                pixel.dataset.r = r;
+                pixel.dataset.g = g;
+                pixel.dataset.b = b;
+                pixel.setAttribute('tabindex', '0');
+                pixel.setAttribute('role', 'button');
+                pixel.setAttribute('aria-label', `Pixel with RGB values ${r}, ${g}, ${b}`);
+                
+                const showPixelValue = (e) => {
+                    const rect = e.target.getBoundingClientRect();
+                    pixelValue.style.left = `${e.pageX}px`;
+                    pixelValue.style.top = `${rect.top + window.scrollY - 40}px`;
+                    pixelValue.textContent = `RGB: (${e.target.dataset.r}, ${e.target.dataset.g}, ${e.target.dataset.b})`;
+                    pixelValue.style.opacity = 1;
+                };
+                
+                const hidePixelValue = () => {
+                    pixelValue.style.opacity = 0;
+                };
+                
+                pixel.addEventListener('mouseover', showPixelValue);
+                pixel.addEventListener('focus', showPixelValue);
+                pixel.addEventListener('mouseout', hidePixelValue);
+                pixel.addEventListener('blur', hidePixelValue);
+                
+                // Add keyboard support
+                pixel.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        showPixelValue(e);
+                    }
+                });
+                
+                pixelGrid.appendChild(pixel);
+            }
+
+            // Initialize feature detection visualizations
+            const createFeatureVisualization = (id, color, gridSize = 5) => {
+                const container = document.getElementById(id);
+                const canvas = document.createElement('canvas');
+                canvas.width = 200;
+                canvas.height = 200;
+                container.appendChild(canvas);
+                
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#f5f5f5';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                const cellSize = canvas.width / gridSize;
+                
+                if (id === 'edgeDetection') {
+                    // Create an edge pattern
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.moveTo(50, 50);
+                    ctx.lineTo(150, 50);
+                    ctx.lineTo(150, 150);
+                    ctx.lineTo(50, 150);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Highlight the edges
+                    ctx.strokeStyle = '#ff0000';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(50, 50, 100, 100);
+
+                    // Add animation
+                    let highlightAlpha = 0;
+                    let increasing = true;
+                    
+                    function animateEdge() {
+                        if (increasing) {
+                            highlightAlpha += 0.03;
+                            if (highlightAlpha >= 1) {
+                                increasing = false;
+                            }
+                        } else {
+                            highlightAlpha -= 0.03;
+                            if (highlightAlpha <= 0) {
+                                increasing = true;
+                            }
+                        }
+                        
+                        // Redraw with highlight
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.fillStyle = '#f5f5f5';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        
+                        // Draw shape
+                        ctx.fillStyle = color;
+                        ctx.beginPath();
+                        ctx.moveTo(50, 50);
+                        ctx.lineTo(150, 50);
+                        ctx.lineTo(150, 150);
+                        ctx.lineTo(50, 150);
+                        ctx.closePath();
+                        ctx.fill();
+                        
+                        // Draw edge highlight
+                        ctx.strokeStyle = `rgba(255, 0, 0, ${highlightAlpha})`;
+                        ctx.lineWidth = 3;
+                        ctx.strokeRect(50, 50, 100, 100);
+                        
+                        requestAnimationFrame(animateEdge);
+                    }
+                    
+                    animateEdge();
+                    
+                } else if (id === 'textureDetection') {
+                    // Create a texture pattern
+                    for (let x = 0; x < gridSize; x++) {
+                        for (let y = 0; y < gridSize; y++) {
+                            if ((x + y) % 2 === 0) {
+                                ctx.fillStyle = color;
+                            } else {
+                                ctx.fillStyle = '#ffffff';
+                            }
+                            ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+                        }
+                    }
+                    
+                    // Highlight the texture pattern with animation
+                    let highlightX = 0;
+                    let highlightY = 0;
+                    
+                    function animateTexture() {
+                        // Redraw base texture
+                        for (let x = 0; x < gridSize; x++) {
+                            for (let y = 0; y < gridSize; y++) {
+                                if ((x + y) % 2 === 0) {
+                                    ctx.fillStyle = color;
+                                } else {
+                                    ctx.fillStyle = '#ffffff';
+                                }
+                                ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+                            }
+                        }
+                        
+                        // Draw moving highlight
+                        ctx.strokeStyle = '#ff0000';
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(
+                            highlightX * cellSize, 
+                            highlightY * cellSize, 
+                            cellSize, 
+                            cellSize
+                        );
+                        
+                        // Update highlight position
+                        highlightX = (highlightX + 1) % gridSize;
+                        if (highlightX === 0) {
+                            highlightY = (highlightY + 1) % gridSize;
+                        }
+                        
+                        setTimeout(() => requestAnimationFrame(animateTexture), 300);
+                    }
+                    
+                    animateTexture();
+                    
+                } else if (id === 'shapeDetection') {
+                    // Create a shape with animation
+                    let angle = 0;
+                    
+                    function animateShape() {
+                        // Clear canvas
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.fillStyle = '#f5f5f5';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        
+                        // Draw rotating triangle
+                        ctx.save();
+                        ctx.translate(100, 100);
+                        ctx.rotate(angle);
+                        ctx.translate(-100, -100);
+                        
+                        ctx.fillStyle = color;
+                        ctx.beginPath();
+                        ctx.moveTo(100, 50);
+                        ctx.lineTo(150, 150);
+                        ctx.lineTo(50, 150);
+                        ctx.closePath();
+                        ctx.fill();
+                        
+                        // Highlight the shape
+                        ctx.strokeStyle = '#ff0000';
+                        ctx.lineWidth = 3;
+                        ctx.stroke();
+                        
+                        ctx.restore();
+                        
+                        // Update angle
+                        angle += 0.01;
+                        if (angle > Math.PI * 2) {
+                            angle = 0;
+                        }
+                        
+                        requestAnimationFrame(animateShape);
+                    }
+                    
+                    animateShape();
+                }
+            };
+            
+            createFeatureVisualization('edgeDetection', '#4285f4');
+            createFeatureVisualization('textureDetection', '#34a853');
+            createFeatureVisualization('shapeDetection', '#ea4335');
+
+            // Initialize neural network visualization
+            const createNetworkLayer = (id, nodeCount) => {
+                const layer = document.getElementById(id);
+                for (let i = 0; i < nodeCount; i++) {
+                    const node = document.createElement('div');
+                    node.className = 'network-node';
+                    node.textContent = i + 1;
+                    node.setAttribute('tabindex', '0'); // Make focusable for keyboard users
+                    node.setAttribute('role', 'button');
+                    node.setAttribute('aria-label', `Node ${i + 1} in ${id}`);
+                    layer.appendChild(node);
+                }
+            };
+
+            const createConnections = (sourceId, targetId, connectionId) => {
+                const sourceLayer = document.getElementById(sourceId);
+                const targetLayer = document.getElementById(targetId);
+                const connectionsContainer = document.getElementById(connectionId);
+                
+                const sourceNodes = sourceLayer.querySelectorAll('.network-node');
+                const targetNodes = targetLayer.querySelectorAll('.network-node');
+                
+                sourceNodes.forEach(sourceNode => {
+                    const sourceRect = sourceNode.getBoundingClientRect();
+                    const sourceCenterX = sourceRect.left + sourceRect.width / 2;
+                    const sourceCenterY = sourceRect.bottom;
+                    
+                    targetNodes.forEach(targetNode => {
+                        const targetRect = targetNode.getBoundingClientRect();
+                        const targetCenterX = targetRect.left + targetRect.width / 2;
+                        const targetCenterY = targetRect.top;
+                        
+                        const connection = document.createElement('div');
+                        connection.className = 'connection';
+                        
+                        // Calculate the angle and length of the connection
+                        const dx = targetCenterX - sourceCenterX;
+                        const dy = targetCenterY - sourceCenterY;
+                        const length = Math.sqrt(dx * dx + dy * dy);
+                        const angle = Math.atan2(dy, dx);
+                        
+                        // Position and rotate the connection
+                        connection.style.width = `${length}px`;
+                        connection.style.left = `${sourceCenterX - sourceLayer.getBoundingClientRect().left}px`;
+                        connection.style.top = `${sourceCenterY - connectionsContainer.getBoundingClientRect().top}px`;
+                        connection.style.transform = `rotate(${angle}rad)`;
+                        
+                        connectionsContainer.appendChild(connection);
+                    });
+                });
+            };
+
+            createNetworkLayer('inputLayer', 4);
+            createNetworkLayer('hiddenLayer1', 5);
+            createNetworkLayer('hiddenLayer2', 5);
+            createNetworkLayer('outputLayer', 3);
+
+            // Add neural network animation
+            const networkNodes = document.querySelectorAll('.network-node');
+            let activeNodeIndex = 0;
+
+            function animateNeuralNetwork() {
+                // Reset all nodes
+                networkNodes.forEach(node => {
+                    node.style.backgroundColor = '';
+                    node.style.transform = '';
+                    node.style.boxShadow = '';
+                });
+                
+                // Activate current node
+                const currentNode = networkNodes[activeNodeIndex];
+                currentNode.style.backgroundColor = '#ea4335';
+                currentNode.style.transform = 'scale(1.2)';
+                currentNode.style.boxShadow = '0 0 10px rgba(234, 67, 53, 0.5)';
+                
+                // Increment index for next animation
+                activeNodeIndex = (activeNodeIndex + 1) % networkNodes.length;
+                
+                setTimeout(animateNeuralNetwork, 1000);
+            }
+
+            setTimeout(animateNeuralNetwork, 2000);
+
+            // File upload functionality
+            const uploadContainer = document.getElementById('uploadContainer');
+            const fileInput = document.getElementById('fileInput');
+            const uploadButton = document.getElementById('uploadButton');
+            const resultContainer = document.getElementById('resultContainer');
+            const resultImage = document.getElementById('resultImage');
+            const resultImageContainer = document.getElementById('resultImageContainer');
+            const resultLabels = document.getElementById('resultLabels');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+
+            // Handle drag and drop
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, () => {
+                    uploadContainer.classList.add('dragover');
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, () => {
+                    uploadContainer.classList.remove('dragover');
+                }, false);
+            });
+
+            uploadContainer.addEventListener('drop', handleDrop, false);
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleFiles(files);
+            }
+
+            uploadButton.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+            });
+            
+            // Add keyboard support for upload container
+            uploadContainer.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    fileInput.click();
+                }
+            });
+
+            function handleFiles(files) {
+                if (files.length > 0) {
+                    const file = files[0];
+                    if (file.type.match('image.*')) {
+                        const reader = new FileReader();
+                        
+                        // Show loading spinner
+                        loadingSpinner.classList.add('active');
+                        resultContainer.classList.remove('active');
+                        
+                        reader.onload = function(e) {
+                            resultImage.src = e.target.result;
+                            resultImage.onload = function() {
+                                // Simulate processing delay
+                                setTimeout(() => {
+                                    // Hide loading spinner
+                                    loadingSpinner.classList.remove('active');
+                                    
+                                    // Show the results container
+                                    resultContainer.classList.add('active');
+                                    
+                                    // Simulate image recognition
+                                    simulateImageRecognition();
+                                    
+                                    // Scroll to the results
+                                    resultContainer.scrollIntoView({ behavior: 'smooth' });
+                                    
+                                    // Announce results for screen readers
+                                    announceToScreenReader("Image processed. Results are displayed below.");
+                                }, 1500);
+                            };
+                        };
+                        
+                        reader.readAsDataURL(file);
+                    } else {
+                        alert('Please upload an image file.');
+                    }
+                }
+            }
+
+            function simulateImageRecognition() {
+                // Clear previous results
+                while (resultImageContainer.querySelector('.detection-box')) {
+                    resultImageContainer.removeChild(resultImageContainer.querySelector('.detection-box'));
+                }
+                resultLabels.innerHTML = '';
+                
+                // Generate random detection boxes (in a real app, these would come from the model)
+                const numObjects = Math.floor(Math.random() * 3) + 1; // 1 to 3 objects
+                
+                const possibleObjects = [
+                    { name: 'Person', confidence: 0.98 },
+                    { name: 'Car', confidence: 0.95 },
+                    { name: 'Dog', confidence: 0.92 },
+                    { name: 'Cat', confidence: 0.89 },
+                    { name: 'Chair', confidence: 0.85 },
+                    { name: 'Table', confidence: 0.82 },
+                    { name: 'Plant', confidence: 0.78 },
+                    { name: 'Building', confidence: 0.75 }
+                ];
+                
+                const selectedObjects = [];
+                for (let i = 0; i < numObjects; i++) {
+                    const randomIndex = Math.floor(Math.random() * possibleObjects.length);
+                    selectedObjects.push(possibleObjects.splice(randomIndex, 1)[0]);
+                }
+                
+                // Create detection boxes with animation
+                selectedObjects.forEach((obj, index) => {
+                    // Random position and size for the box
+                    const width = Math.floor(Math.random() * 50) + 30; // 30% to 80% of image width
+                    const height = Math.floor(Math.random() * 50) + 30; // 30% to 80% of image height
+                    const left = Math.floor(Math.random() * (100 - width)); // Ensure box is within image
+                    const top = Math.floor(Math.random() * (100 - height)); // Ensure box is within image
+                    
+                    const box = document.createElement('div');
+                    box.className = 'detection-box';
+                    box.style.width = `${width}%`;
+                    box.style.height = `${height}%`;
+                    box.style.left = `${left}%`;
+                    box.style.top = `${top}%`;
+                    box.style.opacity = '0';
+                    box.style.transform = 'scale(0.8)';
+                    box.setAttribute('aria-label', `Detected ${obj.name} with ${Math.round(obj.confidence * 100)}% confidence`);
+                    
+                    resultImageContainer.appendChild(box);
+                    
+                    // Animate box appearance
+                    setTimeout(() => {
+                        box.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                        box.style.opacity = '1';
+                        box.style.transform = 'scale(1)';
+                    }, 300 * index);
+                    
+                    // Create label with animation
+                    setTimeout(() => {
+                        const label = document.createElement('div');
+                        label.className = 'result-label';
+                        label.textContent = obj.name;
+                        label.style.opacity = '0';
+                        label.style.transform = 'translateY(10px)';
+                        
+                        const confidence = document.createElement('span');
+                        confidence.className = 'confidence';
+                        confidence.textContent = `${Math.round(obj.confidence * 100)}%`;
+                        
+                        label.appendChild(confidence);
+                        resultLabels.appendChild(label);
+                        
+                        // Animate label appearance
+                        setTimeout(() => {
+                            label.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                            label.style.opacity = '1';
+                            label.style.transform = 'translateY(0)';
+                        }, 50);
+                    }, 500 * index + 300);
+                });
+            }
+
+            // Resolution slider functionality
+            const resolutionSlider = document.getElementById('resolutionSlider');
+            const resolutionValue = document.getElementById('resolutionValue');
+            const resolutionCanvas = document.getElementById('resolutionCanvas');
+            const resCtx = resolutionCanvas.getContext('2d');
+            
+            // Create sample image for resolution demo
+            const sampleImage = new Image();
+            sampleImage.src = "data:image/jpeg;base64,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";
+            
+            sampleImage.onload = function() {
+                updateResolutionPreview();
+            };
+            
+            resolutionSlider.addEventListener('input', updateResolutionPreview);
+            
+            function updateResolutionPreview() {
+                const resolution = parseInt(resolutionSlider.value);
+                resolutionValue.textContent = `${resolution}×${resolution}`;
+                
+                // Clear canvas
+                resCtx.clearRect(0, 0, resolutionCanvas.width, resolutionCanvas.height);
+                
+                // Draw pixelated image
+                const pixelSize = resolutionCanvas.width / resolution;
+                
+                // First pass: sample the original image at low resolution
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = resolution;
+                tempCanvas.height = resolution;
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                // Draw the image at low resolution
+                tempCtx.drawImage(sampleImage, 0, 0, resolution, resolution);
+                
+                // Second pass: scale up the low resolution image
+                resCtx.imageSmoothingEnabled = false; // Disable smoothing for pixelated effect
+                resCtx.drawImage(tempCanvas, 0, 0, resolutionCanvas.width, resolutionCanvas.height);
+                
+                // Draw grid lines
+                if (resolution <= 16) {
+                    resCtx.strokeStyle = 'rgba(200, 200, 200, 0.5)';
+                    resCtx.lineWidth = 1;
+                    
+                    for (let x = 0; x <= resolution; x++) {
+                        resCtx.beginPath();
+                        resCtx.moveTo(x * pixelSize, 0);
+                        resCtx.lineTo(x * pixelSize, resolutionCanvas.height);
+                        resCtx.stroke();
+                    }
+                    
+                    for (let y = 0; y <= resolution; y++) {
+                        resCtx.beginPath();
+                        resCtx.moveTo(0, y * pixelSize);
+                        resCtx.lineTo(resolutionCanvas.width, y * pixelSize);
+                        resCtx.stroke();
+                    }
+                }
+            }
+            
+            // Edge detection threshold slider
+            const edgeThresholdSlider = document.getElementById('edgeThresholdSlider');
+            const thresholdValue = document.getElementById('thresholdValue');
+            const edgeCompareContainer = document.getElementById('edgeCompareContainer');
+            const edgeAfterContainer = document.getElementById('edgeAfterContainer');
+            const edgeSlider = document.getElementById('edgeSlider');
+            const originalImage = document.getElementById('originalImage');
+            const edgeImage = document.getElementById('edgeImage');
+            
+            // Initialize edge detection slider
+            edgeThresholdSlider.addEventListener('input', function() {
+                const threshold = edgeThresholdSlider.value;
+                thresholdValue.textContent = `${threshold}%`;
+                
+                // Simulate edge detection with different thresholds
+                // In a real app, you would apply an actual edge detection algorithm
+                const opacity = 0.3 + (threshold / 100) * 0.7;
+                edgeImage.style.filter = `brightness(0.2) contrast(${1 + threshold/25}) invert(1) opacity(${opacity})`;
+            });
+            
+            // Initialize edge comparison slider functionality
+            let isDragging = false;
+            
+            function initComparisonSlider() {
+                const sliderHandle = edgeSlider.querySelector('.slider-handle');
+                
+                // Set initial position
+                setSliderPosition(50);
+                
+                // Event listeners
+                edgeSlider.addEventListener('mousedown', startDrag);
+                edgeSlider.addEventListener('touchstart', startDrag, { passive: true });
+                
+                document.addEventListener('mousemove', drag);
+                document.addEventListener('touchmove', drag, { passive: false });
+                
+                document.addEventListener('mouseup', endDrag);
+                document.addEventListener('touchend', endDrag);
+                
+                // Keyboard accessibility
+                edgeSlider.setAttribute('tabindex', '0');
+                edgeSlider.setAttribute('role', 'slider');
+                edgeSlider.setAttribute('aria-label', 'Compare original and edge-detected images');
+                edgeSlider.setAttribute('aria-valuemin', '0');
+                edgeSlider.setAttribute('aria-valuemax', '100');
+                edgeSlider.setAttribute('aria-valuenow', '50');
+                
+                edgeSlider.addEventListener('keydown', function(e) {
+                    let newPosition = parseInt(edgeSlider.getAttribute('aria-valuenow'));
+                    
+                    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+                        newPosition = Math.max(0, newPosition - 5);
+                        e.preventDefault();
+                    } else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+                        newPosition = Math.min(100, newPosition + 5);
+                        e.preventDefault();
+                    }
+                    
+                    setSliderPosition(newPosition);
+                });
+                
+                function startDrag(e) {
+                    isDragging = true;
+                    drag(e);
+                }
+                
+                function drag(e) {
+                    if (!isDragging) return;
+                    
+                    e.preventDefault();
+                    
+                    const containerRect = edgeCompareContainer.getBoundingClientRect();
+                    const containerWidth = containerRect.width;
+                    
+                    let clientX;
+                    if (e.type === 'touchmove') {
+                        clientX = e.touches[0].clientX;
+                    } else {
+                        clientX = e.clientX;
+                    }
+                    
+                    const position = ((clientX - containerRect.left) / containerWidth) * 100;
+                    setSliderPosition(position);
+                }
+                
+                function endDrag() {
+                    isDragging = false;
+                }
+                
+                function setSliderPosition(position) {
+                    const clampedPosition = Math.max(0, Math.min(100, position));
+                    
+                    edgeAfterContainer.style.width = `${clampedPosition}%`;
+                    edgeSlider.style.left = `${clampedPosition}%`;
+                    
+                    // Update ARIA attributes
+                    edgeSlider.setAttribute('aria-valuenow', Math.round(clampedPosition));
+                }
+            }
+            
+            // Initialize edge comparison slider after images are loaded
+            originalImage.onload = edgeImage.onload = function() {
+                if (originalImage.complete && edgeImage.complete) {
+                    initComparisonSlider();
+                }
+            };
+            
+            if (originalImage.complete && edgeImage.complete) {
+                initComparisonSlider();
+            }
+            
+            // Neural network layer visualization
+            const layerDepthSlider = document.getElementById('layerDepthSlider');
+            const layerDepthValue = document.getElementById('layerDepthValue');
+            const layerCanvas = document.getElementById('layerCanvas');
+            const layerCtx = layerCanvas.getContext('2d');
+            
+            // Create sample layer visualizations
+            const layerLabels = [

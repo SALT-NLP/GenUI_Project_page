@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLTV Analysis Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --primary-dark: #0056b3;
+            --secondary-color: #6c757d;
+            --background-color: #f8f9fa;
+            --surface-color: #ffffff;
+            --text-color: #212529;
+            --text-light: #6c757d;
+            --border-color: #dee2e6;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --spacing-unit: 8px;
+            --border-radius: 8px;
+            --shadow-subtle: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: grid;
+            grid-template-rows: auto 1fr;
+            grid-template-columns: 250px 1fr;
+            height: 100vh;
+            overflow: hidden; /* Prevent main scrollbar */
+        }
+
+        header {
+            grid-column: 1 / -1;
+            background-color: var(--surface-color);
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 3);
+            box-shadow: var(--shadow-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        .app-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        aside {
+            grid-row: 2 / 3;
+            grid-column: 1 / 2;
+            background-color: var(--surface-color);
+            padding: calc(var(--spacing-unit) * 2) 0;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto; /* Allow sidebar scrolling */
+        }
+
+        .nav-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .nav-item {
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 3);
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: background-color 0.2s ease, color 0.2s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(0, 123, 255, 0.1);
+            color: var(--primary-color);
+        }
+
+        .nav-link.active {
+            background-color: rgba(0, 123, 255, 0.15);
+            color: var(--primary-dark);
+            border-left-color: var(--primary-color);
+        }
+
+        .nav-icon {
+            margin-right: var(--spacing-unit);
+            font-size: 1.2rem;
+            /* Placeholder for actual icons */
+        }
+
+        main {
+            grid-row: 2 / 3;
+            grid-column: 2 / 3;
+            padding: calc(var(--spacing-unit) * 3);
+            overflow-y: auto; /* Allow main content scrolling */
+        }
+
+        .content-section {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+            height: 100%; /* Ensure section takes full height of main */
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Card/Panel Styling */
+        .card {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-subtle);
+            padding: calc(var(--spacing-unit) * 3);
+            margin-bottom: calc(var(--spacing-unit) * 3);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 0;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            color: var(--text-color);
+        }
+
+        /* Data Upload Specific Styles */
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--border-radius);
+            padding: calc(var(--spacing-unit) * 5);
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s ease, background-color 0.2s ease;
+        }
+
+        .upload-area:hover,
+        .upload-area.dragover {
+            border-color: var(--primary-color);
+            background-color: rgba(0, 123, 255, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--text-light);
+            margin-bottom: var(--spacing-unit);
+            /* Placeholder for actual icon */
+        }
+
+        .upload-text {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .upload-subtext {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-bottom: calc(var(--spacing-unit) * 2);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .button {
+            display: inline-block;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.2s ease, opacity 0.2s ease;
+            border: none;
+        }
+
+        .button-primary {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+        }
+
+        .button-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .file-preview-container {
+            margin-top: calc(var(--spacing-unit) * 3);
+            max-height: 300px; /* Limit height for preview */
+            overflow-y: auto; /* Enable scrolling for table */
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+        }
+
+        .file-preview-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .file-preview-table th,
+        .file-preview-table td {
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+
+        .file-preview-table th {
+            background-color: var(--background-color);
+            font-weight: 600;
+            position: sticky;
+            top: 0; /* Stick header */
+            z-index: 1;
+        }
+
+        .file-preview-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .file-preview-table tbody tr:nth-child(even) {
+            background-color: #f0f0f0; /* Subtle zebra striping */
+        }
+
+        /* Column Mapping Styles */
+        .mapping-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: calc(var(--spacing-unit) * 2);
+            margin-top: calc(var(--spacing-unit) * 3);
+        }
+
+        .mapping-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .mapping-label {
+            font-weight: 500;
+            margin-bottom: var(--spacing-unit);
+            font-size: 0.95rem;
+        }
+
+        .select-input {
+            padding: var(--spacing-unit);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            background-color: var(--surface-color);
+            cursor: pointer;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .select-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        /* Analysis Configuration Styles */
+        .config-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: calc(var(--spacing-unit) * 3);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-label {
+            font-weight: 500;
+            margin-bottom: var(--spacing-unit);
+            font-size: 0.95rem;
+        }
+
+        .text-input,
+        .number-input {
+            padding: var(--spacing-unit);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            background-color: var(--surface-color);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .text-input:focus,
+        .number-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        .run-analysis-button-container {
+            margin-top: calc(var(--spacing-unit) * 3);
+            text-align: right;
+        }
+
+        /* Results and Insights Styles */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: calc(var(--spacing-unit) * 3);
+        }
+
+        .summary-card {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-subtle);
+            padding: calc(var(--spacing-unit) * 3);
+            text-align: center;
+        }
+
+        .summary-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .summary-label {
+            font-size: 1rem;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .chart-card {
+            grid-column: span 2; /* Charts can take more space */
+            min-height: 400px; /* Ensure charts have space */
+            position: relative;
+        }
+
+        .insights-panel {
+            margin-top: calc(var(--spacing-unit) * 3);
+            border-top: 1px solid var(--border-color);
+            padding-top: calc(var(--spacing-unit) * 3);
+        }
+
+        .insights-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+        }
+
+        .insight-item {
+            background-color: #e9ecef;
+            border-left: 4px solid var(--info-color);
+            padding: calc(var(--spacing-unit) * 2);
+            border-radius: var(--border-radius);
+            margin-bottom: var(--spacing-unit) * 2;
+        }
+
+        .insight-item strong {
+            color: var(--info-color);
+        }
+
+        /* Loading Indicator */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .loading-overlay.visible {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="app-title">CLTV Insights</div>
+        <!-- User profile/settings icon placeholder -->
+        <div>👤</div>
+    </header>
+
+    <aside>
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a href="#" class="nav-link active" data-section="data-upload">
+                    <span class="nav-icon">📁</span>
+                    Data Upload
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" data-section="analysis-config">
+                    <span class="nav-icon">⚙️</span>
+                    Analysis Configuration
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" data-section="results">
+                    <span class="nav-icon">📊</span>
+                    Results & Insights
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" data-section="reports">
+                    <span class="nav-icon">📄</span>
+                    Reports
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <main>
+        <!-- Data Upload Section -->
+        <section id="data-upload" class="content-section active">
+            <div class="card">
+                <h2 class="card-title">Upload Customer Data</h2>
+                <div id="drop-area" class="upload-area">
+                    <div class="upload-icon">📤</div>
+                    <div class="upload-text">Drag & Drop your CSV or Excel file here</div>
+                    <div class="upload-subtext">or click to select a file</div>
+                    <input type="file" id="file-input" class="file-input" accept=".csv, .xls, .xlsx">
+                    <label for="file-input" class="button button-primary">Select File</label>
+                </div>
+
+                <div id="file-info" style="margin-top: var(--spacing-unit*2); display: none;">
+                    Selected File: <strong id="file-name"></strong> (<span id="file-size"></span>)
+                </div>
+
+                <div id="preview-container" class="file-preview-container" style="display: none;">
+                    <table class="file-preview-table">
+                        <thead>
+                            <tr id="preview-header">
+                                <!-- Table headers will be inserted here -->
+                            </tr>
+                        </thead>
+                        <tbody id="preview-body">
+                            <!-- Table rows will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="mapping-card" class="card" style="display: none;">
+                <h2 class="card-title">Map Data Columns</h2>
+                <p>Map the columns from your uploaded file to the required analysis variables.</p>
+                <div id="mapping-interface" class="mapping-grid">
+                    <!-- Mapping dropdowns will be inserted here -->
+                    <div class="mapping-item">
+                        <label class="mapping-label" for="map-customer-id">Customer ID:</label>
+                        <select id="map-customer-id" class="select-input">
+                            <option value="">-- Select Column --</option>
+                        </select>
+                    </div>
+                    <div class="mapping-item">
+                        <label class="mapping-label" for="map-transaction-id">Transaction ID:</label>
+                        <select id="map-transaction-id" class="select-input">
+                            <option value="">-- Select Column --</option>
+                        </select>
+                    </div>
+                    <div class="mapping-item">
+                        <label class="mapping-label" for="map-transaction-date">Transaction Date:</label>
+                        <select id="map-transaction-date" class="select-input">
+                            <option value="">-- Select Column --</option>
+                        </select>
+                    </div>
+                    <div class="mapping-item">
+                        <label class="mapping-label" for="map-transaction-amount">Transaction Amount:</label>
+                        <select id="map-transaction-amount" class="select-input">
+                            <option value="">-- Select Column --</option>
+                        </select>
+                    </div>
+                    <!-- Add more required mappings as needed -->
+                </div>
+                <div class="run-analysis-button-container">
+                     <button id="proceed-to-config" class="button button-primary" disabled>Proceed to Configuration</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Analysis Configuration Section -->
+        <section id="analysis-config" class="content-section">
+             <div class="card">
+                <h2 class="card-title">CLTV Analysis Configuration</h2>
+                <p>Define parameters and select analysis methods.</p>
+                <div class="config-form">
+                    <div class="form-group">
+                        <label class="form-label" for="config-time-horizon">CLTV Time Horizon (Months):</label>
+                        <input type="number" id="config-time-horizon" class="number-input" value="12" min="1">
+                    </div>
+                     <div class="form-group">
+                        <label class="form-label" for="config-discount-rate">Discount Rate (%):</label>
+                        <input type="number" id="config-discount-rate" class="number-input" value="10" min="0" step="0.1">
+                    </div>
+                     <div class="form-group">
+                        <label class="form-label" for="config-analysis-method">Analysis Method:</label>
+                        <select id="config-analysis-method" class="select-input">
+                            <option value="regression">Regression</option>
+                            <option value="segmentation">Segmentation</option>
+                            <option value="predictive">Predictive Modeling</option>
+                        </select>
+                    </div>
+                     <!-- Add more configuration options -->
+                </div>
+                 <div class="run-analysis-button-container">
+                     <button id="run-analysis" class="button button-primary">Run Analysis</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Results & Insights Section -->
+        <section id="results" class="content-section">
+             <div class="card">
+                <h2 class="card-title">Analysis Results Summary</h2>
+                <div class="results-grid">
+                    <div class="summary-card">
+                        <div class="summary-value" id="summary-avg-cltv">$0.00</div>
+                        <div class="summary-label">Average CLTV</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-value" id="summary-repeat-rate">0%</div>
+                        <div class="summary-label">Repeat Purchase Rate</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-value" id="summary-avg-frequency">0</div>
+                        <div class="summary-label">Avg Purchase Frequency</div>
+                    </div>
+                     <div class="summary-card">
+                        <div class="summary-value" id="summary-avg-value">$0.00</div>
+                        <div class="summary-label">Avg Order Value</div>
+                    </div>
+                </div>
+            </div>
+
+             <div class="card chart-card">
+                <h2 class="card-title">Interactive Data Visualizations</h2>
+                 <!-- Chart containers will be added here by JS -->
+                 <div style="height: 350px;"><canvas id="cltv-segment-chart"></canvas></div>
+            </div>
+
+             <div class="card">
+                <h2 class="card-title">Detailed Analysis Results</h2>
+                 <!-- Detailed tables (e.g., regression coefficients, segment details) -->
+                 <div class="file-preview-container">
+                     <table class="file-preview-table">
+                         <thead>
+                             <tr>
+                                 <th>Factor</th>
+                                 <th>Coefficient</th>
+                                 <th>P-Value</th>
+                             </tr>
+                         </thead>
+                         <tbody>
+                             <tr>
+                                 <td>Avg Order Value</td>
+                                 <td>...</td>
+                                 <td>...</td>
+                             </tr>
+                             <!-- More rows -->
+                         </tbody>
+                     </table>
+                 </div>
+            </div>
+
+             <div class="card insights-panel">
+                <h2 class="insights-title">Actionable Insights</h2>
+                 <div class="insight-item">
+                     <strong>Insight 1:</strong> Customers with higher initial purchase value tend to have a higher CLTV.
+                     <p><strong>Action:</strong> Offer incentives for first-time buyers to increase their initial order size.</p>
+                 </div>
+                 <div class="insight-item">
+                     <strong>Insight 2:</strong> Customers who purchase product category 'X' within the first 3 months have a significantly higher repeat purchase rate.
+                     <p><strong>Action:</strong> Target new customers with promotions for product category 'X' early in their lifecycle.</p>
+                 </div>
+                 <!-- More insights -->
+            </div>
+        </section>
+
+        <!-- Reports Section -->
+        <section id="reports" class="content-section">
+             <div class="card">
+                <h2 class="card-title">Reports & Export Options</h2>
+                 <p>Generate and export detailed reports of your analysis results and insights.</p>
+                 <!-- Export buttons/options -->
+                 <button class="button button-primary">Export Summary (PDF)</button>
+                 <button class="button button-primary">Export Detailed Results (CSV)</button>
+                 <button class="button button-secondary">Export Insights (Text)</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+        // Could import PapaParse here for CSV parsing if needed client-side
+        // import Papa from 'https://esm.sh/papaparse';
+
+        const dropArea = document.getElementById('drop-area');
+        const fileInput = document.getElementById('file-input');
+        const fileNameSpan = document.getElementById('file-name');
+        const fileSizeSpan = document.getElementById('file-size');
+        const fileInfoDiv = document.getElementById('file-info');
+        const previewContainer = document.getElementById('preview-container');
+        const previewHeader = document.getElementById('preview-header');
+        const previewBody = document.getElementById('preview-body');
+        const mappingCard = document.getElementById('mapping-card');
+        const mappingInterface = document.getElementById('mapping-interface');
+        const proceedButton = document.getElementById('proceed-to-config');
+        const loadingOverlay = document.getElementById('loading-overlay');
+
+        const navLinks = document.querySelectorAll('.nav-link');
+        const contentSections = document.querySelectorAll('.content-section');
+
+        let uploadedData = null; // Store parsed data
+
+        // --- Navigation ---
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetSectionId = link.dataset.section;
+
+                navLinks.forEach(nav => nav.classList.remove('active'));
+                link.classList.add('active');
+
+                contentSections.forEach(section => {
+                    if (section.id === targetSectionId) {
+                        section.classList.add('active');
+                    } else {
+                        section.classList.remove('active');
+                    }
+                });
+            });
+        });
+
+        // --- File Upload ---
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => dropArea.classList.add('dragover'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => dropArea.classList.remove('dragover'), false);
+        });
+
+        dropArea.addEventListener('drop', handleDrop, false);
+        fileInput.addEventListener('change', handleFiles, false);
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles({ target: { files: files } });
+        }
+
+        function handleFiles(event) {
+            const files = event.target.files;
+            if (files.length > 0) {
+                const file = files[0];
+                fileNameSpan.textContent = file.name;
+                fileSizeSpan.textContent = formatBytes(file.size);
+                fileInfoDiv.style.display = 'block';
+                showLoading();
+                // Simulate file reading and parsing
+                setTimeout(() => {
+                     // In a real app, use PapaParse or similar for CSV/Excel
+                     // For now, create dummy data
+                     const dummyHeaders = ['Customer ID', 'Transaction ID', 'Date', 'Amount', 'Product Category', 'Demographic'];
+                     const dummyData = [
+                         ['C1001', 'T001', '2022-01-15', '55.20', 'Home Decor', 'Urban'],
+                         ['C1002', 'T002', '2022-01-20', '120.50', 'Furniture', 'Suburban'],
+                         ['C1001', 'T003', '2022-02-10', '30.00', 'Home Decor', 'Urban'],
+                         ['C1003', 'T004', '2022-02-25', '88.75', 'Kitchenware', 'Rural'],
+                         ['C1002', 'T005', '2022-03-05', '210.00', 'Furniture', 'Suburban'],
+                         // Add more dummy data rows...
+                         ['C1001', 'T050', '2024-05-01', '45.99', 'Home Decor', 'Urban'],
+                         ['C1004', 'T051', '2024-05-10', '75.00', 'Kitchenware', 'Suburban'],
+                         ['C1005', 'T052', '2024-05-12', '150.00', 'Furniture', 'Urban'],
+                         ['C1003', 'T053', '2024-05-15', '60.00', 'Home Decor', 'Rural'],
+                         ['C1004', 'T054', '2024-05-20', '95.00', 'Kitchenware', 'Suburban'],
+                     ];
+                     uploadedData = { headers: dummyHeaders, data: dummyData };
+                     displayPreview(uploadedData.headers, uploadedData.data);
+                     populateMappingDropdowns(uploadedData.headers);
+                     mappingCard.style.display = 'block';
+                     proceedButton.disabled = false; // Enable button after data is ready
+                     hideLoading();
+                }, 1000); // Simulate loading time
+            }
+        }
+
+        function formatBytes(bytes, decimals = 2) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+
+        function displayPreview(headers, data) {
+            previewHeader.innerHTML = '';
+            headers.forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header;
+                previewHeader.appendChild(th);
+            });
+
+            previewBody.innerHTML = '';
+            // Display only the first few rows
+            const previewRows = data.slice(0, 10);
+            previewRows.forEach(rowData => {
+                const tr = document.createElement('tr');
+                rowData.forEach(cellData => {
+                    const td = document.createElement('td');
+                    td.textContent = cellData;
+                    tr.appendChild(td);
+                });
+                previewBody.appendChild(tr);
+            });
+             previewContainer.style.display = 'block';
+        }
+
+        function populateMappingDropdowns(headers) {
+            const selectElements = mappingInterface.querySelectorAll('select');
+            selectElements.forEach(select => {
+                // Clear existing options except the default
+                select.innerHTML = '<option value="">-- Select Column --</option>';
+                headers.forEach(header => {
+                    const option = document.createElement('option');
+                    option.value = header;
+                    option.textContent = header;
+                    select.appendChild(option);
+                });
+            });
+        }
+
+        // --- Proceed to Configuration ---
+        proceedButton.addEventListener('click', () => {
+             // In a real app, validate mapping here
+             // For now, just switch section
+             document.querySelector('.nav-link[data-section="analysis-config"]').click();
+        });
+
+
+        // --- Analysis Configuration ---
+        const runAnalysisButton = document.getElementById('run-analysis');
+        const cltvSegmentChartCanvas = document.getElementById('cltv-segment-chart');
+        let cltvSegmentChart = null; // To hold the Chart.js instance
+
+        runAnalysisButton.addEventListener('click', () => {
+            showLoading();
+            // Simulate analysis process
+            setTimeout(() => {
+                // Simulate analysis results
+                document.getElementById('summary-avg-cltv').textContent = '$450.75';
+                document.getElementById('summary-repeat-rate').textContent = '35%';
+                document.getElementById('summary-avg-frequency').textContent = '3.2';
+                document.getElementById('summary-avg-value').textContent = '$140.86';
+
+                // Simulate chart data (e.g., CLTV by Segment)
+                const chartData = {
+                    labels: ['High-Value', 'Mid-Value', 'Low-Value', 'New Customers'],
+                    datasets: [{
+                        label: 'Average CLTV',
+                        data: [1200, 550, 150, 80],
+                        backgroundColor: [
+                            'rgba(0, 123, 255, 0.8)',
+                            'rgba(40, 167, 69, 0.8)',
+                            'rgba(255, 193, 7, 0.8)',
+                            'rgba(108, 117, 125, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(0, 123, 255, 1)',
+                            'rgba(40, 167, 69, 1)',
+                            'rgba(255, 193, 7, 1)',
+                            'rgba(108, 117, 125, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                };
+
+                // Destroy previous chart instance if it exists
+                if (cltvSegmentChart) {
+                    cltvSegmentChart.destroy();
+                }
+
+                // Render the chart
+                cltvSegmentChart = new Chart(cltvSegmentChartCanvas, {
+                    type: 'bar',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false,
+                            },
+                            title: {
+                                display: true,
+                                text: 'Average CLTV by Customer Segment',
+                                font: {
+                                    size: 16,
+                                    weight: 'bold'
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Average CLTV ($)'
+                                }
+                            },
+                             x: {
+                                title: {
+                                    display: true,
+                                    text: 'Customer Segment'
+                                }
+                            }
+                        }
+                    }
+                });
+
+
+                hideLoading();
+                 document.querySelector('.nav-link[data-section="results"]').click(); // Auto-switch to results
+            }, 2000); // Simulate analysis time
+        });
+
+
+        // --- Loading Indicator ---
+        function showLoading() {
+            loadingOverlay.classList.add('visible');
+        }
+
+        function hideLoading() {
+            loadingOverlay.classList.remove('visible');
+        }
+
+        // Initial state: Activate the first section
+        document.addEventListener('DOMContentLoaded', () => {
+             document.querySelector('.nav-link.active').click();
+        });
+
+    </script>
+</body>
+</html>

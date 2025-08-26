@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriVision Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+        :root {
+            --primary-color: #4CAF50; /* Green */
+            --secondary-color: #2196F3; /* Blue */
+            --accent-color: #FF9800; /* Orange */
+            --background-color: #f4f7ff; /* Light Grey */
+            --surface-color: #ffffff; /* White */
+            --text-color: #333; /* Dark Grey */
+            --text-light-color: #666; /* Medium Grey */
+            --border-color: #ddd; /* Light Grey */
+            --shadow-color: rgba(0, 0, 0, 0.08);
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+            --border-radius: 8px;
+            --header-height: 60px;
+            --sidebar-width: 300px;
+            --stress-low: #a5d6a7; /* Light Green */
+            --stress-medium: #fff176; /* Yellow */
+            --stress-high: #ef5350; /* Red */
+            --yield-low: #ef9a9a; /* Light Red */
+            --yield-medium: #fff59d; /* Light Yellow */
+            --yield-high: #81c784; /* Light Green */
+            --focus-outline-color: rgba(76, 175, 80, 0.4); /* Primary color with transparency */
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: grid;
+            grid-template-rows: var(--header-height) 1fr;
+            grid-template-areas: "header" "main";
+            min-height: 100vh;
+            overflow: hidden; /* Prevent body scroll, content areas will scroll */
+        }
+
+        header {
+            grid-area: header;
+            background-color: var(--surface-color);
+            color: var(--text-color);
+            padding: 0 var(--spacing-lg);
+            box-shadow: 0 2px 4px var(--shadow-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 1000; /* Ensure header is above content */
+            position: relative; /* Needed for z-index */
+        }
+
+        .header-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            color: var(--text-color); /* Ensure title color is readable */
+        }
+
+        .header-title .material-symbols-rounded {
+            margin-right: var(--spacing-sm);
+            font-size: 1.2em;
+            color: var(--primary-color);
+        }
+
+        .header-nav a {
+            margin-left: var(--spacing-lg);
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
+            padding: var(--spacing-sm) 0; /* Increase click target */
+            display: inline-block; /* Ensure padding works */
+        }
+
+        .header-nav a:hover {
+            color: var(--primary-color);
+        }
+
+         .header-nav a:focus {
+            outline: 2px solid var(--focus-outline-color);
+            outline-offset: 2px;
+         }
+
+
+        main {
+            grid-area: main;
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr;
+            grid-template-areas: "sidebar content";
+            overflow: hidden; /* Contain internal scrolling */
+        }
+
+        aside.sidebar {
+            grid-area: sidebar;
+            background-color: var(--surface-color);
+            padding: var(--spacing-lg);
+            box-shadow: 2px 0 4px var(--shadow-color);
+            overflow-y: auto; /* Enable scrolling for sidebar content */
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-lg);
+            z-index: 1; /* Below header */
+        }
+
+        .sidebar-section {
+            margin-bottom: var(--spacing-md);
+        }
+
+        .sidebar-section h3 {
+            font-size: 1.1em;
+            margin-top: 0;
+            margin-bottom: var(--spacing-md);
+            color: var(--primary-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: var(--spacing-sm);
+        }
+
+        label {
+            display: block;
+            margin-bottom: var(--spacing-sm);
+            font-weight: 500;
+            color: var(--text-light-color);
+            cursor: pointer;
+        }
+
+        select, input[type="date"], input[type="range"], input[type="file"], button {
+            width: 100%;
+            padding: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            box-sizing: border-box; /* Include padding and border in element's total width */
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            background-color: var(--surface-color); /* Ensure consistent background */
+            color: var(--text-color);
+        }
+
+        select:focus, input[type="date"]:focus, input[type="range"]:focus, input[type="file"]:focus, button:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px var(--focus-outline-color);
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            border: none;
+            padding: var(--spacing-md);
+            margin-bottom: 0; /* Remove default margin-bottom from input style */
+            transition: background-color 0.2s ease;
+        }
+
+        button:hover {
+            background-color: #388E3C; /* Darker Green */
+        }
+
+        button:active {
+            background-color: #1B5E20; /* Even Darker Green */
+        }
+
+         button:disabled {
+             background-color: #a5d6a7; /* Light green for disabled */
+             cursor: not-allowed;
+         }
+
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            margin-bottom: var(--spacing-sm);
+            cursor: pointer;
+            user-select: none; /* Prevent text selection */
+            padding: var(--spacing-xs) 0; /* Add padding for easier clicking/tapping */
+        }
+
+        .toggle-switch input[type="checkbox"] {
+            display: none;
+        }
+
+        .toggle-switch label {
+            margin-bottom: 0;
+            margin-left: var(--spacing-sm);
+            flex-grow: 1;
+            cursor: pointer;
+            color: var(--text-color);
+            font-weight: 400; /* Less bold than section labels */
+        }
+
+        .slider {
+            position: relative;
+            width: 40px;
+            height: 20px;
+            background-color: var(--border-color);
+            border-radius: 20px;
+            transition: background-color 0.2s ease;
+            flex-shrink: 0; /* Prevent shrinking */
+             box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .slider::before {
+            content: "";
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: var(--surface-color);
+            top: 2px;
+            left: 2px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        input[type="checkbox"]:checked + .slider {
+            background-color: var(--primary-color);
+        }
+
+        input[type="checkbox"]:checked + .slider::before {
+            transform: translateX(20px);
+        }
+
+         .toggle-switch input[type="checkbox"]:focus + .slider {
+            box-shadow: 0 0 0 2px var(--focus-outline-color);
+         }
+
+
+        .content-area {
+            grid-area: content;
+            display: flex;
+            flex-direction: column;
+            padding: var(--spacing-lg);
+            gap: var(--spacing-lg);
+            overflow-y: auto; /* Enable scrolling for main content */
+        }
+
+        .card {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 8px var(--shadow-color);
+            padding: var(--spacing-lg);
+            display: flex;
+            flex-direction: column;
+            position: relative; /* For loading overlay and floating controls */
+        }
+
+        .card-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-top: 0;
+            margin-bottom: var(--spacing-lg);
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+        }
+
+        .card-title .material-symbols-rounded {
+             margin-right: var(--spacing-sm);
+             color: var(--secondary-color);
+             font-size: 1.2em;
+        }
+
+        #map {
+            flex-grow: 1;
+            min-height: 400px; /* Minimum height for the map */
+            border-radius: var(--border-radius);
+            overflow: hidden; /* Ensure map corners are rounded */
+            z-index: 0; /* Below floating controls */
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px; /* Fixed height for charts */
+            width: 100%;
+             cursor: pointer; /* Indicate interactivity */
+             outline: none; /* Remove default outline, use custom focus */
+        }
+
+        .chart-container:focus {
+             box-shadow: 0 0 0 2px var(--focus-outline-color);
+             border-radius: var(--border-radius); /* Apply focus style to container */
+        }
+
+
+         /* Chart.js specific adjustments */
+        .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .floating-controls {
+            position: absolute;
+            top: var(--spacing-md);
+            right: var(--spacing-md);
+            background: rgba(255, 255, 255, 0.95);
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 8px var(--shadow-color);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 500; /* Above chart, below header */
+            min-width: 200px;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+            outline: none; /* Remove default outline */
+        }
+
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .floating-controls:focus-within {
+             box-shadow: 0 0 0 2px var(--focus-outline-color); /* Add focus style when controls are active */
+        }
+
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+         .control-group label {
+             font-size: 0.9em;
+             margin-bottom: var(--spacing-xs);
+             color: var(--text-light-color);
+             font-weight: 400;
+         }
+
+        .control-group input, .control-group select {
+            margin-bottom: 0; /* Remove default margin */
+            padding: var(--spacing-xs); /* Smaller padding for controls */
+            font-size: 0.9em;
+        }
+
+        .recommendations-area {
+            margin-top: var(--spacing-lg);
+        }
+
+        .recommendation-item {
+            background-color: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--accent-color);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer; /* Indicate interactivity */
+            outline: none; /* Remove default outline */
+        }
+
+        .recommendation-item:last-child {
+            margin-bottom: 0; /* Remove bottom margin for the last item */
+        }
+
+        .recommendation-item:hover {
+             transform: translateY(-2px);
+             box-shadow: 0 4px 10px var(--shadow-color);
+        }
+
+         .recommendation-item:focus {
+             box-shadow: 0 0 0 2px var(--focus-outline-color);
+         }
+
+        .recommendation-item p {
+            margin: 0;
+            font-size: 1em;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            border-radius: var(--border-radius);
+            pointer-events: none; /* Allow clicks to pass through when not visible */
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading-overlay.visible {
+            opacity: 1;
+            pointer-events: all; /* Block clicks when visible */
+        }
+
+        .spinner {
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Tooltip styles (Leaflet uses its own, Chart.js uses its own) */
+        /* Custom tooltip for other elements if needed */
+        .custom-tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: var(--spacing-sm);
+            border-radius: 4px; /* Smaller radius for tooltips */
+            font-size: 0.8em;
+            pointer-events: none;
+            z-index: 2000; /* Above everything */
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        /* Map Legend */
+        .legend {
+            background: var(--surface-color);
+            padding: var(--spacing-sm);
+            border-radius: var(--border-radius);
+            box-shadow: 0 1px 4px var(--shadow-color);
+            line-height: 1.5;
+            font-size: 0.9em;
+        }
+        .legend h4 {
+            margin: 0 0 var(--spacing-sm);
+            color: var(--text-color);
+            font-size: 1em;
+            font-weight: 600;
+        }
+        .legend i {
+            width: 18px;
+            height: 18px;
+            float: left;
+            margin-right: var(--spacing-xs);
+            opacity: 0.9; /* Make legend colors slightly more opaque */
+            border: 1px solid var(--border-color); /* Add border for clarity */
+        }
+        .legend-stress i {
+             border: none; /* Stress/Yield use fill, not border */
+        }
+         .legend-yield i {
+             border: none; /* Stress/Yield use fill, not border */
+        }
+
+
+        /* Responsive adjustments */
+        @media (max-width: 1024px) {
+            main {
+                grid-template-columns: 1fr;
+                grid-template-areas: "sidebar" "content";
+            }
+
+            aside.sidebar {
+                 width: 100%;
+                 box-shadow: 0 2px 4px var(--shadow-color); /* Adjust shadow for bottom */
+                 overflow-y: visible; /* Allow content to push sidebar height */
+                 padding-bottom: var(--spacing-lg); /* Add padding at the bottom */
+                 position: relative; /* Ensure shadow is visible */
+            }
+
+            .content-area {
+                padding-top: 0; /* Remove padding at the top where sidebar ends */
+            }
+
+             .floating-controls {
+                 top: var(--spacing-sm);
+                 right: var(--spacing-sm);
+                 min-width: 180px;
+                 padding: var(--spacing-sm);
+             }
+
+             .control-group label {
+                 font-size: 0.8em;
+             }
+             .control-group input, .control-group select {
+                 font-size: 0.8em;
+                 padding: var(--spacing-xs);
+             }
+        }
+
+        /* Accessibility: Focus styles for interactive elements */
+        a:focus, button:focus, select:focus, input:focus, .toggle-switch input[type="checkbox"]:focus + .slider {
+             outline: 2px solid var(--focus-outline-color);
+             outline-offset: 2px;
+        }
+
+        /* Ensure map controls are accessible */
+        .leaflet-control-zoom a:focus, .leaflet-control-layers-toggle:focus {
+             outline: 2px solid var(--focus-outline-color);
+             outline-offset: 2px;
+        }
+
+
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-title">
+            <span class="material-symbols-rounded" aria-hidden="true">agriculture</span>
+            AgriVision
+        </div>
+        <nav class="header-nav">
+            <a href="#" aria-label="Go to Dashboard">Dashboard</a>
+            <a href="#" aria-label="Manage Data">Data</a>
+            <a href="#" aria-label="Application Settings">Settings</a>
+        </nav>
+    </header>
+
+    <main>
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <h3>Field & Season</h3>
+                <label for="field-select">Select Field:</label>
+                <select id="field-select" aria-label="Select a field">
+                    <option value="field1">Field 1 (North)</option>
+                    <option value="field2">Field 2 (South)</option>
+                    <option value="field3">Field 3 (East)</option>
+                </select>
+
+                <label for="season-select">Select Season:</label>
+                <select id="season-select" aria-label="Select a growing season">
+                    <option value="season2023">2023 Growing Season</option>
+                    <option value="season2022">2022 Growing Season</option>
+                </select>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Time Range</h3>
+                 <label for="date-range-start">Start Date:</label>
+                 <input type="date" id="date-range-start" value="2023-05-01" aria-label="Select start date for data range">
+
+                 <label for="date-range-end">End Date:</label>
+                 <input type="date" id="date-range-end" value="2023-09-30" aria-label="Select end date for data range">
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Map Layers</h3>
+                <div class="toggle-switch" role="switch" aria-checked="true" tabindex="0">
+                    <input type="checkbox" id="layer-imagery" checked aria-labelledby="layer-imagery-label">
+                    <span class="slider"></span>
+                    <label id="layer-imagery-label" for="layer-imagery">Drone Imagery (NDVI)</label>
+                </div>
+                 <div class="toggle-switch" role="switch" aria-checked="true" tabindex="0">
+                    <input type="checkbox" id="layer-stress" checked aria-labelledby="layer-stress-label">
+                    <span class="slider"></span>
+                    <label id="layer-stress-label" for="layer-stress">Crop Stress Zones</label>
+                </div>
+                 <div class="toggle-switch" role="switch" aria-checked="true" tabindex="0">
+                    <input type="checkbox" id="layer-yield" checked aria-labelledby="layer-yield-label">
+                    <span class="slider"></span>
+                    <label id="layer-yield-label" for="layer-yield">Predicted Yield</label>
+                </div>
+                 <div class="toggle-switch" role="switch" aria-checked="true" tabindex="0">
+                    <input type="checkbox" id="layer-sensors" checked aria-labelledby="layer-sensors-label">
+                    <span class="slider"></span>
+                    <label id="layer-sensors-label" for="layer-sensors">Sensor Locations</label>
+                </div>
+            </div>
+
+             <div class="sidebar-section">
+                <h3>Data Upload</h3>
+                <label for="data-upload">Upload New Data:</label>
+                <input type="file" id="data-upload" accept=".geojson,.csv,.tif" aria-label="Select files to upload">
+                <button id="process-data-button" aria-label="Process uploaded data">Process Data</button>
+            </div>
+        </aside>
+
+        <div class="content-area">
+            <div class="card">
+                <h2 class="card-title"><span class="material-symbols-rounded" aria-hidden="true">map</span>Field Overview Map</h2>
+                <div id="map" role="region" aria-label="Interactive map of the selected field"></div>
+                <div class="loading-overlay" id="map-loading" role="status" aria-live="polite" aria-label="Map loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title"><span class="material-symbols-rounded" aria-hidden="true">monitoring</span>Historical Weather Data</h2>
+                <div class="chart-container" tabindex="0" role="img" aria-label="Historical weather data chart">
+                    <canvas id="weatherChart"></canvas>
+                     <div class="floating-controls" id="weatherChart-controls" aria-hidden="true">
+                        <div class="control-group">
+                            <label for="weatherChart-type">Chart Type</label>
+                            <select id="weatherChart-type" aria-label="Select weather chart type">
+                                <option value="line">Line</option>
+                                <option value="bar">Bar</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label for="weatherChart-color">Line/Bar Color</label>
+                            <input type="color" id="weatherChart-color" value="#2196F3" aria-label="Select weather chart color">
+                        </div>
+                         <div class="control-group">
+                            <label for="weatherChart-dataset">Dataset</label>
+                            <select id="weatherChart-dataset" aria-label="Select weather data dataset">
+                                <option value="temperature">Temperature (°C)</option>
+                                <option value="precipitation">Precipitation (mm)</option>
+                                <option value="humidity">Humidity (%)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                 <div class="loading-overlay" id="weatherChart-loading" role="status" aria-live="polite" aria-label="Weather chart loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+
+             <div class="card">
+                <h2 class="card-title"><span class="material-symbols-rounded" aria-hidden="true">sensors</span>Sensor Data Trends</h2>
+                <div class="chart-container" tabindex="0" role="img" aria-label="Sensor data trends chart">
+                    <canvas id="sensorChart"></canvas>
+                     <div class="floating-controls" id="sensorChart-controls" aria-hidden="true">
+                        <div class="control-group">
+                            <label for="sensorChart-type">Chart Type</label>
+                            <select id="sensorChart-type" aria-label="Select sensor chart type">
+                                <option value="line">Line</option>
+                                <option value="bar">Bar</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label for="sensorChart-color">Line/Bar Color</label>
+                            <input type="color" id="sensorChart-color" value="#FF9800" aria-label="Select sensor chart color">
+                        </div>
+                         <div class="control-group">
+                            <label for="sensorChart-dataset">Sensor</label>
+                            <select id="sensorChart-dataset" aria-label="Select sensor for sensor data chart">
+                                <!-- Options populated by JS based on field -->
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                 <div class="loading-overlay" id="sensorChart-loading" role="status" aria-live="polite" aria-label="Sensor chart loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+
+             <div class="card">
+                <h2 class="card-title"><span class="material-symbols-rounded" aria-hidden="true">trending_up</span>Yield Prediction vs Actual</h2>
+                <div class="chart-container" tabindex="0" role="img" aria-label="Yield prediction versus actual chart">
+                    <canvas id="yieldChart"></canvas>
+                     <div class="floating-controls" id="yieldChart-controls" aria-hidden="true">
+                        <div class="control-group">
+                            <label for="yieldChart-type">Chart Type</label>
+                            <select id="yieldChart-type" aria-label="Select yield chart type">
+                                <option value="bar">Bar</option>
+                                <option value="line">Line</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label for="yieldChart-predicted-color">Predicted Color</label>
+                            <input type="color" id="yieldChart-predicted-color" value="#81c784" aria-label="Select predicted yield bar color">
+                        </div>
+                         <div class="control-group">
+                            <label for="yieldChart-actual-color">Actual Color</label>
+                            <input type="color" id="yieldChart-actual-color" value="#4CAF50" aria-label="Select actual yield bar color">
+                        </div>
+                    </div>
+                </div>
+                 <div class="loading-overlay" id="yieldChart-loading" role="status" aria-live="polite" aria-label="Yield chart loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+
+            <div class="card recommendations-area">
+                <h2 class="card-title"><span class="material-symbols-rounded" aria-hidden="true">lightbulb</span>Targeted Recommendations</h2>
+                <div id="recommendations-list" role="region" aria-label="List of targeted recommendations">
+                    <!-- Recommendations populated by JS -->
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script type="module">
+        import * as L from "https://esm.sh/leaflet";
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        // --- State Management ---
+        const appState = {
+            selectedField: 'field1',
+            selectedSeason: 'season2023',
+            dateRange: {
+                start: '2023-05-01',
+                end: '2023-09-30'
+            },
+            activeLayers: {
+                imagery: true,
+                stress: true,
+                yield: true,
+                sensors: true
+            },
+            map: null,
+            layers: {}, // Store Leaflet layers (boundary, imagery, stress, yield, sensors, legends)
+            charts: {}, // Store Chart.js instances
+            data: { // Dummy Data Structure
+                fields: {
+                    field1: {
+                        name: 'Field 1 (North)',
+                        boundary: [[51.505, -0.09], [51.51, -0.1], [51.51, -0.08], [51.505, -0.09]], // Example Polygon
+                        stressZones: { // Example GeoJSON FeatureCollection
+                            "type": "FeatureCollection",
+                            "features": [
+                                { "type": "Feature", "properties": { "level": "high" }, "geometry": { "type": "Polygon", "coordinates": [[[-0.095, 51.506], [-0.09, 51.506], [-0.09, 51.507], [-0.095, 51.507], [-0.095, 51.506]]] } },
+                                { "type": "Feature", "properties": { "level": "medium" }, "geometry": { "type": "Polygon", "coordinates": [[[-0.088, 51.508], [-0.085, 51.508], [-0.085, 51.509], [-0.088, 51.509], [-0.088, 51.508]]] } },
+                                { "type": "Feature", "properties": { "level": "low" }, "geometry": { "type": "Polygon", "coordinates": [[[-0.08, 51.506], [-0.078, 51.506], [-0.078, 51.507], [-0.08, 51.507], [-0.08, 51.506]]] } },
+                            ]
+                        },
+                        yieldPrediction: { // Example GeoJSON FeatureCollection
+                             "type": "FeatureCollection",
+                            "features": [
+                                { "type": "Feature", "properties": { "level": "low", "yield": 85 }, "geometry": { "type": "Polygon", "coordinates": [[[-0.098, 51.5055], [-0.093, 51.5055], [-0.093, 51.5065], [-0.098, 51.5065], [-0.098, 51.5055]]] } },
+                                { "type": "Feature", "properties": { "level": "high", "yield": 130 }, "geometry": { "type": "Polygon", "coordinates": [[[-0.08, 51.509], [-0.075, 51.509], [-0.075, 51.51], [-0.08, 51.51], [-0.08, 51.509]]] } },
+                                { "type": "Feature", "properties": { "level": "medium", "yield": 110 }, "geometry": { "type": "Polygon", "coordinates": [[[-0.09, 51.509], [-0.085, 51.509], [-0.085, 51.51], [-0.09, 51.51], [-0.09, 51.509]]] } },
+                            ]
+                        },
+                        sensors: [{ lat: 51.507, lng: -0.092, id: 'sensor1', type: 'moisture' }, { lat: 51.5085, lng: -0.086, id: 'sensor2', type: 'nutrient' }],
+                        imageryOverlay: { url: 'https://placehold.co/600x400/a5d6a7/333?text=NDVI+Overlay', bounds: [[51.505, -0.1], [51.51, -0.08]] } // Example image overlay
+                    },
+                     field2: {
+                        name: 'Field 2 (South)',
+                        boundary: [[51.49, -0.15], [51.495, -0.16], [51.495, -0.14], [51.49, -0.15]],
+                        stressZones: { "type": "FeatureCollection", "features": [] }, // Empty for example
+                        yieldPrediction: { "type": "FeatureCollection", "features": [] }, // Empty for example
+                        sensors: [{ lat: 51.492, lng: -0.155, id: 'sensor3', type: 'temperature' }],
+                        imageryOverlay: null
+                     },
+                      field3: {
+                        name: 'Field 3 (East)',
+                        boundary: [[51.52, -0.05], [51.525, -0.06], [51.525, -0.04], [51.52, -0.05]],
+                        stressZones: { "type": "FeatureCollection", "features": [] }, // Empty for example
+                        yieldPrediction: { "type": "FeatureCollection", "features": [] }, // Empty for example
+                        sensors: [],
+                        imageryOverlay: null
+                     }
+                },
+                weather: { // Dummy time series data
+                    labels: ['2023-05-01', '2023-06-01', '2023-07-01', '2023-08-01', '2023-09-01'],
+                    datasets: {
+                        temperature: [15, 20, 25, 22, 18],
+                        precipitation: [10, 5, 2, 8, 15],
+                        humidity: [60, 55, 50, 65, 70]
+                    }
+                },
+                sensors: { // Dummy time series data per sensor
+                    sensor1: {
+                         labels: ['2023-05-01', '2023-06-01', '2023-07-01', '2023-08-01', '2023-09-01'],
+                         datasets: { moisture: [40, 35, 30, 38, 45] }
+                    },
+                    sensor2: {
+                         labels: ['2023-05-01', '2023-06-01', '2023-07-01', '2023-08-01', '2023-09-01'],
+                         datasets: { nutrients: [5, 4.5, 4, 4.8, 5.2] }
+                    },
+                     sensor3: {
+                         labels: ['2023-05-01', '2023-06-01', '2023-07-01', '2023-08-01', '2023-09-01'],
+                         datasets: { temperature: [16, 21, 26, 23, 19] } // Example temperature sensor data
+                    }
+                },
+                yield: { // Dummy comparison data (per field section)
+                    field1: { // Example data for field1
+                        labels: ['Section A', 'Section B', 'Section C', 'Section D'],
+                        datasets: {
+                            predicted: [100, 120, 90, 105], // Example units (e.g., kg/ha)
+                            actual: [95, 110, 92, 100]
+                        }
+                    },
+                     field2: {
+                         labels: ['Section A', 'Section B'],
+                        datasets: {
+                            predicted: [80, 95],
+                            actual: [78, 90]
+                        }
+                     },
+                     field3: {
+                         labels: ['Section A', 'Section B', 'Section C'],
+                        datasets: {
+                            predicted: [110, 100, 115],
+                            actual: [105, 98, 112]
+                        }
+                     }
+                },
+                 recommendations: [
+                    { field: 'field1', section: 'Section B', text: 'Moderate stress detected. Consider targeted irrigation in the next 48 hours.' },
+                    { field: 'field2', section: 'Section A', text: 'Low nutrient levels detected by Sensor B. Recommend soil sample analysis and potential fertilization.' },
+                    { field: 'field3', section: null, text: 'Predicted yield for Field 3 is slightly below average. Review historical data and recent weather patterns.' },
+                    { field: 'field1', section: null, text: 'Weather forecast indicates potential for increased humidity. Monitor for fungal disease risk.' }
+                 ]
+            }
+        };
+
+        // --- DOM Elements ---
+        const mapElement = document.getElementById('map');
+        const fieldSelect = document.getElementById('field-select');
+        const seasonSelect = document.getElementById('season-select');
+        const dateRangeStartInput = document.getElementById('date-range-start');
+        const dateRangeEndInput = document.getElementById('date-range-end');
+        const layerCheckboxes = {
+            imagery: document.getElementById('layer-imagery'),
+            stress: document.getElementById('layer-stress'),
+            yield: document.getElementById('layer-yield'),
+            sensors: document.getElementById('layer-sensors')
+        };
+        const weatherChartCanvas = document.getElementById('weatherChart');
+        const sensorChartCanvas = document.getElementById('sensorChart');
+        const yieldChartCanvas = document.getElementById('yieldChart');
+        const recommendationsList = document.getElementById('recommendations-list');
+        const loadingOverlays = {
+            map: document.getElementById('map-loading'),
+            weatherChart: document.getElementById('weatherChart-loading'),
+            sensorChart: document.getElementById('sensorChart-loading'),
+            yieldChart: document.getElementById('yieldChart-loading')
+        };
+        const weatherChartControls = document.getElementById('weatherChart-controls');
+        const sensorChartControls = document.getElementById('sensorChart-controls');
+        const yieldChartControls = document.getElementById('yieldChart-controls');
+        const processDataButton = document.getElementById('process-data-button');
+
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set initial date range values based on dummy data or state
+            dateRangeStartInput.value = appState.dateRange.start;
+            dateRangeEndInput.value = appState.dateRange.end;
+
+            initMap();
+            initCharts();
+            bindEventListeners();
+            updateUI(); // Initial UI render
+        });
+
+        function initMap() {
+            showLoading('map');
+            // Initialize map centered loosely over Europe/UK for dummy data
+            // Use a default view that will be adjusted by fitBounds later
+            appState.map = L.map(mapElement).setView([51.505, -0.09], 13, {
+                 attributionControl: false // Hide default attribution to add custom one later if needed
+            });
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(appState.map);
+
+            // Add custom attribution if needed
+            // L.control.attribution({ position: 'bottomright' }).addTo(appState.map);
+
+            appState.map.on('load', () => {
+                hideLoading('map');
+            });
+
+             appState.map.on('resize', () => {
+                 // Ensure map is correctly sized after container resize
+                 appState.map.invalidateSize();
+             });
+        }
+
+        function initCharts() {
+             // Weather Chart
+            appState.charts.weatherChart = new Chart(weatherChartCanvas, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Temperature (°C)',
+                        data: [],
+                        borderColor: "var('--secondary-color')",
+                        backgroundColor: "rgba(33, 150, 243, 0.2)",
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                        x: { type: 'category', title: { display: true, text: 'Date' } },
+                        y: { title: { display: true, text: 'Value' } }
+                    },
+                     onClick: (e) => toggleFloatingControls('weatherChart-controls', e),
+                }
+            });
+
+            // Sensor Chart
+             appState.charts.sensorChart = new Chart(sensorChartCanvas, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Moisture (%)',
+                        data: [],
+                        borderColor: "var('--accent-color')",
+                        backgroundColor: "rgba(255, 152, 0, 0.2)",
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                         x: { type: 'category', title: { display: true, text: 'Date' } },
+                        y: { title: { display: true, text: 'Value' } }
+                    },
+                     onClick: (e) => toggleFloatingControls('sensorChart-controls', e),
+                }
+            });
+
+            // Yield Chart
+             appState.charts.yieldChart = new Chart(yieldChartCanvas, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Predicted Yield',
+                            data: [],
+                            backgroundColor: "var('--yield-high')",
+                        },
+                         {
+                            label: 'Actual Yield',
+                            data: [],
+                            backgroundColor: "var('--primary-color')",
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                         x: { type: 'category', title: { display: true, text: 'Section' } },
+                        y: { beginAtZero: true, title: { display: true, text: 'Yield (kg/ha)' } }
+                    },
+                     onClick: (e) => toggleFloatingControls('yieldChart-controls', e),
+                }
+            });
+
+            // Add event listeners for floating chart controls
+            weatherChartControls.addEventListener('change', updateWeatherChart);
+            sensorChartControls.addEventListener('change', updateSensorChart);
+            yieldChartControls.addEventListener('change', updateYieldChart);
+
+             // Close floating controls when clicking outside
+            document.addEventListener('click', (e) => {
+                document.querySelectorAll('.floating-controls').forEach(controls => {
+                    // Check if the click target is outside the controls AND outside the chart container
+                    const chartContainer = controls.previousElementSibling.closest('.chart-container');
+                    if (controls.classList.contains('active') && !controls.contains(e.target) && chartContainer && !chartContainer.contains(e.target)) {
+                        controls.classList.remove('active');
+                         controls.setAttribute('aria-hidden', 'true');
+                    }
+                });
+            });
+
+             // Accessibility: Close controls with Escape key
+            document.addEventListener('keydown', (e) => {
+                 if (e.key === 'Escape') {
+                     document.querySelectorAll('.floating-controls.active').forEach(controls => {
+                         controls.classList.remove('active');
+                          controls.setAttribute('aria-hidden', 'true');
+                          // Return focus to the chart container
+                          controls.previousElementSibling.closest('.chart-container').focus();
+                     });
+                 }
+            });
+
+             // Accessibility: Toggle controls with Enter/Space key on chart container
+             document.querySelectorAll('.chart-container').forEach(container => {
+                 container.addEventListener('keydown', (e) => {
+                     if (e.key === 'Enter' || e.key === ' ') { // Spacebar
+                         e.preventDefault(); // Prevent scrolling
+                         const controls = container.nextElementSibling; // Assumes controls are right after container
+                         if (controls && controls.classList.contains('floating-controls')) {
+                            toggleFloatingControls(controls.id, { target: container.querySelector('canvas') }); // Simulate click on canvas
+                         }
+                     }
+                 });
+             });
+        }
+
+         function toggleFloatingControls(controlsId, event) {
+             const controls = document.getElementById(controlsId);
+             const chartCanvas = event.target; // The canvas element
+
+             // Check if the click was on the canvas itself
+             if (chartCanvas.tagName === 'CANVAS') {
+                 const isActive = controls.classList.toggle('active');
+                 controls.setAttribute('aria-hidden', !isActive);
+
+                 // Accessibility: Move focus into the controls when opened
+                 if (isActive) {
+                     // Find the first focusable element within controls
+                     const firstFocusable = controls.querySelector('select, input, button');
+                     if (firstFocusable) {
+                         firstFocusable.focus();
+                     }
+                 } else {
+                     // Accessibility: Return focus to the chart container when closed
+                     chartCanvas.closest('.chart-container').focus();
+                 }
+             }
+         }
+
+
+        function bindEventListeners() {
+            fieldSelect.addEventListener('change', handleFieldChange);
+            seasonSelect.addEventListener('change', handleSeasonChange);
+            dateRangeStartInput.addEventListener('change', handleDateRangeChange);
+            dateRangeEndInput.addEventListener('change', handleDateRangeChange);
+
+            Object.values(layerCheckboxes).forEach(checkbox => {
+                checkbox.addEventListener('change', handleLayerToggle);
+                 // Accessibility: Update aria-checked on toggle switch parent
+                 checkbox.closest('.toggle-switch').setAttribute('aria-checked', checkbox.checked);
+                 checkbox.addEventListener('change', (e) => {
+                     e.target.closest('.toggle-switch').setAttribute('aria-checked', e.target.checked);
+                 });
+            });
+
+             // Accessibility: Handle keyboard interaction for toggle switches
+             document.querySelectorAll('.toggle-switch').forEach(toggle => {
+                 toggle.addEventListener('keydown', (e) => {
+                     if (e.key === 'Enter' || e.key === ' ') { // Spacebar
+                         e.preventDefault();
+                         const checkbox = toggle.querySelector('input[type="checkbox"]');
+                         checkbox.checked = !checkbox.checked;
+                         checkbox.dispatchEvent(new Event('change')); // Trigger change event
+                     }
+                 });
+             });
+
+            // Placeholder for data upload button
+            processDataButton.addEventListener('click', handleDataUpload);
+        }
+
+        // --- Event Handlers ---
+        function handleFieldChange(event) {
+            appState.selectedField = event.target.value;
+            updateUI();
+        }
+
+        function handleSeasonChange(event) {
+            appState.selectedSeason = event.target.value;
+             // In a real app, this would load season-specific data
+            updateUI();
+        }
+
+        function handleDateRangeChange() {
+            appState.dateRange.start = dateRangeStartInput.value;
+            appState.dateRange.end = dateRangeEndInput.value;
+            // In a real app, this would filter data for charts
+            updateCharts(); // Only charts are affected by date range in this example
+        }
+
+        function handleLayerToggle(event) {
+            const layerId = event.target.id.replace('layer-', '');
+            appState.activeLayers[layerId] = event.target.checked;
+            updateMapLayers();
+        }
+
+        function handleDataUpload() {
+            const fileInput = document.getElementById('data-upload');
+            if (fileInput.files.length > 0) {
+                console.log('Uploading file:', fileInput.files[0].name);
+                // Placeholder for actual upload and processing logic
+
+                // Simulate loading
+                showLoading('map');
+                showLoading('weatherChart');
+                showLoading('sensorChart');
+                showLoading('yieldChart');
+
+                 // Disable controls during loading
+                 document.querySelectorAll('.sidebar select, .sidebar input, .sidebar button').forEach(el => el.disabled = true);
+                 document.querySelectorAll('.floating-controls select, .floating-controls input').forEach(el => el.disabled = true);
+
+
+                 setTimeout(() => {
+                     hideLoading('map');
+                     hideLoading('weatherChart');
+                     hideLoading('sensorChart');
+                     hideLoading('yieldChart');
+
+                      // Enable controls after loading
+                     document.querySelectorAll('.sidebar select, .sidebar input, .sidebar button').forEach(el => el.disabled = false);
+                      document.querySelectorAll('.floating-controls select, .floating-controls input').forEach(el => el.disabled = false);
+
+                     console.log('Data processing complete. UI updated.');
+                     // In a real app, this would trigger data loading and UI updates
+                     updateUI();
+                 }, 2000); // Simulate 2-second processing time
+            } else {
+                console.log('Please select a file to upload.');
+                // Provide user feedback, e.g., highlight the input or show a message
+                // alert('Please select a file to upload.'); // Avoid disruptive alerts
+            }
+        }
+
+
+        // --- UI Update Functions ---
+        function updateUI() {
+            updateMap();
+            updateCharts();
+            updateRecommendations();
+        }
+
+        function updateMap() {
+            showLoading('map');
+            const fieldData = appState.data.fields[appState.selectedField];
+
+            // Clear existing layers except base tile layer and legend controls
+            appState.map.eachLayer(layer => {
+                // Check if it's the base tile layer
+                const isBaseLayer = layer._url && layer._url.includes('openstreetmap');
+                 // Check if it's a legend control layer (which are technically added as layers by L.control)
+                 const isLegend = layer === appState.layers.stressLegend?.getContainer()?.parentElement?._leaflet_id ||
+                                  layer === appState.layers.yieldLegend?.getContainer()?.parentElement?._leaflet_id;
+
+                if (!isBaseLayer && !isLegend) {
+                     appState.map.removeLayer(layer);
+                }
+            });
+            // Remove existing legends if they exist
+             if (appState.layers.stressLegend) {
+                 appState.map.removeControl(appState.layers.stressLegend);
+                 delete appState.layers.stressLegend;
+             }
+              if (appState.layers.yieldLegend) {
+                 appState.map.removeControl(appState.layers.yieldLegend);
+                 delete appState.layers.yieldLegend;
+             }
+
+            appState.layers = {}; // Reset layers state (except base map)
+
+            // Add Field Boundary
+            if (fieldData.boundary) {
+                appState.layers.boundary = L.polygon(fieldData.boundary, { color: "var('--secondary-color')", weight: 2, fill: false, interactive: false }).addTo(appState.map); // Non-interactive boundary
+                appState.map.fitBounds(appState.layers.boundary.getBounds());
+            }
+
+             // Add Imagery Overlay (if active and data exists)
+            if (appState.activeLayers.imagery && fieldData.imageryOverlay) {
+                 appState.layers.imagery = L.imageOverlay(fieldData.imageryOverlay.url, fieldData.imageryOverlay.bounds, { opacity: 0.8 }).addTo(appState.map);
+            }
+
+            // Add Stress Zones (if active and data exists)
+            if (appState.activeLayers.stress && fieldData.stressZones && fieldData.stressZones.features.length > 0) {
+                 appState.layers.stress = L.geoJSON(fieldData.stressZones, {
+                     style: function(feature) {
+                         switch (feature.properties.level) {
+                             case 'high': return { color: "var('--stress-high')", weight: 1, opacity: 0.8, fillOpacity: 0.6 };
+                             case 'medium': return { color: "var('--stress-medium')", weight: 1, opacity: 0.8, fillOpacity: 0.6 };
+                             case 'low': return { color: "var('--stress-low')", weight: 1, opacity: 0.8, fillOpacity: 0.6 };
+                             default: return { color: "grey", weight: 1, opacity: 0.8, fillOpacity: 0.6 };
+                         }
+                     },
+                     onEachFeature: function(feature, layer) {
+                         layer.bindTooltip(`Stress: ${feature.properties.level.charAt(0).toUpperCase() + feature.properties.level.slice(1)}`, { permanent: false, direction: 'auto' });
+                         layer.on('mouseover', function() { this.setStyle({ weight: 3, color: "black" }); });
+                         layer.on('mouseout', function() { appState.layers.stress.resetStyle(this); });
+                          layer.on('click', function() { console.log('Clicked Stress Zone:', feature.properties.level); /* Add filtering/highlighting logic */ });
+                     }
+                 }).addTo(appState.map);
+
+                 // Add Stress Legend
+                 appState.layers.stressLegend = L.control({position: 'bottomleft'});
+                 appState.layers.stressLegend.onAdd = function (map) {
+                     const div = L.DomUtil.create('div', 'info legend legend-stress');
+                     const levels = ['high', 'medium', 'low'];
+                     const colors = ["var(--stress-high)", "var(--stress-medium)", "var(--stress-low)"];
+                     const labels = ['High Stress', 'Medium Stress', 'Low Stress'];
+
+                     div.innerHTML += '<h4>Stress Level</h4>';
+                     for (let i = 0; i < levels.length; i++) {
+                         div.innerHTML +=
+                             '<i style="background:' + colors[i] + ';"></i> ' +
+                             labels[i] + '<br>';
+                     }
+                     return div;
+                 };
+                 appState.layers.stressLegend.addTo(appState.map);
+            }
+
+            // Add Yield Prediction (if active and data exists)
+            if (appState.activeLayers.yield && fieldData.yieldPrediction && fieldData.yieldPrediction.features.length > 0) {
+                 appState.layers.yield = L.geoJSON(fieldData.yieldPrediction, {
+                     style: function(feature) {
+                         switch (feature.properties.level) {
+                             case 'high': return { color: "var('--yield-high')", weight: 1, opacity: 0.8, fillOpacity: 0.6 };
+                             case 'medium': return { color: "var('--yield-medium')", weight: 1, opacity: 0.8, fillOpacity: 0.6 };
+                             case 'low': return { color: "var('--yield-low')", weight: 1, opacity: 0.8, fillOpacity: 0.6 };
+                             default: return { color: "grey", weight: 1, opacity: 0.8, fillOpacity: 0.6 };
+                         }
+                     },
+                      onEachFeature: function(feature, layer) {
+                         layer.bindTooltip(`Predicted Yield: ${feature.properties.level.charAt(0).toUpperCase() + feature.properties.level.slice(1)} (${feature.properties.yield || 'N/A'} kg/ha)`, { permanent: false, direction: 'auto' });
+                         layer.on('mouseover', function() { this.setStyle({ weight: 3, color: "black" }); });
+                         layer.on('mouseout', function() { appState.layers.yield.resetStyle(this); });
+                          layer.on('click', function() { console.log('Clicked Yield Zone:', feature.properties.level, feature.properties.yield); /* Add filtering/highlighting logic */ });
+                     }
+                 }).addTo(appState.map);
+
+                  // Add Yield Legend
+                 appState.layers.yieldLegend = L.control({position: 'bottomleft'});
+                 appState.layers.yieldLegend.onAdd = function (map) {
+                     const div = L.DomUtil.create('div', 'info legend legend-yield');
+                     const levels = ['high', 'medium', 'low'];
+                     const colors = ["var(--yield-high)", "var(--yield-medium)", "var(--yield-low)"];
+                     const labels = ['High Yield', 'Medium Yield', 'Low Yield'];
+
+                     div.innerHTML += '<h4>Yield Prediction</h4>';
+                     for (let i = 0; i < levels.length; i++) {
+                         div.innerHTML +=
+                             '<i style="background:' + colors[i] + ';"></i> ' +
+                             labels[i] + '<br>';
+                     }
+                     return div;
+                 };
+                 appState.layers.yieldLegend.addTo(appState.map);
+            }
+
+            // Add Sensor Locations (if active and data exists)
+            if (appState.activeLayers.sensors && fieldData.sensors && fieldData.sensors.length > 0) {
+                 appState.layers.sensors = L.layerGroup().addTo(appState.map);
+                 fieldData.sensors.forEach(sensor => {
+                     const marker = L.marker([sensor.lat, sensor.lng]).addTo(appState.layers.sensors);
+                     marker.bindTooltip(`Sensor ${sensor.id.toUpperCase()} (${sensor.type.charAt(0).toUpperCase() + sensor.type.slice(1)})`, { permanent: false, direction: 'auto' });
+                      marker.on('click', function() {
+                          console.log('Clicked Sensor:', sensor.id);
+                          // Update sensor select dropdown and trigger chart update
+                          const sensorSelect = document.getElementById('sensorChart-dataset');
+                          if (sensorSelect) {
+                              sensorSelect.value = sensor.id;
+                              updateSensorChart(); // Trigger chart update
+                          }
+                      });
+                 });
+            }
+
+            // Ensure map size is correct after updates
+            appState.map.invalidateSize();
+            hideLoading('map');
+        }
+
+        function updateMapLayers() {
+             // Toggle visibility of layers based on activeLayers state
+             Object.keys(appState.layers).forEach(layerId => {
+                 const layer = appState.layers[layerId];
+                 // Skip base layer as it's always present
+                 if (layer && layer._url && layer._url.includes('openstreetmap')) {
+                     return;
+                 }
+
+                 const isActive = appState.activeLayers[layerId];
+
+                 if (isActive && layer && !appState.map.hasLayer(layer)) {
+                     appState.map.addLayer(layer);
+                 } else if (!isActive && layer && appState.map.hasLayer(layer)) {
+                     appState.map.removeLayer(layer);
+                 }
+             });
+
+             // Toggle legend visibility based on corresponding layer
+             if (appState.layers.stressLegend) {
+                 const hasStressData = appState.data.fields[appState.selectedField]?.stressZones?.features.length > 0;
+                 if (appState.activeLayers.stress && hasStressData) {
+                     if (!appState.map.hasControl(appState.layers.stressLegend)) appState.layers.stressLegend.addTo(appState.map);
+                 } else {
+                     if (appState.map.hasControl(appState.layers.stressLegend)) appState.map.removeControl(appState.layers.stressLegend);
+                 }
+             }
+              if (appState.layers.yieldLegend) {
+                 const hasYieldData = appState.data.fields[appState.selectedField]?.yieldPrediction?.features.length > 0;
+                 if (appState.activeLayers.yield && hasYieldData) {
+                     if (!appState.map.hasControl(appState.layers.yieldLegend)) appState.layers.yieldLegend.addTo(appState.map);
+                 } else {
+                     if (appState.map.hasControl(appState.layers.yieldLegend)) appState.map.removeControl(appState.layers.yieldLegend);
+                 }
+             }
+        }
+
+
+        function updateCharts() {
+            updateWeatherChart();
+            updateSensorChart();
+            updateYieldChart();
+        }
+
+        // Helper functions to update individual charts based on their controls
+        function updateWeatherChart() {
+            showLoading('weatherChart');
+             const weatherChart = appState.charts.weatherChart;
+            const selectedWeatherDataset = document.getElementById('weatherChart-dataset').value;
+            const weatherDatasetLabel = document.getElementById('weatherChart-dataset').options[document.getElementById('weatherChart-dataset').selectedIndex].text;
+
+            // Filter data based on current date range
+            const startDate = new Date(appState.dateRange.start);
+            const endDate = new Date(appState.dateRange.end);
+             const weatherLabels = appState.data.weather.labels.filter(dateString => {
+                 const date = new Date(dateString);
+                 return date >= startDate && date <= endDate;
+            });
+             const weatherDatasets = {};
+             Object.keys(appState.data.weather.datasets).forEach(key => {
+                 weatherDatasets[key] = appState.data.weather.datasets[key].filter((_, index) => {
+                     const date = new Date(appState.data.weather.labels[index]);
+                     return date >= startDate && date <= endDate;
+                 });
+             });
+
+
+            weatherChart.data.labels = weatherLabels;
+            weatherChart.data.datasets[0].label = weatherDatasetLabel;
+            weatherChart.data.datasets[0].data = weatherDatasets[selectedWeatherDataset];
+            weatherChart.config.type = document.getElementById('weatherChart-type').value;
+            const weatherColor = document.getElementById('weatherChart-color').value;
+            weatherChart.data.datasets[0].borderColor = weatherColor;
+            weatherChart.data.datasets[0].backgroundColor = weatherColor.replace('rgb', 'rgba').replace(')', ', 0.2)'); // Add transparency
+
+            // Update Y-axis title based on selected dataset
+            let yAxisText = 'Value';
+            switch(selectedWeatherDataset) {
+                case 'temperature': yAxisText = 'Temperature (°C)'; break;
+                case 'precipitation': yAxisText = 'Precipitation (mm)'; break;
+                case 'humidity': yAxisText = 'Humidity (%)'; break;
+            }
+            weatherChart.options.scales.y.title.text = yAxisText;
+
+
+            weatherChart.update();
+            hideLoading('weatherChart');
+        }
+
+         function updateSensorChart() {
+            showLoading('sensorChart');
+             const sensorChart = appState.charts.sensorChart;
+             const sensorSelect = document.getElementById('sensorChart-dataset');
+
+             // Update sensor select options based on selected field
+             const currentFieldSensors = appState.data.fields[appState.selectedField].sensors;
+             const currentSensorOptions = Array.from(sensorSelect.options).map(opt => opt.value);
+             const newSensorOptions = currentFieldSensors.map(s => s.id);
+
+             // Only update options if they've changed
+             if (JSON.stringify(currentSensorOptions) !== JSON.stringify(newSensorOptions)) {
+                 sensorSelect.innerHTML = ''; // Clear current options
+                 if (currentFieldSensors.length === 0) {
+                      const option = document.createElement('option');
+                      option.value = '';
+                      option.textContent = 'No sensors for this field';
+                      option.disabled = true;
+                      sensorSelect.appendChild(option);
+                 } else {
+                     currentFieldSensors.forEach(sensor => {
+                         const option = document.createElement('option');
+                         option.value = sensor.id;
+                         option.textContent = `Sensor ${sensor.id.toUpperCase()} (${sensor.type.charAt(0).toUpperCase() + sensor.type.slice(1)})`;
+                         sensorSelect.appendChild(option);
+                     });
+                 }
+                 // Set selected value to the first sensor if available, otherwise empty
+                 sensorSelect.value = currentFieldSensors.length > 0 ? currentFieldSensors[0].id : '';
+             }
+
+             const selectedSensorId = sensorSelect.value;
+             const sensorData = appState.data.sensors[selectedSensorId]; // Get data for selected sensor
+             const selectedSensorLabel = sensorSelect.options[sensorSelect.selectedIndex]?.text || 'Sensor Data';
+
+             // Filter data based on current date range
+             const startDate = new Date(appState.dateRange.start);
+             const endDate = new Date(appState.dateRange.end);
+
+             let sensorLabels = [];
+             let sensorDatasetData = [];
+             let sensorDataType = 'Value'; // Default Y-axis label
+
+             if (sensorData) {
+                 sensorLabels = sensorData.labels.filter(dateString => {
+                      const date = new Date(dateString);
+                      return date >= startDate && date <= endDate;
+                 });
+                  // Assuming only one dataset per sensor in dummy data
+                 const dataKey = Object.keys(sensorData.datasets)[0];
+                 sensorDatasetData = sensorData.datasets[dataKey].filter((_, index) => {
+                      const date = new Date(sensorData.labels[index]);
+                      return date >= startDate && date <= endDate;
+                 });
+                 sensorDataType = dataKey === 'moisture' ? 'Moisture (%)' : (dataKey === 'nutrients' ? 'Nutrients' : 'Value'); // Set Y-axis label based on data key
+             }
+
+
+            sensorChart.data.labels = sensorLabels;
+            sensorChart.data.datasets[0].label = selectedSensorLabel;
+            sensorChart.data.datasets[0].data = sensorDatasetData;
+            sensorChart.config.type = document.getElementById('sensorChart-type').value;
+            const sensorColor = document.getElementById('sensorChart-color').value;
+            sensorChart.data.datasets[0].borderColor = sensorColor;
+             sensorChart.data.datasets[0].backgroundColor = sensorColor.replace('rgb', 'rgba').replace(')', ', 0.2)'); // Add transparency
+
+             sensorChart.options.scales.y.title.text = sensorDataType; // Update Y-axis title
+
+            sensorChart.update();
+            hideLoading('sensorChart');
+        }
+
+         function updateYieldChart() {
+            showLoading('yieldChart');
+             const yieldChart = appState.charts.yieldChart;
+             const fieldYieldData = appState.data.yield[appState.selectedField];
+
+            if (fieldYieldData) {
+                 yieldChart.data.labels = fieldYieldData.labels;
+                 yieldChart.data.datasets[0].data = fieldYieldData.datasets.predicted;
+                 yieldChart.data.datasets[1].data = fieldYieldData.datasets.actual;
+            } else {
+                 yieldChart.data.labels = [];
+                 yieldChart.data.datasets[0].data = [];
+                 yieldChart.data.datasets[1].data = [];
+            }
+
+            yieldChart.config.type = document.getElementById('yieldChart-type').value;
+            yieldChart.data.datasets[0].backgroundColor = document.getElementById('yieldChart-predicted-color').value;
+            yieldChart.data.datasets[1].backgroundColor = document.getElementById('yieldChart-actual-color').value;
+
+            yieldChart.update();
+            hideLoading('yieldChart');
+         }
+
+
+        function updateRecommendations() {
+            recommendationsList.innerHTML = ''; // Clear existing recommendations
+            // Filter recommendations based on selected field (or show overall)
+            const filteredRecommendations = appState.data.recommendations.filter(rec =>
+                 rec.field === appState.selectedField || rec.field === 'Overall'
+            );
+
+            if (filteredRecommendations.length === 0) {
+                 const noRecElement = document.createElement('div');
+                 noRecElement.classList.add('recommendation-item');
+                 noRecElement.innerHTML = '<p>No specific recommendations for this field at this time.</p>';
+                 noRecElement.tabIndex = 0; // Make it focusable
+                 recommendationsList.appendChild(noRecElement);
+            } else {
+                filteredRecommendations.forEach(rec => {
+                    const recElement = document.createElement('div');
+                    recElement.classList.add('recommendation-item');
+                    const fieldLabel = appState.data.fields[rec.field]?.name || rec.field; // Use field name from data if available
+                    recElement.innerHTML = `<p><strong>${fieldLabel}${rec.section ? ', ' + rec.section : ''}:</strong> ${rec.text}</p>`;
+                    recElement.tabIndex = 0; // Make it focusable
+                    recommendationsList.appendChild(recElement);
+                });
+            }
+        }
+
+        // --- Loading Indicators ---
+        function showLoading(elementId) {
+            const overlay = loadingOverlays[elementId];
+            if (overlay) {
+                overlay.classList.add('visible');
+                // Disable controls associated with the loading element
+                 const card = overlay.closest('.card');
+                 if (card) {
+                     card.querySelectorAll('select, input, button, .toggle-switch').forEach(el => {
+                         el.disabled = true;
+                         // For toggle switches, disable the input directly
+                         if (el.classList.contains('toggle-switch')) {
+                             el.querySelector('input[type="checkbox"]').disabled = true;
+                         }
+                      });
+                 }
+            }
+        }
+
+        function hideLoading(elementId) {
+             const overlay = loadingOverlays[elementId];
+            if (overlay) {
+                overlay.classList.remove('visible');
+                 // Enable controls associated with the element
+                 const card = overlay.closest('.card');
+                 if (card) {
+                     card.querySelectorAll('select, input, button, .toggle-switch').forEach(el => {
+                          // Only enable if not disabled by another overlay or overall process
+                         if (el.closest('.loading-overlay.visible') === null) {
+                             el.disabled = false;
+                              if (el.classList.contains('toggle-switch')) {
+                                 el.querySelector('input[type="checkbox"]').disabled = false;
+                             }
+                         }
+                      });
+                 }
+            }
+        }
+
+    </script>
+</body>
+</html>

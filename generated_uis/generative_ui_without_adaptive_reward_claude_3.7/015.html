@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How Google's Search Algorithm Works</title>
+    <style>
+        :root {
+            --primary: #4285F4;
+            --secondary: #34A853;
+            --accent1: #FBBC05;
+            --accent2: #EA4335;
+            --dark: #202124;
+            --light: #F8F9FA;
+            --medium: #5F6368;
+            --border-radius: 8px;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--dark);
+            background-color: var(--light);
+            overflow-x: hidden;
+        }
+        
+        header {
+            background-color: white;
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+        
+        .logo-icon {
+            display: flex;
+            font-size: 1.8rem;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            color: var(--medium);
+            font-weight: 500;
+            transition: var(--transition);
+            padding: 0.5rem 0;
+            position: relative;
+        }
+        
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+        
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: var(--primary);
+            transition: var(--transition);
+        }
+        
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+        
+        .hero {
+            padding: 6rem 0 4rem;
+            text-align: center;
+            background-color: white;
+        }
+        
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto 2rem;
+            color: var(--medium);
+        }
+        
+        .section {
+            padding: 4rem 0;
+            background-color: white;
+            margin-bottom: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+        
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .section-header h2 {
+            font-size: 2rem;
+            color: var(--dark);
+            margin-bottom: 1rem;
+        }
+        
+        .section-header p {
+            color: var(--medium);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .process-flow {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-bottom: 3rem;
+        }
+        
+        .process-step {
+            flex: 1;
+            min-width: 200px;
+            max-width: 300px;
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            background-color: white;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            position: relative;
+        }
+        
+        .process-step:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .process-step::after {
+            content: '→';
+            position: absolute;
+            right: -1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 2rem;
+            color: var(--medium);
+            opacity: 0.5;
+        }
+        
+        .process-step:last-child::after {
+            display: none;
+        }
+        
+        .step-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--light);
+            border-radius: 50%;
+            font-size: 2rem;
+        }
+        
+        .step-icon.crawling {
+            color: var(--primary);
+        }
+        
+        .step-icon.indexing {
+            color: var(--secondary);
+        }
+        
+        .step-icon.ranking {
+            color: var(--accent1);
+        }
+        
+        .step-icon.serving {
+            color: var(--accent2);
+        }
+        
+        .process-step h3 {
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+        
+        .process-step p {
+            color: var(--medium);
+            font-size: 0.9rem;
+        }
+        
+        .key-term {
+            position: relative;
+            display: inline-block;
+            color: var(--primary);
+            font-weight: 500;
+            border-bottom: 1px dotted var(--primary);
+            cursor: help;
+        }
+        
+        .key-term .tooltip {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--dark);
+            color: white;
+            text-align: center;
+            padding: 0.5rem;
+            border-radius: var(--border-radius);
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-weight: normal;
+            font-size: 0.85rem;
+        }
+        
+        .key-term:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .search-simulation {
+            background-color: var(--light);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .search-bar {
+            display: flex;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            border-radius: 24px;
+            overflow: hidden;
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            outline: none;
+            font-size: 1rem;
+        }
+        
+        .search-button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .search-button:hover {
+            background-color: #3367d6;
+        }
+        
+        .search-results {
+            display: none;
+        }
+        
+        .result-item {
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            background-color: white;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+        
+        .result-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .result-title {
+            color: #1a0dab;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            text-decoration: none;
+        }
+        
+        .result-title:hover {
+            text-decoration: underline;
+        }
+        
+        .result-url {
+            color: #006621;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .result-snippet {
+            color: var(--medium);
+            font-size: 0.9rem;
+        }
+        
+        .ranking-factors {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .factor-card {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+        
+        .factor-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .factor-icon {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--light);
+            border-radius: 50%;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+        
+        .factor-card h3 {
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+        
+        .factor-card p {
+            color: var(--medium);
+            font-size: 0.9rem;
+        }
+        
+        .glossary {
+            background-color: var(--light);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            margin-top: 3rem;
+        }
+        
+        .glossary h3 {
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+        }
+        
+        .glossary-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .glossary-item {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+        
+        .glossary-term {
+            color: var(--primary);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .glossary-def {
+            color: var(--medium);
+            font-size: 0.9rem;
+        }
+        
+        .progress-container {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: 5px;
+            background-color: transparent;
+            z-index: 200;
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background-color: var(--primary);
+            width: 0%;
+        }
+        
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .hero p {
+                font-size: 1rem;
+            }
+            
+            .section-header h2 {
+                font-size: 1.5rem;
+            }
+            
+            .process-flow {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .process-step {
+                max-width: 100%;
+            }
+            
+            .process-step::after {
+                content: '↓';
+                right: 50%;
+                top: auto;
+                bottom: -2rem;
+                transform: translateX(50%);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <header>
+        <div class="container">
+            <nav>
+                <div class="logo">
+                    <div class="logo-icon">🔍</div>
+                    <span>Google Algorithm Explorer</span>
+                </div>
+                <div class="nav-links">
+                    <a href="#crawling">Crawling</a>
+                    <a href="#indexing">Indexing</a>
+                    <a href="#ranking">Ranking</a>
+                    <a href="#spam">Spam Detection</a>
+                    <a href="#glossary">Glossary</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <h1>How Google's Search Algorithm Works</h1>
+            <p>Discover the core principles and processes behind Google's search technology that delivers billions of results every day.</p>
+        </div>
+    </section>
+
+    <div class="container">
+        <section class="section">
+            <div class="section-header">
+                <h2>The Search Process Overview</h2>
+                <p>Google's search algorithm follows a complex yet systematic approach to deliver the most relevant results for your queries.</p>
+            </div>
+
+            <div class="process-flow">
+                <div class="process-step">
+                    <div class="step-icon crawling">🕸️</div>
+                    <h3>Crawling</h3>
+                    <p>Google's bots discover content across the web by following links and reading sitemaps.</p>
+                </div>
+                <div class="process-step">
+                    <div class="step-icon indexing">📚</div>
+                    <h3>Indexing</h3>
+                    <p>Discovered content is processed and stored in Google's massive database.</p>
+                </div>
+                <div class="process-step">
+                    <div class="step-icon ranking">⭐</div>
+                    <h3>Ranking</h3>
+                    <p>When you search, Google finds and ranks the most relevant content from its index.</p>
+                </div>
+                <div class="process-step">
+                    <div class="step-icon serving">🖥️</div>
+                    <h3>Serving</h3>
+                    <p>The most relevant results are presented in a user-friendly format.</p>
+                </div>
+            </div>
+
+            <div class="search-simulation">
+                <div class="search-bar">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Try searching for something...">
+                    <button class="search-button" id="searchButton">Search</button>
+                </div>
+                <div class="search-results" id="searchResults">
+                    <div class="result-item">
+                        <a href="#" class="result-title">Understanding Google's Search Algorithm | Comprehensive Guide</a>
+                        <div class="result-url">https://example.com/google-algorithm-guide</div>
+                        <div class="result-snippet">A detailed explanation of how Google's search algorithm works, including crawling, indexing, and ranking factors that determine search results.</div>
+                    </div>
+                    <div class="result-item">
+                        <a href="#" class="result-title">Google SEO: How Search Algorithms Determine Rankings</a>
+                        <div class="result-url">https://example.org/google-seo-ranking</div>
+                        <div class="result-snippet">Learn about the key factors in Google's ranking algorithm and how they impact your website's visibility in search results.</div>
+                    </div>
+                    <div class="result-item">
+                        <a href="#" class="result-title">The Evolution of Google's Search Technology | History and Updates</a>
+                        <div class="result-url">https://example.net/google-algorithm-history</div>
+                        <div class="result-snippet">Explore how Google's search algorithm has evolved over time, from PageRank to BERT and beyond, improving search quality for users.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="crawling" class="section">
+            <div class="section-header">
+                <h2>1. Crawling: Discovering the Web</h2>
+                <p>Before Google can show search results, it needs to discover what content exists on the web.</p>
+            </div>
+
+            <div class="container">
+                <p>Google's crawling process begins with a list of known web addresses from past crawls and sitemaps provided by website owners. Programs called <span class="key-term">crawlers<span class="tooltip">Automated programs that browse the web to discover and collect information about web pages.</span></span> (also known as spiders or bots) visit these websites, much like you would by clicking on links.</p>
+                <br>
+                <p>The main crawler, called <span class="key-term">Googlebot<span class="tooltip">Google's web crawler that discovers new and updated pages to add to the Google index.</span></span>, uses an algorithmic process to determine which sites to crawl, how often, and how many pages to fetch from each site. The crawling process follows these steps:</p>
+                <br>
+                <ol style="margin-left: 2rem; margin-bottom: 2rem;">
+                    <li><strong>Discovery:</strong> Googlebot finds pages through links from known pages, sitemaps, and submitted URLs.</li>
+                    <li><strong>Fetching:</strong> The crawler requests the page from the server, similar to how a browser does.</li>
+                    <li><strong>Processing:</strong> Googlebot renders the page and analyzes its content and links.</li>
+                    <li><strong>Following:</strong> It follows links on the page to discover new URLs to crawl.</li>
+                </ol>
+                <p>Website owners can control how Google crawls their site using the <span class="key-term">robots.txt<span class="tooltip">A text file that tells search engine crawlers which pages or files the crawler can or can't request from your site.</span></span> file and other directives. This helps Google crawl the most important content efficiently.</p>
+            </div>
+        </section>
+
+        <section id="indexing" class="section">
+            <div class="section-header">
+                <h2>2. Indexing: Understanding and Storing Content</h2>
+                <p>Once content is crawled, Google processes and analyzes it to understand what it's about.</p>
+            </div>
+
+            <div class="container">
+                <p>Indexing is the process where Google analyzes and stores information about crawled pages. During indexing, Google:</p>
+                <br>
+                <ul style="margin-left: 2rem; margin-bottom: 2rem;">
+                    <li><strong>Processes the content:</strong> Google analyzes the text, images, videos, and other media on the page.</li>
+                    <li><strong>Renders the page:</strong> Using a system similar to a browser, Google processes JavaScript and CSS to see the page as users would.</li>
+                    <li><strong>Understands the meaning:</strong> Using <span class="key-term">natural language processing<span class="tooltip">A field of AI that gives computers the ability to understand text and spoken words similar to how humans can.</span></span>, Google determines what the page is about.</li>
+                    <li><strong>Catalogs information:</strong> The page is categorized and added to Google's massive index, ready to be retrieved when relevant to a search query.</li>
+                </ul>
+                <p>Not all crawled pages are indexed. Google may choose not to index pages that are:</p>
+                <br>
+                <ul style="margin-left: 2rem; margin-bottom: 2rem;">
+                    <li>Duplicates of already-indexed content</li>
+                    <li>Low quality or containing little value</li>
+                    <li>Marked with a <span class="key-term">noindex tag<span class="tooltip">An HTML tag that tells search engines not to include a specific page in their index.</span></span></li>
+                    <li>Blocked by robots.txt (though this alone doesn't prevent indexing)</li>
+                </ul>
+                <p>Google's index is constantly updating as new pages are discovered, existing pages change, and outdated content is removed.</p>
+            </div>
+        </section>
+
+        <section id="ranking" class="section">
+            <div class="section-header">
+                <h2>3. Ranking: Delivering Relevant Results</h2>
+                <p>When you search, Google's algorithms work to find the most relevant and useful results from billions of indexed pages.</p>
+            </div>
+
+            <div class="container">
+                <p>Ranking is where Google's algorithm truly shines. When you enter a search query, Google:</p>
+                <br>
+                <ol style="margin-left: 2rem; margin-bottom: 2rem;">
+                    <li><strong>Interprets your query:</strong> Understanding what you're looking for, including spelling corrections, synonyms, and search intent.</li>
+                    <li><strong>Retrieves matching pages:</strong> Finding pages from the index that are related to your query.</li>
+                    <li><strong>Ranks the results:</strong> Ordering them by relevance using hundreds of ranking factors.</li>
+                    <li><strong>Returns the best results:</strong> Presenting them in a format that's most useful to you.</li>
+                </ol>
+                <p>Google uses over 200 ranking factors in its algorithm. While the exact details are proprietary, some of the known key factors include:</p>
+            </div>
+
+            <div class="ranking-factors">
+                <div class="factor-card">
+                    <div class="factor-icon" style="color: var(--primary);">📝</div>
+                    <h3>Content Quality</h3>
+                    <p>Google evaluates if content is comprehensive, accurate, and helpful to users. It looks for expertise, authoritativeness, and trustworthiness (E-A-T).</p>
+                </div>
+                <div class="factor-card">
+                    <div class="factor-icon" style="color: var(--secondary);">🔗</div>
+                    <h3>Backlinks</h3>
+                    <p>Links from other websites serve as "votes of confidence." The original <span class="key-term">PageRank<span class="tooltip">Google's original algorithm that ranked pages based on the quantity and quality of links pointing to them.</span></span> algorithm was built on this concept.</p>
+                </div>
+                <div class="factor-card">
+                    <div class="factor-icon" style="color: var(--accent1);">📱</div>
+                    <h3>Mobile-Friendliness</h3>
+                    <p>With most searches now coming from mobile devices, Google prioritizes sites that provide a good mobile experience.</p>
+                </div>
+                <div class="factor-card">
+                    <div class="factor-icon" style="color: var(--accent2);">⚡</div>
+                    <h3>Page Speed</h3>
+                    <p>Faster-loading pages provide a better user experience and may rank higher, especially on mobile searches.</p>
+                </div>
+                <div class="factor-card">
+                    <div class="factor-icon" style="color: var(--primary);">🔒</div>
+                    <h3>Security</h3>
+                    <p>Google gives preference to secure websites (HTTPS over HTTP) to protect user data and privacy.</p>
+                </div>
+                <div class="factor-card">
+                    <div class="factor-icon" style="color: var(--secondary);">👥</div>
+                    <h3>User Experience</h3>
+                    <p>Metrics like <span class="key-term">Core Web Vitals<span class="tooltip">A set of metrics that measure real-world user experience for loading performance, interactivity, and visual stability.</span></span> help Google evaluate if users have a good experience on the page.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="spam" class="section">
+            <div class="section-header">
+                <h2>4. Spam Detection: Ensuring Quality Results</h2>
+                <p>Google works hard to identify and filter out content that tries to manipulate rankings or deceive users.</p>
+            </div>
+
+            <div class="container">
+                <p>To maintain the quality of search results, Google has sophisticated systems to detect attempts to manipulate rankings. These include:</p>
+                <br>
+                <ul style="margin-left: 2rem; margin-bottom: 2rem;">
+                    <li><strong><span class="key-term">Spam filters<span class="tooltip">Algorithms designed to detect and penalize content that violates Google's Webmaster Guidelines.</span></span>:</strong> Automated systems that identify content violating Google's guidelines.</li>
+                    <li><strong>Manual actions:</strong> Human reviewers can flag sites that don't comply with Google's quality guidelines.</li>
+                    <li><strong>Algorithm updates:</strong> Regular updates like <span class="key-term">Panda<span class="tooltip">A Google algorithm update that targets low-quality content and content farms.</span></span>, <span class="key-term">Penguin<span class="tooltip">A Google algorithm update that targets manipulative link building practices.</span></span>, and others target specific types of spam or low-quality content.</li>
+                </ul>
+                <p>Common spam techniques that Google penalizes include:</p>
+                <br>
+                <ul style="margin-left: 2rem; margin-bottom: 2rem;">
+                    <li>Keyword stuffing (overusing keywords unnaturally)</li>
+                    <li>Link schemes and buying links</li>
+                    <li>Cloaking (showing different content to users versus search engines)</li>
+                    <li>Hidden text or links</li>
+                    <li>Doorway pages (pages created just for search engines)</li>
+                    <li>Scraped or duplicate content</li>
+                </ul>
+                <p>Google's spam detection systems are constantly evolving to stay ahead of new manipulation techniques, ensuring that users get high-quality results.</p>
+            </div>
+        </section>
+
+        <section id="glossary" class="section">
+            <div class="section-header">
+                <h2>Glossary of Key Terms</h2>
+                <p>Important concepts and terminology related to Google's search algorithm.</p>
+            </div>
+
+            <div class="glossary">
+                <div class="glossary-list">
+                    <div class="glossary-item">
+                        <div class="glossary-term">Algorithm</div>
+                        <div class="glossary-def">A complex computer program that looks for clues to give you back exactly what you want. Google's search algorithm uses over 200 factors to rank webpages.</div>
+                    </div>
+                    <div class="glossary-item">
+                        <div class="glossary-term">BERT</div>
+                        <div class="glossary-def">Bidirectional Encoder Representations from Transformers - a neural network-based technique for natural language processing that helps Google better understand the context of words in search queries.</div>
+                    </div>
+                    <div class="glossary-item">
+                        <div class="glossary-term">Core Web Vitals</div>
+                        <div class="glossary-def">A set of metrics measuring user experience including loading performance (LCP), interactivity (FID), and visual stability (CLS).</div>
+                    </div>
+                    <div class="glossary-item">
+                        <div class="glossary-term">Crawler</div>
+                        <div class="glossary-def">A program that visits websites and reads their pages to create entries for a search engine index. Google's main crawler is called Googlebot.</div>
+                    </div>
+                    <div class="glossary-item">
+                        <div class="glossary-term">E-A-T</div>
+                        <div class="glossary-def">Expertise, Authoritativeness, and Trustworthiness - principles Google uses to assess content quality, especially for YMYL (Your Money Your Life) topics.</div>
+                    </div>
+                    <div class="glossary-item">
+                        <div class="glossary-term">Index</div>
+                        <div class="glossary-def">Google's index is like a library where it stores all the webpages it knows about. When you search, Google looks through the index for relevant information.</div>
+                    </div>
+                    <div class="glossary-item">
+                        <div class="glossary-term">MUM</div>
+                        <div class="glossary-def">Multitask Unified Model - an AI technology 1000 times more powerful than BERT, helping Google understand complex queries and multimodal content.</div>
+                    </div>
+                    <div class="glossary-item">
+                        <div class="glossary-term">PageRank</div>
+                        <div class="glossary-def">Google's original ranking algorithm that evaluates the quantity and quality of links to a webpage to determine its importance.</div>
+                    </div>
+                    <div class="glossary-item">
+                        <div class="glossary-term">RankBrain</div>
+                        <div class="glossary-def">A machine learning component of Google's algorithm that helps process and understand search queries, especially new ones never seen before.</div>
+                    </div>
+                    <div class="glossary-item">
+                        <div class="glossary-term">Search Intent</div>
+                        <div class="glossary-def">The goal behind a user's search query - whether they're looking for information, trying to make a purchase, or navigating to a specific site.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Progress bar functionality
+        window.onscroll = function() {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById("progressBar").style.width = scrolled + "%";
+        };
+        
+        // Smooth scroll functionality
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+        
+        // Search simulation
+        document.getElementById('searchButton').addEventListener('click', function() {
+            const searchInput = document.getElementById('searchInput');
+            const searchResults = document.getElementById('searchResults');
+            
+            if (searchInput.value.trim() !== '') {
+                // Simulate loading
+                searchResults.style.display = 'none';
+                searchButton.textContent = 'Searching...';
+                
+                // Simulate the search process with a delay
+                setTimeout(() => {
+                    searchResults.style.display = 'block';
+                    searchButton.textContent = 'Search';
+                    
+                    // Scroll to results
+                    searchResults.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 1500);
+            }
+        });
+        
+        // Allow pressing Enter to search
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('searchButton').click();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4a90e2; /* Blue */
+            --secondary-color: #f5a623; /* Orange */
+            --accent-color: #50e3c2; /* Teal */
+            --background-color: #f4f7f6; /* Light Grey */
+            --card-background: #ffffff; /* White */
+            --text-color: #333333; /* Dark Grey */
+            --text-light: #666666; /* Medium Grey */
+            --border-color: #e0e0e0; /* Light Grey */
+            --shadow-color: rgba(0, 0, 0, 0.08);
+            --spacing-unit: 8px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            padding: var(--spacing-unit) * 3;
+        }
+
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--spacing-unit) * 3;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .filter-panel {
+            background-color: var(--card-background);
+            padding: var(--spacing-unit) * 3;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px var(--shadow-color);
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-unit) * 2;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-unit);
+        }
+
+        .filter-group label {
+            font-size: 0.9em;
+            font-weight: 500;
+            color: var(--text-light);
+        }
+
+        .filter-group select,
+        .filter-group input[type="date"],
+        .filter-group input[type="text"] {
+            padding: var(--spacing-unit) 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1em;
+            color: var(--text-color);
+            background-color: var(--card-background);
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            min-width: 150px;
+        }
+
+        .filter-group select:focus,
+        .filter-group input[type="date"]:focus,
+        .filter-group input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-unit) * 3;
+        }
+
+        .chart-card {
+            background-color: var(--card-background);
+            padding: var(--spacing-unit) * 3;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px var(--shadow-color);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .chart-card h3 {
+            margin-top: 0;
+            margin-bottom: var(--spacing-unit) * 2;
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px; /* Fixed height for charts */
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .floating-controls {
+            position: absolute;
+            top: var(--spacing-unit) * 2;
+            right: var(--spacing-unit) * 2;
+            background: rgba(255, 255, 255, 0.95);
+            padding: var(--spacing-unit) * 1.5;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px var(--shadow-color);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-unit);
+        }
+
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-unit) * 0.5;
+        }
+
+        .control-group label {
+            font-size: 0.85em;
+            font-weight: 500;
+            color: var(--text-light);
+        }
+
+        .control-group input,
+        .control-group select {
+            padding: var(--spacing-unit) 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.9em;
+            color: var(--text-color);
+            background-color: var(--card-background);
+        }
+
+        .data-table-container {
+            background-color: var(--card-background);
+            padding: var(--spacing-unit) * 3;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px var(--shadow-color);
+            overflow-x: auto; /* Make table scrollable on smaller screens */
+        }
+
+        .data-table-container h3 {
+            margin-top: 0;
+            margin-bottom: var(--spacing-unit) * 2;
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px; /* Ensure table is wide enough on desktop */
+        }
+
+        th, td {
+            text-align: left;
+            padding: var(--spacing-unit) * 1.5;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--background-color);
+            font-weight: 600;
+            font-size: 0.9em;
+            color: var(--text-light);
+            cursor: pointer;
+        }
+
+        th:hover {
+            background-color: #e9eceb;
+        }
+
+        tbody tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Basic responsiveness */
+        @media (min-width: 768px) {
+            .dashboard-container {
+                grid-template-columns: 1fr 3fr; /* Filter panel on left, content on right */
+            }
+
+            .filter-panel {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+             .filter-group {
+                width: 100%;
+            }
+
+            .charts-container {
+                 grid-column: 2 / 3; /* Charts take up the second column */
+            }
+
+            .data-table-container {
+                 grid-column: 1 / 3; /* Table spans both columns */
+            }
+        }
+
+         @media (min-width: 1024px) {
+            .charts-container {
+                grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); /* Allow wider charts */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="filter-panel">
+            <h2>Filters</h2>
+            <div class="filter-group">
+                <label for="year-filter">Year:</label>
+                <select id="year-filter" aria-label="Select Year">
+                    <option value="2023">2023</option>
+                    <option value="2022">2022</option>
+                    <option value="2021">2021</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="month-filter">Month:</label>
+                <select id="month-filter" aria-label="Select Month">
+                    <option value="">All</option>
+                    <option value="1">January</option>
+                    <option value="2">February</option>
+                    <option value="3">March</option>
+                    <option value="4">April</option>
+                    <option value="5">May</option>
+                    <option value="6">June</option>
+                    <option value="7">July</option>
+                    <option value="8">August</option>
+                    <option value="9">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                </select>
+            </div>
+             <div class="filter-group">
+                <label for="product-filter">Product:</label>
+                <select id="product-filter" aria-label="Select Product">
+                    <option value="">All</option>
+                    <option value="A">Product A</option>
+                    <option value="B">Product B</option>
+                    <option value="C">Product C</option>
+                </select>
+            </div>
+             <div class="filter-group">
+                <label for="region-filter">Region:</label>
+                <select id="region-filter" aria-label="Select Region">
+                    <option value="">All</option>
+                    <option value="North">North</option>
+                    <option value="South">South</option>
+                    <option value="East">East</option>
+                     <option value="West">West</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="start-date-filter">Start Date:</label>
+                <input type="date" id="start-date-filter" aria-label="Select Start Date">
+            </div>
+             <div class="filter-group">
+                <label for="end-date-filter">End Date:</label>
+                <input type="date" id="end-date-filter" aria-label="Select End Date">
+            </div>
+        </div>
+
+        <div class="charts-container">
+            <div class="chart-card">
+                <h3 id="bar-chart-title">Sales by Month (Bar Chart)</h3>
+                 <div class="chart-container" id="bar-chart-container">
+                    <canvas id="barChart"></canvas>
+                    <div class="floating-controls" id="barChartControls">
+                        <div class="control-group">
+                            <label for="barChartType">Chart Type</label>
+                            <select id="barChartType" aria-label="Change Bar Chart Type">
+                                <option value="bar">Bar</option>
+                                <option value="line">Line</option>
+                                <option value="pie">Pie</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label for="barChartColor">Bar Color</label>
+                            <input type="color" id="barChartColor" value="#4a90e2" aria-label="Change Bar Color">
+                        </div>
+                    </div>
+                 </div>
+            </div>
+
+             <div class="chart-card">
+                <h3 id="line-chart-title">Sales Trend (Line Chart)</h3>
+                 <div class="chart-container" id="line-chart-container">
+                    <canvas id="lineChart"></canvas>
+                     <div class="floating-controls" id="lineChartControls">
+                         <div class="control-group">
+                            <label for="lineChartType">Chart Type</label>
+                            <select id="lineChartType" aria-label="Change Line Chart Type">
+                                <option value="line">Line</option>
+                                <option value="bar">Bar</option>
+                                <option value="pie">Pie</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label for="lineChartColor">Line Color</label>
+                            <input type="color" id="lineChartColor" value="#f5a623" aria-label="Change Line Color">
+                        </div>
+                    </div>
+                 </div>
+            </div>
+
+             <div class="chart-card">
+                <h3 id="pie-chart-title">Sales Distribution by Product (Pie Chart)</h3>
+                 <div class="chart-container" id="pie-chart-container">
+                    <canvas id="pieChart"></canvas>
+                     <div class="floating-controls" id="pieChartControls">
+                         <div class="control-group">
+                            <label for="pieChartType">Chart Type</label>
+                            <select id="pieChartType" aria-label="Change Pie Chart Type">
+                                <option value="pie">Pie</option>
+                                <option value="doughnut">Doughnut</option>
+                                <option value="bar">Bar</option>
+                            </select>
+                        </div>
+                         <!-- Color controls for pie chart would be more complex (per slice) -->
+                    </div>
+                 </div>
+            </div>
+        </div>
+
+        <div class="data-table-container">
+            <h3>Sales Data Table</h3>
+            <table id="salesTable">
+                <thead>
+                    <tr>
+                        <th data-sort="month" aria-sort="none">Month</th>
+                        <th data-sort="product" aria-sort="none">Product</th>
+                        <th data-sort="region" aria-sort="none">Region</th>
+                        <th data-sort="sales" aria-sort="none">Sales Amount ($)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data rows will be populated by JavaScript -->
+                    <tr>
+                        <td>January</td>
+                        <td>Product A</td>
+                        <td>North</td>
+                        <td>15000</td>
+                    </tr>
+                     <tr>
+                        <td>January</td>
+                        <td>Product B</td>
+                        <td>South</td>
+                        <td>12000</td>
+                    </tr>
+                     <tr>
+                        <td>February</td>
+                        <td>Product A</td>
+                        <td>East</td>
+                        <td>18000</td>
+                    </tr>
+                     <tr>
+                        <td>February</td>
+                        <td>Product C</td>
+                        <td>West</td>
+                        <td>9000</td>
+                    </tr>
+                     <tr>
+                        <td>March</td>
+                        <td>Product B</td>
+                        <td>North</td>
+                        <td>22000</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        // Placeholder Data
+        const salesData = [
+            { month: 'January', product: 'Product A', region: 'North', sales: 15000 },
+            { month: 'January', product: 'Product B', region: 'South', sales: 12000 },
+            { month: 'February', product: 'Product A', region: 'East', sales: 18000 },
+            { month: 'February', product: 'Product C', region: 'West', sales: 9000 },
+            { month: 'March', product: 'Product B', region: 'North', sales: 22000 },
+            { month: 'March', product: 'Product A', region: 'South', sales: 16000 },
+            { month: 'April', product: 'Product C', region: 'East', sales: 11000 },
+            { month: 'April', product: 'Product B', region: 'West', sales: 14000 },
+            { month: 'May', product: 'Product A', region: 'North', sales: 20000 },
+            { month: 'May', product: 'Product C', region: 'South', sales: 13000 },
+            { month: 'June', product: 'Product B', region: 'East', sales: 25000 },
+            { month: 'June', product: 'Product A', region: 'West', sales: 19000 },
+        ];
+
+        let filteredData = [...salesData];
+
+        // --- Chart Initialization ---
+        const chartConfigs = {
+            barChart: {
+                ctx: document.getElementById('barChart').getContext('2d'),
+                config: {
+                    type: 'bar',
+                    data: {
+                        labels: [], // Populated dynamically
+                        datasets: [{
+                            label: 'Total Sales',
+                            data: [], // Populated dynamically
+                            backgroundColor: 'var(--primary-color)',
+                            borderColor: 'var(--primary-color)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                         onClick: (e, elements) => showControls(e, 'barChartControls'),
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { enabled: true } // Default tooltip
+                        },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                },
+                chartInstance: null,
+                controlsId: 'barChartControls'
+            },
+            lineChart: {
+                ctx: document.getElementById('lineChart').getContext('2d'),
+                 config: {
+                    type: 'line',
+                    data: {
+                        labels: [], // Populated dynamically
+                        datasets: [{
+                            label: 'Sales Trend',
+                            data: [], // Populated dynamically
+                            backgroundColor: 'rgba(245, 166, 35, 0.2)', /* secondary-color with alpha */
+                            borderColor: 'var(--secondary-color)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                         onClick: (e, elements) => showControls(e, 'lineChartControls'),
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { enabled: true }
+                        },
+                         scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                },
+                chartInstance: null,
+                controlsId: 'lineChartControls'
+            },
+             pieChart: {
+                ctx: document.getElementById('pieChart').getContext('2d'),
+                 config: {
+                    type: 'pie',
+                    data: {
+                        labels: [], // Populated dynamically
+                        datasets: [{
+                            label: 'Sales Distribution',
+                            data: [], // Populated dynamically
+                            backgroundColor: [
+                                'var(--primary-color)',
+                                'var(--secondary-color)',
+                                'var(--accent-color)',
+                                '#e74c3c', /* Red */
+                                '#9b59b6', /* Purple */
+                                '#3498db', /* Light Blue */
+                            ],
+                            borderColor: 'var(--card-background)',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                         onClick: (e, elements) => showControls(e, 'pieChartControls'),
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                            },
+                            tooltip: { enabled: true }
+                        }
+                    }
+                },
+                chartInstance: null,
+                controlsId: 'pieChartControls'
+            }
+        };
+
+        function initializeCharts() {
+            for (const key in chartConfigs) {
+                const config = chartConfigs[key];
+                config.chartInstance = new Chart(config.ctx, config.config);
+            }
+             updateCharts(filteredData); // Initial data load
+             populateTable(filteredData);
+        }
+
+        // --- Data Filtering and Updating ---
+        function applyFilters() {
+            const year = document.getElementById('year-filter').value;
+            const month = document.getElementById('month-filter').value;
+            const product = document.getElementById('product-filter').value;
+            const region = document.getElementById('region-filter').value;
+            const startDate = document.getElementById('start-date-filter').value;
+            const endDate = document.getElementById('end-date-filter').value;
+
+            filteredData = salesData.filter(item => {
+                // Basic filtering logic (needs refinement for date ranges)
+                const itemMonth = new Date(Date.parse(item.month + " 1, 2000")).getMonth() + 1; // Simple month parsing
+                const itemDate = new Date(`${item.month} 1, 2023`); // Placeholder year
+
+                let isMatch = true;
+                // Year filter (not implemented in placeholder data)
+                // if (year && item.year != year) isMatch = false;
+                if (month && itemMonth != parseInt(month)) isMatch = false;
+                if (product && item.product !== product) isMatch = false;
+                if (region && item.region !== region) isMatch = false;
+
+                // Date range filter (placeholder - requires proper date parsing and comparison)
+                if (startDate) {
+                     // Placeholder date logic
+                     const start = new Date(startDate);
+                     if (itemDate < start) isMatch = false;
+                }
+                 if (endDate) {
+                     // Placeholder date logic
+                     const end = new Date(endDate);
+                     if (itemDate > end) isMatch = false;
+                }
+
+
+                return isMatch;
+            });
+
+            updateCharts(filteredData);
+            populateTable(filteredData);
+        }
+
+        function updateCharts(data) {
+            // Aggregate data for charts
+            const salesByMonth = data.reduce((acc, item) => {
+                acc[item.month] = (acc[item.month] || 0) + item.sales;
+                return acc;
+            }, {});
+
+             const salesByProduct = data.reduce((acc, item) => {
+                acc[item.product] = (acc[item.product] || 0) + item.sales;
+                return acc;
+            }, {});
+
+            // Update Bar Chart (Sales by Month)
+            const barChart = chartConfigs.barChart.chartInstance;
+            barChart.data.labels = Object.keys(salesByMonth);
+            barChart.data.datasets[0].data = Object.values(salesByMonth);
+            barChart.update();
+
+            // Update Line Chart (Sales Trend - using months for now)
+             const lineChart = chartConfigs.lineChart.chartInstance;
+             lineChart.data.labels = Object.keys(salesByMonth);
+             lineChart.data.datasets[0].data = Object.values(salesByMonth);
+             lineChart.update();
+
+            // Update Pie Chart (Sales by Product)
+             const pieChart = chartConfigs.pieChart.chartInstance;
+             pieChart.data.labels = Object.keys(salesByProduct);
+             pieChart.data.datasets[0].data = Object.values(salesByProduct);
+             pieChart.update();
+        }
+
+         // --- Table Population and Sorting ---
+        function populateTable(data) {
+            const tableBody = document.querySelector('#salesTable tbody');
+            tableBody.innerHTML = ''; // Clear existing rows
+
+            data.forEach(item => {
+                const row = tableBody.insertRow();
+                row.innerHTML = `
+                    <td>${item.month}</td>
+                    <td>${item.product}</td>
+                    <td>${item.region}</td>
+                    <td>${item.sales.toLocaleString()}</td>
+                `;
+            });
+        }
+
+        function sortTable(columnIndex) {
+            const table = document.getElementById('salesTable');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            const header = table.querySelectorAll('th')[columnIndex];
+            const sortKey = header.getAttribute('data-sort');
+            let currentSort = header.getAttribute('aria-sort') || 'none';
+            let newSort = 'ascending';
+
+             // Reset other headers
+            table.querySelectorAll('th').forEach((th, index) => {
+                if (index !== columnIndex) {
+                    th.setAttribute('aria-sort', 'none');
+                }
+            });
+
+
+            if (currentSort === 'ascending') {
+                newSort = 'descending';
+            } else if (currentSort === 'descending') {
+                 newSort = 'none'; // Cycle back to none
+            } else {
+                 newSort = 'ascending';
+            }
+
+             header.setAttribute('aria-sort', newSort);
+
+
+            if (newSort === 'none') {
+                 // Reset to initial order (or perhaps month/date order)
+                 // For simplicity, we'll just repopulate with the current filtered data
+                 populateTable(filteredData);
+                 return;
+            }
+
+
+            const sortedRows = rows.sort((a, b) => {
+                const aText = a.querySelectorAll('td')[columnIndex].textContent.trim();
+                const bText = b.querySelectorAll('td')[columnIndex].textContent.trim();
+
+                let comparison = 0;
+                if (sortKey === 'sales') {
+                    const aValue = parseFloat(aText.replace(/[^0-9.-]+/g,""));
+                    const bValue = parseFloat(bText.replace(/[^0-9.-]+/g,""));
+                    if (aValue < bValue) comparison = -1;
+                    if (aValue > bValue) comparison = 1;
+                } else { // Text sorting
+                    if (aText < bText) comparison = -1;
+                    if (aText > bText) comparison = 1;
+                }
+
+                return newSort === 'ascending' ? comparison : (comparison * -1);
+            });
+
+            // Re-append sorted rows
+            sortedRows.forEach(row => tbody.appendChild(row));
+        }
+
+
+        // --- Floating Controls Logic ---
+        function showControls(event, controlsId) {
+             // Hide all controls first
+            document.querySelectorAll('.floating-controls').forEach(ctrl => {
+                if (ctrl.id !== controlsId) {
+                     ctrl.classList.remove('active');
+                }
+            });
+
+            const controls = document.getElementById(controlsId);
+            controls.classList.toggle('active');
+             event.stopPropagation(); // Prevent click from closing immediately
+        }
+
+        // Close panel when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.floating-controls') && !e.target.closest('.chart-container')) {
+                document.querySelectorAll('.floating-controls').forEach(ctrl => {
+                    ctrl.classList.remove('active');
+                });
+            }
+        });
+
+        // Dynamic chart updates from controls
+        function setupChartControls(chartKey) {
+            const config = chartConfigs[chartKey];
+            const controls = document.getElementById(config.controlsId);
+
+            controls.querySelectorAll('input, select').forEach(element => {
+                element.addEventListener('change', () => {
+                    const chart = config.chartInstance;
+
+                    if (element.id === `${chartKey}Type`) {
+                        chart.config.type = element.value;
+                        // Re-apply colors if changing type
+                         if (element.value === 'pie' || element.value === 'doughnut') {
+                             chart.data.datasets[0].backgroundColor = chartConfigs.pieChart.config.data.datasets[0].backgroundColor;
+                             chart.data.datasets[0].borderColor = chartConfigs.pieChart.config.data.datasets[0].borderColor;
+                             chart.data.datasets[0].borderWidth = chartConfigs.pieChart.config.data.datasets[0].borderWidth;
+                             if(chart.options.plugins.legend) chart.options.plugins.legend.display = true;
+                         } else {
+                             // Apply default colors for bar/line
+                              chart.data.datasets[0].backgroundColor = chartKey === 'barChart' ? 'var(--primary-color)' : 'rgba(245, 166, 35, 0.2)';
+                             chart.data.datasets[0].borderColor = chartKey === 'barChart' ? 'var(--primary-color)' : 'var(--secondary-color)';
+                             chart.data.datasets[0].borderWidth = chartKey === 'barChart' ? 1 : 2;
+                             if(chart.options.plugins.legend) chart.options.plugins.legend.display = false;
+                         }
+
+                    } else if (element.id === `${chartKey}Color`) {
+                        if (chart.config.type === 'bar' || chart.config.type === 'line') {
+                             chart.data.datasets[0].borderColor = element.value;
+                             // For bar, also change background (maybe with transparency)
+                             if (chart.config.type === 'bar') {
+                                chart.data.datasets[0].backgroundColor = element.value;
+                             } else { // For line, keep fill transparent or light
+                                chart.data.datasets[0].backgroundColor = element.value + '33'; // Add transparency
+                             }
+                        }
+                         // Pie chart color update is more complex per slice
+                    }
+
+                    chart.update();
+                });
+            });
+        }
+
+
+        // --- Event Listeners ---
+        document.querySelectorAll('.filter-panel select, .filter-panel input').forEach(control => {
+            control.addEventListener('change', applyFilters);
+        });
+
+         document.querySelectorAll('#salesTable th').forEach((header, index) => {
+            header.addEventListener('click', () => sortTable(index));
+        });
+
+
+        // --- Initial Setup ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeCharts();
+            setupChartControls('barChart');
+            setupChartControls('lineChart');
+            setupChartControls('pieChart'); // Setup controls even if color picker is complex
+        });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mixed-Methods Study Design Tool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --primary-dark: #0056b3;
+            --secondary-color: #6c757d;
+            --secondary-dark: #5a6268;
+            --background-color: #f8f9fa;
+            --surface-color: #ffffff;
+            --text-color: #212529;
+            --text-light: #6c757d;
+            --border-color: #dee2e6;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --spacing-unit: 8px;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Enhanced shadow */
+            --transition-duration: 0.3s;
+            --transition-timing-function: ease-in-out; /* Slightly smoother */
+            --focus-ring-color: rgba(0, 123, 255, 0.5); /* Added focus ring color */
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: calc(4 * var(--spacing-unit));
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: calc(4 * var(--spacing-unit));
+            width: 100%;
+            max-width: 960px;
+            display: flex;
+            flex-direction: column;
+            gap: calc(4 * var(--spacing-unit));
+        }
+
+        h1, h2, h3, h4 {
+            color: var(--primary-dark);
+            margin-bottom: calc(2 * var(--spacing-unit));
+            line-height: 1.2;
+        }
+
+        h1 {
+            font-size: 2.2em; /* Slightly larger */
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: calc(5 * var(--spacing-unit)); /* More space */
+        }
+
+        h2 {
+            font-size: 1.6em; /* Slightly larger */
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: var(--spacing-unit);
+            margin-bottom: calc(3 * var(--spacing-unit));
+        }
+
+        h3 {
+            font-size: 1.3em; /* Slightly larger */
+            font-weight: 600;
+            margin-top: calc(4 * var(--spacing-unit)); /* More space above */
+            margin-bottom: calc(2 * var(--spacing-unit));
+        }
+
+         h4 {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: var(--text-color); /* Use text color for card titles */
+            margin-top: 0;
+            margin-bottom: calc(2 * var(--spacing-unit));
+        }
+
+
+        .progress-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: calc(5 * var(--spacing-unit)); /* More space below */
+            position: relative;
+            padding-top: calc(2 * var(--spacing-unit)); /* Space for labels */
+        }
+
+        .progress-indicator::before {
+            content: '';
+            position: absolute;
+            top: calc(2 * var(--spacing-unit) + 15px); /* Align with circle center */
+            left: 0;
+            right: 0;
+            height: 4px;
+            background-color: var(--border-color);
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+
+        .progress-step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+            cursor: pointer;
+            padding-top: calc(3 * var(--spacing-unit)); /* Space for circle */
+            outline: none; /* Remove default outline */
+        }
+
+         .progress-step:focus-visible .progress-circle {
+             box-shadow: 0 0 0 3px var(--focus-ring-color); /* Focus ring */
+         }
+
+
+        .progress-circle {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: var(--border-color);
+            color: var(--text-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto var(--spacing-unit);
+            font-weight: 600;
+            transition: background-color var(--transition-duration) var(--transition-timing-function), color var(--transition-duration) var(--transition-timing-function), box-shadow 0.2s ease;
+        }
+
+        .progress-step.active .progress-circle {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+        }
+
+        .progress-step.complete .progress-circle {
+            background-color: var(--success-color);
+            color: var(--surface-color);
+        }
+
+        .progress-label {
+            font-size: 0.9em;
+            color: var(--text-light);
+            transition: color var(--transition-duration) var(--transition-timing-function);
+        }
+
+        .progress-step.active .progress-label,
+        .progress-step.complete .progress-label {
+            color: var(--text-color);
+            font-weight: 600;
+        }
+
+        .step {
+            display: none;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--transition-duration) var(--transition-timing-function); /* Only opacity transition */
+        }
+
+        .step.active {
+            display: block;
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .form-group {
+            margin-bottom: calc(3 * var(--spacing-unit));
+        }
+
+        label {
+            display: block;
+            margin-bottom: var(--spacing-unit);
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        input[type="text"],
+        input[type="email"],
+        textarea,
+        select {
+            width: 100%;
+            padding: calc(1.5 * var(--spacing-unit));
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            color: var(--text-color);
+            background-color: var(--surface-color);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        textarea:focus,
+        select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem var(--focus-ring-color); /* Use focus ring color */
+            outline: none;
+        }
+
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .data-type-card {
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: calc(2 * var(--spacing-unit));
+            margin-bottom: calc(3 * var(--spacing-unit));
+            background-color: var(--background-color);
+        }
+
+        .data-type-card .form-group {
+            margin-bottom: calc(2 * var(--spacing-unit));
+        }
+
+        .data-type-card .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            gap: calc(2 * var(--spacing-unit));
+            margin-top: calc(4 * var(--spacing-unit));
+        }
+
+        button {
+            padding: calc(1.5 * var(--spacing-unit)) calc(3 * var(--spacing-unit));
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease; /* Added box-shadow transition */
+            font-weight: 600;
+            outline: none; /* Remove default outline */
+        }
+
+         button:focus-visible {
+             box-shadow: 0 0 0 3px var(--focus-ring-color); /* Focus ring */
+         }
+
+        button.primary {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+        }
+
+        button.primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        button.secondary {
+            background-color: var(--secondary-color);
+            color: var(--surface-color);
+        }
+
+        button.secondary:hover {
+            background-color: var(--secondary-dark);
+        }
+
+        button:disabled {
+            opacity: 0.5; /* Reduced opacity */
+            cursor: not-allowed;
+            box-shadow: none; /* Remove shadow when disabled */
+        }
+
+        .resource-links {
+            margin-top: calc(4 * var(--spacing-unit));
+            padding-top: calc(3 * var(--spacing-unit));
+            border-top: 1px solid var(--border-color);
+        }
+
+        .resource-links h3 {
+            margin-top: 0;
+        }
+
+        .resource-links ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .resource-links li {
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .resource-links a {
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color 0.2s ease;
+            outline: none; /* Remove default outline */
+        }
+
+        .resource-links a:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+
+         .resource-links a:focus-visible {
+             box-shadow: 0 0 0 2px var(--focus-ring-color); /* Focus ring */
+             border-radius: 2px;
+         }
+
+
+        .validation-error {
+            color: var(--danger-color);
+            font-size: 0.9em;
+            margin-top: var(--spacing-unit);
+            display: none;
+        }
+
+        input.invalid,
+        textarea.invalid,
+        select.invalid {
+             border-color: var(--danger-color);
+        }
+
+        input.invalid:focus,
+        textarea.invalid:focus,
+        select.invalid:focus {
+             box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25); /* Danger color focus ring */
+        }
+
+
+        input.invalid + .validation-error,
+        textarea.invalid + .validation-error,
+        select.invalid + .validation-error {
+            display: block;
+        }
+
+        /* Placeholder styles */
+        .placeholder-box {
+             border: 1px dashed var(--border-color);
+             border-radius: var(--border-radius);
+             padding: calc(3 * var(--spacing-unit));
+             text-align: center;
+             color: var(--text-light);
+             margin-bottom: calc(3 * var(--spacing-unit));
+             background-color: var(--background-color); /* Match card background */
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6); /* Slightly darker overlay */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity var(--transition-duration) var(--transition-timing-function), visibility var(--transition-duration) var(--transition-timing-function);
+        }
+
+        .modal-overlay.visible {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .modal {
+            background: var(--surface-color);
+            padding: calc(4 * var(--spacing-unit));
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            transform: translateY(20px); /* Added slight animation */
+            transition: transform var(--transition-duration) var(--transition-timing-function);
+        }
+
+         .modal-overlay.visible .modal {
+             transform: translateY(0);
+         }
+
+
+        .modal h3 {
+            margin-top: 0;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: var(--spacing-unit);
+            margin-bottom: calc(3 * var(--spacing-unit));
+        }
+
+        .modal-close {
+            position: absolute;
+            top: var(--spacing-unit);
+            right: var(--spacing-unit);
+            font-size: 1.8em; /* Larger close button */
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: var(--text-light);
+            padding: var(--spacing-unit); /* Added padding for click area */
+            line-height: 1;
+            transition: color 0.2s ease;
+            outline: none; /* Remove default outline */
+        }
+         .modal-close:hover {
+             color: var(--text-color);
+         }
+          .modal-close:focus-visible {
+             box-shadow: 0 0 0 2px var(--focus-ring-color); /* Focus ring */
+             border-radius: var(--border-radius);
+         }
+
+
+        /* Expandable Resources */
+        details {
+            margin-bottom: var(--spacing-unit);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-unit) calc(2 * var(--spacing-unit));
+            background-color: var(--background-color);
+        }
+
+        summary {
+            font-weight: 600;
+            cursor: pointer;
+            padding: var(--spacing-unit) 0;
+            outline: none;
+            transition: color 0.2s ease;
+        }
+
+        summary:hover {
+            color: var(--primary-dark);
+        }
+
+         summary:focus-visible {
+             box-shadow: 0 0 0 2px var(--focus-ring-color); /* Focus ring */
+             border-radius: 2px;
+         }
+
+
+        details[open] summary {
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: var(--spacing-unit);
+        }
+
+        details p {
+            margin-top: var(--spacing-unit);
+            margin-bottom: 0;
+        }
+
+        #summary-content p {
+            margin-bottom: var(--spacing-unit);
+        }
+         #summary-content p strong {
+             display: inline-block;
+             min-width: 150px; /* Align labels */
+         }
+
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            body {
+                 padding: calc(2 * var(--spacing-unit));
+            }
+            .container {
+                padding: calc(3 * var(--spacing-unit));
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            h2 {
+                font-size: 1.4em;
+            }
+             h3 {
+                 font-size: 1.2em;
+             }
+
+            .progress-indicator {
+                flex-direction: column;
+                align-items: center;
+                padding-top: 0; /* Remove top padding */
+            }
+
+            .progress-indicator::before {
+                 display: none; /* Hide line on small screens */
+            }
+
+            .progress-step {
+                width: 100%;
+                margin-bottom: calc(2 * var(--spacing-unit));
+                padding-top: 0; /* Remove top padding */
+                display: flex; /* Use flex for alignment */
+                align-items: center;
+                text-align: left;
+            }
+
+            .progress-circle {
+                margin: 0 calc(2 * var(--spacing-unit)) 0 0; /* Space circle from label */
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+
+             .modal {
+                 padding: calc(3 * var(--spacing-unit));
+             }
+             .modal-close {
+                 font-size: 1.5em;
+             }
+
+             #summary-content p strong {
+                 min-width: 100px; /* Adjust alignment for smaller screens */
+             }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Mixed-Methods Study Design Wizard</h1>
+
+        <div class="progress-indicator" role="tablist" aria-label="Study design steps">
+            <div class="progress-step active" data-step="0" role="tab" aria-selected="true" aria-controls="step-0-content" id="progress-step-0" tabindex="0">
+                <div class="progress-circle">1</div>
+                <div class="progress-label">Overview</div>
+            </div>
+            <div class="progress-step" data-step="1" role="tab" aria-selected="false" aria-controls="step-1-content" id="progress-step-1" tabindex="-1">
+                <div class="progress-circle">2</div>
+                <div class="progress-label">Methods</div>
+            </div>
+            <div class="progress-step" data-step="2" role="tab" aria-selected="false" aria-controls="step-2-content" id="progress-step-2" tabindex="-1">
+                <div class="progress-circle">3</div>
+                <div class="progress-label">Data Types</div>
+            </div>
+            <div class="progress-step" data-step="3" role="tab" aria-selected="false" aria-controls="step-3-content" id="progress-step-3" tabindex="-1">
+                <div class="progress-circle">4</div>
+                <div class="progress-label">EJ Considerations</div>
+            </div>
+            <div class="progress-step" data-step="4" role="tab" aria-selected="false" aria-controls="step-4-content" id="progress-step-4" tabindex="-1">
+                <div class="progress-circle">5</div>
+                <div class="progress-label">Summary</div>
+            </div>
+        </div>
+
+        <!-- Step 1: Study Overview -->
+        <div class="step active" data-step="0" id="step-0-content" role="tabpanel" aria-labelledby="progress-step-0">
+            <h2>Study Overview</h2>
+            <div class="form-group">
+                <label for="study-title">Study Title <span style="color: var(--danger-color);" aria-hidden="true">*</span></label>
+                <input type="text" id="study-title" required aria-required="true">
+                <div class="validation-error" aria-live="polite">Study Title is required.</div>
+            </div>
+            <div class="form-group">
+                <label for="study-objectives">Study Objectives <span style="color: var(--danger-color);" aria-hidden="true">*</span></label>
+                <textarea id="study-objectives" required aria-required="true" placeholder="Clearly state the main goals of your study."></textarea>
+                 <div class="validation-error" aria-live="polite">Study Objectives are required.</div>
+            </div>
+             <div class="form-group">
+                <label for="research-questions">Research Questions <span style="color: var(--danger-color);" aria-hidden="true">*</span></label>
+                <textarea id="research-questions" required aria-required="true" placeholder="List the specific questions your study aims to answer."></textarea>
+                 <div class="validation-error" aria-live="polite">Research Questions are required.</div>
+            </div>
+        </div>
+
+        <!-- Step 2: Methodologies -->
+        <div class="step" data-step="1" id="step-1-content" role="tabpanel" aria-labelledby="progress-step-1" hidden aria-hidden="true">
+            <h2>Methodologies</h2>
+            <div class="form-group">
+                <label for="mixed-methods-design">Mixed Methods Design Type <span style="color: var(--danger-color);" aria-hidden="true">*</span></label>
+                <select id="mixed-methods-design" required aria-required="true">
+                    <option value="">Select a design type</option>
+                    <option value="convergent">Convergent Parallel</option>
+                    <option value="explanatory">Explanatory Sequential</option>
+                    <option value="exploratory">Exploratory Sequential</option>
+                    <option value="transformative">Transformative</option>
+                    <option value="embedded">Embedded</option>
+                    <option value="multistage">Multistage</option>
+                </select>
+                 <div class="validation-error" aria-live="polite">Mixed Methods Design Type is required.</div>
+            </div>
+             <div class="form-group">
+                <label for="selected-methods">Selected Methods <span style="color: var(--danger-color);" aria-hidden="true">*</span></label>
+                 <textarea id="selected-methods" required aria-required="true" placeholder="List the specific methods you will use (e.g., GIS analysis, Surveys, Interviews, Focus Groups, Participatory Mapping)."></textarea>
+                 <div class="validation-error" aria-live="polite">Selected Methods are required.</div>
+            </div>
+             <div class="form-group">
+                <label for="methodological-frameworks">Methodological Frameworks/Theories</label>
+                 <textarea id="methodological-frameworks" placeholder="Describe any specific frameworks or theories guiding your methods (e.g., Critical GIS, Community-Based Participatory Research, specific public health models)."></textarea>
+            </div>
+        </div>
+
+        <!-- Step 3: Data Types -->
+        <div class="step" data-step="2" id="step-2-content" role="tabpanel" aria-labelledby="progress-step-2" hidden aria-hidden="true">
+            <h2>Data Types & Sources</h2>
+
+            <div class="data-type-card">
+                <h4>GIS Spatial Data</h4>
+                <div class="form-group">
+                    <label for="gis-description">Description</label>
+                    <textarea id="gis-description" placeholder="Describe the type of GIS data (e.g., land use, demographics, environmental layers)."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="gis-source">Source(s)</label>
+                    <input type="text" id="gis-source" placeholder="e.g., Census Bureau, EPA, Local Government">
+                </div>
+                 <div class="form-group">
+                    <label for="gis-format">Format</label>
+                    <input type="text" id="gis-format" placeholder="e.g., Shapefiles, GeoJSON, Raster">
+                </div>
+            </div>
+
+            <div class="data-type-card">
+                <h4>Public Health Data</h4>
+                 <div class="form-group">
+                    <label for="ph-description">Description</label>
+                    <textarea id="ph-description" placeholder="Describe the type of public health data (e.g., health outcomes, survey data, administrative records)."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="ph-source">Source(s)</label>
+                    <input type="text" id="ph-source" placeholder="e.g., CDC, Local Health Department, Clinic Records">
+                </div>
+                 <div class="form-group">
+                    <label for="ph-format">Format</label>
+                    <input type="text" id="ph-format" placeholder="e.g., CSV, Database, Excel">
+                </div>
+            </div>
+
+            <div class="data-type-card">
+                <h4>Qualitative Interview Data</h4>
+                 <div class="form-group">
+                    <label for="qual-description">Description</label>
+                    <textarea id="qual-description" placeholder="Describe the focus of the interviews (e.g., experiences with green space, perceptions of well-being)."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="qual-source">Source(s)</label>
+                    <input type="text" id="qual-source" placeholder="e.g., Individual interviews, Focus groups">
+                </div>
+                 <div class="form-group">
+                    <label for="qual-format">Format</label>
+                    <input type="text" id="qual-format" placeholder="e.g., Transcripts, Audio recordings">
+                </div>
+            </div>
+
+             <div class="data-type-card">
+                <h4>Participatory Mapping Data</h4>
+                 <div class="form-group">
+                    <label for="part-description">Description</label>
+                    <textarea id="part-description" placeholder="Describe the participatory mapping process and expected outputs (e.g., community asset mapping, perceived environmental risks)."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="part-source">Source(s)</label>
+                    <input type="text" id="part-source" placeholder="e.g., Community workshops, Participatory GIS sessions">
+                </div>
+                 <div class="form-group">
+                    <label for="part-format">Format</label>
+                    <input type="text" id="part-format" placeholder="e.g., Hand-drawn maps, Digital maps, Workshop notes">
+                </div>
+            </div>
+
+            <!-- Placeholder for Data Integration Visualizer -->
+             <h3>Data Integration Planning</h3>
+             <p>An interactive tool to map relationships and plan integration points between different data types will go here.</p>
+             <div class="placeholder-box">
+                 [Interactive Data Mapping/Integration Tool Placeholder]<br>
+                 (e.g., Drag data types to a canvas, draw connections, add notes on integration methods)
+             </div>
+
+        </div>
+
+         <!-- Step 4: Environmental Justice -->
+        <div class="step" data-step="3" id="step-3-content" role="tabpanel" aria-labelledby="progress-step-3" hidden aria-hidden="true">
+            <h2>Environmental Justice Considerations</h2>
+            <p>Consider how your study addresses issues of equity, distribution of resources, power dynamics, and community involvement, particularly in relation to environmental benefits and burdens.</p>
+
+            <div class="form-group">
+                <label for="ej-relevance">How is Environmental Justice relevant to your study? <span style="color: var(--danger-color);" aria-hidden="true">*</span></label>
+                <textarea id="ej-relevance" required aria-required="true" placeholder="Explain the connection between your research questions/objectives and EJ principles."></textarea>
+                 <div class="validation-error" aria-live="polite">Relevance to Environmental Justice is required.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="ej-community-engagement">Community Engagement Plan</label>
+                <textarea id="ej-community-engagement" placeholder="Describe how you will involve affected communities in the study design, data collection, analysis, and dissemination."></textarea>
+            </div>
+
+             <div class="form-group">
+                <label for="ej-equity-analysis">Analyzing for Equity/Disparities</label>
+                <textarea id="ej-equity-analysis" placeholder="How will your analysis explicitly examine disparities or inequities related to green space access and well-being across different groups or neighborhoods?"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="ej-outcomes">Intended Outcomes for EJ</label>
+                <textarea id="ej-outcomes" placeholder="What are the potential positive impacts or contributions of your study findings towards promoting environmental justice?"></textarea>
+            </div>
+
+             <h3>Resources for EJ Integration</h3>
+             <p>Expand the sections below for information on frameworks for integrating environmental justice into research.</p>
+             <details>
+                 <summary>Frameworks for EJ Research</summary>
+                 <p>Details on common frameworks like the Jemez Principles, CBPR approaches, or specific EJ analytical models would be provided here.</p>
+             </details>
+              <details>
+                 <summary>Community Engagement Best Practices</summary>
+                 <p>Information on ethical and effective methods for engaging with communities in research.</p>
+             </details>
+              <details>
+                 <summary>Data Analysis for Equity</summary>
+                 <p>Guidance on analytical techniques to identify and quantify disparities in environmental and health outcomes.</p>
+             </details>
+
+        </div>
+
+        <!-- Step 5: Summary & Export -->
+        <div class="step" data-step="4" id="step-4-content" role="tabpanel" aria-labelledby="progress-step-4" hidden aria-hidden="true">
+            <h2>Study Design Summary</h2>
+            <p>Review your study design details below. You can go back to make changes or save/export the summary.</p>
+
+            <div id="summary-content">
+                <!-- Summary will be generated here by JavaScript -->
+                 <p>Loading summary...</p>
+            </div>
+
+            <div class="resource-links">
+                <h3>Helpful Resources</h3>
+                <ul>
+                    <li><a href="#" class="open-help-modal" data-topic="mixed-methods">Guide to Mixed Methods Design Types</a></li>
+                    <li><a href="#" class="open-help-modal" data-topic="data-integration">Strategies for Integrating Diverse Data</a></li>
+                    <li><a href="#" class="open-help-modal" data-topic="ej-principles">Principles for Environmental Justice Research</a></li>
+                </ul>
+            </div>
+
+        </div>
+
+
+        <div class="button-group">
+            <button id="prev-button" class="secondary" disabled aria-label="Previous Step">Previous</button>
+            <button id="next-button" class="primary" aria-label="Next Step">Next</button>
+            <button id="save-button" class="secondary" style="display: none;" aria-label="Save Study Design">Save Design</button>
+            <button id="export-button" class="primary" style="display: none;" aria-label="Export Summary">Export Summary</button>
+        </div>
+
+         <!-- Modals Placeholder -->
+         <div id="help-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-hidden="true" tabindex="-1">
+             <div class="modal" role="document">
+                 <button class="modal-close" aria-label="Close help modal">&times;</button>
+                 <h3 id="help-modal-title">Help & Resources</h3>
+                 <div id="help-modal-content">
+                     <p>Select a topic from the links to view help content here.</p>
+                 </div>
+             </div>
+         </div>
+
+         <div id="save-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-hidden="true" tabindex="-1">
+             <div class="modal" role="document">
+                  <button class="modal-close" aria-label="Close save modal">&times;</button>
+                 <h3 id="save-modal-title">Save Study Design</h3>
+                 <div id="save-modal-content">
+                     <p>Your study design has been saved to your browser's local storage.</p>
+                     <p>Note: This is a basic save feature. Data may be lost if browser data is cleared.</p>
+                     <p>For persistent storage, you would need a backend system.</p>
+                 </div>
+             </div>
+         </div>
+
+         <div id="export-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-hidden="true" tabindex="-1">
+             <div class="modal" role="document">
+                  <button class="modal-close" aria-label="Close export modal">&times;</button>
+                 <h3 id="export-modal-title">Export Study Summary</h3>
+                 <div id="export-modal-content">
+                     <p>Click the button below to download your study design summary as a text file.</p>
+                     <button id="confirm-export-button" class="primary">Download Summary</button>
+                 </div>
+             </div>
+         </div>
+
+
+    </div>
+
+    <script>
+        const steps = document.querySelectorAll('.step');
+        const progressSteps = document.querySelectorAll('.progress-step');
+        const prevButton = document.getElementById('prev-button');
+        const nextButton = document.getElementById('next-button');
+        const saveButton = document.getElementById('save-button');
+        const exportButton = document.getElementById('export-button');
+        const summaryContent = document.getElementById('summary-content');
+
+        const helpModal = document.getElementById('help-modal');
+        const saveModal = document.getElementById('save-modal');
+        const exportModal = document.getElementById('export-modal');
+        const modalCloseButtons = document.querySelectorAll('.modal-close');
+        const helpLinks = document.querySelectorAll('.open-help-modal');
+        const confirmExportButton = document.getElementById('confirm-export-button');
+
+
+        let currentStep = 0;
+
+        // --- Modal Logic ---
+        function openModal(modalElement) {
+            modalElement.classList.add('visible');
+            modalElement.setAttribute('aria-hidden', 'false');
+            modalElement.removeAttribute('tabindex'); // Make modal focusable
+
+            const modalContent = modalElement.querySelector('.modal');
+            const focusableElements = modalContent.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+            const firstElement = focusableElements[0];
+            const lastElement = focusableElements[focusableElements.length - 1];
+
+            // Save currently focused element to restore later
+            const previouslyFocusedElement = document.activeElement;
+            modalElement.dataset.previouslyFocused = previouslyFocusedElement ? previouslyFocusedElement.id || previouslyFocusedElement.tagName : '';
+
+
+            if (firstElement) {
+                 firstElement.focus();
+            }
+
+            // Basic focus trapping
+            modalElement.addEventListener('keydown', function trapFocus(e) {
+                const isTabPressed = e.key === 'Tab';
+
+                if (!isTabPressed) {
+                    return;
+                }
+
+                if (e.shiftKey) { // Shift + Tab
+                    if (document.activeElement === firstElement) {
+                        lastElement.focus();
+                        e.preventDefault();
+                    }
+                } else { // Tab
+                    if (document.activeElement === lastElement) {
+                        firstElement.focus();
+                        e.preventDefault();
+                    }
+                }
+            });
+        }
+
+        function closeModal(modalElement) {
+            modalElement.classList.remove('visible');
+            modalElement.setAttribute('aria-hidden', 'true');
+            modalElement.setAttribute('tabindex', '-1'); // Make modal non-focusable
+
+            // Restore focus to the element that was focused before the modal opened
+            const previouslyFocusedElementId = modalElement.dataset.previouslyFocused;
+            if (previouslyFocusedElementId) {
+                const elementToFocus = document.getElementById(previouslyFocusedElementId) || document.querySelector(previouslyFocusedElementId);
+                if (elementToFocus) {
+                     elementToFocus.focus();
+                }
+            } else {
+                 // Fallback: focus the first focusable element on the page or body
+                 document.body.focus();
+            }
+
+             // Remove the focus trap listener to prevent memory leaks
+             const trapFocusHandler = modalElement.querySelector('.modal').onkeydown; // Assuming the handler is attached to the modal content
+             if (trapFocusHandler) {
+                 modalElement.querySelector('.modal').removeEventListener('keydown', trapFocusHandler);
+             }
+        }
+
+        modalCloseButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                closeModal(button.closest('.modal-overlay'));
+            });
+        });
+
+         window.addEventListener('keydown', (e) => {
+             if (e.key === 'Escape') {
+                 if (helpModal.classList.contains('visible')) closeModal(helpModal);
+                 if (saveModal.classList.contains('visible')) closeModal(saveModal);
+                 if (exportModal.classList.contains('visible')) closeModal(exportModal);
+             }
+         });
+
+        helpLinks.forEach(link => {
+             link.addEventListener('click', (e) => {
+                 e.preventDefault();
+                 const topic = link.getAttribute('data-topic');
+                 const helpContentDiv = document.getElementById('help-modal-content');
+                 // Placeholder content - replace with actual help text based on topic
+                 let content = '';
+                 switch(topic) {
+                     case 'mixed-methods':
+                         content = `<h4>Guide to Mixed Methods Design Types</h4><p>Mixed methods research involves collecting, analyzing, and integrating quantitative and qualitative data in a single study or a series of studies. Common designs include:</p><ul><li><strong>Convergent Parallel:</strong> Quan and Qual data collected separately but concurrently, and then merged for interpretation.</li><li><strong>Explanatory Sequential:</strong> Quan data collected first, followed by Qual data to help explain or build upon the quantitative results.</li><li><strong>Exploratory Sequential:</strong> Qual data collected first, followed by Quan data to test or generalize qualitative findings.</li><li><strong>Transformative:</strong> Uses mixed methods within a framework (like EJ) to advocate for change.</li><li><strong>Embedded:</strong> One method is embedded within a larger design of the other method.</li><li><strong>Multistage:</strong> Different methods are used sequentially in different phases of a project.</p></ul>`;
+                         break;
+                     case 'data-integration':
+                         content = `<h4>Strategies for Integrating Diverse Data</h4><p>Integrating different data types is key in mixed methods. Strategies include:</p><ul><li><strong>Merging/Connecting:</strong> Linking data from different sources based on common variables (e.g., linking survey data to spatial data by location).</li><li><strong>Transforming:</strong> Converting one data type into another (e.g., quantifying qualitative themes, spatializing qualitative data).</li><li><strong>Embedding:</strong> Using one data type to inform the collection or analysis of the other.</li><li><strong>Visualizing:</strong> Displaying different data types together on maps, diagrams, or charts to identify patterns and relationships.</li><li><strong>Narrative Integration:</strong> Bringing findings from different data sources together during the interpretation phase to create a comprehensive understanding.</li></ul>`;
+                         break;
+                     case 'ej-principles':
+                         content = `<h4>Principles for Environmental Justice Research</h4><p>Integrating EJ means centering equity and community voice. Key principles and practices:</p><ul><li><strong>Participatory Approaches:</strong> Engaging affected communities as partners, not just subjects.</li><li><strong>Identifying Disparities:</strong> Explicitly analyzing how environmental burdens and benefits are distributed across different social groups.</li><li><strong>Addressing Root Causes:</strong> Considering systemic factors (policies, power dynamics) that create inequities.</li><li><strong>Action-Oriented Outcomes:</strong> Designing research that can inform policy or support community action.</li><li><strong>Cultural Humility:</strong> Respecting diverse knowledge systems and experiences.</li></ul>`;
+                         break;
+                     default:
+                         content = `<p>Content for "${topic}" goes here...</p>`;
+                 }
+                 document.getElementById('help-modal-title').textContent = link.textContent; // Update modal title
+                 helpContentDiv.innerHTML = content;
+                 openModal(helpModal);
+             });
+        });
+
+        // --- Step Navigation & Validation ---
+        function showStep(stepIndex) {
+            steps.forEach((step, index) => {
+                const isActive = index === stepIndex;
+                step.classList.toggle('active', isActive);
+                step.setAttribute('aria-hidden', !isActive);
+                step.toggleAttribute('hidden', !isActive);
+            });
+             progressSteps.forEach((pStep, index) => {
+                const isActive = index === stepIndex;
+                pStep.classList.toggle('active', isActive);
+                pStep.classList.toggle('complete', index < stepIndex);
+                pStep.setAttribute('aria-selected', isActive);
+                pStep.setAttribute('tabindex', isActive ? '0' : '-1');
+            });
+            currentStep = stepIndex;
+            updateButtons();
+            if (currentStep === steps.length - 1) {
+                 updateSummary(); // Update summary only on the final step
+            }
+
+             // Focus the first focusable element in the new step for accessibility
+             const activeStepElement = steps[stepIndex];
+             const firstFocusable = activeStepElement.querySelector('input, textarea, select, button, [tabindex]:not([tabindex="-1"])');
+             if (firstFocusable) {
+                 firstFocusable.focus();
+             } else {
+                 // If no focusable elements, focus the step container itself
+                 activeStepElement.setAttribute('tabindex', '-1'); // Make it focusable
+                 activeStepElement.focus();
+             }
+        }
+
+        function updateButtons() {
+            prevButton.disabled = currentStep === 0;
+            nextButton.style.display = currentStep === steps.length - 1 ? 'none' : 'inline-block';
+            saveButton.style.display = currentStep === steps.length - 1 ? 'inline-block' : 'none';
+            exportButton.style.display = currentStep === steps.length - 1 ? 'inline-block' : 'none';
+
+             if (currentStep < steps.length - 1) {
+                 nextButton.textContent = 'Next';
+                 // Dynamically enable/disable Next button based on current step validation
+                 nextButton.disabled = !validateStep(currentStep);
+             }
+        }
+
+        function validateStep(stepIndex) {
+            const currentStepElement = steps[stepIndex];
+            let isValid = true;
+            // Select only required inputs that are currently visible/in the active step
+            const requiredInputs = currentStepElement.querySelectorAll('input[required], textarea[required], select[required]');
+
+            requiredInputs.forEach(input => {
+                // Use validity API for more robust checks if needed, but simple trim() check for required is fine here
+                const isInvalid = !input.value.trim();
+                input.classList.toggle('invalid', isInvalid);
+                input.setAttribute('aria-invalid', isInvalid);
+
+                const errorElement = input.nextElementSibling; // Assumes error div is immediately after input
+                if (errorElement && errorElement.classList.contains('validation-error')) {
+                    errorElement.style.display = isInvalid ? 'block' : 'none';
+                }
+
+                if (isInvalid) {
+                    isValid = false;
+                }
+            });
+            return isValid;
+        }
+
+        // Add real-time validation feedback and button state update
+        steps.forEach((step, stepIndex) => {
+             // Only add listeners if the step has required inputs
+             const requiredInputs = step.querySelectorAll('input[required], textarea[required], select[required]');
+             if (requiredInputs.length > 0) {
+                 requiredInputs.forEach(input => {
+                    const validateAndToggleNext = () => {
+                        // Only validate the current step and update the next button if this is the active step
+                        if (currentStep === stepIndex) {
+                            validateStep(currentStep); // Validate to show/hide errors
+                            nextButton.disabled = !validateStep(currentStep); // Update button state
+                        }
+                    };
+                    input.addEventListener('input', validateAndToggleNext);
+                    input.addEventListener('change', validateAndToggleNext); // For select elements
+                    input.addEventListener('blur', validateAndToggleNext); // Also validate on blur
+                 });
+             }
+        });
+
+
+        function updateSummary() {
+            if (currentStep === steps.length - 1) {
+                let summaryHtml = '<h3>Study Overview</h3>';
+                summaryHtml += `<p><strong>Title:</strong> ${escapeHTML(document.getElementById('study-title').value) || '<em>Not specified</em>'}</p>`;
+                summaryHtml += `<p><strong>Objectives:</strong> ${escapeHTML(document.getElementById('study-objectives').value).replace(/\n/g, '<br>') || '<em>Not specified</em>'}</p>`;
+                summaryHtml += `<p><strong>Research Questions:</strong> ${escapeHTML(document.getElementById('research-questions').value).replace(/\n/g, '<br>') || '<em>Not specified</em>'}</p>`;
+
+                summaryHtml += '<h3>Methodologies</h3>';
+                summaryHtml += `<p><strong>Design Type:</strong> ${escapeHTML(document.getElementById('mixed-methods-design').options[document.getElementById('mixed-methods-design').selectedIndex].text) || '<em>Not specified</em>'}</p>`;
+                 summaryHtml += `<p><strong>Selected Methods:</strong> ${escapeHTML(document.getElementById('selected-methods').value).replace(/\n/g, '<br>') || '<em>Not specified</em>'}</p>`;
+                 summaryHtml += `<p><strong>Frameworks:</strong> ${escapeHTML(document.getElementById('methodological-frameworks').value).replace(/\n/g, '<br>') || '<em>Not specified</em>'}</p>`;
+
+                summaryHtml += '<h3>Data Types & Sources</h3>';
+                summaryHtml += `<h4>GIS Spatial Data</h4>`;
+                summaryHtml += `<p><strong>Description:</strong> ${escapeHTML(document.getElementById('gis-description').value).replace(/\n/g, '<br>') || '<em>Not specified</em>'}</p>`;
+                summaryHtml += `<p><strong>Source(s):</strong> ${escapeHTML(document.getElementById('gis-source').value) || '<em>Not specified</em>'}</p>`;
+                summaryHtml += `<p><strong>Format:</strong> ${escapeHTML(document.getElementById('gis-format').value) || '<em>Not specified</em>'}</p>`;
+
+                 summaryHtml += `<h4>Public Health Data</h4>`;
+                summaryHtml += `<p><strong>Description:</strong> ${escapeHTML(document.getElementById('ph-description').value).replace(/\n/g, '<br>') || '<em>Not specified</em>'}</p>`;
+                summaryHtml += `<p><strong>Source(s):</strong> ${escapeHTML(document.getElementById('ph-source').value) || '<em>Not specified</em>'}</p>`;
+                summaryHtml += `<p><strong>Format:</strong> ${escapeHTML(document.getElementById('ph-format').value) || '<em>Not specified</em>'}</p>`;
+
+                 summaryHtml += `<h4>Qualitative Interview Data</h4>`;
+                summaryHtml += `<p><strong>Description:</strong> ${escapeHTML(document.getElementById('qual-description').value).replace(/\n/g, '<br>') || '<em>Not specified</em>'}</p>`;
+                summaryHtml += `<p><strong>Source(s):</strong> ${escapeHTML(document.getElementById('qual-source').value) || '<em>Not specified</em>'}</p>`;
+                summaryHtml += `<p><strong>Format:</strong> ${escapeHTML(document.getElementById('qual-format').value) || '<em>Not specified</em>'}</p>`;
+
+                 summaryHtml += `<h4>Participatory Mapping Data</h4>`;
+                summaryHtml += `<p><strong>Description:</strong> ${escapeHTML(document.getElementById('part-description').value).replace(/\n/g, '<br>') || '<em>Not specified</em>'}</p>`;
+                summaryHtml += `<p><strong>Source(s):</strong> ${escapeHTML(document.getElementById('part-source').value) || '<em>Not specified</em>'}</p>`;
+                summaryHtml += `<p><strong>Format:</strong> ${escapeHTML(document.getElementById('part-format').value) || '<em>Not specified</em>'}</p>`;
+
+                summaryHtml += '<h3>Environmental Justice Considerations</h3>';
+                summaryHtml += `<p><strong>Relevance:</strong> ${escapeHTML(document.getElementById('ej-relevance').value).replace(/\n/g, '<br>') || '<em>Not specified</em>'}</p>`;
+                summaryHtml += `<p><strong>Community Engagement:</strong> ${escapeHTML(document.getElementById('ej-community-engagement').value).replace(/\n/g, '<br>') || '<em>Not specified</em>'}</p>`;
+                summaryHtml += `<p><strong>Equity Analysis:</strong> ${escapeHTML(document.getElementById('ej-equity-analysis').value).replace(/\n/g, '<br>') || '<em>Not specified</em>'}</p>`;
+                 summaryHtml += `<p><strong>Intended Outcomes:</strong> ${escapeHTML(document.getElementById('ej-outcomes').value).replace(/\n/g, '<br>') || '<em>Not specified</em>'}</p>`;
+
+
+                summaryContent.innerHTML = summaryHtml;
+            }
+        }
+
+        // Basic HTML escaping for summary display
+        function escapeHTML(str) {
+            const div = document.createElement('div');
+            div.appendChild(document.createTextNode(str));
+            return div.innerHTML;
+        }
+
+
+        // --- Button Event Listeners ---
+        prevButton.addEventListener('click', () => {
+            if (currentStep > 0) {
+                showStep(currentStep - 1);
+            }
+        });
+
+        nextButton.addEventListener('click', () => {
+            if (validateStep(currentStep)) { // Only proceed if current step is valid
+                if (currentStep < steps.length - 1) {
+                    showStep(currentStep + 1);
+                }
+            } else {
+                 // Focus the first invalid field for better UX
+                 const firstInvalid = steps[currentStep].querySelector('input.invalid, textarea.invalid, select.invalid');
+                 if(firstInvalid) {
+                     firstInvalid.focus();
+                 }
+            }
+        });
+
+        saveButton.addEventListener('click', () => {
+             const studyData = {
+                 title: document.getElementById('study-title').value,
+                 objectives: document.getElementById('study-objectives').value,
+                 researchQuestions: document.getElementById('research-questions').value,
+                 designType: document.getElementById('mixed-methods-design').value,
+                 selectedMethods: document.getElementById('selected-methods').value,
+                 methodologicalFrameworks: document.getElementById('methodological-frameworks').value,
+                 gis: {
+                     description: document.getElementById('gis-description').value,
+                     source: document.getElementById('gis-source').value,
+                     format: document.getElementById('gis-format').value
+                 },
+                 publicHealth: {
+                     description: document.getElementById('ph-description').value,
+                     source: document.getElementById('ph-source').value,
+                     format: document.getElementById('ph-format').value
+                 },
+                  qualitative: {
+                     description: document.getElementById('qual-description').value,
+                     source: document.getElementById('qual-source').value,
+                     format: document.getElementById('qual-format').value
+                 },
+                  participatory: {
+                     description: document.getElementById('part-description').value,
+                     source: document.getElementById('part-source').value,
+                     format: document.getElementById('part-format').value
+                 },
+                 ej: {
+                     relevance: document.getElementById('ej-relevance').value,
+                     communityEngagement: document.getElementById('ej-community-engagement').value,
+                     equityAnalysis: document.getElementById('ej-equity-analysis').value,
+                     outcomes: document.getElementById('ej-outcomes').value
+                 }
+             };
+             try {
+                 localStorage.setItem('mixedMethodsStudyDesign', JSON.stringify(studyData));
+                 openModal(saveModal); // Show save confirmation modal
+             } catch (e) {
+                 console.error("Failed to save to local storage:", e);
+                 alert("Could not save study design. Local storage might be full or disabled.");
+             }
+        });
+
+        exportButton.addEventListener('click', () => {
+            openModal(exportModal); // Show export confirmation modal
+        });
+
+        confirmExportButton.addEventListener('click', () => {
+             const summaryText = summaryContent.innerText; // Get text content of summary
+             const blob = new Blob([summaryText], { type: 'text/plain' });
+             const url = URL.createObjectURL(blob);
+             const a = document.createElement('a');
+             a.href = url;
+             a.download = 'mixed_methods_study_design_summary.txt';
+             document.body.appendChild(a);
+             a.click();
+             document.body.removeChild(a);
+             URL.revokeObjectURL(url);
+             closeModal(exportModal); // Close modal after download initiated
+        });
+
+
+        // --- Progress Step Click Listener ---
+        progressSteps.forEach((pStep, index) => {
+            pStep.addEventListener('click', () => {
+                // Allow clicking only on completed or active steps for navigation
+                if (index <= currentStep || pStep.classList.contains('complete')) {
+                    // Optional: Add validation check before jumping forward
+                    // if (index > currentStep && !validateStep(currentStep)) {
+                    //     alert('Please complete the current step before jumping forward.');
+                    //     return;
+                    // }
+                    showStep(index);
+                }
+            });
+             // Add keyboard navigation for progress steps (using Enter/Space)
+             pStep.addEventListener('keydown', (e) => {
+                 if (e.key === 'Enter' || e.key === ' ') {
+                     e.preventDefault();
+                     pStep.click();
+                 }
+             });
+        });
+
+
+        // --- Load Saved Data ---
+        function loadStudyData() {
+             try {
+                 const savedData = localStorage.getItem('mixedMethodsStudyDesign');
+                 if (savedData) {
+                     const studyData = JSON.parse(savedData);
+                     if (studyData.title) document.getElementById('study-title').value = studyData.title;
+                     if (studyData.objectives) document.getElementById('study-objectives').value = studyData.objectives;
+                     if (studyData.researchQuestions) document.getElementById('research-questions').value = studyData.researchQuestions;
+                     if (studyData.designType) document.getElementById('mixed-methods-design').value = studyData.designType;
+                     if (studyData.selectedMethods) document.getElementById('selected-methods').value = studyData.selectedMethods;
+                     if (studyData.methodologicalFrameworks) document.getElementById('methodological-frameworks').value = studyData.methodologicalFrameworks;
+
+                     if (studyData.gis) {
+                          if (studyData.gis.description) document.getElementById('gis-description').value = studyData.gis.description;
+                          if (studyData.gis.source) document.getElementById('gis-source').value = studyData.gis.source;
+                          if (studyData.gis.format) document.getElementById('gis-format').value = studyData.gis.format;
+                     }
+                     if (studyData.publicHealth) {
+                          if (studyData.publicHealth.description) document.getElementById('ph-description').value = studyData.publicHealth.description;
+                          if (studyData.publicHealth.source) document.getElementById('ph-source').value = studyData.ph.source;
+                          if (studyData.publicHealth.format) document.getElementById('ph-format').value = studyData.ph.format;
+                     }
+                      if (studyData.qualitative) {
+                          if (studyData.qualitative.description) document.getElementById('qual-description').value = studyData.qualitative.description;
+                          if (studyData.qualitative.source) document.getElementById('qual-source').value = studyData.qualitative.source;
+                          if (studyData.qualitative.format) document.getElementById('qual-format').value = studyData.qualitative.format;
+                     }
+                      if (studyData.participatory) {
+                          if (studyData.participatory.description) document.getElementById('part-description').value = studyData.participatory.description;
+                          if (studyData.participatory.source) document.getElementById('part-source').value = studyData.participatory.source;
+                          if (studyData.participatory.format) document.getElementById('part-format').value = studyData.participatory.format;
+                     }
+
+                     if (studyData.ej) {
+                         if (studyData.ej.relevance) document.getElementById('ej-relevance').value = studyData.ej.relevance;
+                         if (studyData.ej.communityEngagement) document.getElementById('ej-community-engagement').value = studyData.ej.communityEngagement;
+                         if (studyData.ej.equityAnalysis) document.getElementById('ej-equity-analysis').value = studyData.ej.equityAnalysis;
+                         if (studyData.ej.outcomes) document.getElementById('ej-outcomes').value = studyData.ej.outcomes;
+                     }
+
+                     // After loading, re-validate the first step to enable the Next button if fields are filled
+                     validateStep(0);
+                     updateButtons();
+
+                     console.log('Loaded previous study design from local storage.');
+                     // Optional: Show a "Load successful" message
+                 }
+             } catch (e) {
+                 console.error("Failed to load from local storage:", e);
+                 // Optional: Show a "Load failed" message
+             }
+        }
+
+        // --- Initialization ---
+        showStep(0);
+        loadStudyData(); // Attempt to load data on page load
+
+
+    </script>
+</body>
+</html>

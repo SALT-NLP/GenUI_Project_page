@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How Image Recognition Works</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Open+Sans:wght@400;600&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+        :root {
+            --primary-color: #4CAF50; /* Green */
+            --secondary-color: #2196F3; /* Blue */
+            --accent-color: #FFC107; /* Amber */
+            --background-color: #f4f6ff; /* Very Light Blue-Grey */
+            --card-background: #ffffff; /* White */
+            --text-color: #333; /* Dark Grey */
+            --heading-color: #1a1a1a; /* Very Dark Grey */
+            --border-color: #e0e0e0; /* Grey */
+            --shadow-color: rgba(0, 0, 0, 0.08); /* Softer shadow */
+            --spacing-unit: 16px;
+            --border-radius: 10px; /* Slightly larger radius */
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+        }
+
+        main {
+            width: 100%;
+            max-width: 1200px;
+            padding: calc(var(--spacing-unit) * 2);
+            box-sizing: border-box;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Roboto', sans-serif;
+            color: var(--heading-color);
+            margin-bottom: var(--spacing-unit);
+        }
+
+        h1 {
+            font-size: 2.8em; /* Slightly larger */
+            text-align: center;
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        h2 {
+            font-size: 2em; /* Slightly larger */
+            margin-top: calc(var(--spacing-unit) * 2);
+            border-bottom: 3px solid var(--primary-color); /* Thicker border */
+            padding-bottom: calc(var(--spacing-unit) / 2);
+            font-weight: 700;
+        }
+
+        h3 {
+             font-size: 1.5em;
+             margin-top: var(--spacing-unit);
+             margin-bottom: var(--spacing-unit);
+             color: var(--secondary-color);
+        }
+
+        section {
+            background-color: var(--card-background);
+            padding: calc(var(--spacing-unit) * 2.5); /* More padding */
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            border-radius: var(--border-radius);
+            box-shadow: 0 6px 12px var(--shadow-color); /* Softer, larger shadow */
+            opacity: 0;
+            transform: translateY(30px); /* More pronounced initial state */
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out; /* Slower transition */
+        }
+
+        section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: calc(var(--spacing-unit) * 2);
+        }
+
+        @media (min-width: 768px) {
+            .content-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .text-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .visual-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--background-color);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-unit);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05); /* Softer inset shadow */
+            min-height: 280px; /* Ensure visual content has a minimum height */
+            overflow: hidden; /* Hide overflow for images/canvas */
+        }
+
+        .visual-content img,
+        .visual-content canvas,
+        .visual-content svg {
+            max-width: 100%;
+            height: auto;
+            border-radius: calc(var(--border-radius) / 2);
+            display: block; /* Prevent extra space below images/canvas */
+        }
+
+        .diagram-container {
+            width: 100%;
+            height: 250px;
+            position: relative;
+            margin: var(--spacing-unit) 0;
+            overflow: visible; /* Allow tooltip outside SVG bounds */
+        }
+
+        .diagram-container svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .diagram-node {
+            fill: var(--secondary-color);
+            stroke: var(--heading-color);
+            stroke-width: 2;
+            transition: fill 0.3s ease, transform 0.3s ease, stroke 0.3s ease;
+            cursor: pointer;
+            outline: none; /* Remove default outline */
+        }
+
+        .diagram-node:hover {
+            fill: #0b7cd3; /* Darker Blue */
+        }
+
+        .diagram-node:focus {
+            fill: var(--accent-color);
+            transform: scale(1.05);
+            outline: 3px solid var(--accent-color); /* Add focus indicator */
+            outline-offset: 4px;
+            stroke: var(--accent-color);
+        }
+
+        .diagram-text {
+            font-family: 'Open Sans', sans-serif;
+            font-size: 14px;
+            fill: var(--card-background);
+            pointer-events: none; /* Allow clicking through text to node */
+            user-select: none; /* Prevent text selection */
+            font-weight: 600;
+        }
+
+        .diagram-arrow {
+            stroke: var(--text-color);
+            stroke-width: 2;
+            fill: none;
+            marker-end: url(#arrowhead);
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
+            margin-top: var(--spacing-unit);
+            text-decoration: none; /* For buttons used as links */
+            outline: none; /* Remove default outline */
+            box-shadow: 0 2px 4px var(--shadow-color);
+        }
+
+        .button:hover {
+            background-color: #388E3C; /* Darker Green */
+            box-shadow: 0 4px 8px var(--shadow-color);
+        }
+
+        .button:active {
+            transform: scale(0.98);
+            box-shadow: 0 1px 2px var(--shadow-color);
+        }
+
+         .button:focus {
+            outline: 3px solid var(--accent-color); /* Add focus indicator */
+            outline-offset: 4px;
+        }
+
+
+        .button .material-symbols-rounded {
+            margin-right: calc(var(--spacing-unit) / 2);
+        }
+
+        .interactive-controls {
+            margin-top: calc(var(--spacing-unit) * 2);
+            padding: calc(var(--spacing-unit) * 1.5);
+            background-color: var(--background-color);
+            border-radius: var(--border-radius);
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-unit);
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-unit);
+            flex-wrap: wrap; /* Allow controls to wrap on small screens */
+        }
+
+        .control-group label {
+            font-weight: 600;
+            min-width: 80px;
+            color: var(--heading-color);
+        }
+
+        .control-group input[type="range"] {
+            flex-grow: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 10px; /* Thicker slider */
+            background: var(--border-color);
+            border-radius: 5px;
+            outline: none;
+            opacity: 1;
+            transition: opacity 0.2s;
+            cursor: pointer;
+        }
+
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px; /* Larger thumb */
+            height: 24px; /* Larger thumb */
+            background: var(--primary-color);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            margin-top: -7px; /* Center thumb vertically */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .control-group input[type="range"]::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .control-group input[type="range"]:hover::-webkit-slider-thumb {
+            background-color: #388E3C;
+            transform: scale(1.1); /* Subtle scale on hover */
+        }
+         .control-group input[type="range"]:hover::-moz-range-thumb {
+            background-color: #388E3C;
+        }
+
+        .control-group input[type="range"]:focus {
+             outline: 3px solid var(--accent-color); /* Add focus indicator */
+             outline-offset: 4px;
+        }
+
+        .control-group input[type="range"]:active::-webkit-slider-thumb {
+             transform: scale(0.9); /* Subtle scale on active */
+        }
+
+
+        .tooltip {
+            position: fixed; /* Use fixed for reliable positioning */
+            background-color: var(--heading-color);
+            color: var(--card-background);
+            padding: calc(var(--spacing-unit) / 2) var(--spacing-unit);
+            border-radius: calc(var(--border-radius) / 2);
+            font-size: 0.9em;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 100; /* Higher z-index */
+            white-space: nowrap; /* Prevent text wrapping */
+            transform: translate(-50%, -100%); /* Center and position above */
+            /* Initial positioning handled by JS */
+        }
+
+        .tooltip.visible {
+            opacity: 1;
+        }
+
+        .classification-chart-container {
+            width: 100%;
+            height: 250px; /* Adjusted height */
+            margin-top: var(--spacing-unit);
+            overflow: visible; /* Allow text labels outside bars */
+        }
+
+        .classification-chart-container svg {
+             overflow: visible; /* Allow text labels outside bars */
+        }
+
+        .chart-bar {
+            fill: var(--secondary-color);
+            transition: fill 0.3s ease, height 0.8s ease-out, y 0.8s ease-out; /* Animate height and y */
+        }
+
+        .chart-bar:hover {
+            fill: #0b7cd3; /* Darker blue on hover */
+        }
+
+        .chart-label {
+            font-family: 'Open Sans', sans-serif;
+            font-size: 12px;
+            fill: var(--text-color);
+            text-anchor: middle;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .chart-value {
+             font-family: 'Open Sans', sans-serif;
+            font-size: 12px;
+            fill: var(--heading-color); /* Darker color for visibility */
+            text-anchor: middle;
+             pointer-events: none;
+             user-select: none;
+             opacity: 0;
+             transition: opacity 0.4s ease-out, y 0.8s ease-out; /* Animate opacity and y */
+        }
+
+        /* Accessibility */
+        [aria-hidden="true"] {
+            display: none;
+        }
+
+         /* Focus visible for non-mouse users */
+        *:focus-visible {
+            outline: 3px solid var(--accent-color);
+            outline-offset: 4px;
+        }
+
+        /* Hide default outline for elements handled by custom focus styles */
+        .diagram-node:focus-visible,
+        .button:focus-visible,
+        input[type="range"]:focus-visible {
+             outline: none;
+        }
+
+
+    </style>
+</head>
+<body>
+    <main>
+        <h1>Understanding Image Recognition</h1>
+
+        <section id="intro">
+            <div class="content-grid">
+                <div class="text-content">
+                    <h2>What is Image Recognition?</h2>
+                    <p>Image recognition is a technology that allows computers to identify and understand what is in an image. It's the foundation for many applications like facial recognition, object detection, and self-driving cars. But how do computers "see" and interpret images like humans do?</p>
+                    <p>It involves a series of steps, breaking down the complex task into manageable parts, often powered by sophisticated machine learning models.</p>
+                </div>
+                <div class="visual-content">
+                    <img src="https://placehold.co/400x280?text=Input+Image" alt="Example input image: A picture of a cat.">
+                </div>
+            </div>
+        </section>
+
+        <section id="pipeline">
+            <h2>The Image Recognition Pipeline</h2>
+            <p>The process typically follows a pipeline, transforming the raw image data through several stages until a final classification or identification is made.</p>
+            <div class="diagram-container" aria-label="Diagram showing the image recognition pipeline: Input Image, Preprocessing, Feature Extraction, Classification, Output. Arrows connect each step sequentially.">
+                <svg viewBox="0 0 900 250"> <!-- Increased viewBox width slightly -->
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="7"
+                                refX="10" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="var(--text-color)" />
+                        </marker>
+                    </defs>
+
+                    <!-- Nodes -->
+                    <rect class="diagram-node" id="node-input" x="50" y="100" width="120" height="50" rx="5" ry="5" data-tooltip="The raw image data entering the system." tabindex="0" role="button" aria-label="Diagram step: Input Image. Click to learn more." />
+                    <text class="diagram-text" x="110" y="125" text-anchor="middle" dominant-baseline="middle">Input Image</text>
+
+                    <rect class="diagram-node" id="node-preprocess" x="220" y="100" width="120" height="50" rx="5" ry="5" data-tooltip="Cleaning and enhancing the image data." tabindex="0" role="button" aria-label="Diagram step: Preprocessing. Click to learn more." />
+                    <text class="diagram-text" x="280" y="125" text-anchor="middle" dominant-baseline="middle">Preprocessing</text>
+
+                    <rect class="diagram-node" id="node-features" x="390" y="100" width="120" height="50" rx="5" ry="5" data-tooltip="Identifying key visual characteristics like edges and textures." tabindex="0" role="button" aria-label="Diagram step: Feature Extraction. Click to learn more." />
+                    <text class="diagram-text" x="450" y="125" text-anchor="middle" dominant-baseline="middle">Feature Extraction</text>
+
+                    <rect class="diagram-node" id="node-classify" x="560" y="100" width="120" height="50" rx="5" ry="5" data-tooltip="Using extracted features to categorize the image." tabindex="0" role="button" aria-label="Diagram step: Classification. Click to learn more." />
+                    <text class="diagram-text" x="620" y="125" text-anchor="middle" dominant-baseline="middle">Classification</text>
+
+                    <rect class="diagram-node" id="node-output" x="730" y="100" width="120" height="50" rx="5" ry="5" data-tooltip="The final result, such as an object label or bounding box." tabindex="0" role="button" aria-label="Diagram step: Output. Click to learn more." />
+                    <text class="diagram-text" x="790" y="125" text-anchor="middle" dominant-baseline="middle">Output</text>
+
+                    <!-- Arrows -->
+                    <line class="diagram-arrow" x1="170" y1="125" x2="220" y2="125" />
+                    <line class="diagram-arrow" x1="340" y1="125" x2="390" y2="125" />
+                    <line class="diagram-arrow" x1="510" y1="125" x2="560" y2="125" />
+                    <line class="diagram-arrow" x1="680" y1="125" x2="730" y2="125" />
+                </svg>
+                <div id="diagram-tooltip" class="tooltip" aria-hidden="true" role="tooltip"></div>
+            </div>
+            <p>Click on the boxes in the diagram to learn more about each step.</p>
+        </section>
+
+        <section id="preprocessing">
+            <div class="content-grid">
+                <div class="text-content">
+                    <h2>Step 1: Preprocessing</h2>
+                    <p>Before analyzing an image, it often needs cleaning and standardization. This can involve resizing, color correction, noise reduction, or converting to grayscale. This step helps ensure that the image data is in a consistent format and highlights important information for the next stages.</p>
+                    <p>For example, resizing images to a standard dimension is crucial for feeding them into machine learning models.</p>
+                </div>
+                <div class="visual-content">
+                     <img src="https://placehold.co/400x280?text=Processed+Image" alt="Example processed image: The same cat image, resized and maybe slightly adjusted.">
+                </div>
+            </div>
+        </section>
+
+        <section id="feature-extraction">
+            <h2>Step 2: Feature Extraction</h2>
+            <p>This is a critical step where the computer identifies important visual "features" in the image. Instead of looking at every single pixel, it looks for patterns like edges, corners, textures, or specific shapes. These features are more meaningful than raw pixel values for distinguishing objects.</p>
+            <p>Early methods used hand-crafted filters (like Sobel or Gabor filters) to detect specific patterns. Modern approaches, especially with deep learning, learn to extract complex features automatically from the data.</p>
+            <div class="interactive-controls">
+                <h3>Edge Detection Demo</h3>
+                <p>Adjust the threshold below to see how it affects edge detection in a simple image. Higher thresholds detect stronger edges.</p>
+                <div class="control-group">
+                    <label for="edge-threshold">Threshold:</label>
+                    <input type="range" id="edge-threshold" min="1" max="100" value="30" aria-label="Edge detection threshold value">
+                    <span id="threshold-value">30</span>
+                </div>
+                <div class="visual-content">
+                    <!-- Original image is loaded here -->
+                    <canvas id="edge-demo-canvas" width="400" height="280" aria-label="Edge detection demo visualization"></canvas>
+                    <img id="edge-demo-image-source" src="https://placehold.co/400x280?text=Demo+Image" alt="Source image for edge detection demo" style="display:none;">
+                     <img id="edge-demo-image-cat" src="https://placehold.co/400x280?text=Cat+Image+for+Demo" alt="Cat image for edge detection demo" style="display:none;">
+                </div>
+                <div style="display: flex; gap: var(--spacing-unit);">
+                    <button class="button" id="load-demo-image"><span class="material-symbols-rounded">image</span> Load Demo Image</button>
+                    <button class="button" id="load-cat-image"><span class="material-symbols-rounded">image</span> Load Cat Image</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="classification">
+            <h2>Step 3: Classification</h2>
+            <p>Once features are extracted, the system uses this information to classify the image. This is typically done using a machine learning model, such as a Support Vector Machine (SVM) or, more commonly now, a Convolutional Neural Network (CNN).</p>
+            <p>The model is trained on a large dataset of labeled images (e.g., thousands of images labeled "cat", "dog", "car"). During training, the model learns to associate specific combinations of features with particular categories. When a new image is presented, the model uses the extracted features to predict which category it belongs to, often outputting a probability score for each possible class.</p>
+            <div class="visual-content">
+                 <!-- Simple Classification Output Visualization -->
+                 <div class="classification-chart-container" aria-label="Bar chart showing classification probabilities.">
+                     <svg viewBox="0 0 450 250"> <!-- Adjusted viewBox width -->
+                         <!-- Example data: Cat 95%, Dog 3%, Car 1%, Other 1% -->
+                         <!-- Bars start at the bottom (y=250) with height 0 -->
+                         <rect class="chart-bar" x="60" y="250" width="60" height="0" data-label="Cat" data-value="95"></rect>
+                         <rect class="chart-bar" x="160" y="250" width="60" height="0" data-label="Dog" data-value="3"></rect>
+                         <rect class="chart-bar" x="260" y="250" width="60" height="0" data-label="Car" data-value="1"></rect>
+                         <rect class="chart-bar" x="360" y="250" width="60" height="0" data-label="Other" data-value="1"></rect>
+
+                         <!-- Labels (will be positioned by JS) -->
+                         <text class="chart-label" x="90" y="245">Cat</text>
+                         <text class="chart-label" x="190" y="245">Dog</text>
+                         <text class="chart-label" x="290" y="245">Car</text>
+                         <text class="chart-label" x="390" y="245">Other</text>
+
+                          <!-- Values (will be positioned by JS) -->
+                         <text class="chart-value" x="90" y="250"></text>
+                         <text class="chart-value" x="190" y="250"></text>
+                         <text class="chart-value" x="290" y="250"></text>
+                         <text class="chart-value" x="390" y="250"></text>
+
+                         <!-- Y-axis guide -->
+                         <line x1="40" y1="0" x2="40" y2="250" stroke="var(--border-color)"></line>
+                         <text x="35" y="10" text-anchor="end" font-size="10" fill="var(--text-color)">100%</text>
+                         <text x="35" y="125" text-anchor="end" font-size="10" fill="var(--text-color)">50%</text>
+                         <text x="35" y="240" text-anchor="end" font-size="10" fill="var(--text-color)">0%</text>
+
+                     </svg>
+                 </div>
+            </div>
+        </section>
+
+         <section id="output">
+            <div class="content-grid">
+                <div class="text-content">
+                    <h2>Step 4: Output</h2>
+                    <p>The final output is the result of the classification. This could be a single label ("Cat"), a list of possible labels with confidence scores ("Cat: 95%, Dog: 3%, Car: 1%"), or even bounding boxes around detected objects in the image.</p>
+                    <p>The output is then used by applications, whether it's tagging photos, flagging inappropriate content, or guiding a robot.</p>
+                </div>
+                <div class="visual-content">
+                     <img src="https://placehold.co/400x280?text=Output:+'Cat'+(95%25)" alt="Example output showing the classification result 'Cat' with 95% confidence.">
+                </div>
+            </div>
+        </section>
+
+        <section id="conclusion">
+            <h2>Beyond the Basics</h2>
+            <p>Modern image recognition heavily relies on deep learning, particularly Convolutional Neural Networks (CNNs). These networks combine feature extraction and classification into a single, end-to-end trainable system, achieving state-of-the-art results on many tasks.</p>
+            <p>While this explanation covers the core pipeline, the field is constantly evolving with new architectures, techniques, and applications.</p>
+        </section>
+
+    </main>
+
+    <script>
+        // CSS variable helper for JS
+        function getCssVar(name) {
+            return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        }
+
+        // Scroll Animation
+        const sections = document.querySelectorAll('section');
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1 // Trigger when 10% of the section is visible
+        };
+
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    // Optional: Stop observing once visible
+                    // observer.unobserve(entry.target);
+                } else {
+                     // Optional: Remove visible class when out of view
+                     // entry.target.classList.remove('visible');
+                }
+            });
+        }, observerOptions);
+
+        sections.forEach(section => {
+            observer.observe(section);
+        });
+
+        // Diagram Tooltip
+        const diagramNodes = document.querySelectorAll('.diagram-node');
+        const tooltip = document.getElementById('diagram-tooltip');
+        let activeTooltipElement = null;
+
+        function showTooltip(element, text) {
+             if (!text) return;
+             tooltip.textContent = text;
+             tooltip.classList.add('visible');
+             activeTooltipElement = element;
+             positionTooltip(element);
+        }
+
+        function hideTooltip() {
+            tooltip.classList.remove('visible');
+            tooltip.removeAttribute('style'); // Reset position
+            activeTooltipElement = null;
+        }
+
+        function positionTooltip(element) {
+             if (!element || !tooltip.classList.contains('visible')) return;
+
+             const rect = element.getBoundingClientRect();
+             // Position tooltip relative to the viewport
+             tooltip.style.left = `${rect.left + rect.width / 2}px`;
+             tooltip.style.top = `${rect.top}px`; // Position at the top edge of the element
+             // transform: translate(-50%, -100%) handles centering and moving above
+        }
+
+        // Reposition tooltip on scroll and resize
+        let positionTimeout;
+        function handlePositionUpdate() {
+            clearTimeout(positionTimeout);
+            positionTimeout = setTimeout(() => {
+                if (activeTooltipElement) {
+                    positionTooltip(activeTooltipElement);
+                }
+            }, 50); // Debounce positioning
+
+        }
+        window.addEventListener('scroll', handlePositionUpdate);
+        window.addEventListener('resize', handlePositionUpdate);
+
+
+        diagramNodes.forEach(node => {
+            node.addEventListener('mouseenter', (event) => {
+                const text = node.getAttribute('data-tooltip');
+                 showTooltip(node, text);
+            });
+
+            node.addEventListener('mouseleave', () => {
+                hideTooltip();
+            });
+
+            // Handle focus for keyboard users
+            node.addEventListener('focus', () => {
+                 const text = node.getAttribute('data-tooltip');
+                 showTooltip(node, text);
+            });
+
+            node.addEventListener('blur', () => {
+                hideTooltip();
+            });
+
+
+             node.addEventListener('click', () => {
+                const nodeId = node.id;
+                let targetSectionId = '';
+                switch(nodeId) {
+                    case 'node-input':
+                        targetSectionId = 'intro';
+                        break;
+                    case 'node-preprocess':
+                        targetSectionId = 'preprocessing';
+                        break;
+                    case 'node-features':
+                        targetSectionId = 'feature-extraction';
+                        break;
+                    case 'node-classify':
+                        targetSectionId = 'classification';
+                        break;
+                     case 'node-output':
+                        targetSectionId = 'output';
+                        break;
+                    default:
+                        break;
+                }
+
+                if (targetSectionId) {
+                    const targetSection = document.getElementById(targetSectionId);
+                    if (targetSection) {
+                        targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        // Add visible class immediately if not already
+                        if (!targetSection.classList.contains('visible')) {
+                             targetSection.classList.add('visible');
+                        }
+                    }
+                }
+            });
+        });
+
+        // Edge Detection Demo (Simplified Canvas Implementation)
+        const edgeThresholdSlider = document.getElementById('edge-threshold');
+        const thresholdValueSpan = document.getElementById('threshold-value');
+        const edgeDemoCanvas = document.getElementById('edge-demo-canvas');
+        const edgeDemoImageSource = document.getElementById('edge-demo-image-source');
+        const edgeDemoImageCat = document.getElementById('edge-demo-image-cat');
+        const loadDemoImageButton = document.getElementById('load-demo-image');
+        const loadCatImageButton = document.getElementById('load-cat-image');
+        const ctx = edgeDemoCanvas.getContext('2d');
+
+        let currentImage = null;
+
+        function loadImageForDemo(imgElement) {
+             currentImage = imgElement;
+             // Reset canvas size to match desired display size
+             edgeDemoCanvas.width = edgeDemoCanvas.parentElement.offsetWidth - (getCssVar('--spacing-unit').replace('px','') * 2); // Adjust for padding
+             edgeDemoCanvas.height = 280; // Fixed display height
+
+             if (currentImage.complete) {
+                 drawEdgeDetection();
+             } else {
+                 currentImage.onload = drawEdgeDetection;
+                 currentImage.onerror = () => {
+                    console.error("Failed to load image for demo.");
+                    ctx.clearRect(0, 0, edgeDemoCanvas.width, edgeDemoCanvas.height);
+                    ctx.fillStyle = getCssVar('--background-color');
+                    ctx.fillRect(0, 0, edgeDemoCanvas.width, edgeDemoCanvas.height);
+                    ctx.font = '16px "Open Sans", sans-serif';
+                    ctx.fillStyle = getCssVar('--text-color');
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('Error loading image', edgeDemoCanvas.width / 2, edgeDemoCanvas.height / 2);
+                 };
+             }
+        }
+
+        function drawEdgeDetection() {
+            if (!currentImage || !ctx) return;
+
+            const imgWidth = currentImage.naturalWidth;
+            const imgHeight = currentImage.naturalHeight;
+
+            if (imgWidth === 0 || imgHeight === 0) {
+                 console.warn("Image dimensions are zero.");
+                 return;
+            }
+
+            // Scale image to fit canvas while maintaining aspect ratio
+            const aspectRatio = imgWidth / imgHeight;
+            let canvasDisplayWidth = edgeDemoCanvas.width;
+            let canvasDisplayHeight = edgeDemoCanvas.height;
+
+            if (imgWidth > imgHeight) {
+                canvasDisplayHeight = canvasDisplayWidth / aspectRatio;
+            } else {
+                canvasDisplayWidth = canvasDisplayHeight * aspectRatio;
+            }
+
+            // Ensure it doesn't exceed canvas bounds
+             canvasDisplayWidth = Math.min(canvasDisplayWidth, edgeDemoCanvas.width);
+             canvasDisplayHeight = Math.min(canvasDisplayHeight, edgeDemoCanvas.height);
+
+
+            // Create a temporary canvas for processing at original image resolution
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = imgWidth;
+            tempCanvas.height = imgHeight;
+
+            tempCtx.drawImage(currentImage, 0, 0, imgWidth, imgHeight);
+
+            const imageData = tempCtx.getImageData(0, 0, imgWidth, imgHeight);
+            const pixels = imageData.data;
+            const threshold = parseInt(edgeThresholdSlider.value);
+
+            // Create output image data
+            const outputImageData = tempCtx.createImageData(imgWidth, imgHeight);
+            const outputPixels = outputImageData.data;
+
+            // Simple edge detection (Sobel-like approximation)
+            // Grayscale conversion first
+             const grayPixels = new Uint8Array(imgWidth * imgHeight);
+             for (let i = 0; i < pixels.length; i += 4) {
+                 grayPixels[i / 4] = (pixels[i] * 0.299 + pixels[i + 1] * 0.587 + pixels[i + 2] * 0.114);
+             }
+
+            for (let y = 1; y < imgHeight - 1; y++) {
+                for (let x = 1; x < imgWidth - 1; x++) {
+                    const i = (y * imgWidth + x);
+
+                    // Sobel-like operators simplified
+                    const gx = (grayPixels[i - 1] * -1 + grayPixels[i + 1] * 1) +
+                               (grayPixels[i - imgWidth - 1] * -2 + grayPixels[i - imgWidth + 1] * 2) +
+                               (grayPixels[i + imgWidth - 1] * -1 + grayPixels[i + imgWidth + 1] * 1);
+
+                    const gy = (grayPixels[i - imgWidth] * -1 + grayPixels[i + imgWidth] * 1) +
+                               (grayPixels[i - imgWidth - 1] * -2 + grayPixels[i + imgWidth - 1] * 2) +
+                               (grayPixels[i - imgWidth + 1] * -1 + grayPixels[i + imgWidth + 1] * 1);
+
+                    const magnitude = Math.sqrt(gx * gx + gy * gy);
+
+                    // Apply threshold
+                    const edgeValue = magnitude > threshold ? 0 : 255; // Black for edge, white otherwise
+
+                    const outputIndex = i * 4;
+                    outputPixels[outputIndex] = edgeValue;     // Red
+                    outputPixels[outputIndex + 1] = edgeValue; // Green
+                    outputPixels[outputIndex + 2] = edgeValue; // Blue
+                    outputPixels[outputIndex + 3] = 255;       // Alpha
+                }
+            }
+
+            // Clear canvas and draw the processed image scaled to fit
+            ctx.clearRect(0, 0, edgeDemoCanvas.width, edgeDemoCanvas.height);
+             // Draw background color
+            ctx.fillStyle = getCssVar('--background-color');
+            ctx.fillRect(0, 0, edgeDemoCanvas.width, edgeDemoCanvas.height);
+
+
+            // Calculate position to center the scaled image
+            const displayX = (edgeDemoCanvas.width - canvasDisplayWidth) / 2;
+            const displayY = (edgeDemoCanvas.height - canvasDisplayHeight) / 2;
+
+
+            // Draw the processed image onto the main canvas, scaled
+            const processedImageBitmap = tempCtx.createImageData(imgWidth, imgHeight);
+            processedImageBitmap.data.set(outputPixels);
+            tempCtx.putImageData(processedImageBitmap, 0, 0); // Draw onto temp canvas again
+
+            ctx.drawImage(tempCanvas, 0, 0, imgWidth, imgHeight, displayX, displayY, canvasDisplayWidth, canvasDisplayHeight);
+
+             // Add text overlay
+            ctx.font = `16px "${getCssVar('--font-family-open-sans')}", sans-serif`;
+            ctx.fillStyle = getCssVar('--text-color');
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(`Threshold: ${thresholdValueSpan.textContent}`, edgeDemoCanvas.width / 2, edgeDemoCanvas.height - 10);
+        }
+
+
+        edgeThresholdSlider.addEventListener('input', (event) => {
+            thresholdValueSpan.textContent = event.target.value;
+            if (currentImage) {
+                drawEdgeDetection(); // Redraw on slider change
+            }
+        });
+
+        loadDemoImageButton.addEventListener('click', () => {
+             loadImageForDemo(edgeDemoImageSource);
+        });
+
+         loadCatImageButton.addEventListener('click', () => {
+             loadImageForDemo(edgeDemoImageCat);
+        });
+
+        // Load a default image on page load
+        loadImageForDemo(edgeDemoImageSource);
+
+        // Adjust canvas size on window resize
+        window.addEventListener('resize', () => {
+             if (currentImage) {
+                // Update canvas width based on parent size
+                edgeDemoCanvas.width = edgeDemoCanvas.parentElement.offsetWidth - (getCssVar('--spacing-unit').replace('px','') * 2);
+                drawEdgeDetection();
+             }
+        });
+
+
+        // Classification Chart Visualization
+        const classificationSvg = document.querySelector('#classification .classification-chart-container svg');
+        const chartBars = classificationSvg.querySelectorAll('.chart-bar');
+        const chartLabels = classificationSvg.querySelectorAll('.chart-label');
+        const chartValues = classificationSvg.querySelectorAll('.chart-value');
+        const svgHeight = 250; // Matches the container height
+        const svgPaddingBottom = 30; // Space for labels
+
+        function animateClassificationChart() {
+            const maxBarHeight = svgHeight - svgPaddingBottom; // Max height for bars
+
+            chartBars.forEach(bar => {
+                const value = parseFloat(bar.getAttribute('data-value'));
+                const targetHeight = (value / 100) * maxBarHeight; // Scale value to height
+
+                // Animate height from 0 to targetHeight
+                bar.animate([
+                    { height: 0, y: svgHeight },
+                    { height: targetHeight, y: svgHeight - targetHeight }
+                ], {
+                    duration: 800,
+                    easing: 'ease-out',
+                    fill: 'forwards' // Keep the final state
+                });
+            });
+
+            // Animate value text and position labels
+            chartValues.forEach((textElement, index) => {
+                 const bar = chartBars[index];
+                 const value = parseFloat(bar.getAttribute('data-value'));
+                 const targetY = svgHeight - (value / 100) * maxBarHeight - 5; // Position above bar
+
+                 textElement.textContent = `${value}%`; // Set the text content
+
+                 textElement.setAttribute('x', parseFloat(bar.getAttribute('x')) + parseFloat(bar.getAttribute('width')) / 2);
+                 textElement.setAttribute('y', svgHeight); // Start from bottom
+
+                 textElement.animate([
+                    { opacity: 0, y: svgHeight },
+                    { opacity: 1, y: targetY }
+                 ], {
+                    duration: 800,
+                    easing: 'ease-out',
+                    fill: 'forwards',
+                    delay: 400 // Delay text animation slightly
+                 });
+            });
+
+            // Position labels below bars
+            chartLabels.forEach(label => {
+                 const bar = classificationSvg.querySelector(`.chart-bar[data-label="${label.textContent}"]`);
+                 if (bar) {
+                     label.setAttribute('x', parseFloat(bar.getAttribute('x')) + parseFloat(bar.getAttribute('width')) / 2);
+                     label.setAttribute('y', svgHeight + 15); // Position below the bar area
+                 }
+            });
+        }
+
+        // Trigger chart animation when the section becomes visible
+        const classificationSection = document.getElementById('classification');
+        const classificationObserver = new IntersectionObserver((entries, observer) => {
+             entries.forEach(entry => {
+                 if (entry.isIntersecting) {
+                     animateClassificationChart();
+                     // observer.unobserve(entry.target); // Optional: Run only once
+                 } else {
+                      // Optional: Reset or animate out when not visible
+                 }
+             });
+        }, { threshold: 0.3 }); // Trigger when 30% of the section is visible
+
+        classificationObserver.observe(classificationSection);
+
+
+        // Basic Keyboard Navigation for Diagram Nodes
+        diagramNodes.forEach((node, index) => {
+            // tabindex and role="button" added in HTML
+            // aria-label added in HTML
+
+            node.addEventListener('keydown', (event) => {
+                // Trigger click action on Enter or Space
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault(); // Prevent default spacebar behavior (scrolling)
+                    node.click();
+                }
+                 // Basic arrow key navigation (optional, more complex for non-linear diagrams)
+                 if (event.key === 'ArrowRight' && index < diagramNodes.length - 1) {
+                     diagramNodes[index + 1].focus();
+                 }
+                 if (event.key === 'ArrowLeft' && index > 0) {
+                     diagramNodes[index - 1].focus();
+                 }
+            });
+        });
+
+        // Add ARIA labels for controls (added in HTML)
+
+    </script>
+</body>
+</html>

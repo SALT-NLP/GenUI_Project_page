@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hardware Store Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007bff; /* Muted blue accent */
+            --secondary-color: #6c757d; /* Muted grey */
+            --background-color: #f8f9fa; /* Light grey background */
+            --surface-color: #ffffff; /* White card/panel background */
+            --text-color: #343a40; /* Dark grey text */
+            --text-light: #6c757d; /* Lighter grey text */
+            --border-color: #dee2e6; /* Light grey border */
+            --success-color: #28a745; /* Green for positive trends */
+            --danger-color: #dc3545; /* Red for negative trends */
+            --warning-color: #ffc107; /* Yellow for warnings */
+            --spacing-unit: 8px;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden; /* Prevent horizontal scroll caused by layout */
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: var(--surface-color);
+            box-shadow: var(--box-shadow);
+            padding: calc(var(--spacing-unit) * 3) calc(var(--spacing-unit) * 2);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            position: sticky; /* Make sidebar sticky */
+            top: 0;
+            height: 100vh; /* Full height */
+            overflow-y: auto; /* Enable scrolling if content overflows */
+        }
+
+        .sidebar .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: calc(var(--spacing-unit) * 4);
+            text-align: center;
+        }
+
+        .sidebar nav a {
+            display: block;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            margin-bottom: var(--spacing-unit);
+            color: var(--text-color);
+            text-decoration: none;
+            border-radius: var(--border-radius);
+            transition: background-color 0.2s ease, color 0.2s ease;
+            font-weight: 400;
+        }
+
+        .sidebar nav a:hover {
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        .sidebar nav a.active {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+            font-weight: 600;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: calc(var(--spacing-unit) * 4);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: calc(var(--spacing-unit) * 4);
+            align-content: start; /* Align items to the start of the grid */
+        }
+
+        .card {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: calc(var(--spacing-unit) * 3);
+            display: flex;
+            flex-direction: column;
+            position: relative; /* Needed for floating controls */
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            color: var(--text-color);
+        }
+
+        .metric-card .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .metric-card .metric-label {
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        .metric-card .metric-trend {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: var(--spacing-unit);
+        }
+
+        .metric-card .metric-trend.positive {
+            color: var(--success-color);
+        }
+
+        .metric-card .metric-trend.negative {
+            color: var(--danger-color);
+        }
+
+        .upload-area {
+            grid-column: 1 / -1; /* Span across all columns */
+            text-align: center;
+            border: 2px dashed var(--border-color);
+            border-radius: var(--border-radius);
+            padding: calc(var(--spacing-unit) * 5);
+            margin-bottom: calc(var(--spacing-unit) * 4);
+            transition: border-color 0.2s ease;
+        }
+
+        .upload-area.dragover {
+            border-color: var(--primary-color);
+        }
+
+        .upload-area input[type="file"] {
+            display: none;
+        }
+
+        .button {
+            display: inline-block;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 3);
+            border-radius: var(--border-radius);
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease, opacity 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+            border: none;
+            font-size: 1rem;
+            text-align: center;
+        }
+
+        .button.primary {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+        }
+
+        .button.primary:hover {
+            opacity: 0.9;
+        }
+
+        .button.secondary {
+            background-color: var(--secondary-color);
+            color: var(--surface-color);
+        }
+
+        .button.secondary:hover {
+            opacity: 0.9;
+        }
+
+        .button.outline {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+
+        .button.outline:hover {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            background-color: var(--background-color);
+            border-radius: var(--border-radius);
+            margin-top: calc(var(--spacing-unit) * 2);
+            overflow: hidden;
+            height: var(--spacing-unit);
+            display: none; /* Initially hidden */
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: var(--success-color);
+            transition: width 0.3s ease;
+        }
+
+        .chart-container {
+            height: 300px; /* Fixed height for charts */
+            position: relative;
+            cursor: pointer; /* Indicate interactivity */
+        }
+
+        .floating-controls {
+            position: absolute;
+            top: var(--spacing-unit);
+            right: var(--spacing-unit);
+            background: rgba(255, 255, 255, 0.95);
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 10; /* Ensure it's above the chart */
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-unit);
+        }
+
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: calc(var(--spacing-unit) / 2);
+        }
+
+        .control-group label {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+        .control-group input[type="color"],
+        .control-group input[type="number"],
+        .control-group select,
+        .control-group input[type="date"] {
+            padding: calc(var(--spacing-unit) / 2) var(--spacing-unit);
+            border: 1px solid var(--border-color);
+            border-radius: calc(var(--border-radius) / 2);
+            font-size: 0.9rem;
+            color: var(--text-color);
+            background-color: var(--surface-color);
+        }
+
+        .control-group input[type="color"] {
+             padding: calc(var(--spacing-unit) / 2);
+             height: 30px; /* Adjust height for color picker */
+        }
+
+
+        .data-table-container {
+            grid-column: 1 / -1; /* Span across all columns */
+            overflow-x: auto; /* Enable horizontal scrolling for large tables */
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: calc(var(--spacing-unit) * 2);
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            background-color: var(--background-color);
+            font-weight: 600;
+            color: var(--text-color);
+            cursor: pointer; /* Indicate sortable */
+        }
+
+        .data-table tbody tr:nth-child(even) {
+            background-color: var(--background-color);
+        }
+
+        .data-table tbody tr:hover {
+            background-color: #e9ecef; /* Lighter hover background */
+        }
+
+        .filters-panel {
+            grid-column: 1 / -1; /* Span across all columns */
+            display: flex;
+            flex-wrap: wrap;
+            gap: calc(var(--spacing-unit) * 2);
+            margin-bottom: calc(var(--spacing-unit) * 4);
+            align-items: flex-end; /* Align items to the bottom */
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: calc(var(--spacing-unit) / 2);
+        }
+
+        .filter-group label {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+        .filter-group input[type="text"],
+        .filter-group select,
+        .filter-group input[type="date"] {
+            padding: calc(var(--spacing-unit) / 2) var(--spacing-unit);
+            border: 1px solid var(--border-color);
+            border-radius: calc(var(--border-radius) / 2);
+            font-size: 1rem;
+            color: var(--text-color);
+            background-color: var(--surface-color);
+            min-width: 150px; /* Ensure inputs have a minimum width */
+        }
+
+        /* Utility classes */
+        .text-center { text-align: center; }
+        .mb-4 { margin-bottom: calc(var(--spacing-unit) * 4); }
+        .mt-4 { margin-top: calc(var(--spacing-unit) * 4); }
+        .w-full { width: 100%; }
+
+         /* Accessibility: Visible focus outline */
+        *:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo" aria-label="Hardware Insights Dashboard">Hardware Insights</div>
+        <nav aria-label="Main Navigation">
+            <a href="#" class="active" aria-current="page">Dashboard</a>
+            <a href="#">Data Upload</a>
+            <a href="#">Inventory Analysis</a>
+            <a href="#">Reports & Export</a>
+            <a href="#">Strategic Planning</a>
+        </nav>
+    </div>
+    <div class="main-content">
+        <!-- Data Upload Area -->
+        <section class="card upload-area" id="uploadArea" aria-labelledby="upload-title">
+            <h2 id="upload-title" class="card-title">Upload Point-of-Sale Data</h2>
+            <p>Drag and drop your CSV or Excel files here, or click to select files.</p>
+            <input type="file" id="fileInput" accept=".csv, .xls, .xlsx" multiple aria-label="Select Point of Sale data files">
+            <button class="button primary mt-4" onclick="document.getElementById('fileInput').click()" aria-controls="progressBarContainer">Select Files</button>
+            <div class="progress-bar-container" id="progressBarContainer" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+        </section>
+
+        <!-- Dashboard Panels/Cards -->
+        <section class="card metric-card" aria-label="Total Sales Metric">
+            <h2 class="card-title">Total Sales (Last 30 Days)</h2>
+            <div class="metric-value">$XX,XXX.XX</div>
+            <div class="metric-label">vs. Previous 30 Days</div>
+            <div class="metric-trend positive">↑ X.X%</div>
+            <!-- Sparkline placeholder -->
+        </section>
+
+        <section class="card metric-card" aria-label="Profit Margin Metric">
+            <h2 class="card-title">Profit Margin</h2>
+            <div class="metric-value">XX.X%</div>
+            <div class="metric-label">Average across all sales</div>
+            <div class="metric-trend negative">↓ X.X%</div>
+            <!-- Sparkline placeholder -->
+        </section>
+
+        <section class="card metric-card" aria-label="Inventory Turnover Rate Metric">
+            <h2 class="card-title">Inventory Turnover Rate</h2>
+            <div class="metric-value">X.XX</div>
+            <div class="metric-label">Annualized Rate</div>
+            <div class="metric-trend positive">↑ X.X%</div>
+            <!-- Sparkline placeholder -->
+        </section>
+
+         <section class="card metric-card" aria-label="Most Profitable Department Metric">
+            <h2 class="card-title">Most Profitable Department</h2>
+            <div class="metric-value">Department Name</div>
+            <div class="metric-label">Profit Margin: XX.X%</div>
+            <div class="metric-trend positive">↑ X.X%</div>
+            <!-- Sparkline placeholder -->
+        </section>
+
+
+        <!-- Filters Panel -->
+        <section class="card filters-panel" aria-labelledby="filters-title">
+             <h2 id="filters-title" class="card-title w-full">Data Filters</h2>
+             <div class="filter-group">
+                 <label for="dateRangeStart">Date Range Start:</label>
+                 <input type="date" id="dateRangeStart" aria-label="Start date for data filter">
+             </div>
+             <div class="filter-group">
+                 <label for="dateRangeEnd">Date Range End:</label>
+                 <input type="date" id="dateRangeEnd" aria-label="End date for data filter">
+             </div>
+             <div class="filter-group">
+                 <label for="departmentFilter">Department:</label>
+                 <select id="departmentFilter" aria-label="Filter data by department">
+                     <option value="">All Departments</option>
+                     <option value="plumbing">Plumbing</option>
+                     <option value="electrical">Electrical</option>
+                     <option value="hardware">Hardware</option>
+                     <option value="paint">Paint</option>
+                     <!-- Add more departments dynamically -->
+                 </select>
+             </div>
+              <div class="filter-group">
+                 <label for="categoryFilter">Category:</label>
+                 <select id="categoryFilter" aria-label="Filter data by category">
+                     <option value="">All Categories</option>
+                      <!-- Add categories dynamically -->
+                 </select>
+             </div>
+              <button class="button outline" aria-label="Apply selected filters">Apply Filters</button>
+        </section>
+
+
+        <!-- Chart Containers -->
+        <section class="card" aria-labelledby="dept-profit-title">
+            <h2 id="dept-profit-title" class="card-title">📊 Profitability by Department</h2>
+            <div class="chart-container" role="img" aria-label="Bar chart showing average profit margin by department">
+                <canvas id="deptProfitChart"></canvas>
+                 <!-- Floating control panel -->
+                <div class="floating-controls" id="deptProfitChartControls" aria-label="Controls for Profitability by Department chart">
+                    <div class="control-group">
+                        <label for="deptProfitChartType">Chart Type</label>
+                        <select id="deptProfitChartType" aria-label="Select chart type">
+                            <option value="bar">Bar</option>
+                            <option value="line">Line</option>
+                            <option value="pie">Pie</option>
+                        </select>
+                    </div>
+                     <div class="control-group">
+                        <label for="deptProfitChartColor">Bar Color</label>
+                        <input type="color" id="deptProfitChartColor" value="#007bff" aria-label="Select bar color">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card" aria-labelledby="sales-trend-title">
+            <h2 id="sales-trend-title" class="card-title">📈 Sales Trends Over Time</h2>
+            <div class="chart-container" role="img" aria-label="Line chart showing sales trends over time">
+                <canvas id="salesTrendChart"></canvas>
+                 <!-- Floating control panel -->
+                <div class="floating-controls" id="salesTrendChartControls" aria-label="Controls for Sales Trends chart">
+                     <div class="control-group">
+                        <label for="salesTrendChartType">Chart Type</label>
+                        <select id="salesTrendChartType" aria-label="Select chart type">
+                            <option value="line">Line</option>
+                            <option value="bar">Bar</option>
+                        </select>
+                    </div>
+                     <div class="control-group">
+                        <label for="salesTrendChartColor">Line Color</label>
+                        <input type="color" id="salesTrendChartColor" value="#28a745" aria-label="Select line color">
+                    </div>
+                     <div class="control-group">
+                        <label for="salesTrendTimePeriod">Time Period</label>
+                        <select id="salesTrendTimePeriod" aria-label="Select time period for sales trend">
+                            <option value="day">Daily</option>
+                            <option value="week">Weekly</option>
+                            <option value="month">Monthly</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+         <section class="card" aria-labelledby="category-sales-title">
+            <h2 id="category-sales-title" class="card-title">📦 Sales Breakdown by Category</h2>
+            <div class="chart-container" role="img" aria-label="Pie chart showing sales breakdown by category">
+                <canvas id="categorySalesChart"></canvas>
+                 <!-- Floating control panel -->
+                <div class="floating-controls" id="categorySalesChartControls" aria-label="Controls for Sales Breakdown chart">
+                     <div class="control-group">
+                        <label for="categorySalesChartType">Chart Type</label>
+                        <select id="categorySalesChartType" aria-label="Select chart type">
+                            <option value="pie">Pie</option>
+                            <option value="doughnut">Doughnut</option>
+                            <option value="bar">Bar</option>
+                        </select>
+                    </div>
+                     <!-- Color controls for pie/doughnut charts are more complex, omit for simplicity in this example -->
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Data Table -->
+        <section class="card data-table-container" aria-labelledby="transactions-title">
+            <h2 id="transactions-title" class="card-title">Detailed Sales Transactions</h2>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th scope="col" aria-sort="none">Date</th>
+                        <th scope="col" aria-sort="none">Transaction ID</th>
+                        <th scope="col" aria-sort="none">Department</th>
+                        <th scope="col" aria-sort="none">Category</th>
+                        <th scope="col" aria-sort="none">Product SKU</th>
+                        <th scope="col" aria-sort="none">Quantity</th>
+                        <th scope="col" aria-sort="none">Unit Price</th>
+                        <th scope="col" aria-sort="none">Total Sale</th>
+                        <th scope="col" aria-sort="none">Cost</th>
+                        <th scope="col" aria-sort="none">Profit</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Dummy Data Rows -->
+                    <tr>
+                        <td>2023-10-26</td>
+                        <td>TXN001</td>
+                        <td>Plumbing</td>
+                        <td>Pipes</td>
+                        <td>SKU123</td>
+                        <td>2</td>
+                        <td>$15.00</td>
+                        <td>$30.00</td>
+                        <td>$20.00</td>
+                        <td>$10.00</td>
+                    </tr>
+                     <tr>
+                        <td>2023-10-26</td>
+                        <td>TXN002</td>
+                        <td>Electrical</td>
+                        <td>Wiring</td>
+                        <td>SKU456</td>
+                        <td>5</td>
+                        <td>$5.00</td>
+                        <td>$25.00</td>
+                        <td>$15.00</td>
+                        <td>$10.00</td>
+                    </tr>
+                     <tr>
+                        <td>2023-10-25</td>
+                        <td>TXN003</td>
+                        <td>Hardware</td>
+                        <td>Fasteners</td>
+                        <td>SKU789</td>
+                        <td>10</td>
+                        <td>$1.50</td>
+                        <td>$15.00</td>
+                        <td>$10.00</td>
+                        <td>$5.00</td>
+                    </tr>
+                    <!-- More rows would be added dynamically -->
+                </tbody>
+            </table>
+        </section>
+
+         <!-- Placeholder for Inventory Analysis -->
+         <section class="card" style="grid-column: 1 / -1;" aria-labelledby="inventory-title">
+             <h2 id="inventory-title" class="card-title">Inventory Analysis (Coming Soon)</h2>
+             <p>Detailed inventory levels, turnover by SKU, and reorder suggestions will appear here.</p>
+         </section>
+
+         <!-- Placeholder for Reports & Export -->
+         <section class="card" style="grid-column: 1 / -1;" aria-labelledby="reports-title">
+             <h2 id="reports-title" class="card-title">Reports & Export (Coming Soon)</h2>
+             <p>Generate custom reports and export data in various formats.</p>
+         </section>
+
+          <!-- Placeholder for Strategic Planning -->
+         <section class="card" style="grid-column: 1 / -1;" aria-labelledby="strategy-title">
+             <h2 id="strategy-title" class="card-title">Strategic Planning Insights (Coming Soon)</h2>
+             <p>Analysis and recommendations for modernization, e-commerce, and customer acquisition.</p>
+         </section>
+
+    </div>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        // --- Sidebar Navigation Active State ---
+        document.querySelectorAll('.sidebar nav a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                // Prevent default link behavior for demonstration
+                e.preventDefault();
+                document.querySelectorAll('.sidebar nav a').forEach(nav => nav.classList.remove('active', 'aria-current'));
+                this.classList.add('active');
+                 this.setAttribute('aria-current', 'page');
+                // In a real app, you'd load content or navigate here
+                console.log('Navigating to:', this.textContent.trim());
+            });
+        });
+
+
+        // --- Data Upload Functionality (Placeholder) ---
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const progressBarContainer = document.getElementById('progressBarContainer');
+        const progressBar = document.getElementById('progressBar');
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+             e.dataTransfer.dropEffect = 'copy'; // Indicate a copy operation
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            handleFiles(files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const files = e.target.files;
+            handleFiles(files);
+        });
+
+        function handleFiles(files) {
+            if (files.length === 0) return;
+
+            console.log('Files selected:', files);
+
+            // Simulate upload progress
+            progressBarContainer.style.display = 'block';
+            progressBarContainer.setAttribute('aria-valuenow', '0');
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 5; // Simulate progress
+                if (progress > 100) progress = 100;
+                progressBar.style.width = progress + '%';
+                 progressBarContainer.setAttribute('aria-valuenow', progress);
+
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    console.log('Upload complete (simulated)');
+                    // Reset after a short delay
+                    setTimeout(() => {
+                        progressBarContainer.style.display = 'none';
+                        progressBar.style.width = '0%';
+                         progressBarContainer.setAttribute('aria-valuenow', '0');
+                    }, 1000);
+                }
+            }, 100);
+
+            // In a real application, you would send these files to a server
+            // using fetch or XMLHttpRequest.
+            // Example:
+            // const formData = new FormData();
+            // for (const file of files) {
+            //     formData.append('files', file);
+            // }
+            // fetch('/upload', {
+            //     method: 'POST',
+            //     body: formData
+            // }).then(response => response.json())
+            //   .then(data => console.log('Upload success', data))
+            //   .catch(error => console.error('Upload error', error));
+        }
+
+
+        // --- Chart Functionality ---
+
+        // Helper function to toggle floating controls
+        function toggleControls(chartId) {
+             const controls = document.getElementById(chartId + 'Controls');
+             if (controls) {
+                 // Close all other controls first
+                 document.querySelectorAll('.floating-controls').forEach(ctrl => {
+                     if (ctrl.id !== chartId + 'Controls') {
+                         ctrl.classList.remove('active');
+                     }
+                 });
+                 controls.classList.toggle('active');
+             }
+        }
+
+        // Close controls when clicking outside of any chart container or control panel
+        document.addEventListener('click', (e) => {
+            let clickedInsideChartOrControls = false;
+            let currentElement = e.target;
+            while (currentElement) {
+                if (currentElement.classList && (currentElement.classList.contains('chart-container') || currentElement.classList.contains('floating-controls'))) {
+                    clickedInsideChartOrControls = true;
+                    break;
+                }
+                currentElement = currentElement.parentElement;
+            }
+
+            if (!clickedInsideChartOrControls) {
+                document.querySelectorAll('.floating-controls').forEach(controls => {
+                    controls.classList.remove('active');
+                });
+            }
+        });
+
+
+        // Chart 1: Profitability by Department
+        const deptProfitCtx = document.getElementById('deptProfitChart').getContext('2d');
+        const deptProfitChart = new Chart(deptProfitCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Plumbing', 'Electrical', 'Hardware', 'Paint', 'Tools', 'Garden'], // Dummy data
+                datasets: [{
+                    label: 'Average Profit Margin (%)',
+                    data: [35, 28, 40, 22, 30, 18], // Dummy data
+                    backgroundColor: "var('--primary-color')", // Use CSS variable wrapped in quotes
+                    borderColor: "var('--primary-color')",
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                 onClick: (e, elements) => {
+                    // Check if a chart element was clicked
+                    if (elements && elements.length > 0) {
+                         console.log('Chart element clicked:', elements[0]);
+                         // Add logic here to filter data table based on clicked department
+                         alert('Simulating filter for ' + deptProfitChart.data.labels[elements[0].index]);
+                    } else {
+                        // If no chart element was clicked, toggle controls
+                         toggleControls('deptProfitChart');
+                    }
+                 },
+                plugins: {
+                    legend: {
+                        display: false // Hide legend for single dataset
+                    },
+                    tooltip: {
+                         callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.raw + '%';
+                            }
+                         }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Profit Margin (%)'
+                        }
+                    },
+                     x: {
+                        title: {
+                            display: true,
+                            text: 'Department'
+                        }
+                    }
+                }
+            }
+        });
+
+         // Controls for Chart 1
+        document.getElementById('deptProfitChartType').addEventListener('change', function() {
+            deptProfitChart.config.type = this.value;
+            deptProfitChart.update();
+        });
+         document.getElementById('deptProfitChartColor').addEventListener('input', function() {
+             // Update background color for all bars
+            deptProfitChart.data.datasets[0].backgroundColor = this.value;
+            deptProfitChart.data.datasets[0].borderColor = this.value; // Often border matches fill for bars
+            deptProfitChart.update();
+        });
+
+
+        // Chart 2: Sales Trends Over Time
+        const salesTrendCtx = document.getElementById('salesTrendChart').getContext('2d');
+         // Dummy data for sales trend
+         const salesTrendData = {
+             day: {
+                 labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'],
+                 data: [1200, 1500, 1300, 1600, 1800, 1700, 2000]
+             },
+             week: {
+                 labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                 data: [8000, 9500, 8800, 10500]
+             },
+             month: {
+                 labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                 data: [30000, 35000, 32000, 38000, 40000, 42000]
+             }
+         };
+
+        const salesTrendChart = new Chart(salesTrendCtx, {
+            type: 'line',
+            data: {
+                labels: salesTrendData.day.labels, // Start with daily
+                datasets: [{
+                    label: 'Total Sales ($)',
+                    data: salesTrendData.day.data,
+                    backgroundColor: "rgba(40, 167, 69, 0.2)", // Use RGBA directly or calculate from CSS var
+                    borderColor: "var('--success-color')", // Use CSS variable wrapped in quotes
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.1 // Add some curve to the line
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                 onClick: (e) => toggleControls('salesTrendChart'),
+                plugins: {
+                    legend: {
+                        display: true
+                    },
+                     tooltip: {
+                         callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': $' + context.raw.toFixed(2);
+                            }
+                         }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Sales ($)'
+                        }
+                    },
+                     x: {
+                        title: {
+                            display: true,
+                            text: 'Time Period'
+                        }
+                    }
+                }
+            }
+        });
+
+         // Controls for Chart 2
+         document.getElementById('salesTrendChartType').addEventListener('change', function() {
+            salesTrendChart.config.type = this.value;
+            salesTrendChart.update();
+        });
+         document.getElementById('salesTrendChartColor').addEventListener('input', function() {
+            const color = this.value;
+            salesTrendChart.data.datasets[0].borderColor = color;
+            // Update background color with transparency for fill
+            // A more robust way would involve getting the color from the CSS variable and then adding alpha
+             const rootStyle = getComputedStyle(document.documentElement);
+             const successColor = rootStyle.getPropertyValue('--success-color').trim(); // Get CSS variable
+             // Simple approach: just use the selected color with fixed alpha
+            salesTrendChart.data.datasets[0].backgroundColor = color + '33'; // Add 33 (hex for 20%) alpha
+            salesTrendChart.update();
+        });
+         document.getElementById('salesTrendTimePeriod').addEventListener('change', function() {
+             const period = this.value;
+             salesTrendChart.data.labels = salesTrendData[period].labels;
+             salesTrendChart.data.datasets[0].data = salesTrendData[period].data;
+             salesTrendChart.options.scales.x.title.text = period.charAt(0).toUpperCase() + period.slice(1) + 's'; // Update axis label
+             salesTrendChart.update();
+         });
+
+
+        // Chart 3: Sales Breakdown by Category
+        const categorySalesCtx = document.getElementById('categorySalesChart').getContext('2d');
+         // Dummy data for category sales
+         const categorySalesData = {
+             labels: ['Plumbing', 'Electrical', 'Hardware', 'Paint', 'Tools', 'Garden', 'Other'],
+             data: [25, 18, 20, 10, 15, 8, 4] // Percentage breakdown dummy
+         };
+
+        const categorySalesChart = new Chart(categorySalesCtx, {
+            type: 'pie',
+            data: {
+                labels: categorySalesData.labels,
+                datasets: [{
+                    label: 'Sales Percentage (%)',
+                    data: categorySalesData.data,
+                    backgroundColor: [ // Use a palette of colors
+                        "var('--primary-color')",
+                        "var('--secondary-color')",
+                        "var('--success-color')",
+                        "var('--danger-color')",
+                        "var('--warning-color')",
+                        "var('--text-light')",
+                        "#adb5bd" // Another muted grey
+                    ],
+                    borderColor: "var('--surface-color')", // White border between slices
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                 onClick: (e, elements) => {
+                    // Check if a chart element was clicked
+                    if (elements && elements.length > 0) {
+                         console.log('Chart element clicked:', elements[0]);
+                         // Add logic here to filter data table based on clicked category
+                         alert('Simulating filter for ' + categorySalesChart.data.labels[elements[0].index]);
+                    } else {
+                        // If no chart element was clicked, toggle controls
+                         toggleControls('categorySalesChart');
+                    }
+                 },
+                plugins: {
+                    legend: {
+                        position: 'right' // Position legend to the right
+                    },
+                     tooltip: {
+                         callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += context.raw + '%';
+                                return label;
+                            }
+                         }
+                    }
+                }
+            }
+        });
+
+         // Controls for Chart 3
+         document.getElementById('categorySalesChartType').addEventListener('change', function() {
+            categorySalesChart.config.type = this.value;
+            // Pie/Doughnut charts don't support scales, need to remove/add them if switching to/from bar
+            if (this.value === 'bar') {
+                 categorySalesChart.options.scales = {
+                     y: { beginAtZero: true, title: { display: true, text: 'Sales (%)' } },
+                     x: { title: { display: true, text: 'Category' } }
+                 };
+                 categorySalesChart.options.plugins.legend.position = 'top'; // Move legend for bar chart
+            } else {
+                 delete categorySalesChart.options.scales;
+                 categorySalesChart.options.plugins.legend.position = 'right'; // Move legend back for pie/doughnut
+            }
+            categorySalesChart.update();
+        });
+
+
+        // --- Data Table Sorting (Placeholder) ---
+        document.querySelectorAll('.data-table th').forEach(header => {
+            header.addEventListener('click', () => {
+                const column = header.textContent.trim();
+                console.log('Sorting by:', column);
+                // Add sorting logic here
+                // Example: Sort the table rows based on the data in the clicked column
+                // Update aria-sort attribute
+                const currentSort = header.getAttribute('aria-sort');
+                let newSort = 'ascending';
+                if (currentSort === 'ascending') {
+                    newSort = 'descending';
+                } else if (currentSort === 'descending') {
+                    newSort = 'none'; // Or back to default unsorted state
+                }
+                 document.querySelectorAll('.data-table th').forEach(th => th.setAttribute('aria-sort', 'none'));
+                 header.setAttribute('aria-sort', newSort);
+
+                alert('Simulating sorting by ' + column + ' (' + newSort + ')');
+            });
+        });
+
+         // --- Filter Button Placeholder ---
+         document.querySelector('.filters-panel .button').addEventListener('click', () => {
+             const startDate = document.getElementById('dateRangeStart').value;
+             const endDate = document.getElementById('dateRangeEnd').value;
+             const department = document.getElementById('departmentFilter').value;
+             const category = document.getElementById('categoryFilter').value;
+             console.log('Applying Filters:', { startDate, endDate, department, category });
+             // Add filtering logic here to update charts and table
+             alert('Simulating applying filters');
+         });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CI Workflow Setup</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400..700,0..1,-50..200" />
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --background-color: #f8f9fa;
+            --surface-color: #ffffff;
+            --text-color: #212529;
+            --border-color: #dee2e6;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --spacing-unit: 8px;
+            --border-radius: 8px;
+            --transition-speed: 0.3s ease;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: var(--spacing-unit) * 4;
+        }
+
+        .container {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 20px var(--shadow-color);
+            padding: var(--spacing-unit) * 4;
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: var(--spacing-unit) * 3;
+            margin-bottom: var(--spacing-unit) * 4;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8em;
+            color: var(--primary-color);
+        }
+
+        .progress-indicator {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-unit) * 4;
+            position: relative;
+        }
+
+        .progress-bar {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background-color: var(--border-color);
+            transform: translateY(-50%);
+            z-index: 0;
+            margin: 0 var(--spacing-unit) * 2;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background-color: var(--primary-color);
+            transition: width var(--transition-speed);
+        }
+
+        .step-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: var(--border-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 600;
+            z-index: 1;
+            transition: background-color var(--transition-speed), color var(--transition-speed);
+            cursor: pointer;
+        }
+
+        .step-circle.active {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+        }
+
+        .step-circle.completed {
+            background-color: var(--success-color);
+            color: var(--surface-color);
+        }
+
+        .step-content {
+            min-height: 300px;
+            margin-bottom: var(--spacing-unit) * 4;
+            overflow: hidden; /* Hide steps that are not active */
+            position: relative;
+        }
+
+        .step {
+            display: none;
+            padding: var(--spacing-unit) * 3 0;
+            animation: fadeIn var(--transition-speed);
+            width: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .step.active {
+            display: block;
+            position: static;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .step h2 {
+            margin-top: 0;
+            margin-bottom: var(--spacing-unit) * 3;
+            color: var(--primary-color);
+            font-size: 1.5em;
+        }
+
+        .form-group {
+            margin-bottom: var(--spacing-unit) * 3;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: var(--spacing-unit);
+            font-weight: 500;
+            color: #343a40;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="password"],
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: var(--spacing-unit) * 1.5;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+            box-sizing: border-box; /* Include padding and border in element's total width and height */
+        }
+
+        .form-group input[type="text"]:focus,
+        .form-group input[type="password"]:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            outline: none;
+        }
+
+        .form-group textarea {
+            min-height: 150px;
+            resize: vertical;
+            font-family: 'Consolas', 'Monaco', 'Andale Mono', 'Ubuntu Mono', monospace; /* Code-like font */
+            background-color: #f4f4f4;
+            border: 1px solid #ddd;
+            padding: var(--spacing-unit) * 2;
+        }
+
+        .form-group .help-text {
+            font-size: 0.9em;
+            color: var(--secondary-color);
+            margin-top: var(--spacing-unit);
+        }
+
+        .form-group .error-message {
+            font-size: 0.9em;
+            color: var(--danger-color);
+            margin-top: var(--spacing-unit);
+            display: none; /* Hidden by default */
+        }
+
+        .form-group input.invalid,
+        .form-group select.invalid,
+        .form-group textarea.invalid {
+            border-color: var(--danger-color);
+        }
+
+        .form-group input.invalid:focus,
+        .form-group select.invalid:focus,
+        .form-group textarea.invalid:focus {
+             box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: var(--spacing-unit) * 2;
+            margin-top: var(--spacing-unit) * 4;
+        }
+
+        .navigation-buttons button {
+            padding: var(--spacing-unit) * 1.5 var(--spacing-unit) * 3;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: background-color var(--transition-speed), opacity var(--transition-speed);
+        }
+
+        .navigation-buttons button.btn-primary {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+        }
+
+        .navigation-buttons button.btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .navigation-buttons button.btn-secondary {
+            background-color: var(--secondary-color);
+            color: var(--surface-color);
+        }
+
+        .navigation-buttons button.btn-secondary:hover {
+            background-color: #545b62;
+        }
+
+        .navigation-buttons button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .dashboard-view {
+            display: none; /* Hidden by default */
+            padding-top: var(--spacing-unit) * 3;
+        }
+
+        .dashboard-view.active {
+            display: block;
+        }
+
+        .dashboard-view h2 {
+             margin-top: 0;
+            margin-bottom: var(--spacing-unit) * 3;
+            color: var(--primary-color);
+            font-size: 1.5em;
+        }
+
+        .run-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .run-item {
+            background-color: #fefefe;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-unit) * 2;
+            margin-bottom: var(--spacing-unit) * 2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .run-item span {
+            font-weight: 500;
+        }
+
+        .status-badge {
+            padding: var(--spacing-unit) var(--spacing-unit) * 1.5;
+            border-radius: var(--border-radius);
+            font-size: 0.9em;
+            font-weight: 600;
+            color: var(--surface-color);
+        }
+
+        .status-badge.success { background-color: var(--success-color); }
+        .status-badge.failure { background-color: var(--danger-color); }
+        .status-badge.running { background-color: var(--info-color); }
+        .status-badge.pending { background-color: var(--secondary-color); }
+
+        /* Contextual Help/Tooltip Placeholder */
+        .help-icon {
+            cursor: pointer;
+            margin-left: var(--spacing-unit);
+            color: var(--info-color);
+            font-size: 1.1em;
+            vertical-align: middle;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%; /* Position the tooltip above the text */
+            left: 50%;
+            margin-left: -100px; /* Use half of the width to center the tooltip */
+            opacity: 0;
+            transition: opacity var(--transition-speed);
+        }
+
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%; /* At the bottom of the tooltip */
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #555 transparent transparent transparent;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>CI Workflow Setup Wizard</h1>
+            <!-- Optional: User profile/settings icon -->
+            <!-- <span class="material-symbols-rounded">settings</span> -->
+        </header>
+
+        <div class="progress-indicator">
+            <div class="progress-bar"><div class="progress-bar-fill" id="progressBarFill"></div></div>
+            <div class="step-circle active" data-step="1">1</div>
+            <div class="step-circle" data-step="2">2</div>
+            <div class="step-circle" data-step="3">3</div>
+            <div class="step-circle" data-step="4">4</div>
+            <div class="step-circle" data-step="5">5</div>
+        </div>
+
+        <div class="step-content" id="stepContent">
+            <!-- Step 1: Version Control -->
+            <div class="step active" id="step-1">
+                <h2>1. Configure Version Control</h2>
+                <div class="form-group">
+                    <label for="repoUrl">Repository URL:</label>
+                    <input type="text" id="repoUrl" placeholder="e.g., https://github.com/user/repo">
+                    <div class="error-message" id="repoUrlError">Repository URL is required.</div>
+                    <div class="help-text">Enter the URL of your code repository.</div>
+                </div>
+                <div class="form-group">
+                    <label for="repoType">Repository Type:</label>
+                    <select id="repoType">
+                        <option value="git">Git</option>
+                        <option value="svn">SVN</option>
+                    </select>
+                    <div class="help-text">Select the type of your version control system.</div>
+                </div>
+                <div class="form-group">
+                    <label for="repoBranch">Branch:</label>
+                    <input type="text" id="repoBranch" placeholder="e.g., main">
+                     <div class="error-message" id="repoBranchError">Branch is required.</div>
+                    <div class="help-text">Specify the branch to build from.</div>
+                </div>
+                 <div class="form-group">
+                    <label for="repoCredentials">Access Token/Password (Optional):</label>
+                    <input type="password" id="repoCredentials" placeholder="Enter token or password">
+                    <div class="help-text">Provide credentials if your repository is private.</div>
+                </div>
+            </div>
+
+            <!-- Step 2: Build -->
+            <div class="step" id="step-2">
+                <h2>2. Configure Build</h2>
+                 <div class="form-group">
+                    <label for="buildEnvironment">Build Environment:</label>
+                    <select id="buildEnvironment">
+                        <option value="node">Node.js</option>
+                        <option value="python">Python</option>
+                        <option value="java">Java</option>
+                        <option value="dotnet">.NET</option>
+                        <option value="docker">Docker</option>
+                         <option value="other">Other</option>
+                    </select>
+                    <div class="help-text">Select the primary environment for your build.</div>
+                </div>
+                <div class="form-group">
+                    <label for="buildCommand">Build Script:</label>
+                    <textarea id="buildCommand" placeholder="e.g., npm install && npm run build"></textarea>
+                    <div class="error-message" id="buildCommandError">Build script is required.</div>
+                    <div class="help-text">Enter the commands to build your project. (Placeholder for Code Editor)</div>
+                </div>
+                 <div class="form-group">
+                    <label for="buildArtifacts">Artifacts Path (Optional):</label>
+                    <input type="text" id="buildArtifacts" placeholder="e.g., ./dist">
+                    <div class="help-text">Path to build artifacts to be collected.</div>
+                </div>
+            </div>
+
+            <!-- Step 3: Test -->
+            <div class="step" id="step-3">
+                <h2>3. Configure Test</h2>
+                 <div class="form-group">
+                    <label for="testFramework">Test Framework (Optional):</label>
+                    <input type="text" id="testFramework" placeholder="e.g., Jest, Pytest, JUnit">
+                    <div class="help-text">Specify the testing framework used.</div>
+                </div>
+                <div class="form-group">
+                    <label for="testCommand">Test Script (Optional):</label>
+                    <textarea id="testCommand" placeholder="e.g., npm test"></textarea>
+                    <div class="help-text">Enter the commands to run your tests. (Placeholder for Code Editor)</div>
+                </div>
+                 <div class="form-group">
+                    <label for="testReports">Test Reports Path (Optional):</label>
+                    <input type="text" id="testReports" placeholder="e.g., ./coverage">
+                    <div class="help-text">Path to test reports/coverage files to be collected.</div>
+                </div>
+            </div>
+
+            <!-- Step 4: Deploy -->
+            <div class="step" id="step-4">
+                <h2>4. Configure Deployment</h2>
+                 <div class="form-group">
+                    <label for="deployTarget">Deployment Target (Optional):</label>
+                    <select id="deployTarget">
+                        <option value="">-- Select Target --</option>
+                        <option value="server">Custom Server (SSH)</option>
+                        <option value="aws-s3">AWS S3</option>
+                        <option value="heroku">Heroku</option>
+                        <option value="netlify">Netlify</option>
+                         <option value="other">Other</option>
+                    </select>
+                    <div class="help-text">Choose where to deploy your application.</div>
+                </div>
+                <div class="form-group">
+                    <label for="deployCommand">Deployment Script (Optional):</label>
+                    <textarea id="deployCommand" placeholder="e.g., ssh user@your-server 'deploy.sh'"></textarea>
+                    <div class="help-text">Enter the commands to deploy your project. (Placeholder for Code Editor)</div>
+                </div>
+                 <div class="form-group">
+                    <label for="deployCredentials">Deployment Credentials (Optional):</label>
+                    <input type="password" id="deployCredentials" placeholder="Enter credentials/key">
+                    <div class="help-text">Credentials needed for the deployment target.</div>
+                </div>
+            </div>
+
+            <!-- Step 5: Review & Save -->
+            <div class="step" id="step-5">
+                <h2>5. Review & Save</h2>
+                <p>Review your configuration before saving.</p>
+                <div id="reviewSummary">
+                    <!-- Summary will be populated by JS -->
+                </div>
+                 <div class="form-group" style="margin-top: var(--spacing-unit) * 4;">
+                    <label for="workflowName">Workflow Name:</label>
+                    <input type="text" id="workflowName" placeholder="e.g., My Web App CI/CD">
+                     <div class="error-message" id="workflowNameError">Workflow Name is required.</div>
+                    <div class="help-text">Give your workflow a descriptive name.</div>
+                </div>
+            </div>
+
+             <!-- Dashboard View (Hidden initially) -->
+            <div class="dashboard-view" id="dashboardView">
+                 <h2>CI Workflow Dashboard</h2>
+                 <p>Recent Workflow Runs:</p>
+                 <ul class="run-list">
+                     <li class="run-item">
+                         <span>Workflow #123 - main branch</span>
+                         <span class="status-badge success">Success</span>
+                     </li>
+                      <li class="run-item">
+                         <span>Workflow #122 - feature/new-feat</span>
+                         <span class="status-badge failure">Failure</span>
+                     </li>
+                      <li class="run-item">
+                         <span>Workflow #121 - main branch</span>
+                         <span class="status-badge running">Running</span>
+                     </li>
+                      <li class="run-item">
+                         <span>Workflow #120 - develop branch</span>
+                         <span class="status-badge pending">Pending</span>
+                     </li>
+                 </ul>
+                 <p style="margin-top: var(--spacing-unit)*3; font-style: italic; color: var(--secondary-color);">
+                     This is a placeholder dashboard view. Real-time updates and detailed logs would be shown here.
+                 </p>
+            </div>
+
+        </div>
+
+        <div class="navigation-buttons">
+            <button id="backButton" class="btn-secondary" disabled>Back</button>
+            <button id="nextButton" class="btn-primary">Next</button>
+            <button id="saveButton" class="btn-primary" style="display: none;">Save Workflow</button>
+        </div>
+    </div>
+
+    <script>
+        const steps = document.querySelectorAll('.step');
+        const stepCircles = document.querySelectorAll('.step-circle');
+        const backButton = document.getElementById('backButton');
+        const nextButton = document.getElementById('nextButton');
+        const saveButton = document.getElementById('saveButton');
+        const progressBarFill = document.getElementById('progressBarFill');
+        const stepContent = document.getElementById('stepContent');
+        const dashboardView = document.getElementById('dashboardView');
+        const reviewSummary = document.getElementById('reviewSummary');
+
+        let currentStep = 0;
+        const totalSteps = steps.length;
+
+        // Required fields for validation
+        const requiredFields = {
+            1: ['repoUrl', 'repoBranch'],
+            2: ['buildCommand'],
+            5: ['workflowName']
+        };
+
+        function showStep(stepIndex) {
+            // Hide all steps and dashboard
+            steps.forEach(step => step.classList.remove('active'));
+            dashboardView.classList.remove('active');
+
+            // Show the current step or dashboard
+            if (stepIndex < totalSteps) {
+                 steps[stepIndex].classList.add('active');
+                 stepContent.style.display = 'block'; // Ensure step content container is visible
+            } else {
+                 // Show dashboard/completion view
+                 dashboardView.classList.add('active');
+                 stepContent.style.display = 'none'; // Hide step content container
+            }
+
+
+            // Update progress circles
+            stepCircles.forEach((circle, index) => {
+                circle.classList.remove('active', 'completed');
+                if (index === stepIndex) {
+                    circle.classList.add('active');
+                } else if (index < stepIndex) {
+                    circle.classList.add('completed');
+                }
+            });
+
+            // Update progress bar
+            const progressWidth = (stepIndex / (totalSteps - 1)) * 100;
+            progressBarFill.style.width = `${progressWidth}%`;
+
+            // Update button states
+            backButton.disabled = stepIndex === 0;
+            nextButton.style.display = stepIndex < totalSteps - 1 ? 'inline-block' : 'none';
+            saveButton.style.display = stepIndex === totalSteps - 1 ? 'inline-block' : 'none';
+
+            // If on the review step, populate the summary
+            if (stepIndex === totalSteps - 1) {
+                populateReviewSummary();
+            }
+
+             // If on the dashboard step, hide buttons
+            if (stepIndex >= totalSteps) {
+                 backButton.style.display = 'none';
+                 nextButton.style.display = 'none';
+                 saveButton.style.display = 'none';
+            } else {
+                 backButton.style.display = 'inline-block';
+            }
+        }
+
+        function validateStep(stepIndex) {
+            const currentStepElement = steps[stepIndex];
+            let isValid = true;
+
+            const fieldsToValidate = requiredFields[stepIndex + 1] || [];
+
+            fieldsToValidate.forEach(fieldId => {
+                const input = document.getElementById(fieldId);
+                const errorElement = document.getElementById(`${fieldId}Error`);
+                if (input && errorElement) {
+                    if (input.value.trim() === '') {
+                        input.classList.add('invalid');
+                        errorElement.style.display = 'block';
+                        isValid = false;
+                    } else {
+                        input.classList.remove('invalid');
+                        errorElement.style.display = 'none';
+                    }
+                }
+            });
+
+            return isValid;
+        }
+
+        function populateReviewSummary() {
+            let summaryHTML = '<h3>Configuration Details:</h3><ul>';
+
+            // Step 1 Summary
+            summaryHTML += `<li><strong>Version Control:</strong></li>`;
+            summaryHTML += `<ul>`;
+            summaryHTML += `<li>Repository URL: ${document.getElementById('repoUrl').value || 'N/A'}</li>`;
+            summaryHTML += `<li>Repository Type: ${document.getElementById('repoType').value || 'N/A'}</li>`;
+            summaryHTML += `<li>Branch: ${document.getElementById('repoBranch').value || 'N/A'}</li>`;
+            // summaryHTML += `<li>Credentials: ${document.getElementById('repoCredentials').value ? 'Provided' : 'Not Provided'}</li>`; // Avoid showing actual credentials
+            summaryHTML += `</ul>`;
+
+            // Step 2 Summary
+            summaryHTML += `<li><strong>Build:</strong></li>`;
+            summaryHTML += `<ul>`;
+            summaryHTML += `<li>Environment: ${document.getElementById('buildEnvironment').value || 'N/A'}</li>`;
+            summaryHTML += `<li>Script: <pre>${document.getElementById('buildCommand').value || 'N/A'}</pre></li>`;
+            summaryHTML += `<li>Artifacts Path: ${document.getElementById('buildArtifacts').value || 'N/A'}</li>`;
+            summaryHTML += `</ul>`;
+
+             // Step 3 Summary
+            summaryHTML += `<li><strong>Test:</strong></li>`;
+            summaryHTML += `<ul>`;
+            summaryHTML += `<li>Framework: ${document.getElementById('testFramework').value || 'N/A'}</li>`;
+            summaryHTML += `<li>Script: <pre>${document.getElementById('testCommand').value || 'N/A'}</pre></li>`;
+            summaryHTML += `<li>Reports Path: ${document.getElementById('testReports').value || 'N/A'}</li>`;
+            summaryHTML += `</ul>`;
+
+             // Step 4 Summary
+            summaryHTML += `<li><strong>Deployment:</strong></li>`;
+            summaryHTML += `<ul>`;
+            summaryHTML += `<li>Target: ${document.getElementById('deployTarget').value || 'N/A'}</li>`;
+            summaryHTML += `<li>Script: <pre>${document.getElementById('deployCommand').value || 'N/A'}</pre></li>`;
+             // summaryHTML += `<li>Credentials: ${document.getElementById('deployCredentials').value ? 'Provided' : 'Not Provided'}</li>`; // Avoid showing actual credentials
+            summaryHTML += `</ul>`;
+
+            summaryHTML += '</ul>';
+            reviewSummary.innerHTML = summaryHTML;
+        }
+
+
+        function nextStep() {
+            if (validateStep(currentStep)) {
+                 if (currentStep < totalSteps - 1) {
+                    currentStep++;
+                    showStep(currentStep);
+                 } else if (currentStep === totalSteps - 1) {
+                    // This is the last step, Next button is hidden, Save button is shown
+                    // The Save button handles the final action
+                 }
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 0) {
+                currentStep--;
+                showStep(currentStep);
+            }
+        }
+
+        function saveWorkflow() {
+            if (validateStep(currentStep)) {
+                // Collect all data
+                const workflowData = {
+                    workflowName: document.getElementById('workflowName').value,
+                    versionControl: {
+                        repoUrl: document.getElementById('repoUrl').value,
+                        repoType: document.getElementById('repoType').value,
+                        repoBranch: document.getElementById('repoBranch').value,
+                        credentials: document.getElementById('repoCredentials').value // Note: In a real app, handle credentials securely
+                    },
+                    build: {
+                        environment: document.getElementById('buildEnvironment').value,
+                        command: document.getElementById('buildCommand').value,
+                        artifactsPath: document.getElementById('buildArtifacts').value
+                    },
+                    test: {
+                        framework: document.getElementById('testFramework').value,
+                        command: document.getElementById('testCommand').value,
+                        reportsPath: document.getElementById('testReports').value
+                    },
+                    deploy: {
+                        target: document.getElementById('deployTarget').value,
+                        command: document.getElementById('deployCommand').value,
+                        credentials: document.getElementById('deployCredentials').value // Note: Handle securely
+                    }
+                };
+
+                console.log("Workflow Data Saved (simulated):", workflowData);
+
+                // Simulate saving and moving to dashboard
+                alert("Workflow saved successfully!");
+                currentStep++; // Move to the dashboard view index (totalSteps)
+                showStep(currentStep);
+            }
+        }
+
+        // Event listeners
+        nextButton.addEventListener('click', nextStep);
+        backButton.addEventListener('click', prevStep);
+        saveButton.addEventListener('click', saveWorkflow);
+
+        // Allow clicking on progress circles to jump steps (if valid)
+        stepCircles.forEach((circle, index) => {
+            circle.addEventListener('click', () => {
+                // Only allow jumping to previous or current step, or next step if current is valid
+                if (index <= currentStep || (index === currentStep + 1 && validateStep(currentStep))) {
+                     currentStep = index;
+                     showStep(currentStep);
+                } else if (index > currentStep + 1) {
+                    alert("Please complete the current step before jumping ahead.");
+                }
+            });
+        });
+
+
+        // Initial display
+        showStep(currentStep);
+
+    </script>
+
+</body>
+</html>

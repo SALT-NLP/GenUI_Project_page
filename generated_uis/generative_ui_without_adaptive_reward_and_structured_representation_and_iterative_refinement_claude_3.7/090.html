@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Machine Learning Algorithm Explorer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007acc;
+            --secondary-color: #f0f0f0;
+            --background-color: #ffffff;
+            --text-color: #333;
+            --border-color: #ddd;
+            --sidebar-width: 250px;
+            --card-background: #ffffff;
+            --card-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            --control-background: #f9f9f9;
+            --control-border: #ccc;
+            --button-background: var(--primary-color);
+            --button-text: #ffffff;
+            --button-hover: #005f99;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: var(--button-text);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 100;
+            box-sizing: border-box;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 500;
+        }
+
+        .container {
+            display: flex;
+            width: 100%;
+            padding-top: 70px; /* Space for fixed header */
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--secondary-color);
+            padding: 1rem 0;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+            position: fixed;
+            top: 70px; /* Below header */
+            bottom: 0;
+            left: 0;
+            overflow-y: auto;
+            z-index: 50;
+        }
+
+        .sidebar h2 {
+            font-size: 1.2rem;
+            font-weight: 500;
+            padding: 0 1.5rem 0.5rem;
+            margin-top: 0;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar li {
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar button {
+            display: block;
+            width: 100%;
+            padding: 0.8rem 1.5rem;
+            text-align: left;
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease;
+            border-radius: 4px;
+        }
+
+        .sidebar button:hover {
+            background-color: #e0e0e0;
+        }
+
+        .sidebar button.active {
+            background-color: var(--primary-color);
+            color: var(--button-text);
+            font-weight: 500;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex-grow: 1;
+            padding: 2rem;
+            box-sizing: border-box;
+        }
+
+        .content-section {
+            background-color: var(--card-background);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .content-section h2 {
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 1rem;
+            font-size: 1.6rem;
+            font-weight: 500;
+        }
+
+        .content-section h3 {
+            color: var(--text-color);
+            margin-top: 1.5rem;
+            margin-bottom: 0.8rem;
+            font-size: 1.3rem;
+            font-weight: 500;
+        }
+
+        .content-section p {
+            margin-bottom: 1rem;
+        }
+
+        .visualization-area {
+            margin-top: 2rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            background-color: #fefefe;
+            position: relative;
+        }
+
+        .visualization-area canvas {
+            display: block;
+            width: 100% !important;
+            height: 400px !important; /* Fixed height for consistency */
+        }
+
+        .controls {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background-color: var(--control-background);
+            border: 1px solid var(--control-border);
+            border-radius: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 150px;
+        }
+
+        .control-group label {
+            font-size: 0.9rem;
+            margin-bottom: 0.4rem;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .control-group input[type="range"],
+        .control-group input[type="number"],
+        .control-group select,
+        .control-group button {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        .control-group input[type="range"] {
+            padding: 0;
+        }
+
+        .control-group button {
+            background-color: var(--button-background);
+            color: var(--button-text);
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            border: none;
+        }
+
+        .control-group button:hover {
+            background-color: var(--button-hover);
+        }
+
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            background-color: var(--secondary-color);
+            color: #555;
+            font-size: 0.9rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* Tooltip Styles */
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 10;
+        }
+
+        .tooltip.visible {
+            opacity: 1;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: static;
+                box-shadow: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+
+            .container {
+                flex-direction: column;
+                padding-top: 60px; /* Adjust for smaller header */
+            }
+
+            header {
+                padding: 0.8rem 1rem;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .control-group {
+                width: 100%;
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Machine Learning Algorithm Explorer</h1>
+    </header>
+
+    <div class="container">
+        <aside class="sidebar">
+            <h2>Algorithms</h2>
+            <ul>
+                <li><button data-algorithm="intro" class="active">Introduction</button></li>
+                <li><button data-algorithm="linear-regression">Linear Regression</button></li>
+                <li><button data-algorithm="k-means">K-Means Clustering</button></li>
+                <li><button data-algorithm="decision-tree">Decision Tree</button></li>
+                <!-- Add more algorithms here -->
+            </ul>
+        </aside>
+
+        <main class="main-content" id="main-content">
+            <!-- Content will be loaded here -->
+            <section class="content-section" id="intro-section">
+                <h2>Welcome to the ML Algorithm Explorer</h2>
+                <p>This interactive tool helps you understand how different machine learning algorithms work by providing clear explanations and visualizations.</p>
+                <p>Machine learning is a field of artificial intelligence that enables systems to learn from data, identify patterns, and make decisions with minimal human intervention. Explore the algorithms in the sidebar to see them in action!</p>
+
+                <h3>How to Use</h3>
+                <p>Select an algorithm from the list on the left. The main area will update with an explanation, key concepts, and an interactive visualization. Use the controls below the visualization to adjust parameters and observe their effect.</p>
+            </section>
+        </main>
+    </div>
+
+    <footer>
+        <p>&copy; 2023 ML Algorithm Explorer. All rights reserved.</p>
+    </footer>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        // Data for Linear Regression visualization
+        const linearRegressionData = [
+            { x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4.5 }, { x: 4, y: 5 },
+            { x: 5, y: 6 }, { x: 6, y: 7.5 }, { x: 7, y: 8 }, { x: 8, y: 9 }
+        ];
+
+        // Data for K-Means visualization (example data)
+        const kMeansData = [
+            { x: 2, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 3 }, { x: 3, y: 2 },
+            { x: 7, y: 8 }, { x: 8, y: 7 }, { x: 9, y: 8 }, { x: 8, y: 9 },
+            { x: 1, y: 7 }, { x: 2, y: 8 }, { x: 3, y: 7 }, { x: 2, y: 6 }
+        ];
+
+        const algorithms = {
+            'intro': {
+                title: 'Introduction',
+                description: `
+                    <p>This interactive tool helps you understand how different machine learning algorithms work by providing clear explanations and visualizations.</p>
+                    <p>Machine learning is a field of artificial intelligence that enables systems to learn from data, identify patterns, and make decisions with minimal human intervention. Explore the algorithms in the sidebar to see them in action!</p>
+                    <h3>How to Use</h3>
+                    <p>Select an algorithm from the list on the left. The main area will update with an explanation, key concepts, and an interactive visualization. Use the controls below the visualization to adjust parameters and observe their effect.</p>
+                `,
+                visualization: null, // No visualization for intro
+                controls: []
+            },
+            'linear-regression': {
+                title: 'Linear Regression',
+                description: `
+                    <p>Linear Regression is a basic and commonly used type of predictive analysis. It models the relationship between a dependent variable and one or more independent variables by fitting a linear equation to observed data.</p>
+                    <p>The goal is to find the best-fitting straight line (or hyperplane in higher dimensions) that minimizes the sum of squared differences between the observed and predicted values.</p>
+                    <h3>Key Concepts:</h3>
+                    <ul>
+                        <li><strong>Dependent Variable (Y):</strong> The variable you are trying to predict.</li>
+                        <li><strong>Independent Variable (X):</strong> The variable(s) used to predict the dependent variable.</li>
+                        <li><strong>Slope (m):</strong> The change in Y for a one-unit change in X.</li>
+                        <li><strong>Y-intercept (b):</strong> The value of Y when X is 0.</li>
+                        <li><strong>Equation:</strong> Y = mX + b (for simple linear regression)</li>
+                        <li><strong>Least Squares:</strong> The method used to find the line that best fits the data by minimizing the sum of the squared vertical distances from the data points to the line.</li>
+                    </ul>
+                `,
+                visualization: (ctx, data, controls) => {
+                    // Simple Linear Regression visualization using Chart.js
+                    // We'll simulate a simple line based on controls (e.g., slope and intercept)
+                    const slope = parseFloat(controls.slope || 1);
+                    const intercept = parseFloat(controls.intercept || 1);
+
+                    const chartData = {
+                        datasets: [
+                            {
+                                label: 'Data Points',
+                                data: data,
+                                backgroundColor: 'rgba(0, 122, 204, 0.8)',
+                                borderColor: 'rgba(0, 122, 204, 1)',
+                                pointRadius: 6,
+                                type: 'scatter'
+                            },
+                            {
+                                label: 'Regression Line',
+                                data: [
+                                    { x: 0, y: intercept },
+                                    { x: 10, y: intercept + slope * 10 } // Extend line beyond data
+                                ],
+                                borderColor: 'rgba(229, 57, 53, 1)',
+                                backgroundColor: 'rgba(229, 57, 53, 0.5)',
+                                borderWidth: 2,
+                                fill: false,
+                                type: 'line',
+                                pointRadius: 0,
+                                tension: 0 // Straight line
+                            }
+                        ]
+                    };
+
+                    const config = {
+                        type: 'scatter', // Base type
+                        data: chartData,
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                x: {
+                                    type: 'linear',
+                                    position: 'bottom',
+                                    title: {
+                                        display: true,
+                                        text: 'Independent Variable (X)'
+                                    }
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: 'Dependent Variable (Y)'
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    display: true
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            let label = context.dataset.label || '';
+                                            if (label) {
+                                                label += ': ';
+                                            }
+                                            if (context.dataset.type === 'scatter') {
+                                                 label += `(X: ${context.parsed.x.toFixed(2)}, Y: ${context.parsed.y.toFixed(2)})`;
+                                            } else {
+                                                 label += `(X: ${context.parsed.x.toFixed(2)}, Y: ${context.parsed.y.toFixed(2)})`;
+                                            }
+                                            return label;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    };
+
+                    return new Chart(ctx, config);
+                },
+                controls: [
+                    { id: 'slope', label: 'Slope (m)', type: 'range', min: -2, max: 2, step: 0.1, value: 1 },
+                    { id: 'intercept', label: 'Intercept (b)', type: 'range', min: -5, max: 5, step: 0.1, value: 1 }
+                ],
+                data: linearRegressionData
+            },
+            'k-means': {
+                 title: 'K-Means Clustering',
+                 description: `
+                    <p>K-Means is an unsupervised learning algorithm used for partitioning n observations into k clusters, where each observation belongs to the cluster with the nearest mean (centroid).</p>
+                    <p>The algorithm iteratively assigns data points to clusters and updates the cluster centroids until convergence.</p>
+                    <h3>Key Concepts:</h3>
+                    <ul>
+                        <li><strong>K:</strong> The number of clusters to create (must be specified beforehand).</li>
+                        <li><strong>Centroid:</strong> The mean position of all the points in a cluster.</li>
+                        <li><strong>Initialization:</strong> How the initial centroids are chosen (often randomly).</li>
+                        <li><strong>Assignment Step:</strong> Each data point is assigned to the cluster whose centroid is closest.</li>
+                        <li><strong>Update Step:</strong> New centroids are calculated as the mean of all data points assigned to each cluster.</li>
+                        <li><strong>Convergence:</strong> The algorithm stops when the assignments no longer change or a maximum number of iterations is reached.</li>
+                    </ul>
+                 `,
+                 visualization: (ctx, data, controls) => {
+                     // K-Means visualization using Chart.js
+                     const k = parseInt(controls.k || 3);
+                     // Simple simulation: Assign points randomly to k clusters for initial visualization
+                     // A true K-Means simulation would require iterative updates, which is more complex
+                     const clusters = Array.from({ length: k }, (_, i) => ({
+                         label: `Cluster ${i + 1}`,
+                         data: [],
+                         backgroundColor: `hsl(${i * (360 / k)}, 70%, 60%)`, // Different color per cluster
+                         borderColor: `hsl(${i * (360 / k)}, 70%, 50%)`,
+                         pointRadius: 6,
+                         type: 'scatter'
+                     }));
+
+                     data.forEach(point => {
+                         const randomClusterIndex = Math.floor(Math.random() * k);
+                         clusters[randomClusterIndex].data.push(point);
+                     });
+
+                     const chartData = {
+                         datasets: clusters
+                     };
+
+                     const config = {
+                         type: 'scatter',
+                         data: chartData,
+                         options: {
+                             responsive: true,
+                             maintainAspectRatio: false,
+                             scales: {
+                                 x: {
+                                     type: 'linear',
+                                     position: 'bottom',
+                                     title: {
+                                         display: true,
+                                         text: 'Feature 1'
+                                     }
+                                 },
+                                 y: {
+                                     title: {
+                                         display: true,
+                                         text: 'Feature 2'
+                                     }
+                                 }
+                             },
+                             plugins: {
+                                 legend: {
+                                     display: true
+                                 },
+                                 tooltip: {
+                                     callbacks: {
+                                         label: function(context) {
+                                             let label = context.dataset.label || '';
+                                             if (label) {
+                                                 label += ': ';
+                                             }
+                                             label += `(X: ${context.parsed.x.toFixed(2)}, Y: ${context.parsed.y.toFixed(2)})`;
+                                             return label;
+                                         }
+                                     }
+                                 }
+                             }
+                         }
+                     };
+
+                     return new Chart(ctx, config);
+                 },
+                 controls: [
+                     { id: 'k', label: 'Number of Clusters (K)', type: 'number', min: 2, max: 10, step: 1, value: 3 },
+                     // Add a button to trigger a step or full run (more complex implementation)
+                     { id: 'run-kmeans', label: 'Run K-Means (Simulated)', type: 'button' }
+                 ],
+                 data: kMeansData // Example data for K-Means
+            },
+            'decision-tree': {
+                title: 'Decision Tree',
+                description: `
+                    <p>A Decision Tree is a flowchart-like structure where each internal node represents a "test" on an attribute, each branch represents the outcome of the test, and each leaf node represents a class label (in classification) or a value (in regression).</p>
+                    <p>They are simple to understand and interpret, and can handle both numerical and categorical data.</p>
+                    <h3>Key Concepts:</h3>
+                    <ul>
+                        <li><strong>Root Node:</strong> The topmost node, representing the initial split.</li>
+                        <li><strong>Internal Node:</strong> Represents a test on an attribute.</li>
+                        <li><strong>Branch:</strong> Represents the outcome of a test.</li>
+                        <li><strong>Leaf Node:</strong> Represents the final decision or prediction.</li>
+                        <li><strong>Splitting:</strong> The process of dividing a node into two or more sub-nodes.</li>
+                        <li><strong>Information Gain / Gini Impurity:</strong> Metrics used to decide the best attribute to split on.</li>
+                        <li><strong>Pruning:</strong> Removing branches to avoid overfitting.</li>
+                    </ul>
+                `,
+                visualization: null, // Decision Tree visualization is more complex (tree structure) - placeholder
+                controls: [],
+                data: null
+            }
+            // Add more algorithm objects here
+        };
+
+        let currentChart = null;
+
+        function renderAlgorithm(algorithmKey) {
+            const algorithm = algorithms[algorithmKey];
+            const mainContent = document.getElementById('main-content');
+
+            // Clear previous content
+            mainContent.innerHTML = '';
+
+            // Create section for the algorithm
+            const section = document.createElement('section');
+            section.classList.add('content-section');
+            section.setAttribute('id', `${algorithmKey}-section`);
+
+            // Add title
+            const title = document.createElement('h2');
+            title.textContent = algorithm.title;
+            section.appendChild(title);
+
+            // Add description
+            const descriptionDiv = document.createElement('div');
+            descriptionDiv.innerHTML = algorithm.description; // Use innerHTML for formatted text
+            section.appendChild(descriptionDiv);
+
+            // Add visualization area if visualization exists
+            if (algorithm.visualization) {
+                const vizArea = document.createElement('div');
+                vizArea.classList.add('visualization-area');
+
+                const canvas = document.createElement('canvas');
+                canvas.setAttribute('id', `${algorithmKey}-chart`);
+                vizArea.appendChild(canvas);
+
+                section.appendChild(vizArea);
+
+                // Add controls if controls exist
+                if (algorithm.controls && algorithm.controls.length > 0) {
+                    const controlsDiv = document.createElement('div');
+                    controlsDiv.classList.add('controls');
+                    controlsDiv.setAttribute('id', `${algorithmKey}-controls`);
+
+                    algorithm.controls.forEach(control => {
+                        const controlGroup = document.createElement('div');
+                        controlGroup.classList.add('control-group');
+
+                        const label = document.createElement('label');
+                        label.setAttribute('for', `${algorithmKey}-${control.id}`);
+                        label.textContent = control.label;
+                        controlGroup.appendChild(label);
+
+                        let input;
+                        if (control.type === 'button') {
+                            input = document.createElement('button');
+                            input.textContent = control.label; // Button text is the label
+                        } else {
+                            input = document.createElement('input');
+                            input.setAttribute('type', control.type);
+                            input.setAttribute('id', `${algorithmKey}-${control.id}`);
+                            if (control.min !== undefined) input.setAttribute('min', control.min);
+                            if (control.max !== undefined) input.setAttribute('max', control.max);
+                            if (control.step !== undefined) input.setAttribute('step', control.step);
+                            if (control.value !== undefined) input.setAttribute('value', control.value);
+                        }
+
+
+                        controlGroup.appendChild(input);
+                        controlsDiv.appendChild(controlGroup);
+                    });
+
+                    section.appendChild(controlsDiv);
+                }
+            } else {
+                 // Placeholder for complex visualizations
+                 const placeholderDiv = document.createElement('div');
+                 placeholderDiv.classList.add('visualization-area');
+                 placeholderDiv.style.textAlign = 'center';
+                 placeholderDiv.style.padding = '3rem';
+                 placeholderDiv.style.backgroundColor = '#eee';
+                 placeholderDiv.style.color = '#555';
+                 placeholderDiv.textContent = 'Visualization for this algorithm is not yet implemented.';
+                 section.appendChild(placeholderDiv);
+            }
+
+
+            mainContent.appendChild(section);
+
+            // Initialize visualization and controls if they exist
+            if (algorithm.visualization) {
+                const canvas = document.getElementById(`${algorithmKey}-chart`);
+                const ctx = canvas.getContext('2d');
+
+                // Destroy previous chart instance
+                if (currentChart) {
+                    currentChart.destroy();
+                }
+
+                // Initial controls state
+                const currentControls = {};
+                algorithm.controls.forEach(c => {
+                    if (c.type !== 'button') {
+                         currentControls[c.id] = document.getElementById(`${algorithmKey}-${c.id}`).value;
+                    }
+                });
+
+
+                // Create new chart
+                currentChart = algorithm.visualization(ctx, algorithm.data, currentControls);
+
+                // Add event listeners to controls
+                const controlsDiv = document.getElementById(`${algorithmKey}-controls`);
+                if (controlsDiv) {
+                    controlsDiv.querySelectorAll('input, select, button').forEach(controlElement => {
+                        if (controlElement.tagName === 'BUTTON') {
+                            controlElement.addEventListener('click', () => {
+                                // Handle button click - e.g., trigger a simulation step
+                                console.log(`Button clicked for ${algorithmKey}: ${controlElement.id}`);
+                                // Implement specific simulation logic here if needed
+                                // For K-Means 'run' button, we could re-randomize or run a single step
+                                if (algorithmKey === 'k-means' && controlElement.id.endsWith('-run-kmeans')) {
+                                     // Simple re-randomization for demo
+                                     renderAlgorithm('k-means'); // Re-render with new random clusters
+                                }
+                            });
+                        } else {
+                            controlElement.addEventListener('input', () => {
+                                // Update controls state
+                                currentControls[controlElement.id.replace(`${algorithmKey}-`, '')] = controlElement.value;
+                                // Re-render chart with new controls
+                                if (currentChart) {
+                                    currentChart.destroy(); // Destroy old instance
+                                }
+                                currentChart = algorithm.visualization(ctx, algorithm.data, currentControls);
+                            });
+                        }
+                    });
+                }
+            }
+        }
+
+        // Handle sidebar navigation clicks
+        document.querySelectorAll('.sidebar button').forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active class from all buttons
+                document.querySelectorAll('.sidebar button').forEach(btn => btn.classList.remove('active'));
+                // Add active class to the clicked button
+                button.classList.add('active');
+                // Render the selected algorithm
+                const algorithmKey = button.getAttribute('data-algorithm');
+                renderAlgorithm(algorithmKey);
+            });
+        });
+
+        // Initial load: Render the introduction section
+        renderAlgorithm('intro');
+
+    </script>
+
+</body>
+</html>

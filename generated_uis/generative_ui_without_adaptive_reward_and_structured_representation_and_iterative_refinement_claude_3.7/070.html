@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Energy Management Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --background-color: #f8f9fa;
+            --surface-color: #ffffff;
+            --text-color: #343a40;
+            --text-secondary-color: #6c757d;
+            --border-color: #dee2e6;
+            --spacing-unit: 1rem; /* 16px */
+            --border-radius: 0.5rem; /* 8px */
+            --box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            grid-template-rows: auto 1fr;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            grid-column: 1 / -1;
+            grid-row: 1;
+            background-color: var(--surface-color);
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+            box-shadow: var(--box-shadow);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 100;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .sidebar {
+            grid-column: 1;
+            grid-row: 2;
+            background-color: var(--surface-color);
+            padding: calc(var(--spacing-unit) * 1.5) var(--spacing-unit);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+        }
+
+        .sidebar nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar nav li {
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar nav a {
+            display: block;
+            padding: 0.75rem var(--spacing-unit);
+            color: var(--text-color);
+            text-decoration: none;
+            border-radius: var(--border-radius);
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .sidebar nav a:hover {
+            background-color: var(--background-color);
+            color: var(--primary-color);
+        }
+
+        .sidebar nav a.active {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+        }
+
+        .main-content {
+            grid-column: 2;
+            grid-row: 2;
+            padding: calc(var(--spacing-unit) * 1.5);
+            overflow-y: auto;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: calc(var(--spacing-unit) * 1.5);
+            margin-bottom: calc(var(--spacing-unit) * 1.5);
+        }
+
+        .card {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            padding: calc(var(--spacing-unit) * 1.5);
+            box-shadow: var(--box-shadow);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .card-header h2 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: var(--text-color);
+        }
+
+        .card-body {
+            flex-grow: 1;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary-color);
+        }
+
+        .chart-container {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            padding: calc(var(--spacing-unit) * 1.5);
+            box-shadow: var(--box-shadow);
+            position: relative; /* Needed for floating controls */
+        }
+
+        .chart-container h2 {
+            margin-top: 0;
+            margin-bottom: var(--spacing-unit);
+            font-size: 1.2rem;
+            color: var(--text-color);
+        }
+
+        .chart-canvas {
+            width: 100% !important;
+            height: 300px !important; /* Fixed height for chart */
+        }
+
+        .floating-controls {
+            position: absolute;
+            top: var(--spacing-unit);
+            right: var(--spacing-unit);
+            background: rgba(255, 255, 255, 0.95);
+            padding: var(--spacing-unit);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .control-group {
+            margin-bottom: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .control-group label {
+            font-size: 0.85rem;
+            color: var(--text-secondary-color);
+            font-weight: 500;
+        }
+
+        .control-group input[type="color"],
+        .control-group input[type="number"],
+        .control-group select {
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 0.9rem;
+            color: var(--text-color);
+            background-color: var(--surface-color);
+        }
+
+        .control-group input[type="color"] {
+             padding: 0.25rem; /* Adjust padding for color picker */
+             height: 2.2rem; /* Match height with other inputs */
+        }
+
+        .control-group input:focus,
+        .control-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        /* Placeholder for other components */
+        .table-panel,
+        .control-panel {
+             background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            padding: calc(var(--spacing-unit) * 1.5);
+            box-shadow: var(--box-shadow);
+            margin-top: calc(var(--spacing-unit) * 1.5);
+        }
+
+        .table-panel h2,
+        .control-panel h2 {
+            margin-top: 0;
+            margin-bottom: var(--spacing-unit);
+            font-size: 1.2rem;
+            color: var(--text-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: var(--spacing-unit);
+        }
+
+        th, td {
+            text-align: left;
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--background-color);
+            font-weight: 600;
+            color: var(--text-secondary-color);
+        }
+
+        tr:hover {
+            background-color: var(--background-color);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .status-indicator.online { background-color: var(--success-color); }
+        .status-indicator.offline { background-color: var(--danger-color); }
+        .status-indicator.warning { background-color: var(--warning-color); }
+
+        .control-group-row {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-unit);
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .control-group-row label {
+            min-width: 120px; /* Align labels */
+        }
+
+        .control-group-row input[type="range"] {
+            flex-grow: 1;
+        }
+
+        .button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.2s ease, opacity 0.2s ease;
+        }
+
+        .button-primary {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+        }
+
+        .button-primary:hover {
+            background-color: darken(var(--primary-color), 10%); /* Placeholder - needs Sass/Less or manual calc */
+            opacity: 0.9; /* Simple hover effect */
+        }
+
+        .button-secondary {
+             background-color: var(--secondary-color);
+            color: var(--surface-color);
+        }
+
+        .button-secondary:hover {
+             opacity: 0.9;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--success-color);
+        }
+
+        input:focus + .toggle-slider {
+            box-shadow: 0 0 1px var(--success-color);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+
+    </style>
+</head>
+<body>
+    <div class="dashboard-layout">
+        <header class="header">
+            <h1>Energy Dashboard</h1>
+            <div>
+                <!-- Building Selector Placeholder -->
+                <select id="building-select" aria-label="Select Building">
+                    <option value="">Select Building</option>
+                    <option value="building-a">Building A</option>
+                    <option value="building-b">Building B</option>
+                    <option value="building-c">Building C</option>
+                </select>
+            </div>
+        </header>
+
+        <aside class="sidebar">
+            <nav>
+                <ul>
+                    <li><a href="#" class="active">Overview</a></li>
+                    <li><a href="#">Buildings</a></li>
+                    <li><a href="#">Analytics</a></li>
+                    <li><a href="#">Settings</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <h2>Overview Dashboard</h2>
+
+            <section class="dashboard-grid">
+                <article class="card">
+                    <div class="card-header">
+                        <h2>Total Energy Usage (Today)</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="metric-value">1500 kWh</div>
+                        <div class="metric-label">vs. yesterday: +5%</div>
+                    </div>
+                </article>
+
+                <article class="card">
+                    <div class="card-header">
+                        <h2>Estimated Cost Savings (YTD)</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="metric-value">$12,500</div>
+                        <div class="metric-label">vs. target: +10%</div>
+                    </div>
+                </article>
+
+                <article class="card">
+                    <div class="card-header">
+                        <h2>Average Comfort Level</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="metric-value">72°F</div>
+                        <div class="metric-label">Target: 70-74°F</div>
+                    </div>
+                </article>
+
+                 <article class="card">
+                    <div class="card-header">
+                        <h2>AI Optimization Status</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="metric-value">Active</div>
+                        <div class="metric-label"><span class="status-indicator online"></span> Systems Online</div>
+                    </div>
+                </article>
+            </section>
+
+            <section class="chart-container">
+                 <div class="card-header">
+                    <h2>Energy Usage Trends</h2>
+                    <!-- Floating control panel trigger -->
+                    <button class="button button-secondary" id="toggle-chart-controls">Controls</button>
+                 </div>
+
+                <canvas id="energyChart" class="chart-canvas"></canvas>
+
+                <!-- Floating control panel -->
+                <div class="floating-controls" id="chart-controls">
+                    <div class="control-group">
+                        <label for="chartType">Chart Type</label>
+                        <select id="chartType">
+                            <option value="line">Line</option>
+                            <option value="bar">Bar</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="lineColor">Line Color</label>
+                        <input type="color" id="lineColor" value="#007bff">
+                    </div>
+                     <div class="control-group">
+                        <label for="fillColor">Fill Color</label>
+                        <input type="color" id="fillColor" value="#007bff40">
+                    </div>
+                     <div class="control-group">
+                        <label for="fontSize">Font Size</label>
+                        <input type="number" id="fontSize" value="12" min="8" max="20">
+                    </div>
+                     <div class="control-group">
+                        <label for="dateRange">Date Range</label>
+                        <!-- Placeholder for date range picker -->
+                        <input type="text" id="dateRange" placeholder="Select Date Range">
+                    </div>
+                </div>
+            </section>
+
+             <section class="control-panel">
+                <h2>System Controls & Overrides</h2>
+                <div class="control-group-row">
+                    <label for="ai-toggle">AI Automated Control:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="ai-toggle" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span>Status: <strong id="ai-status">Enabled</strong></span>
+                </div>
+                 <div class="control-group-row">
+                    <label for="temp-slider">Target Temperature:</label>
+                    <input type="range" id="temp-slider" min="65" max="80" value="72">
+                    <span id="temp-value">72°F</span>
+                 </div>
+                 <div class="control-group-row">
+                    <label for="lighting-override">Lighting Schedule Override:</label>
+                    <button class="button button-primary" id="lighting-override">Apply Manual Schedule</button>
+                 </div>
+             </section>
+
+             <section class="table-panel">
+                <h2>Recent Override Logs</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Building</th>
+                            <th>System</th>
+                            <th>Parameter</th>
+                            <th>Old Value</th>
+                            <th>New Value</th>
+                            <th>User</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>2023-10-27 10:30</td>
+                            <td>Building A</td>
+                            <td>HVAC</td>
+                            <td>Target Temp</td>
+                            <td>70°F</td>
+                            <td>72°F</td>
+                            <td>Manager X</td>
+                        </tr>
+                         <tr>
+                            <td>2023-10-27 09:00</td>
+                            <td>Building B</td>
+                            <td>Lighting</td>
+                            <td>Schedule</td>
+                            <td>Auto</td>
+                            <td>Manual</td>
+                            <td>Manager Y</td>
+                        </tr>
+                         <tr>
+                            <td>2023-10-26 16:00</td>
+                            <td>Building A</td>
+                            <td>HVAC</td>
+                            <td>Mode</td>
+                            <td>Auto</td>
+                            <td>Cooling</td>
+                            <td>Manager X</td>
+                        </tr>
+                        <!-- More rows... -->
+                    </tbody>
+                </table>
+             </section>
+
+        </main>
+    </div>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        // --- Chart Initialization ---
+        const ctx = document.getElementById('energyChart').getContext('2d');
+        let energyChart; // Declare chart variable outside to be accessible
+
+        const chartConfig = {
+            type: 'line',
+            data: {
+                labels: ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'],
+                datasets: [{
+                    label: 'Energy Usage (kWh)',
+                    data: [50, 45, 48, 60, 120, 150, 140, 135, 110, 90, 70, 60], // Placeholder data
+                    backgroundColor: "var(--primary-color)40", // Using CSS variable with transparency
+                    borderColor: "var(--primary-color)",
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: {
+                             font: {
+                                size: parseInt(document.getElementById('fontSize').value),
+                                family: 'Inter, sans-serif'
+                            },
+                             color: "var(--text-color)"
+                        }
+                    },
+                     tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += context.parsed.y + ' kWh';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Energy (kWh)',
+                             font: { size: parseInt(document.getElementById('fontSize').value) + 2 },
+                             color: "var(--text-color)"
+                        },
+                         ticks: {
+                             font: { size: parseInt(document.getElementById('fontSize').value) },
+                             color: "var(--text-secondary-color)"
+                         }
+                    },
+                    x: {
+                         title: {
+                            display: true,
+                            text: 'Time of Day',
+                             font: { size: parseInt(document.getElementById('fontSize').value) + 2 },
+                             color: "var(--text-color)"
+                        },
+                        ticks: {
+                             font: { size: parseInt(document.getElementById('fontSize').value) },
+                             color: "var(--text-secondary-color)"
+                        }
+                    }
+                }
+            }
+        };
+
+        energyChart = new Chart(ctx, chartConfig);
+
+        // --- Floating Controls Logic ---
+        const chartControls = document.getElementById('chart-controls');
+        const toggleControlsButton = document.getElementById('toggle-chart-controls');
+
+        toggleControlsButton.addEventListener('click', () => {
+            chartControls.classList.toggle('active');
+        });
+
+        // Close controls when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.floating-controls') && !e.target.closest('#toggle-chart-controls')) {
+                chartControls.classList.remove('active');
+            }
+        });
+
+        // Update chart based on control changes
+        document.querySelectorAll('#chart-controls input, #chart-controls select').forEach(element => {
+            element.addEventListener('change', updateChartFromControls);
+        });
+
+        function updateChartFromControls() {
+            const newChartType = document.getElementById('chartType').value;
+            const newLineColor = document.getElementById('lineColor').value;
+            const newFillColor = document.getElementById('fillColor').value;
+             const newFontSize = parseInt(document.getElementById('fontSize').value);
+
+            energyChart.config.type = newChartType;
+
+            // Handle dataset specific updates based on type
+            energyChart.data.datasets.forEach(dataset => {
+                dataset.borderColor = newLineColor;
+                dataset.backgroundColor = newFillColor; // Use fill color for both line fill and bar color
+                if (newChartType === 'bar') {
+                     dataset.fill = false; // No fill for bars
+                } else {
+                    dataset.fill = true; // Fill for lines
+                }
+            });
+
+            // Update font sizes in options
+            const updateFont = (obj, size) => {
+                if (obj && obj.font) {
+                    obj.font.size = size;
+                }
+            };
+
+            updateFont(energyChart.options.plugins.legend.labels, newFontSize);
+            updateFont(energyChart.options.scales?.y?.title, newFontSize + 2);
+            updateFont(energyChart.options.scales?.y?.ticks, newFontSize);
+            updateFont(energyChart.options.scales?.x?.title, newFontSize + 2);
+            updateFont(energyChart.options.scales?.x?.ticks, newFontSize);
+
+
+            energyChart.update();
+        }
+
+        // --- System Controls Logic ---
+        const aiToggle = document.getElementById('ai-toggle');
+        const aiStatus = document.getElementById('ai-status');
+        const tempSlider = document.getElementById('temp-slider');
+        const tempValue = document.getElementById('temp-value');
+        const lightingOverrideButton = document.getElementById('lighting-override');
+
+        aiToggle.addEventListener('change', (event) => {
+            if (event.target.checked) {
+                aiStatus.textContent = 'Enabled';
+                aiStatus.style.color = "var(--success-color)"; // Use CSS variable
+                // Disable manual controls when AI is enabled
+                tempSlider.disabled = true;
+                lightingOverrideButton.disabled = true;
+            } else {
+                aiStatus.textContent = 'Disabled';
+                aiStatus.style.color = "var(--danger-color)"; // Use CSS variable
+                 // Enable manual controls when AI is disabled
+                tempSlider.disabled = false;
+                lightingOverrideButton.disabled = false;
+            }
+        });
+
+        tempSlider.addEventListener('input', (event) => {
+            tempValue.textContent = `${event.target.value}°F`;
+        });
+
+        lightingOverrideButton.addEventListener('click', () => {
+            // Placeholder for modal or action to apply manual lighting schedule
+            alert('Applying manual lighting schedule...');
+        });
+
+        // Initial state check for controls based on AI toggle
+        if (aiToggle.checked) {
+             tempSlider.disabled = true;
+             lightingOverrideButton.disabled = true;
+        } else {
+             tempSlider.disabled = false;
+             lightingOverrideButton.disabled = false;
+        }
+
+        // --- Building Select Logic ---
+        const buildingSelect = document.getElementById('building-select');
+        buildingSelect.addEventListener('change', (event) => {
+            const selectedBuilding = event.target.value;
+            console.log(`Building selected: ${selectedBuilding}`);
+            // TODO: Implement logic to fetch and display data for the selected building
+            // This would involve updating cards, charts, tables, and control states.
+        });
+
+        // --- Placeholder for Date Range Picker (using a simple input for now) ---
+         const dateRangeInput = document.getElementById('dateRange');
+         // In a real app, you would initialize a date picker library here
+         dateRangeInput.addEventListener('focus', () => {
+             console.log('Date range picker focused. Implement date picker library.');
+             // Example: Initialize a library like flatpickr or datepicker.js
+         });
+
+
+    </script>
+</body>
+</html>

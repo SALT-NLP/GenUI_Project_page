@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Poster Designer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --white-color: #ffffff;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-400: #ced4da;
+            --gray-500: #adb5bd;
+            --gray-600: #6c757d;
+            --gray-700: #495057;
+            --gray-800: #343a40;
+            --gray-900: #212529;
+
+            --background-color: var(--gray-100);
+            --surface-color: var(--white-color);
+            --border-color: var(--gray-300);
+            --text-color: var(--gray-900);
+            --text-light-color: var(--gray-600);
+
+            --header-height: 60px;
+            --sidebar-width: 300px;
+            --spacing-unit: 8px;
+
+            --border-radius: 8px;
+            --box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            --transition-speed: 0.2s ease-in-out;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden; /* Prevent body scroll */
+        }
+
+        header {
+            height: var(--header-height);
+            background-color: var(--surface-color);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 calc(var(--spacing-unit) * 2);
+            box-shadow: var(--box-shadow);
+            z-index: 10;
+        }
+
+        .header-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-right: auto;
+        }
+
+        .tool-bar {
+            display: flex;
+            gap: var(--spacing-unit);
+        }
+
+        .tool-button {
+            background-color: transparent;
+            border: none;
+            padding: var(--spacing-unit);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color var(--transition-speed), transform var(--transition-speed);
+            color: var(--text-color);
+            font-size: 1rem;
+        }
+
+        .tool-button:hover {
+            background-color: var(--gray-200);
+            transform: translateY(-2px);
+        }
+
+        .tool-button:active {
+            background-color: var(--gray-300);
+            transform: translateY(0);
+        }
+
+        .tool-button .material-symbols-rounded {
+            font-size: 24px;
+        }
+
+        main {
+            flex-grow: 1;
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr;
+            height: calc(100vh - var(--header-height));
+        }
+
+        .sidebar {
+            background-color: var(--surface-color);
+            border-right: 1px solid var(--border-color);
+            padding: calc(var(--spacing-unit) * 2);
+            overflow-y: auto;
+            box-shadow: var(--box-shadow);
+        }
+
+        .sidebar-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            padding-bottom: var(--spacing-unit);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .property-group {
+            margin-bottom: calc(var(--spacing-unit) * 3);
+        }
+
+        .property-group label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: var(--spacing-unit);
+            color: var(--text-light-color);
+        }
+
+        .property-group input[type="text"],
+        .property-group input[type="number"],
+        .property-group select,
+        .property-group input[type="color"] {
+            width: 100%;
+            padding: var(--spacing-unit);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            background-color: var(--gray-100);
+            color: var(--text-color);
+            transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+        }
+
+        .property-group input[type="color"] {
+             padding: calc(var(--spacing-unit) / 2);
+             height: 40px; /* Match height of other inputs */
+        }
+
+
+        .property-group input:focus,
+        .property-group select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            outline: none;
+        }
+
+        .canvas-area {
+            flex-grow: 1;
+            position: relative;
+            overflow: auto; /* Allow canvas area to scroll if poster is larger than view */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--gray-200); /* Background for the canvas area */
+            padding: calc(var(--spacing-unit) * 3);
+        }
+
+        #posterCanvas {
+            background-color: var(--white-color);
+            box-shadow: var(--box-shadow);
+            border-radius: var(--border-radius);
+            /* Canvas size will be set by JS or attributes */
+            display: block; /* Remove extra space below canvas */
+        }
+
+        /* Contextual toolbar (example) */
+        .contextual-toolbar {
+            position: absolute;
+            top: var(--spacing-unit);
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--dark-color);
+            color: var(--white-color);
+            padding: var(--spacing-unit);
+            border-radius: var(--border-radius);
+            display: flex;
+            gap: var(--spacing-unit);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity var(--transition-speed);
+        }
+
+        .contextual-toolbar.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .contextual-toolbar button {
+            background-color: transparent;
+            border: none;
+            color: var(--white-color);
+            padding: calc(var(--spacing-unit) / 2);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: background-color var(--transition-speed);
+        }
+
+        .contextual-toolbar button:hover {
+            background-color: var(--gray-700);
+        }
+
+        .contextual-toolbar button .material-symbols-rounded {
+             font-size: 20px;
+        }
+
+        /* Modal for templates (example) */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity var(--transition-speed);
+        }
+
+        .modal-overlay.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content {
+            background-color: var(--surface-color);
+            padding: calc(var(--spacing-unit) * 3);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            max-width: 80%;
+            max-height: 80%;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-close-button {
+            position: absolute;
+            top: var(--spacing-unit);
+            right: var(--spacing-unit);
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray-600);
+        }
+
+        .template-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: calc(var(--spacing-unit) * 2);
+        }
+
+        .template-item {
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+        }
+
+        .template-item:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--box-shadow);
+        }
+
+        .template-item img {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        .template-item p {
+            margin: var(--spacing-unit);
+            font-size: 0.9rem;
+            text-align: center;
+            color: var(--text-light-color);
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background-color var(--transition-speed), opacity var(--transition-speed);
+        }
+
+        .button-primary {
+            background-color: var(--primary-color);
+            color: var(--white-color);
+        }
+
+        .button-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Accessibility */
+        [aria-hidden="true"] {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-title">Poster Designer</div>
+        <div class="tool-bar">
+            <button class="tool-button" aria-label="Add Text" data-tool="add-text">
+                <span class="material-symbols-rounded">text_fields</span>
+            </button>
+            <button class="tool-button" aria-label="Add Image" data-tool="add-image">
+                <span class="material-symbols-rounded">image</span>
+            </button>
+            <button class="tool-button" aria-label="Add Shape" data-tool="add-shape">
+                <span class="material-symbols-rounded">shape_circle</span>
+            </button>
+            <button class="tool-button" aria-label="Undo" data-tool="undo">
+                 <span class="material-symbols-rounded">undo</span>
+            </button>
+             <button class="tool-button" aria-label="Redo" data-tool="redo">
+                 <span class="material-symbols-rounded">redo</span>
+            </button>
+            <button class="tool-button" aria-label="Select Template" data-tool="template">
+                <span class="material-symbols-rounded">layers</span>
+            </button>
+             <button class="tool-button button-primary" aria-label="Export Poster" data-tool="export">
+                <span class="material-symbols-rounded">download</span> Export
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <aside class="sidebar">
+            <h2 class="sidebar-title">Element Properties</h2>
+            <!-- Property controls will be dynamically populated based on selected element -->
+            <div id="propertyPanelContent">
+                <p>Select an element on the canvas to edit its properties.</p>
+                <!-- Example property group -->
+                <!--
+                <div class="property-group">
+                    <label for="fontSize">Font Size</label>
+                    <input type="number" id="fontSize" value="24">
+                </div>
+                 <div class="property-group">
+                    <label for="textColor">Color</label>
+                    <input type="color" id="textColor" value="#000000">
+                </div>
+                <div class="property-group">
+                    <label for="fontFamily">Font</label>
+                    <select id="fontFamily">
+                        <option value="Inter">Inter</option>
+                        <option value="Arial">Arial</option>
+                        <option value="Georgia">Georgia</option>
+                    </select>
+                </div>
+                -->
+            </div>
+        </aside>
+
+        <div class="canvas-area">
+            <canvas id="posterCanvas" width="800" height="1000" aria-label="Poster Design Canvas"></canvas>
+
+            <!-- Contextual Toolbar (initially hidden) -->
+            <div id="contextualToolbar" class="contextual-toolbar" aria-hidden="true">
+                 <button aria-label="Delete Element" data-action="delete">
+                    <span class="material-symbols-rounded">delete</span>
+                 </button>
+                 <button aria-label="Duplicate Element" data-action="duplicate">
+                     <span class="material-symbols-rounded">content_copy</span>
+                 </button>
+                 <!-- Add more actions like Send to Back, Bring to Front -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Template Modal (initially hidden) -->
+    <div id="templateModal" class="modal-overlay" aria-hidden="true">
+        <div class="modal-content">
+            <button class="modal-close-button" aria-label="Close Modal">&times;</button>
+            <h2>Select a Template</h2>
+            <div class="template-gallery">
+                <!-- Placeholder templates -->
+                <div class="template-item" data-template="template1">
+                    <img src="https://placehold.co/150x200?text=Template+1" alt="Template 1 Preview">
+                    <p>Basic Event</p>
+                </div>
+                 <div class="template-item" data-template="template2">
+                    <img src="https://placehold.co/150x200?text=Template+2" alt="Template 2 Preview">
+                    <p>Community Fair</p>
+                </div>
+                 <div class="template-item" data-template="template3">
+                    <img src="https://placehold.co/150x200?text=Template+3" alt="Template 3 Preview">
+                    <p>Workshop</p>
+                </div>
+                <!-- Add more templates -->
+            </div>
+             <div style="margin-top: 20px; text-align: right;">
+                <button class="button button-primary" id="applyTemplateButton" disabled>Apply Selected Template</button>
+             </div>
+        </div>
+    </div>
+
+
+    <script>
+        const canvas = document.getElementById('posterCanvas');
+        const ctx = canvas.getContext('2d');
+        const sidebarContent = document.getElementById('propertyPanelContent');
+        const contextualToolbar = document.getElementById('contextualToolbar');
+        const templateModal = document.getElementById('templateModal');
+        const modalCloseButton = templateModal.querySelector('.modal-close-button');
+        const applyTemplateButton = document.getElementById('applyTemplateButton');
+        const toolButtons = document.querySelectorAll('.tool-button');
+        const templateItems = templateModal.querySelectorAll('.template-item');
+
+        let selectedElement = null; // Represents the currently selected element on canvas
+        let activeTemplate = null; // Represents the selected template in the modal
+
+        // --- Canvas Drawing (Placeholder) ---
+        function drawCanvas() {
+            ctx.fillStyle = 'var(--white-color)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Draw grid or other canvas background elements here if needed
+            // Draw all elements (text, images, shapes) here
+        }
+
+        // Initial draw
+        drawCanvas();
+
+        // --- Event Handlers ---
+
+        // Tool Bar Button Clicks
+        toolButtons.forEach(button => {
+            button.addEventListener('click', (event) => {
+                const tool = event.currentTarget.dataset.tool;
+                console.log(`Tool selected: ${tool}`);
+                // Implement tool actions (e.g., add text, open image upload, show template modal)
+                if (tool === 'template') {
+                    showModal(templateModal);
+                } else if (tool === 'export') {
+                    exportPoster();
+                } else if (tool === 'add-text') {
+                     addTextElement();
+                }
+                // Add other tool actions...
+            });
+        });
+
+        // Canvas Click (for selecting elements)
+        canvas.addEventListener('click', (event) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            console.log(`Canvas clicked at: (${x}, ${y})`);
+
+            // Placeholder: Simulate selecting an element
+            // In a real implementation, you'd check if click coordinates hit an element
+            const simulatedElement = {
+                type: 'text', // or 'image', 'shape'
+                properties: {
+                    text: 'Sample Text',
+                    fontSize: 36,
+                    color: '#333333',
+                    fontFamily: 'Inter'
+                    // ... other properties
+                }
+            };
+
+            selectElement(simulatedElement);
+        });
+
+        // Property Panel Input Changes (Placeholder)
+        sidebarContent.addEventListener('input', (event) => {
+            if (!selectedElement) return;
+
+            const propertyName = event.target.id; // Assuming input ID matches property name
+            const propertyValue = event.target.value;
+
+            console.log(`Property changed: ${propertyName} = ${propertyValue}`);
+            // Update the selected element's property
+            // selectedElement.properties[propertyName] = propertyValue;
+            // Redraw canvas
+            // drawCanvas();
+        });
+
+        // Contextual Toolbar Button Clicks (Placeholder)
+        contextualToolbar.addEventListener('click', (event) => {
+            const action = event.target.closest('button')?.dataset.action;
+             if (action && selectedElement) {
+                console.log(`Contextual action: ${action} on element:`, selectedElement);
+                // Implement delete, duplicate, etc.
+                // After action, maybe deselect or update selection
+                deselectElement();
+             }
+        });
+
+
+        // Template Selection in Modal
+        templateItems.forEach(item => {
+            item.addEventListener('click', (event) => {
+                templateItems.forEach(i => i.style.border = '1px solid var(--border-color)');
+                event.currentTarget.style.border = '2px solid var(--primary-color)';
+                activeTemplate = event.currentTarget.dataset.template;
+                applyTemplateButton.disabled = false;
+                console.log(`Template selected: ${activeTemplate}`);
+            });
+        });
+
+        // Apply Template Button Click
+        applyTemplateButton.addEventListener('click', () => {
+            if (activeTemplate) {
+                console.log(`Applying template: ${activeTemplate}`);
+                // Implement logic to load and apply the selected template
+                hideModal(templateModal);
+                activeTemplate = null; // Reset selection
+                applyTemplateButton.disabled = true;
+                // Redraw canvas with template elements
+                drawCanvas();
+            }
+        });
+
+        // Modal Close Button Click
+        modalCloseButton.addEventListener('click', () => {
+            hideModal(templateModal);
+            activeTemplate = null; // Reset selection
+            applyTemplateButton.disabled = true;
+        });
+
+        // Close Modal on Overlay Click
+        templateModal.addEventListener('click', (event) => {
+            if (event.target === templateModal) {
+                hideModal(templateModal);
+                activeTemplate = null; // Reset selection
+                applyTemplateButton.disabled = true;
+            }
+        });
+
+
+        // --- UI State Management ---
+
+        function selectElement(element) {
+            selectedElement = element;
+            updatePropertyPanel(element);
+            showContextualToolbar(element); // Pass element position/size
+            console.log('Element selected:', element);
+        }
+
+        function deselectElement() {
+            selectedElement = null;
+            updatePropertyPanel(null);
+            hideContextualToolbar();
+            console.log('Element deselected.');
+        }
+
+        function updatePropertyPanel(element) {
+            sidebarContent.innerHTML = ''; // Clear current properties
+            if (element) {
+                sidebarContent.innerHTML += `<p>Editing: ${element.type}</p>`;
+                 // Dynamically create input fields based on element.properties
+                 for (const prop in element.properties) {
+                    const value = element.properties[prop];
+                    let inputHtml = '';
+                    let inputType = 'text'; // Default input type
+
+                    if (typeof value === 'number') {
+                         inputType = 'number';
+                    } else if (typeof value === 'string' && value.startsWith('#')) {
+                         inputType = 'color';
+                    } else if (prop === 'fontFamily') {
+                        // Special case for font dropdown
+                         inputHtml = `
+                            <div class="property-group">
+                                <label for="${prop}">${prop.replace(/([A-Z])/g, ' $1').trim()}</label>
+                                <select id="${prop}">
+                                    <option value="Inter">Inter</option>
+                                    <option value="Arial">Arial</option>
+                                    <option value="Georgia">Georgia</option>
+                                     <option value="Roboto">Roboto</option>
+                                    <!-- Add more fonts -->
+                                </select>
+                            </div>`;
+                    }
+
+
+                    if (!inputHtml) {
+                        inputHtml = `
+                            <div class="property-group">
+                                <label for="${prop}">${prop.replace(/([A-Z])/g, ' $1').trim()}</label>
+                                <input type="${inputType}" id="${prop}" value="${value}">
+                            </div>`;
+                    }
+                    sidebarContent.innerHTML += inputHtml;
+                 }
+
+            } else {
+                 sidebarContent.innerHTML = '<p>Select an element on the canvas to edit its properties.</p>';
+            }
+        }
+
+        function showContextualToolbar(element) {
+            // Position the toolbar near the element (this is a simplified example)
+            // In a real implementation, you'd calculate position based on element bounds
+            contextualToolbar.style.top = 'var(--spacing-unit)'; // Example fixed position
+            contextualToolbar.style.left = '50%';
+            contextualToolbar.style.transform = 'translateX(-50%)';
+            contextualToolbar.classList.add('visible');
+            contextualToolbar.setAttribute('aria-hidden', 'false');
+        }
+
+        function hideContextualToolbar() {
+            contextualToolbar.classList.remove('visible');
+            contextualToolbar.setAttribute('aria-hidden', 'true');
+        }
+
+        function showModal(modalElement) {
+            modalElement.classList.add('visible');
+            modalElement.setAttribute('aria-hidden', 'false');
+        }
+
+        function hideModal(modalElement) {
+            modalElement.classList.remove('visible');
+            modalElement.setAttribute('aria-hidden', 'true');
+        }
+
+        // --- Core Functionality (Placeholder) ---
+
+        function addTextElement() {
+             console.log("Adding text element (placeholder)");
+             // Logic to create a new text element object
+             // Add it to an array of elements
+             // Select the new element
+             // Redraw canvas
+        }
+
+         function exportPoster() {
+            console.log("Exporting poster (placeholder)");
+            // Logic to generate image from canvas
+            // Offer download
+         }
+
+        // Add functions for adding images, shapes, undo, redo, drag, resize, rotate etc.
+        // These require a more complex canvas management system (tracking elements, drawing order, hit testing, transformations)
+    </script>
+</body>
+</html>

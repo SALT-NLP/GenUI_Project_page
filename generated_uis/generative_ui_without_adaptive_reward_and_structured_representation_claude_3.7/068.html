@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hardware Store Analytics Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007acc; /* VSCode Blue */
+            --primary-color-dark: #005f99;
+            --secondary-color: #6a6a6a; /* Muted Grey */
+            --accent-color-sales: #4CAF50; /* Green */
+            --accent-color-profit: #2196F3; /* Blue */
+            --accent-color-inventory: #FF9800; /* Orange */
+            --background-color: #f4f7f6; /* Light Grey */
+            --surface-color: #ffffff; /* White */
+            --text-color: #333; /* Dark Grey */
+            --text-color-light: #6a6a6a;
+            --border-color: #e0e0e0; /* Light Grey Border */
+            --shadow-color: rgba(0, 0, 0, 0.08);
+            --shadow-card: 0 2px 6px var(--shadow-color);
+            --shadow-header: 0 2px 4px var(--shadow-color);
+            --shadow-sidebar: 2px 0 4px var(--shadow-color);
+            --shadow-modal: 0 4px 12px var(--shadow-color);
+            --spacing-xs: 8px;
+            --spacing-sm: 16px;
+            --spacing-md: 24px;
+            --spacing-lg: 32px;
+            --border-radius: 8px;
+            --sidebar-width: 240px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr;
+            grid-template-rows: auto 1fr;
+            height: 100vh;
+            overflow: hidden; /* Prevent body scroll */
+        }
+
+        header {
+            grid-column: 1 / 3;
+            grid-row: 1;
+            background-color: var(--surface-color);
+            padding: var(--spacing-sm) var(--spacing-md);
+            box-shadow: var(--shadow-header);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        .header__logo {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .header__nav-toggle {
+            display: none; /* Hide on desktop */
+            background: none;
+            border: none;
+            font-size: 1.8em;
+            cursor: pointer;
+            color: var(--text-color);
+            padding: 0; /* Remove default button padding */
+            line-height: 1;
+        }
+
+        aside {
+            grid-column: 1;
+            grid-row: 2;
+            background-color: var(--surface-color);
+            padding: var(--spacing-md) 0;
+            box-shadow: var(--shadow-sidebar);
+            overflow-y: auto;
+            transition: transform 0.3s ease-in-out;
+            z-index: 5; /* Below header */
+        }
+
+        .sidebar__nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar__nav li {
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .sidebar__nav a {
+            display: block;
+            padding: var(--spacing-xs) var(--spacing-md);
+            color: var(--text-color-light);
+            text-decoration: none;
+            font-weight: 500;
+            transition: background-color 0.2s ease, color 0.2s ease, border-left-color 0.2s ease;
+            border-left: 4px solid transparent;
+            outline-offset: -4px; /* Keep outline inside padding */
+        }
+
+        .sidebar__nav a:hover {
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        .sidebar__nav a.is-active {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+            border-left-color: var(--accent-color-sales); /* Highlight */
+        }
+
+        main {
+            grid-column: 2;
+            grid-row: 2;
+            padding: var(--spacing-md);
+            overflow-y: auto;
+        }
+
+        .dashboard-section {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .dashboard-section__title {
+            font-size: 1.8em;
+            font-weight: 600;
+            margin-bottom: var(--spacing-md);
+            color: var(--primary-color-dark);
+        }
+
+        .metric-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .card {
+            background-color: var(--surface-color);
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-card);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card__title {
+            font-size: 1.1em;
+            font-weight: 500;
+            color: var(--text-color-light);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .card__value {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: var(--spacing-xs);
+            color: var(--text-color);
+        }
+
+        .card__trend {
+            font-size: 0.9em;
+            color: var(--accent-color-sales); /* Default trend color */
+            font-weight: 500;
+        }
+
+        .card__trend--positive {
+            color: var(--accent-color-sales);
+        }
+
+        .card__trend--negative {
+            color: #f44336; /* Red */
+        }
+
+        .chart-container {
+            background-color: var(--surface-color);
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-card);
+            margin-bottom: var(--spacing-lg);
+            position: relative;
+            min-height: 300px; /* Ensure chart has space */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-container canvas {
+            width: 100% !important;
+            height: auto !important;
+            max-height: 400px;
+            flex-grow: 1; /* Allow canvas to fill container */
+        }
+
+        .chart-controls {
+            position: absolute;
+            top: var(--spacing-sm);
+            right: var(--spacing-sm);
+            background: rgba(255, 255, 255, 0.95);
+            padding: var(--spacing-xs);
+            border-radius: var(--border-radius);
+            box-shadow: 0 1px 4px var(--shadow-color);
+            display: flex;
+            gap: var(--spacing-xs);
+            z-index: 5;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+        }
+
+        .chart-container:hover .chart-controls,
+        .chart-controls:focus-within, /* Keep controls visible when interacting */
+        .chart-controls.is-active {
+             opacity: 1;
+             visibility: visible;
+             transform: translateY(0);
+        }
+
+        .chart-controls select,
+        .chart-controls input[type="color"] {
+            padding: 4px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 0.9em;
+            cursor: pointer;
+            background-color: var(--surface-color);
+            color: var(--text-color);
+        }
+
+        .chart-controls input[type="color"] {
+             padding: 2px; /* Adjust padding for color input */
+             height: 28px; /* Match select height */
+        }
+
+
+        .data-table-container {
+            background-color: var(--surface-color);
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-card);
+            margin-bottom: var(--spacing-lg);
+            overflow-x: auto; /* Enable horizontal scrolling for tables */
+        }
+
+        .table-filters {
+            display: flex;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .table-filters label {
+            font-size: 0.9em;
+            color: var(--text-color-light);
+            margin-right: var(--spacing-xs);
+        }
+
+        .table-filters input,
+        .table-filters select {
+            padding: var(--spacing-xs);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            background-color: var(--surface-color);
+            color: var(--text-color);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: var(--spacing-xs) var(--spacing-sm);
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            background-color: var(--background-color);
+            font-weight: 600;
+            cursor: pointer;
+            position: relative;
+            padding-right: var(--spacing-md); /* Make space for sort indicator */
+        }
+
+        .data-table th:hover {
+            background-color: #e9ecef;
+        }
+
+        .data-table th .sort-indicator {
+             position: absolute;
+             right: var(--spacing-xs);
+             top: 50%;
+             transform: translateY(-50%);
+             font-size: 0.8em;
+             color: var(--text-color-light);
+             transition: color 0.2s ease;
+        }
+
+        .data-table th:hover .sort-indicator {
+             color: var(--text-color);
+        }
+
+        .data-table tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .data-table tbody tr:hover {
+            background-color: #e9ecef;
+        }
+
+        .data-upload-area {
+            background-color: var(--surface-color);
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-card);
+            margin-bottom: var(--spacing-lg);
+            border: 2px dashed var(--border-color);
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s ease, background-color 0.2s ease;
+        }
+
+        .data-upload-area:hover,
+        .data-upload-area.is-dragover {
+            border-color: var(--primary-color);
+            background-color: rgba(0, 122, 204, 0.05); /* Subtle hover effect */
+        }
+
+        .data-upload-area p {
+            margin: var(--spacing-xs) 0;
+            color: var(--text-color-light);
+        }
+
+        .data-upload-area input[type="file"] {
+            display: none;
+        }
+
+        .button {
+            display: inline-block;
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+            border: none;
+            text-align: center;
+        }
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .button--primary {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+        }
+
+        .button--primary:hover:not(:disabled) {
+            background-color: var(--primary-color-dark);
+        }
+
+        .button--secondary {
+            background-color: var(--secondary-color);
+            color: var(--surface-color);
+        }
+
+        .button--secondary:hover:not(:disabled) {
+            background-color: #5a5a5a;
+        }
+
+        .button--outline {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+
+        .button--outline:hover:not(:disabled) {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal.is-visible {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background-color: var(--surface-color);
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-modal);
+            max-width: 500px;
+            width: 90%;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.is-visible .modal-content {
+             transform: translateY(0);
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-color);
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-md);
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            background-color: var(--background-color);
+            border-radius: var(--border-radius);
+            margin-top: var(--spacing-sm);
+            overflow: hidden;
+            height: 8px;
+            display: none; /* Hidden by default */
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: var(--accent-color-sales);
+            transition: width 0.3s ease;
+        }
+
+        /* Tooltip styles */
+        [data-tooltip] {
+            position: relative;
+        }
+
+        [data-tooltip]::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--text-color);
+            color: var(--surface-color);
+            padding: var(--spacing-xs);
+            border-radius: var(--border-radius);
+            font-size: 0.8em;
+            white-space: nowrap;
+            z-index: 20;
+            margin-bottom: 5px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+            pointer-events: none; /* Allow clicks through tooltip */
+        }
+
+        [data-tooltip]:hover::after {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Accessibility: Focus states */
+        *:focus-visible {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            body {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+            }
+
+            header {
+                grid-column: 1;
+            }
+
+            .header__nav-toggle {
+                display: block;
+            }
+
+            aside {
+                grid-column: 1;
+                grid-row: 2;
+                position: fixed;
+                top: 60px; /* Adjust based on header height */
+                left: 0;
+                bottom: 0;
+                width: var(--sidebar-width);
+                transform: translateX(-100%);
+                z-index: 20;
+                padding-top: var(--spacing-sm);
+            }
+
+            aside.is-visible {
+                transform: translateX(0);
+            }
+
+            main {
+                grid-column: 1;
+                grid-row: 2;
+                padding-top: var(--spacing-sm); /* Adjust if sidebar is fixed */
+            }
+
+            .metric-cards {
+                grid-template-columns: 1fr; /* Stack cards on small screens */
+            }
+
+            .table-filters {
+                flex-direction: column;
+                gap: var(--spacing-sm);
+                align-items: stretch; /* Stretch items to fill width */
+            }
+
+            .table-filters > div { /* Wrap date inputs or similar groups */
+                 display: flex;
+                 align-items: center;
+                 gap: var(--spacing-xs);
+            }
+
+            .table-filters input,
+            .table-filters select {
+                 width: 100%; /* Make inputs/selects full width */
+            }
+
+             .table-filters label {
+                 width: auto; /* Allow label to take minimal space */
+                 margin-right: 0;
+             }
+
+
+            .chart-controls {
+                position: static; /* Position below chart on small screens */
+                margin-top: var(--spacing-sm);
+                opacity: 1;
+                visibility: visible;
+                transform: none;
+                box-shadow: none;
+                background: none;
+                padding: 0;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+             .chart-container:hover .chart-controls {
+                 opacity: 1;
+                 visibility: visible;
+                 transform: none;
+             }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header__logo">Hardware Analytics</div>
+        <button class="header__nav-toggle" aria-label="Toggle Navigation">☰</button>
+    </header>
+
+    <aside>
+        <nav class="sidebar__nav">
+            <ul>
+                <li><a href="#overview" class="is-active" aria-current="page">Dashboard Overview</a></li>
+                <li><a href="#data-upload">Data Upload</a></li>
+                <li><a href="#sales-analysis">Sales Analysis</a></li>
+                <li><a href="#inventory">Inventory Analysis</a></li>
+                <li><a href="#reporting">Reporting</a></li>
+                <li><a href="#strategy">Strategic Planning</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main>
+        <section id="overview" class="dashboard-section" role="region" aria-labelledby="overview-title">
+            <h2 id="overview-title" class="dashboard-section__title">Dashboard Overview</h2>
+            <div class="metric-cards">
+                <div class="card" role="contentinfo">
+                    <div class="card__title">Total Sales (YTD)</div>
+                    <div class="card__value">$1,250,000</div>
+                    <div class="card__trend card__trend--positive">↑ 8% vs Last Year</div>
+                </div>
+                <div class="card" role="contentinfo">
+                    <div class="card__title">Gross Profit Margin</div>
+                    <div class="card__value">35.2%</div>
+                    <div class="card__trend card__trend--positive">↑ 1.5% vs Last Year</div>
+                </div>
+                <div class="card" role="contentinfo">
+                    <div class="card__title">Inventory Turnover Rate</div>
+                    <div class="card__value">4.1x</div>
+                    <div class="card__trend card__trend--negative">↓ 0.3x vs Last Year</div>
+                </div>
+                <div class="card" role="contentinfo">
+                    <div class="card__title">Average Customer Transaction</div>
+                    <div class="card__value">$45.75</div>
+                    <div class="card__trend card__trend--positive">↑ 5% vs Last Year</div>
+                </div>
+            </div>
+
+            <div class="chart-container" role="region" aria-labelledby="sales-trend-title">
+                 <h3 id="sales-trend-title" class="card__title" style="margin-bottom: var(--spacing-sm);">Monthly Sales Trend</h3>
+                <canvas id="salesTrendChart" role="img" aria-label="Monthly Sales Trend Chart"></canvas>
+                 <div class="chart-controls" id="salesTrendChart-controls" aria-label="Sales Trend Chart Controls">
+                     <select class="chart-control" data-chart-id="salesTrendChart" data-control-type="chartType" aria-label="Chart Type">
+                         <option value="line">Line</option>
+                         <option value="bar">Bar</option>
+                         <option value="pie">Pie</option>
+                     </select>
+                     <input type="color" class="chart-control" data-chart-id="salesTrendChart" data-control-type="color" data-dataset-index="0" value="#007acc" data-tooltip="Line/Bar Color" aria-label="Chart Color Picker">
+                 </div>
+            </div>
+
+             <div class="chart-container" role="region" aria-labelledby="profit-by-dept-title">
+                 <h3 id="profit-by-dept-title" class="card__title" style="margin-bottom: var(--spacing-sm);">Profitability by Department</h3>
+                <canvas id="profitByDeptChart" role="img" aria-label="Profitability by Department Chart"></canvas>
+                 <div class="chart-controls" id="profitByDeptChart-controls" aria-label="Profit by Department Chart Controls">
+                     <select class="chart-control" data-chart-id="profitByDeptChart" data-control-type="chartType" aria-label="Chart Type">
+                         <option value="bar">Bar</option>
+                         <option value="line">Line</option>
+                         <option value="pie">Pie</option>
+                     </select>
+                     <input type="color" class="chart-control" data-chart-id="profitByDeptChart" data-control-type="color" data-dataset-index="0" value="#2196F3" data-tooltip="Bar/Line Color" aria-label="Chart Color Picker">
+                 </div>
+            </div>
+        </section>
+
+         <section id="data-upload" class="dashboard-section" role="region" aria-labelledby="data-upload-title">
+            <h2 id="data-upload-title" class="dashboard-section__title">Data Upload</h2>
+            <div class="data-upload-area" id="drop-zone" role="group" aria-labelledby="data-upload-title">
+                <p>Drag & drop your CSV/Excel POS data here</p>
+                <p>or</p>
+                <input type="file" id="file-input" accept=".csv, .xls, .xlsx" aria-label="Upload POS data file">
+                <label for="file-input" class="button button--primary" role="button" tabindex="0">Browse Files</label>
+                 <div class="progress-bar-container" id="upload-progress-container" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                     <div class="progress-bar" id="upload-progress"></div>
+                 </div>
+                 <p id="upload-status" style="margin-top: var(--spacing-xs); font-size: 0.9em;" aria-live="polite"></p>
+            </div>
+        </section>
+
+        <section id="sales-analysis" class="dashboard-section" role="region" aria-labelledby="sales-analysis-title">
+            <h2 id="sales-analysis-title" class="dashboard-section__title">Sales Analysis</h2>
+             <div class="table-filters" role="group" aria-label="Sales Table Filters">
+                 <div>
+                     <label for="sale-filter-product">Product:</label>
+                     <input type="text" id="sale-filter-product" placeholder="Filter by Product Name" aria-label="Filter sales by product name">
+                 </div>
+                 <div>
+                     <label for="sale-filter-department">Department:</label>
+                     <select id="sale-filter-department" aria-label="Filter sales by department">
+                         <option value="">All Departments</option>
+                         <option value="Plumbing">Plumbing</option>
+                         <option value="Electrical">Electrical</option>
+                         <option value="Hardware">Hardware</option>
+                         <option value="Tools">Tools</option>
+                          <option value="Paint">Paint</option>
+                     </select>
+                 </div>
+                 <div>
+                      <label for="sale-filter-date-start">Date Range:</label>
+                      <input type="date" id="sale-filter-date-start" aria-label="Sales start date filter">
+                      <span>to</span>
+                      <input type="date" id="sale-filter-date-end" aria-label="Sales end date filter">
+                 </div>
+             </div>
+            <div class="data-table-container">
+                <table class="data-table" id="sales-table" role="table" aria-label="Sales Transactions Data">
+                    <thead>
+                        <tr>
+                            <th data-sort="date" scope="col" aria-sort="none">Date <span class="sort-indicator"></span></th>
+                            <th data-sort="transaction_id" scope="col" aria-sort="none">Transaction ID <span class="sort-indicator"></span></th>
+                            <th data-sort="product" scope="col" aria-sort="none">Product <span class="sort-indicator"></span></th>
+                            <th data-sort="department" scope="col" aria-sort="none">Department <span class="sort-indicator"></span></th>
+                            <th data-sort="quantity" scope="col" aria-sort="none">Quantity <span class="sort-indicator"></span></th>
+                            <th data-sort="price" scope="col" aria-sort="none">Price <span class="sort-indicator"></span></th>
+                            <th data-sort="total" scope="col" aria-sort="none">Total <span class="sort-indicator"></span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data rows will be inserted here by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+         <section id="inventory" class="dashboard-section" role="region" aria-labelledby="inventory-analysis-title">
+            <h2 id="inventory-analysis-title" class="dashboard-section__title">Inventory Analysis</h2>
+             <div class="table-filters" role="group" aria-label="Inventory Table Filters">
+                 <div>
+                     <label for="inventory-filter-sku">SKU/Name:</label>
+                     <input type="text" id="inventory-filter-sku" placeholder="Filter by SKU or Name" aria-label="Filter inventory by SKU or name">
+                 </div>
+                 <div>
+                     <label for="inventory-filter-department">Department:</label>
+                     <select id="inventory-filter-department" aria-label="Filter inventory by department">
+                         <option value="">All Departments</option>
+                         <option value="Plumbing">Plumbing</option>
+                         <option value="Electrical">Electrical</option>
+                         <option value="Hardware">Hardware</option>
+                         <option value="Tools">Tools</option>
+                          <option value="Paint">Paint</option>
+                     </select>
+                 </div>
+                 <div>
+                      <label for="inventory-filter-stock">Stock Level:</label>
+                      <select id="inventory-filter-stock" aria-label="Filter inventory by stock level">
+                         <option value="">All Stock Levels</option>
+                         <option value="low">Low Stock (< 10)</option>
+                         <option value="ok">OK Stock (10-50)</option>
+                         <option value="high">High Stock (> 50)</option>
+                     </select>
+                 </div>
+             </div>
+            <div class="data-table-container">
+                <table class="data-table" id="inventory-table" role="table" aria-label="Inventory Levels Data">
+                     <thead>
+                        <tr>
+                            <th data-sort="sku" scope="col" aria-sort="none">SKU <span class="sort-indicator"></span></th>
+                            <th data-sort="name" scope="col" aria-sort="none">Product Name <span class="sort-indicator"></span></th>
+                            <th data-sort="department" scope="col" aria-sort="none">Department <span class="sort-indicator"></span></th>
+                            <th data-sort="stock" scope="col" aria-sort="none">Current Stock <span class="sort-indicator"></span></th>
+                            <th data-sort="cost" scope="col" aria-sort="none">Unit Cost <span class="sort-indicator"></span></th>
+                            <th data-sort="price" scope="col" aria-sort="none">Unit Price <span class="sort-indicator"></span></th>
+                            <th data-sort="turnover" scope="col" aria-sort="none">Turnover Rate <span class="sort-indicator"></span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data rows will be inserted here by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="reporting" class="dashboard-section" role="region" aria-labelledby="reporting-title">
+            <h2 id="reporting-title" class="dashboard-section__title">Reporting & Export</h2>
+            <p>Generate custom reports based on your data.</p>
+            <button class="button button--primary" id="open-report-modal" aria-haspopup="dialog">Generate Report</button>
+        </section>
+
+        <section id="strategy" class="dashboard-section" role="region" aria-labelledby="strategy-title">
+            <h2 id="strategy-title" class="dashboard-section__title">Strategic Planning & Insights</h2>
+            <p>Use the data analysis above to inform your strategy for modernization and growth.</p>
+            <ul>
+                <li>Identify high-profit departments for potential expansion or marketing focus.</li>
+                <li>Analyze low-turnover inventory to consider clearance sales or reducing stock levels.</li>
+                <li>Examine sales trends to understand seasonality and plan inventory/staffing.</li>
+                <li>Use transaction data to identify popular product bundles or customer purchase patterns.</li>
+                <li>Consider e-commerce integration based on sales data and customer demographics (if available).</li>
+            </ul>
+             <p>Use the area below for your notes and strategic actions based on the data:</p>
+             <textarea style="width: 100%; min-height: 200px; padding: var(--spacing-sm); border: 1px solid var(--border-color); border-radius: var(--border-radius); font-family: 'Inter', sans-serif; resize: vertical;" aria-label="Strategic planning notes"></textarea>
+        </section>
+    </main>
+
+    <!-- Report Modal -->
+    <div id="report-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-hidden="true">
+        <div class="modal-content">
+            <h3 id="modal-title">Generate Report</h3>
+            <p>Select report options:</p>
+            <div style="margin-bottom: var(--spacing-sm);">
+                <label for="report-type">Report Type:</label>
+                <select id="report-type" style="margin-left: var(--spacing-xs); padding: var(--spacing-xs); border-radius: var(--border-radius); border: 1px solid var(--border-color); background-color: var(--surface-color); color: var(--text-color);" aria-label="Select report type">
+                    <option value="sales-summary">Sales Summary</option>
+                    <option value="inventory-summary">Inventory Summary</option>
+                    <option value="profitability-by-dept">Profitability by Department</option>
+                </select>
+            </div>
+             <div>
+                 <label for="report-date-start">Date Range:</label>
+                 <input type="date" id="report-date-start" style="margin-left: var(--spacing-xs); padding: var(--spacing-xs); border-radius: var(--border-radius); border: 1px solid var(--border-color); background-color: var(--surface-color); color: var(--text-color);" aria-label="Report start date">
+                 <span>to</span>
+                 <input type="date" id="report-date-end" style="padding: var(--spacing-xs); border-radius: var(--border-radius); border: 1px solid var(--border-color); background-color: var(--surface-color); color: var(--text-color);" aria-label="Report end date">
+             </div>
+            <div class="modal-actions">
+                <button class="button button--secondary" id="close-report-modal">Cancel</button>
+                <button class="button button--primary" id="generate-report-button">Generate & Export</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        // --- Data Simulation (Replace with actual data loading) ---
+        // Extended dummy data for better filtering/sorting examples
+        const salesData = [
+            { date: '2023-01-15', transaction_id: 'TXN001', product: 'Hammer', department: 'Tools', quantity: 2, price: 15.00, total: 30.00 },
+            { date: '2023-01-15', transaction_id: 'TXN001', product: 'Nails (box)', department: 'Hardware', quantity: 1, price: 5.50, total: 5.50 },
+            { date: '2023-01-16', transaction_id: 'TXN002', product: 'PVC Pipe (10ft)', department: 'Plumbing', quantity: 3, price: 8.00, total: 24.00 },
+            { date: '2023-01-16', transaction_id: 'TXN003', product: 'Light Bulb (LED)', department: 'Electrical', quantity: 10, price: 3.00, total: 30.00 },
+            { date: '2023-02-01', transaction_id: 'TXN004', product: 'Paint Can (White)', department: 'Paint', quantity: 1, price: 40.00, total: 40.00 },
+            { date: '2023-02-01', transaction_id: 'TXN004', product: 'Paint Brush', department: 'Paint', quantity: 2, price: 7.00, total: 14.00 },
+            { date: '2023-03-10', transaction_id: 'TXN005', product: 'Wrench Set', department: 'Tools', quantity: 1, price: 55.00, total: 55.00 },
+            { date: '2023-04-05', transaction_id: 'TXN006', product: 'Screws (box)', department: 'Hardware', quantity: 3, price: 6.00, total: 18.00 },
+            { date: '2023-05-20', transaction_id: 'TXN007', product: 'Copper Fitting', department: 'Plumbing', quantity: 5, price: 4.50, total: 22.50 },
+            { date: '2023-06-18', transaction_id: 'TXN008', product: 'Outlet Cover', department: 'Electrical', quantity: 8, price: 2.00, total: 16.00 },
+            { date: '2023-07-22', transaction_id: 'TXN009', product: 'Wood Stain', department: 'Paint', quantity: 1, price: 30.00, total: 30.00 },
+            { date: '2023-08-14', transaction_id: 'TXN010', product: 'Measuring Tape', department: 'Tools', quantity: 1, price: 12.00, total: 12.00 },
+            { date: '2023-08-15', transaction_id: 'TXN011', product: 'Hammer', department: 'Tools', quantity: 1, price: 15.00, total: 15.00 },
+            { date: '2023-09-01', transaction_id: 'TXN012', product: 'PVC Elbow', department: 'Plumbing', quantity: 10, price: 2.50, total: 25.00 },
+            { date: '2023-10-10', transaction_id: 'TXN013', product: 'Wire Stripper', department: 'Electrical', quantity: 1, price: 25.00, total: 25.00 },
+            { date: '2023-11-05', transaction_id: 'TXN014', product: 'Drywall Screw (box)', department: 'Hardware', quantity: 5, price: 7.00, total: 35.00 },
+            { date: '2023-12-01', transaction_id: 'TXN015', product: 'Roller Brush', department: 'Paint', quantity: 3, price: 10.00, total: 30.00 },
+        ];
+
+        const inventoryData = [
+            { sku: 'SKU101', name: 'Hammer', department: 'Tools', stock: 25, cost: 8.00, price: 15.00, turnover: 6.5 },
+            { sku: 'SKU102', name: 'Screwdriver Set', department: 'Tools', stock: 15, cost: 10.00, price: 20.00, turnover: 4.0 },
+            { sku: 'SKU103', name: 'Measuring Tape', department: 'Tools', stock: 35, cost: 7.00, price: 12.00, turnover: 8.0 },
+            { sku: 'SKU201', name: 'Nails (box)', department: 'Hardware', stock: 50, cost: 2.00, price: 5.50, turnover: 10.2 },
+            { sku: 'SKU202', name: 'Bolts (assorted)', department: 'Hardware', stock: 30, cost: 3.00, price: 7.00, turnover: 7.8 },
+            { sku: 'SKU203', name: 'Drywall Screw (box)', department: 'Hardware', stock: 8, cost: 4.00, price: 7.00, turnover: 3.5 }, /* Low Stock */
+            { sku: 'SKU301', name: 'PVC Pipe (10ft)', department: 'Plumbing', stock: 10, cost: 5.00, price: 8.00, turnover: 3.1 }, /* Low Stock */
+            { sku: 'SKU302', name: 'Copper Fitting', department: 'Plumbing', stock: 8, cost: 3.00, price: 4.50, turnover: 2.5 }, /* Low Stock */
+            { sku: 'SKU303', name: 'PVC Elbow', department: 'Plumbing', stock: 60, cost: 1.00, price: 2.50, turnover: 15.0 }, /* High Stock */
+            { sku: 'SKU401', name: 'Light Bulb (LED)', department: 'Electrical', stock: 120, cost: 1.50, price: 3.00, turnover: 15.0 }, /* High Stock */
+            { sku: 'SKU402', name: 'Outlet Cover', department: 'Electrical', stock: 80, cost: 1.00, price: 2.00, turnover: 12.0 }, /* High Stock */
+            { sku: 'SKU403', name: 'Wire Stripper', department: 'Electrical', stock: 12, cost: 15.00, price: 25.00, turnover: 4.0 }, /* OK Stock */
+            { sku: 'SKU501', name: 'Paint Can (White)', department: 'Paint', stock: 18, cost: 25.00, price: 40.00, turnover: 5.0 },
+            { sku: 'SKU502', name: 'Paint Brush', department: 'Paint', stock: 40, cost: 4.00, price: 7.00, turnover: 8.5 },
+            { sku: 'SKU503', name: 'Roller Brush', department: 'Paint', stock: 22, cost: 6.00, price: 10.00, turnover: 6.0 }, /* OK Stock */
+        ];
+
+        let currentSalesData = [...salesData]; // Data currently displayed/filtered in the table
+        let currentInventoryData = [...inventoryData]; // Data currently displayed/filtered in the table
+
+        // --- DOM Elements ---
+        const navToggle = document.querySelector('.header__nav-toggle');
+        const sidebar = document.querySelector('aside');
+        const navLinks = document.querySelectorAll('.sidebar__nav a');
+        const sections = document.querySelectorAll('main section');
+
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const uploadProgressContainer = document.getElementById('upload-progress-container');
+        const uploadProgressBar = document.getElementById('upload-progress');
+        const uploadStatus = document.getElementById('upload-status');
+
+        const salesTableBody = document.querySelector('#sales-table tbody');
+        const salesTableHeaders = document.querySelectorAll('#sales-table th');
+        const salesFilterProduct = document.getElementById('sale-filter-product');
+        const salesFilterDepartment = document.getElementById('sale-filter-department');
+        const salesFilterDateStart = document.getElementById('sale-filter-date-start');
+        const salesFilterDateEnd = document.getElementById('sale-filter-date-end');
+
+        const inventoryTableBody = document.querySelector('#inventory-table tbody');
+        const inventoryTableHeaders = document.querySelectorAll('#inventory-table th');
+        const inventoryFilterSku = document.getElementById('inventory-filter-sku');
+        const inventoryFilterDepartment = document.getElementById('inventory-filter-department');
+        const inventoryFilterStock = document.getElementById('inventory-filter-stock');
+
+        const reportModal = document.getElementById('report-modal');
+        const openReportModalButton = document.getElementById('open-report-modal');
+        const closeReportModalButton = document.getElementById('close-report-modal');
+        const generateReportButton = document.getElementById('generate-report-button');
+        const reportTypeSelect = document.getElementById('report-type');
+        const reportDateStartInput = document.getElementById('report-date-start');
+        const reportDateEndInput = document.getElementById('report-date-end');
+
+
+        // --- Navigation & Section Switching ---
+        navToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('is-visible');
+        });
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = link.getAttribute('href').substring(1);
+
+                // Update active link
+                navLinks.forEach(nav => {
+                    nav.classList.remove('is-active');
+                    nav.removeAttribute('aria-current');
+                });
+                link.classList.add('is-active');
+                link.setAttribute('aria-current', 'page');
+
+                // Show/hide sections
+                sections.forEach(section => {
+                    if (section.id === targetId) {
+                        section.style.display = 'block';
+                        section.setAttribute('aria-hidden', 'false');
+                         // Trigger chart redraw if needed
+                         if (section.id === 'overview') {
+                             // Use requestAnimationFrame to ensure section is visible before resize
+                             requestAnimationFrame(() => {
+                                 if (salesTrendChart) salesTrendChart.resize();
+                                 if (profitByDeptChart) profitByDeptChart.resize();
+                             });
+                         }
+                    } else {
+                        section.style.display = 'none';
+                        section.setAttribute('aria-hidden', 'true');
+                    }
+                });
+
+                // Hide sidebar on mobile after selection
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.remove('is-visible');
+                }
+            });
+        });
+
+         // Initially hide all sections except overview
+         document.addEventListener('DOMContentLoaded', () => {
+             sections.forEach(section => {
+                 section.style.display = 'none';
+                 section.setAttribute('aria-hidden', 'true');
+             });
+
+             const initialSectionId = window.location.hash ? window.location.hash.substring(1) : 'overview';
+             const initialLink = document.querySelector(`.sidebar__nav a[href="#${initialSectionId}"]`);
+
+             if (initialLink) {
+                 initialLink.click(); // Use click to trigger the section display logic
+             } else {
+                 // Default to overview if hash is invalid
+                 document.querySelector('.sidebar__nav a[href="#overview"]').click();
+             }
+         });
+
+
+        // --- Data Upload Functionality ---
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('is-dragover');
+            uploadStatus.textContent = 'Drop file here...';
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('is-dragover');
+            uploadStatus.textContent = 'Drag & drop your CSV/Excel POS data here';
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('is-dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileUpload(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const files = e.target.files;
+            if (files.length > 0) {
+                handleFileUpload(files[0]);
+            }
+        });
+
+        function handleFileUpload(file) {
+             if (!file) return;
+
+            uploadStatus.textContent = `Uploading "${file.name}"...`;
+            uploadProgressContainer.style.display = 'block';
+            uploadProgressBar.style.width = '0%';
+            uploadProgressContainer.setAttribute('aria-valuenow', '0');
+
+            // Simulate upload progress
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 10;
+                if (progress > 100) progress = 100; // Cap at 100
+                uploadProgressBar.style.width = `${progress}%`;
+                uploadProgressContainer.setAttribute('aria-valuenow', progress);
+
+                if (progress === 100) {
+                    clearInterval(interval);
+                    uploadStatus.textContent = `"${file.name}" uploaded successfully! (Simulated)`;
+                    // In a real app, you would parse the file here and process data
+                    console.log('Simulated file upload:', file);
+                    // After successful upload and processing, potentially update dashboard data
+                    // updateDashboard(parsedData);
+                     setTimeout(() => {
+                         uploadProgressContainer.style.display = 'none';
+                         uploadStatus.textContent = 'Drag & drop your CSV/Excel POS data here'; // Reset status
+                     }, 2000); // Hide progress after a delay
+                }
+            }, 100);
+        }
+
+        // --- Chart Initialization and Updates ---
+        let salesTrendChart;
+        let profitByDeptChart;
+
+        function createSalesTrendChart() {
+             const ctx = document.getElementById('salesTrendChart').getContext('2d');
+             // Aggregate sales data by month for the chart
+             const monthlySales = salesData.reduce((acc, sale) => {
+                 const month = sale.date.substring(0, 7); // YYYY-MM
+                 acc[month] = (acc[month] || 0) + sale.total;
+                 return acc;
+             }, {});
+
+             const sortedMonths = Object.keys(monthlySales).sort();
+             const salesValues = sortedMonths.map(month => monthlySales[month]);
+
+             if (salesTrendChart) salesTrendChart.destroy(); // Destroy existing chart if any
+
+             salesTrendChart = new Chart(ctx, {
+                 type: 'line',
+                 data: {
+                     labels: sortedMonths,
+                     datasets: [{
+                         label: 'Monthly Sales ($)',
+                         data: salesValues,
+                         backgroundColor: "var(--primary-color)",
+                         borderColor: "var(--primary-color-dark)",
+                         borderWidth: 2,
+                         fill: false,
+                         tension: 0.1
+                     }]
+                 },
+                 options: {
+                     responsive: true,
+                     maintainAspectRatio: false,
+                     plugins: {
+                         legend: { display: true },
+                         tooltip: { mode: 'index', intersect: false }
+                     },
+                     scales: {
+                         y: { beginAtZero: true, title: { display: true, text: 'Sales ($)' } },
+                         x: { title: { display: true, text: 'Month' } }
+                     }
+                 }
+             });
+        }
+
+         function createProfitByDeptChart() {
+             const ctx = document.getElementById('profitByDeptChart').getContext('2d');
+             // Simulate profit margin per department (replace with actual calculation)
+             // Using average price/cost from inventory data for a slightly more realistic simulation
+             const deptProfitMargins = inventoryData.reduce((acc, item) => {
+                 if (!acc[item.department]) {
+                     acc[item.department] = { totalProfit: 0, totalRevenue: 0 };
+                 }
+                 // Simulate some sales volume for calculation
+                 const simulatedSales = item.turnover * item.stock * 0.5; // Rough estimate
+                 acc[item.department].totalProfit += simulatedSales * (item.price - item.cost);
+                 acc[item.department].totalRevenue += simulatedSales * item.price;
+                 return acc;
+             }, {});
+
+             const departments = Object.keys(deptProfitMargins);
+             const profitMargins = departments.map(dept => {
+                 const { totalProfit, totalRevenue } = deptProfitMargins[dept];
+                 return totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+             });
+
+             if (profitByDeptChart) profitByDeptChart.destroy(); // Destroy existing chart if any
+
+             profitByDeptChart = new Chart(ctx, {
+                 type: 'bar',
+                 data: {
+                     labels: departments,
+                     datasets: [{
+                         label: 'Profit Margin (%)',
+                         data: profitMargins,
+                         backgroundColor: departments.map((_, i) => `hsl(${i * 60}, 70%, 60%)`), // Use HSL for varied colors
+                         borderColor: departments.map((_, i) => `hsl(${i * 60}, 70%, 50%)`),
+                         borderWidth: 1
+                     }]
+                 },
+                 options: {
+                     responsive: true,
+                     maintainAspectRatio: false,
+                     plugins: {
+                         legend: { display: false },
+                         tooltip: { callbacks: { label: function(context) { return `${context.label}: ${context.raw.toFixed(1)}%`; } } }
+                     },
+                     scales: {
+                         y: { beginAtZero: true, title: { display: true, text: 'Profit Margin (%)' }, max: 100 },
+                         x: { title: { display: true, text: 'Department' } }
+                     }
+                 }
+             });
+         }
+
+        // Initialize charts when the overview section is likely visible
+        // Use a small delay to ensure canvas is rendered and sized correctly
+        requestAnimationFrame(() => {
+            createSalesTrendChart();
+            createProfitByDeptChart();
+        });
+
+
+        // --- Chart Controls Functionality ---
+        document.querySelectorAll('.chart-control').forEach(control => {
+            control.addEventListener('change', (e) => {
+                const chartId = e.target.dataset.chartId;
+                const controlType = e.target.dataset.controlType;
+                const datasetIndex = e.target.dataset.datasetIndex ? parseInt(e.target.dataset.datasetIndex) : 0;
+                let chart;
+
+                if (chartId === 'salesTrendChart') chart = salesTrendChart;
+                else if (chartId === 'profitByDeptChart') chart = profitByDeptChart;
+                else return;
+
+                if (!chart) return;
+
+                switch (controlType) {
+                    case 'chartType':
+                        // Chart.js requires recreating the chart instance to change type significantly
+                        const oldData = chart.data;
+                        const oldOptions = chart.options;
+                        const oldType = chart.config.type;
+                        const newType = e.target.value;
+
+                        if (oldType !== newType) {
+                            chart.destroy();
+                            const ctx = document.getElementById(chartId).getContext('2d');
+                            const newChartConfig = {
+                                type: newType,
+                                data: oldData,
+                                options: oldOptions
+                            };
+
+                             // Adjust options slightly based on new type if needed (e.g. legend for pie)
+                             if (newType === 'pie' || newType === 'doughnut') {
+                                 newChartConfig.options.plugins.legend = { display: true, position: 'right' };
+                                 newChartConfig.options.scales = {}; // Pie charts don't have scales
+                                 // For pie charts, background color should be an array for each slice
+                                 if (!Array.isArray(oldData.datasets[datasetIndex].backgroundColor)) {
+                                      newChartConfig.data.datasets[datasetIndex].backgroundColor = oldData.labels.map((_, i) => `hsl(${i * 60}, 70%, 60%)`);
+                                 }
+                             } else {
+                                  newChartConfig.options.plugins.legend = { display: true }; // Or false if preferred
+                                  // Restore scales if they were removed for pie
+                                   if (!newChartConfig.options.scales.y) {
+                                       newChartConfig.options.scales = {
+                                            y: { beginAtZero: true, title: { display: true, text: newChartConfig.options.scales?.y?.title?.text || '' } },
+                                            x: { title: { display: true, text: newChartConfig.options.scales?.x?.title?.text || '' } }
+                                       };
+                                   }
+                                  // Ensure background color is not an array for line/bar if it was for pie
+                                   if (Array.isArray(oldData.datasets[datasetIndex].backgroundColor)) {
+                                       newChartConfig.data.datasets[datasetIndex].backgroundColor = oldData.datasets[datasetIndex].backgroundColor[0] || "var('--primary-color')"; // Use first color or default
+                                   }
+                             }
+
+
+                            if (chartId === 'salesTrendChart') salesTrendChart = new Chart(ctx, newChartConfig);
+                            else if (chartId === 'profitByDeptChart') profitByDeptChart = new Chart(ctx, newChartConfig);
+
+                        }
+                        break;
+                    case 'color':
+                        const newColor = e.target.value;
+                        if (chart.config.type === 'bar' || chart.config.type === 'line') {
+                             // For bar/line charts, update dataset color
+                            chart.data.datasets[datasetIndex].backgroundColor = newColor;
+                            chart.data.datasets[datasetIndex].borderColor = newColor; // Or a darker shade
+                        } else if (chart.config.type === 'pie' || chart.config.type === 'doughnut') {
+                            // For pie charts, update all slice colors (simple approach: cycle through colors)
+                            const baseHue = parseInt(newColor.substring(1, 3), 16) / 255 * 360; // Rough conversion to get a starting hue
+                            chart.data.datasets[datasetIndex].backgroundColor = chart.data.labels.map((_, i) => {
+                                const hue = (baseHue + (i * 60)) % 360; // Cycle hue
+                                return `hsl(${hue}, 70%, 60%)`;
+                            });
+                             chart.data.datasets[datasetIndex].borderColor = chart.data.labels.map((_, i) => {
+                                const hue = (baseHue + (i * 60)) % 360; // Cycle hue
+                                return `hsl(${hue}, 70%, 50%)`; // Darker border
+                            });
+                        }
+                        chart.update();
+                        break;
+                    // Add more control types here (e.g., data filters, date ranges)
+                }
+            });
+        });
+
+
+        // --- Data Table Functionality (Sales & Inventory) ---
+
+        function renderTable(tableBody, data, columns) {
+            tableBody.innerHTML = ''; // Clear existing rows
+            if (!data || data.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="${columns.length}" style="text-align: center;">No data available.</td></tr>`;
+                return;
+            }
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                columns.forEach(col => {
+                    const td = document.createElement('td');
+                    let value = item[col.key];
+                    if (col.format) {
+                        value = col.format(value);
+                    } else if (value === undefined || value === null) {
+                         value = ''; // Handle missing data gracefully
+                    }
+                    td.textContent = value;
+                    row.appendChild(td);
+                });
+                tableBody.appendChild(row);
+            });
+        }
+
+        const salesTableColumns = [
+            { key: 'date', format: (val) => val ? new Date(val).toLocaleDateString() : '' },
+            { key: 'transaction_id' },
+            { key: 'product' },
+            { key: 'department' },
+            { key: 'quantity' },
+            { key: 'price', format: (val) => val !== undefined ? `$${val.toFixed(2)}` : '' },
+            { key: 'total', format: (val) => val !== undefined ? `$${val.toFixed(2)}` : '' }
+        ];
+
+        const inventoryTableColumns = [
+             { key: 'sku' },
+             { key: 'name' },
+             { key: 'department' },
+             { key: 'stock' },
+             { key: 'cost', format: (val) => val !== undefined ? `$${val.toFixed(2)}` : '' },
+             { key: 'price', format: (val) => val !== undefined ? `$${val.toFixed(2)}` : '' },
+             { key: 'turnover', format: (val) => val !== undefined ? val.toFixed(1) : '' }
+        ];
+
+
+        // Initial render of tables
+        renderTable(salesTableBody, currentSalesData, salesTableColumns);
+        renderTable(inventoryTableBody, currentInventoryData, inventoryTableColumns);
+
+        // Table Sorting
+        function setupTableSorting(tableHeaders, data, renderFn, columns) {
+            tableHeaders.forEach(header => {
+                const key = header.dataset.sort;
+                if (key) {
+                    header.addEventListener('click', () => {
+                        const currentSortOrder = header.classList.contains('sort-asc') ? 'asc' : (header.classList.contains('sort-desc') ? 'desc' : 'none');
+                        let newSortOrder = 'asc';
+                        if (currentSortOrder === 'asc') newSortOrder = 'desc';
+                        else if (currentSortOrder === 'desc') newSortOrder = 'none'; // Cycle: none -> asc -> desc -> none
+
+                        // Remove sort classes and indicators from all headers in this table
+                        tableHeaders.forEach(h => {
+                            h.classList.remove('sort-asc', 'sort-desc');
+                            h.setAttribute('aria-sort', 'none');
+                            const indicator = h.querySelector('.sort-indicator');
+                            if (indicator) indicator.textContent = '';
+                        });
+
+                        let sortedData = [...data]; // Sort a copy
+
+                        if (newSortOrder !== 'none') {
+                            header.classList.add(`sort-${newSortOrder}`);
+                            header.setAttribute('aria-sort', newSortOrder);
+                             const indicator = header.querySelector('.sort-indicator');
+                             if (indicator) indicator.textContent = newSortOrder === 'asc' ? ' ▲' : ' ▼';
+
+                            sortedData.sort((a, b) => {
+                                const valA = a[key];
+                                const valB = b[key];
+
+                                // Handle null/undefined values
+                                if (valA == null && valB == null) return 0;
+                                if (valA == null) return newSortOrder === 'asc' ? -1 : 1;
+                                if (valB == null) return newSortOrder === 'asc' ? 1 : -1;
+
+
+                                if (typeof valA === 'string') {
+                                    return newSortOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                                } else if (typeof valA === 'number') {
+                                    return newSortOrder === 'asc' ? valA - valB : valB - valA;
+                                } else if (valA instanceof Date) {
+                                     const timeA = valA.getTime();
+                                     const timeB = valB.getTime();
+                                     return newSortOrder === 'asc' ? timeA - timeB : timeB - timeA;
+                                }
+                                return 0; // No sorting for other types
+                            });
+                        } else {
+                             // If sorting is removed, re-apply current filters to get the default filtered order
+                             if (tableBody === salesTableBody) applySalesFilters();
+                             else if (tableBody === inventoryTableBody) applyInventoryFilters();
+                             return; // Exit early as renderTable is called in applyFilters
+                        }
+
+
+                        renderFn(sortedData, columns); // Re-render the table with sorted data
+                    });
+                }
+            });
+        }
+
+        setupTableSorting(salesTableHeaders, currentSalesData, renderTable.bind(null, salesTableBody), salesTableColumns);
+        setupTableSorting(inventoryTableHeaders, currentInventoryData, renderTable.bind(null, inventoryTableBody), inventoryTableColumns);
+
+
+        // Table Filtering
+        function applySalesFilters() {
+            const productTerm = salesFilterProduct.value.toLowerCase().trim();
+            const department = salesFilterDepartment.value;
+            const startDate = salesFilterDateStart.value ? new Date(salesFilterDateStart.value) : null;
+            const endDate = salesFilterDateEnd.value ? new Date(salesFilterDateEnd.value) : null;
+
+            // Filter based on the original salesData, not the current filtered/sorted view
+            const filteredData = salesData.filter(sale => {
+                const saleDate = sale.date ? new Date(sale.date) : null;
+                const matchesProduct = !productTerm || (sale.product && sale.product.toLowerCase().includes(productTerm));
+                const matchesDepartment = !department || (sale.department && sale.department === department);
+                const matchesDate = (!startDate || (saleDate && saleDate >= startDate)) && (!endDate || (saleDate && saleDate <= endDate));
+                return matchesProduct && matchesDepartment && matchesDate;
+            });
+
+            currentSalesData = filteredData; // Update the data source for sorting/rendering
+            renderTable(salesTableBody, currentSalesData, salesTableColumns);
+             // Reset sorting indicators after filtering
+             salesTableHeaders.forEach(h => {
+                 h.classList.remove('sort-asc', 'sort-desc');
+                 h.setAttribute('aria-sort', 'none');
+                 const indicator = h.querySelector('.sort-indicator');
+                 if (indicator) indicator.textContent = '';
+             });
+        }
+
+        function applyInventoryFilters() {
+             const skuTerm = inventoryFilterSku.value.toLowerCase().trim();
+             const department = inventoryFilterDepartment.value;
+             const stockLevel = inventoryFilterStock.value;
+
+             // Filter based on the original inventoryData
+             const filteredData = inventoryData.filter(item => {
+                 const matchesSkuName = !skuTerm || (item.sku && item.sku.toLowerCase().includes(skuTerm)) || (item.name && item.name.toLowerCase().includes(skuTerm));
+                 const matchesDepartment = !department || (item.department && item.department === department);
+                 let matchesStock = true;
+                 if (stockLevel === 'low') matchesStock = item.stock !== undefined && item.stock !== null && item.stock < 10;
+                 else if (stockLevel === 'ok') matchesStock = item.stock !== undefined && item.stock !== null && item.stock >= 10 && item.stock <= 50;
+                 else if (stockLevel === 'high') matchesStock = item.stock !== undefined && item.stock !== null && item.stock > 50;
+
+                 return matchesSkuName && matchesDepartment && matchesStock;
+             });
+
+             currentInventoryData = filteredData; // Update the data source for sorting/rendering
+             renderTable(inventoryTableBody, currentInventoryData, inventoryTableColumns);
+              // Reset sorting indicators after filtering
+             inventoryTableHeaders.forEach(h => {
+                 h.classList.remove('sort-asc', 'sort-desc');
+                  h.setAttribute('aria-sort', 'none');
+                 const indicator = h.querySelector('.sort-indicator');
+                 if (indicator) indicator.textContent = '';
+             });
+        }
+
+
+        salesFilterProduct.addEventListener('input', applySalesFilters);
+        salesFilterDepartment.addEventListener('change', applySalesFilters);
+        salesFilterDateStart.addEventListener('change', applySalesFilters);
+        salesFilterDateEnd.addEventListener('change', applySalesFilters);
+
+        inventoryFilterSku.addEventListener('input', applyInventoryFilters);
+        inventoryFilterDepartment.addEventListener('change', applyInventoryFilters);
+        inventoryFilterStock.addEventListener('change', applyInventoryFilters);
+
+
+        // --- Modal Functionality ---
+        openReportModalButton.addEventListener('click', () => {
+            reportModal.classList.add('is-visible');
+            reportModal.setAttribute('aria-hidden', 'false');
+             // Set focus to the first interactive element in the modal
+             reportTypeSelect.focus();
+        });
+
+        closeReportModalButton.addEventListener('click', () => {
+            reportModal.classList.remove('is-visible');
+            reportModal.setAttribute('aria-hidden', 'true');
+             // Return focus to the button that opened the modal
+             openReportModalButton.focus();
+        });
+
+        reportModal.addEventListener('click', (e) => {
+            // Close modal if clicking outside the content
+            if (e.target === reportModal) {
+                reportModal.classList.remove('is-visible');
+                reportModal.setAttribute('aria-hidden', 'true');
+                 openReportModalButton.focus();
+            }
+        });
+
+        generateReportButton.addEventListener('click', () => {
+            const reportType = reportTypeSelect.value;
+            const startDate = reportDateStartInput.value;
+            const endDate = reportDateEndInput.value;
+
+            console.log(`Generating report: ${reportType} from ${startDate || 'start'} to ${endDate || 'end'}`);
+
+            // Disable button during simulation
+            generateReportButton.disabled = true;
+            closeReportModalButton.disabled = true;
+
+            // Simulate report generation and export
+            uploadStatus.textContent = `Generating "${reportType}" report...`;
+            uploadProgressContainer.style.display = 'block';
+            uploadProgressBar.style.width = '0%';
+            uploadProgressContainer.setAttribute('aria-valuenow', '0');
+
+
+             let progress = 0;
+            const interval = setInterval(() => {
+                progress += 20;
+                 if (progress > 100) progress = 100; // Cap at 100
+                uploadProgressBar.style.width = `${progress}%`;
+                uploadProgressContainer.setAttribute('aria-valuenow', progress);
+
+                if (progress === 100) {
+                    clearInterval(interval);
+                    uploadStatus.textContent = `"${reportType}" report generated! (Simulated Export)`;
+                    // Simulate file download or display report content
+                    console.log('Simulated report data based on filters:', { reportType, startDate, endDate, data: '...' });
+
+                    reportModal.classList.remove('is-visible');
+                    reportModal.setAttribute('aria-hidden', 'true');
+
+                     // Re-enable buttons
+                    generateReportButton.disabled = false;
+                    closeReportModalButton.disabled = false;
+                    openReportModalButton.focus(); // Return focus
+
+                     setTimeout(() => {
+                         uploadProgressContainer.style.display = 'none';
+                         uploadStatus.textContent = 'Drag & drop your CSV/Excel POS data here'; // Reset status
+                     }, 2000); // Hide progress after a delay
+                }
+            }, 150);
+        });
+
+         // Close modal with Escape key
+         document.addEventListener('keydown', (e) => {
+             if (e.key === 'Escape' && reportModal.classList.contains('is-visible')) {
+                 reportModal.classList.remove('is-visible');
+                 reportModal.setAttribute('aria-hidden', 'true');
+                 openReportModalButton.focus(); // Return focus
+             }
+         });
+
+        // Trap focus within the modal when it's open
+        reportModal.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab') {
+                const focusableElements = reportModal.querySelectorAll('select, input, button, [tabindex]:not([tabindex="-1"])');
+                const firstElement = focusableElements[0];
+                const lastElement = focusableElements[focusableElements.length - 1];
+
+                if (e.shiftKey) { // Shift + Tab
+                    if (document.activeElement === firstElement) {
+                        lastElement.focus();
+                        e.preventDefault();
+                    }
+                } else { // Tab
+                    if (document.activeElement === lastElement) {
+                        firstElement.focus();
+                        e.preventDefault();
+                    }
+                }
+            }
+        });
+
+
+    </script>
+</body>
+</html>

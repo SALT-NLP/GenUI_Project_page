@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Effective Pricing Strategies</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #007bff;
+            --darker-blue: #0056b3;
+            --light-gray: #e9ecef;
+            --medium-gray: #6c757d;
+            --text-color: #333;
+            --background-color: #f9f9f9;
+            --container-background: #ffffff;
+            --shadow-color: rgba(0, 0, 0, 0.08);
+            --border-radius: 12px;
+            --spacing-medium: 20px;
+            --spacing-large: 30px;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: var(--spacing-medium);
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background: var(--container-background);
+            padding: var(--spacing-large);
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 15px var(--shadow-color);
+            max-width: 800px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: var(--darker-blue);
+            text-align: center;
+            margin-bottom: var(--spacing-large);
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+
+        h2 {
+            color: var(--primary-blue);
+            margin-top: var(--spacing-medium);
+            margin-bottom: 10px;
+            font-size: 1.6em;
+            font-weight: 500;
+            border-bottom: 2px solid var(--light-gray);
+            padding-bottom: 5px;
+        }
+
+        p {
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .accordion-item {
+            margin-bottom: 15px;
+            border: 1px solid var(--light-gray);
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: var(--container-background);
+            box-shadow: 0 2px 5px var(--shadow-color);
+        }
+
+        .accordion-header {
+            background-color: var(--primary-blue);
+            color: white;
+            padding: 15px 20px;
+            cursor: pointer;
+            font-size: 1.3em;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s ease;
+            user-select: none; /* Prevent text selection */
+            border: none; /* Remove default button border */
+            width: 100%; /* Make button fill container */
+            text-align: left; /* Align text left */
+            box-sizing: border-box;
+        }
+
+        .accordion-header:hover,
+        .accordion-header:focus {
+            background-color: var(--darker-blue);
+            outline: none; /* Remove outline on focus */
+        }
+
+        .accordion-header .icon {
+            transition: transform 0.3s ease;
+            font-size: 1.2em;
+        }
+
+        .accordion-header[aria-expanded="true"] .icon {
+            transform: rotate(180deg);
+        }
+
+        .accordion-content {
+            padding: 0 20px;
+            background-color: white;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out, padding 0.5s ease-in-out; /* Smoother transition */
+            box-sizing: border-box;
+        }
+
+        .accordion-content.show {
+             /* max-height will be set by JS for smooth transition from current height */
+            padding: 15px 20px;
+            transition: max-height 0.5s ease-in-out, padding 0.5s ease-in-out; /* Ensure transition on show */
+        }
+
+         .accordion-content p {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: var(--text-color);
+        }
+
+        /* Chart Styles */
+        .chart-container {
+            margin-top: var(--spacing-large);
+            padding: var(--spacing-medium);
+            background: var(--container-background);
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 10px var(--shadow-color);
+            position: relative; /* For floating controls */
+            cursor: pointer; /* Indicate interactivity */
+        }
+
+        .chart-container h2 {
+             margin-top: 0;
+             padding-bottom: 10px;
+             border-bottom: 2px solid var(--light-gray);
+        }
+
+        .chart-canvas-wrapper {
+            height: 300px; /* Fixed height for chart */
+            width: 100%;
+            position: relative;
+        }
+
+
+        .floating-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px var(--shadow-color);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 10; /* Ensure controls are above chart */
+            min-width: 150px;
+        }
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+        .control-group {
+            margin: 10px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .floating-controls label {
+            font-family: 'Roboto', sans-serif;
+            color: var(--medium-gray);
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+        .floating-controls input[type="color"],
+        .floating-controls select {
+            padding: 6px;
+            border: 1px solid var(--light-gray);
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+            font-size: 1em;
+        }
+         .floating-controls input[type="color"] {
+             padding: 4px; /* Adjust padding for color input */
+             height: 35px; /* Ensure consistent height */
+         }
+
+
+        /* Add some basic responsive adjustments */
+        @media (max-width: 600px) {
+            body {
+                padding: var(--spacing-medium);
+            }
+            .container {
+                padding: var(--spacing-medium);
+            }
+            h1 {
+                font-size: 1.8em;
+                margin-bottom: var(--spacing-medium);
+            }
+            h2 {
+                font-size: 1.4em;
+            }
+            p {
+                font-size: 1em;
+            }
+            .accordion-header {
+                font-size: 1.2em;
+                padding: 12px 15px;
+            }
+            .accordion-content {
+                padding: 0 15px;
+            }
+             .accordion-content.show {
+                padding: 12px 15px;
+            }
+             .chart-container {
+                 padding: var(--spacing-medium);
+                 margin-top: var(--spacing-medium);
+             }
+             .floating-controls {
+                 top: 10px;
+                 right: 10px;
+                 padding: 10px;
+                 min-width: 120px;
+             }
+             .floating-controls label {
+                 font-size: 0.8em;
+             }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Effective Pricing Strategies</h1>
+        <p>Choosing the right pricing strategy is crucial for business success. It impacts revenue, profitability, market share, and customer perception. Here are some effective strategies commonly used by businesses:</p>
+
+        <div class="accordion">
+            <div class="accordion-item">
+                <button class="accordion-header" aria-expanded="false" aria-controls="content-cost-plus">
+                    1. Cost-Plus Pricing <span class="icon">&#9660;</span>
+                </button>
+                <div id="content-cost-plus" class="accordion-content">
+                    <p>This is one of the simplest methods, involving adding a fixed percentage (markup) to the total cost of a product or service. It's straightforward to calculate but doesn't consider market demand or competitor pricing.</p>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <button class="accordion-header" aria-expanded="false" aria-controls="content-value-based">
+                    2. Value-Based Pricing <span class="icon">&#9660;</span>
+                </button>
+                <div id="content-value-based" class="accordion-content">
+                    <p>Prices are set based on the perceived value of the product or service to the customer, rather than on the cost of production. This strategy requires deep understanding of customer needs, willingness to pay, and the benefits the product provides. It can lead to higher profits if value is high.</p>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <button class="accordion-header" aria-expanded="false" aria-controls="content-competitive">
+                    3. Competitive Pricing <span class="icon">&#9660;</span>
+                </button>
+                <div id="content-competitive" class="accordion-content">
+                    <p>This strategy involves setting prices relative to competitors' prices. Businesses might price slightly below, above, or the same as their competitors. It's important to consider your product's unique selling proposition when using this method.</p>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <button class="accordion-header" aria-expanded="false" aria-controls="content-dynamic">
+                    4. Dynamic Pricing <span class="icon">&#9660;</span>
+                </button>
+                <div id="content-dynamic" class="accordion-content">
+                    <p>Also known as surge pricing or time-based pricing, this strategy allows businesses to adjust prices in real-time based on market demand, supply, time of day, or other factors. Commonly seen in industries like airlines, hotels, and ride-sharing.</p>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <button class="accordion-header" aria-expanded="false" aria-controls="content-penetration">
+                    5. Penetration Pricing <span class="icon">&#9660;</span>
+                </button>
+                <div id="content-penetration" class="accordion-content">
+                    <p>A strategy where a low price is set initially to attract a large number of customers quickly and gain significant market share. The price may be increased later once a customer base is established and competitors react.</p>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <button class="accordion-header" aria-expanded="false" aria-controls="content-skimming">
+                    6. Price Skimming <span class="icon">&#9660;</span>
+                </button>
+                <div id="content-skimming" class="accordion-content">
+                    <p>In contrast to penetration pricing, skimming involves setting a high initial price for a new, innovative product. The goal is to maximize revenue from early adopters who are willing to pay a premium, before gradually lowering the price over time to attract more price-sensitive customers.</p>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <button class="accordion-header" aria-expanded="false" aria-controls="content-freemium">
+                    7. Freemium <span class="icon">&#9660;</span>
+                </button>
+                <div id="content-freemium" class="accordion-content">
+                    <p>A business model where a basic version of a product or service is offered for free, while premium features, functionality, or content are available for a fee. Popular with software, apps, and digital services.</p>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <button class="accordion-header" aria-expanded="false" aria-controls="content-bundle">
+                    8. Bundle Pricing <span class="icon">&#9660;</span>
+                </button>
+                <div id="content-bundle" class="accordion-content">
+                    <p>Offering two or more products or services together as a package at a single, often discounted, price. This can increase sales volume, move less popular items, and provide perceived value to the customer.</p>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <button class="accordion-header" aria-expanded="false" aria-controls="content-psychological">
+                    9. Psychological Pricing <span class="icon">&#9660;</span>
+                </button>
+                <div id="content-psychological" class="accordion-content">
+                    <p>Using pricing tactics that appeal to consumers' psychological tendencies. Examples include using prices ending in .99 (e.g., $9.99 instead of $10.00) to make a price seem significantly lower, or offering tiered pricing to make a middle option seem more attractive.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container" id="profitChartContainer">
+            <h2>Hypothetical Profit Margin by Strategy</h2>
+            <div class="chart-canvas-wrapper">
+                 <canvas id="profitChart"></canvas>
+            </div>
+            <div class="floating-controls" id="profitChartControls">
+                <div class="control-group">
+                    <label for="profitChartType">Chart Type</label>
+                    <select id="profitChartType">
+                        <option value="bar">Bar</option>
+                        <option value="line">Line</option>
+                    </select>
+                </div>
+                 <div class="control-group">
+                    <label for="profitChartBgColor">Background Color</label>
+                    <input type="color" id="profitChartBgColor" value="#007bff">
+                </div>
+                 <div class="control-group">
+                    <label for="profitChartBorderColor">Border Color</label>
+                    <input type="color" id="profitChartBorderColor" value="#0056b3">
+                </div>
+            </div>
+        </div>
+
+
+        <p style="margin-top: 20px;">The most effective strategy often depends on the industry, target market, business goals, and the specific product or service being offered. Many businesses use a combination of these strategies.</p>
+
+    </div>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Accordion Logic
+            const headers = document.querySelectorAll('.accordion-header');
+
+            headers.forEach(header => {
+                header.addEventListener('click', () => {
+                    const targetId = header.getAttribute('aria-controls');
+                    const targetContent = document.getElementById(targetId);
+                    const isExpanded = header.getAttribute('aria-expanded') === 'true';
+
+                    // Close all other open items
+                    headers.forEach(otherHeader => {
+                        if (otherHeader !== header && otherHeader.getAttribute('aria-expanded') === 'true') {
+                            otherHeader.setAttribute('aria-expanded', 'false');
+                            const otherContent = document.getElementById(otherHeader.getAttribute('aria-controls'));
+                            // Set height before removing class to ensure transition
+                            otherContent.style.maxHeight = otherContent.scrollHeight + "px";
+                             requestAnimationFrame(() => {
+                                otherContent.classList.remove('show');
+                                otherContent.style.maxHeight = null; // Let CSS transition handle collapse
+                            });
+                        }
+                    });
+
+                    // Toggle the clicked item
+                    if (!isExpanded) {
+                        header.setAttribute('aria-expanded', 'true');
+                         // Temporarily set height to scrollHeight to enable transition from 0
+                        targetContent.style.maxHeight = targetContent.scrollHeight + "px";
+                        targetContent.classList.add('show');
+                         // After transition, remove max-height to allow content to grow/shrink naturally if needed
+                         targetContent.addEventListener('transitionend', function handler() {
+                             if (header.getAttribute('aria-expanded') === 'true') {
+                                 targetContent.style.maxHeight = 'none'; // Allow content to determine height
+                             }
+                             targetContent.removeEventListener('transitionend', handler);
+                         });
+
+                    } else {
+                        header.setAttribute('aria-expanded', 'false');
+                        // Set max-height to scrollHeight before removing 'show' to trigger transition
+                        targetContent.style.maxHeight = targetContent.scrollHeight + "px";
+                         // Allow a brief moment for the browser to register the scrollHeight before transitioning
+                        requestAnimationFrame(() => {
+                             targetContent.classList.remove('show');
+                             targetContent.style.maxHeight = null; // Let CSS handle the transition back to 0
+                        });
+                    }
+                });
+
+                 // Add keyboard support for space/enter keys
+                header.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault(); // Prevent default spacebar action (scrolling)
+                        header.click(); // Trigger the click event
+                    }
+                });
+            });
+
+             // Ensure initial state is correct (all closed) and max-height is null
+            document.querySelectorAll('.accordion-content').forEach(content => {
+                 content.style.maxHeight = null;
+                 content.classList.remove('show'); // Ensure no items are initially open
+            });
+
+
+            // Chart Logic
+            const ctx = document.getElementById('profitChart').getContext('2d');
+            const chartControls = document.getElementById('profitChartControls');
+            const chartContainer = document.getElementById('profitChartContainer');
+
+            const chartData = {
+                labels: ['Cost-Plus', 'Value-Based', 'Competitive', 'Dynamic', 'Penetration', 'Skimming', 'Freemium', 'Bundle', 'Psychological'],
+                datasets: [{
+                    label: 'Hypothetical Average Profit Margin (%)',
+                    data: [20, 45, 15, 30, 10, 40, 25, 22, 18],
+                    backgroundColor: getComputedStyle(document.body).getPropertyValue('--primary-blue').trim(),
+                    borderColor: getComputedStyle(document.body).getPropertyValue('--darker-blue').trim(),
+                    borderWidth: 1
+                }]
+            };
+
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                    },
+                    title: {
+                        display: false, // Title is in H2 above chart
+                    },
+                    tooltip: {
+                         callbacks: {
+                             label: function(context) {
+                                 let label = context.dataset.label || '';
+                                 if (label) {
+                                     label += ': ';
+                                 }
+                                 if (context.parsed.y !== null) {
+                                     label += context.parsed.y + '%';
+                                 }
+                                 return label;
+                             }
+                         }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Profit Margin (%)'
+                        },
+                         ticks: {
+                             callback: function(value) {
+                                 return value + '%';
+                             }
+                         }
+                    },
+                    x: {
+                         title: {
+                            display: true,
+                            text: 'Pricing Strategy'
+                        }
+                    }
+                },
+                 onClick: (e) => {
+                     // Check if click is inside the chart canvas
+                     const canvasRect = ctx.canvas.getBoundingClientRect();
+                     if (e.clientX >= canvasRect.left && e.clientX <= canvasRect.right &&
+                         e.clientY >= canvasRect.top && e.clientY <= canvasRect.bottom) {
+                          chartControls.classList.toggle('active');
+                     } else {
+                         // Hide controls if clicking outside the chart area but within the container
+                         if (!chartControls.contains(e.target)) {
+                             chartControls.classList.remove('active');
+                         }
+                     }
+                 }
+            };
+
+            const profitChart = new Chart(ctx, {
+                type: 'bar',
+                data: chartData,
+                options: chartOptions,
+            });
+
+             // Hide controls if clicking anywhere outside the container or controls
+             document.addEventListener('click', (e) => {
+                 if (!chartContainer.contains(e.target) && chartControls.classList.contains('active')) {
+                     chartControls.classList.remove('active');
+                 }
+             });
+
+
+            // Chart Controls Logic
+            const chartTypeSelect = document.getElementById('profitChartType');
+            const bgColorInput = document.getElementById('profitChartBgColor');
+            const borderColorInput = document.getElementById('profitChartBorderColor');
+
+            // Set initial color picker values from CSS variables
+            const style = getComputedStyle(document.body);
+            bgColorInput.value = style.getPropertyValue('--primary-blue').trim();
+            borderColorInput.value = style.getPropertyValue('--darker-blue').trim();
+
+
+            function updateChart() {
+                const newChartType = chartTypeSelect.value;
+                const newBgColor = bgColorInput.value;
+                const newBorderColor = borderColorInput.value;
+
+                profitChart.config.type = newChartType;
+                profitChart.data.datasets[0].backgroundColor = newBgColor;
+                profitChart.data.datasets[0].borderColor = newBorderColor;
+
+                profitChart.update();
+            }
+
+            chartTypeSelect.addEventListener('change', updateChart);
+            bgColorInput.addEventListener('input', updateChart); // Use input for real-time update
+            borderColorInput.addEventListener('input', updateChart); // Use input for real-time update
+
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Readmission Risk Dashboard</title>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --info-color: #17a2b8;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --white-color: #ffffff;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-400: #ced4da;
+            --gray-500: #adb5bd;
+            --gray-600: #6c757d;
+            --gray-700: #495057;
+            --gray-800: #343a40;
+            --gray-900: #212529;
+
+            --spacing-unit: 8px;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            --transition-speed: 0.2s;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: var(--gray-100);
+            color: var(--dark-color);
+        }
+
+        .container {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            height: 100vh;
+        }
+
+        header {
+            background-color: var(--white-color);
+            color: var(--dark-color);
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 3);
+            box-shadow: var(--box-shadow);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        nav ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            gap: calc(var(--spacing-unit) * 3);
+        }
+
+        nav a {
+            text-decoration: none;
+            color: var(--dark-color);
+            font-weight: 500;
+            padding: var(--spacing-unit) 0;
+            position: relative;
+            transition: color var(--transition-speed) ease;
+        }
+
+        nav a::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: var(--primary-color);
+            transition: width var(--transition-speed) ease;
+        }
+
+        nav a:hover,
+        nav a.active {
+            color: var(--primary-color);
+        }
+
+        nav a.active::after {
+            width: 100%;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* Default two columns */
+            gap: calc(var(--spacing-unit) * 4);
+            padding: calc(var(--spacing-unit) * 4);
+            overflow-y: auto;
+        }
+
+        .panel {
+            background-color: var(--white-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: calc(var(--spacing-unit) * 3);
+        }
+
+        .panel h2 {
+            margin-top: 0;
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            font-size: 1.25rem;
+            font-weight: 600;
+            border-bottom: 1px solid var(--gray-200);
+            padding-bottom: var(--spacing-unit) * 2;
+        }
+
+        .patient-list table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .patient-list th,
+        .patient-list td {
+            text-align: left;
+            padding: calc(var(--spacing-unit) * 2) calc(var(--spacing-unit) * 1.5);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .patient-list th {
+            background-color: var(--gray-100);
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--gray-700);
+            cursor: pointer;
+        }
+
+        .patient-list th:hover {
+            background-color: var(--gray-200);
+        }
+
+        .patient-list tbody tr {
+            cursor: pointer;
+            transition: background-color var(--transition-speed) ease;
+        }
+
+        .patient-list tbody tr:hover {
+            background-color: var(--gray-100);
+        }
+
+        .patient-list tbody tr.selected {
+            background-color: var(--primary-color);
+            color: var(--white-color);
+        }
+
+        .patient-list tbody tr.selected td {
+             border-bottom-color: var(--primary-color); /* Match selected row border */
+        }
+
+
+        .risk-score {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            text-align: center;
+            padding: calc(var(--spacing-unit) * 2);
+            border-radius: var(--border-radius);
+        }
+
+        .risk-low {
+            color: var(--success-color);
+            background-color: rgba(40, 167, 69, 0.1);
+        }
+
+        .risk-medium {
+            color: var(--warning-color);
+            background-color: rgba(255, 193, 7, 0.1);
+        }
+
+        .risk-high {
+            color: var(--danger-color);
+            background-color: rgba(220, 53, 69, 0.1);
+        }
+
+        .patient-details .detail-item {
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            padding-bottom: calc(var(--spacing-unit) * 2);
+            border-bottom: 1px dashed var(--gray-200);
+        }
+
+        .patient-details .detail-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .patient-details .detail-label {
+            font-weight: 600;
+            color: var(--gray-700);
+            display: block;
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .patient-details .detail-value {
+            color: var(--dark-color);
+        }
+
+        .model-explanation .explanation-section {
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            padding-bottom: calc(var(--spacing-unit) * 3);
+            border-bottom: 1px dashed var(--gray-200);
+        }
+         .model-explanation .explanation-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .model-explanation h3 {
+            margin-top: 0;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        /* Placeholder for chart */
+        .feature-importance-chart,
+        .interpretability-viz {
+            width: 100%;
+            height: 200px; /* Placeholder height */
+            background-color: var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray-700);
+            font-style: italic;
+            border-radius: var(--border-radius);
+            margin-top: calc(var(--spacing-unit) * 2);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr; /* Single column on smaller screens */
+                padding: calc(var(--spacing-unit) * 2);
+                gap: calc(var(--spacing-unit) * 2);
+            }
+
+            header {
+                padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            }
+
+            nav ul {
+                gap: calc(var(--spacing-unit) * 2);
+            }
+
+            .panel {
+                 padding: calc(var(--spacing-unit) * 2);
+            }
+
+            .patient-list th,
+            .patient-list td {
+                padding: calc(var(--spacing-unit) * 1.5) var(--spacing-unit);
+            }
+
+            .risk-score {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Readmission Risk Dashboard</h1>
+            <nav>
+                <ul>
+                    <li><a href="#" class="active">Patient Cohort</a></li>
+                    <li><a href="#">Model Performance</a></li>
+                    <li><a href="#">Settings</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <main class="main-content">
+            <div class="panel patient-list">
+                <h2>Patient Cohort</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Patient ID</th>
+                            <th>Name</th>
+                            <th>Risk Score</th>
+                            <th>Risk Level</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr data-patient-id="P001" data-risk-score="0.85" data-risk-level="high">
+                            <td>P001</td>
+                            <td>John Doe</td>
+                            <td>85%</td>
+                            <td>High</td>
+                        </tr>
+                        <tr data-patient-id="P002" data-risk-score="0.20" data-risk-level="low">
+                            <td>P002</td>
+                            <td>Jane Smith</td>
+                            <td>20%</td>
+                            <td>Low</td>
+                        </tr>
+                        <tr data-patient-id="P003" data-risk-score="0.55" data-risk-level="medium">
+                            <td>P003</td>
+                            <td>Peter Jones</td>
+                            <td>55%</td>
+                            <td>Medium</td>
+                        </tr>
+                         <tr data-patient-id="P004" data-risk-score="0.92" data-risk-level="high">
+                            <td>P004</td>
+                            <td>Mary Williams</td>
+                            <td>92%</td>
+                            <td>High</td>
+                        </tr>
+                         <tr data-patient-id="P005" data-risk-score="0.30" data-risk-level="low">
+                            <td>P005</td>
+                            <td>David Brown</td>
+                            <td>30%</td>
+                            <td>Low</td>
+                        </tr>
+                         <tr data-patient-id="P006" data-risk-score="0.68" data-risk-level="medium">
+                            <td>P006</td>
+                            <td>Sarah Green</td>
+                            <td>68%</td>
+                            <td>Medium</td>
+                        </tr>
+                        <!-- More rows would be added dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="panel patient-detail-panel">
+                <h2>Patient Details & Prediction</h2>
+                <div id="patient-details-content">
+                    <p>Select a patient from the list to view details and prediction explanation.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Placeholder data - In a real application, this would come from an API
+        const patientData = {
+            "P001": {
+                name: "John Doe",
+                id: "P001",
+                riskScore: 0.85,
+                riskLevel: "high",
+                details: {
+                    age: 68,
+                    gender: "Male",
+                    admissionDate: "2023-10-01",
+                    diagnosis: "Congestive Heart Failure",
+                    medications: ["Lisinopril", "Furosemide", "Metoprolol"],
+                    history: ["Hypertension", "Diabetes Type 2"]
+                },
+                explanation: {
+                    summary: "High risk primarily due to age, diagnosis of CHF, and history of diabetes.",
+                    featureImportance: [
+                        { feature: "Age", importance: 0.30 },
+                        { feature: "Diagnosis (CHF)", importance: 0.25 },
+                        { feature: "Diabetes History", importance: 0.15 },
+                        { feature: "Number of Medications", importance: 0.10 },
+                        { feature: "Recent Admission", importance: 0.08 }
+                    ],
+                     featureImpact: "Age and CHF diagnosis significantly increased risk. Absence of recent admission slightly decreased risk."
+                    // More detailed interpretability data (e.g., LIME/SHAP values) would go here
+                }
+            },
+             "P002": {
+                name: "Jane Smith",
+                id: "P002",
+                riskScore: 0.20,
+                riskLevel: "low",
+                details: {
+                    age: 45,
+                    gender: "Female",
+                    admissionDate: "2023-11-15",
+                    diagnosis: "Pneumonia",
+                    medications: ["Azithromycin"],
+                    history: ["Asthma"]
+                },
+                explanation: {
+                    summary: "Low risk due to younger age, single acute diagnosis, and limited comorbidities.",
+                    featureImportance: [
+                        { feature: "Age", importance: 0.40 },
+                        { feature: "Diagnosis (Pneumonia)", importance: 0.15 },
+                        { feature: "Asthma History", importance: 0.10 },
+                        { feature: "Number of Medications", importance: 0.05 }
+                    ],
+                    featureImpact: "Younger age was the strongest factor reducing risk. Pneumonia diagnosis had a minor increasing effect."
+                }
+            },
+            "P003": {
+                name: "Peter Jones",
+                id: "P003",
+                riskScore: 0.55,
+                riskLevel: "medium",
+                details: {
+                    age: 72,
+                    gender: "Male",
+                    admissionDate: "2023-12-01",
+                    diagnosis: "UTI",
+                    medications: ["Ciprofloxacin"],
+                    history: ["BPH"]
+                },
+                explanation: {
+                    summary: "Medium risk. Older age increases risk, but acute, treatable condition and limited history mitigate it.",
+                    featureImportance: [
+                        { feature: "Age", importance: 0.35 },
+                        { feature: "Diagnosis (UTI)", importance: 0.10 },
+                        { feature: "BPH History", importance: 0.08 }
+                    ],
+                    featureImpact: "Age increased risk, but the specific diagnosis and limited history kept the risk in the medium range."
+                }
+            },
+             "P004": {
+                name: "Mary Williams",
+                id: "P004",
+                riskScore: 0.92,
+                riskLevel: "high",
+                details: {
+                    age: 88,
+                    gender: "Female",
+                    admissionDate: "2024-01-05",
+                    diagnosis: "Sepsis",
+                    medications: ["Vancomycin", "Piperacillin-Tazobactam"],
+                    history: ["COPD", "Chronic Kidney Disease", "Frequent Admissions"]
+                },
+                explanation: {
+                    summary: "Very high risk driven by advanced age, severe diagnosis, multiple comorbidities, and history of frequent admissions.",
+                    featureImportance: [
+                        { feature: "Age", importance: 0.35 },
+                        { feature: "Frequent Admissions", importance: 0.25 },
+                        { feature: "Diagnosis (Sepsis)", importance: 0.18 },
+                        { feature: "Comorbidities (COPD, CKD)", importance: 0.15 }
+                    ],
+                    featureImpact: "Age and history of frequent admissions were the most significant factors increasing risk."
+                }
+            },
+             "P005": {
+                name: "David Brown",
+                id: "P005",
+                riskScore: 0.30,
+                riskLevel: "low",
+                details: {
+                    age: 35,
+                    gender: "Male",
+                    admissionDate: "2024-02-10",
+                    diagnosis: "Appendicitis",
+                    medications: ["Morphine"],
+                    history: []
+                },
+                explanation: {
+                    summary: "Low risk due to young age, acute surgical issue, and no significant medical history.",
+                    featureImportance: [
+                        { feature: "Age", importance: 0.50 },
+                        { feature: "Diagnosis (Appendicitis)", importance: 0.10 }
+                    ],
+                    featureImpact: "Age was the primary factor contributing to low risk. The specific diagnosis had minimal impact."
+                }
+            },
+             "P006": {
+                name: "Sarah Green",
+                id: "P006",
+                riskScore: 0.68,
+                riskLevel: "medium",
+                details: {
+                    age: 59,
+                    gender: "Female",
+                    admissionDate: "2024-03-20",
+                    diagnosis: "Pneumonia",
+                    medications: ["Levofloxacin"],
+                    history: ["Smoking History"]
+                },
+                explanation: {
+                    summary: "Medium risk. Age and smoking history increase risk, but the diagnosis is treatable.",
+                    featureImportance: [
+                        { feature: "Age", importance: 0.25 },
+                        { feature: "Smoking History", importance: 0.20 },
+                        { feature: "Diagnosis (Pneumonia)", importance: 0.15 }
+                    ],
+                    featureImpact: "Age and smoking history were the main contributors to the medium risk level."
+                }
+            }
+        };
+
+        const patientTableBody = document.querySelector('.patient-list tbody');
+        const patientDetailsContent = document.getElementById('patient-details-content');
+
+        // Add event listeners to table rows
+        patientTableBody.addEventListener('click', (event) => {
+            const row = event.target.closest('tr');
+            if (row && row.dataset.patientId) {
+                // Deselect previously selected row
+                const selectedRow = patientTableBody.querySelector('.selected');
+                if (selectedRow) {
+                    selectedRow.classList.remove('selected');
+                }
+                // Select current row
+                row.classList.add('selected');
+                // Display details
+                displayPatientDetails(row.dataset.patientId);
+            }
+        });
+
+        function displayPatientDetails(patientId) {
+            const patient = patientData[patientId];
+            if (!patient) {
+                patientDetailsContent.innerHTML = "<p>Patient data not found.</p>";
+                return;
+            }
+
+            let detailsHtml = `
+                <div class="risk-score risk-${patient.riskLevel}">
+                    ${(patient.riskScore * 100).toFixed(0)}%
+                </div>
+                <div class="patient-details">
+                    <h3>Demographics & History</h3>
+                    <div class="detail-item">
+                        <span class="detail-label">Patient ID:</span>
+                        <span class="detail-value">${patient.id}</span>
+                    </div>
+                     <div class="detail-item">
+                        <span class="detail-label">Name:</span>
+                        <span class="detail-value">${patient.name}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Age:</span>
+                        <span class="detail-value">${patient.details.age}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Gender:</span>
+                        <span class="detail-value">${patient.details.gender}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Admission Date:</span>
+                        <span class="detail-value">${patient.details.admissionDate}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Diagnosis:</span>
+                        <span class="detail-value">${patient.details.diagnosis}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Medications:</span>
+                        <span class="detail-value">${patient.details.medications.join(', ')}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">History:</span>
+                        <span class="detail-value">${patient.details.history.length > 0 ? patient.details.history.join(', ') : 'None'}</span>
+                    </div>
+                </div>
+                <div class="model-explanation">
+                    <h3>Prediction Explanation</h3>
+                    <div class="explanation-section">
+                        <p>${patient.explanation.summary}</p>
+                    </div>
+                    <div class="explanation-section">
+                        <h4>Feature Importance (Relative)</h4>
+                        <ul>
+                            ${patient.explanation.featureImportance.map(f => `<li>${f.feature}: ${(f.importance * 100).toFixed(1)}%</li>`).join('')}
+                        </ul>
+                        <!-- Placeholder for Feature Importance Chart -->
+                        <div class="feature-importance-chart">
+                            [Feature Importance Bar Chart Placeholder]
+                        </div>
+                    </div>
+                    <div class="explanation-section">
+                         <h4>Feature Impact on Prediction</h4>
+                         <p>${patient.explanation.featureImpact}</p>
+                        <!-- Placeholder for Interpretability Visualization -->
+                        <div class="interpretability-viz">
+                            [Interpretability Visualization Placeholder]
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            patientDetailsContent.innerHTML = detailsHtml;
+
+            // In a real app, you would initialize charting libraries here
+            // Example: initFeatureImportanceChart(patient.explanation.featureImportance);
+            // Example: initInterpretabilityViz(patient.explanation.interpretabilityData);
+        }
+
+        // Initial display for the first patient (optional, or show a "select patient" message)
+        // displayPatientDetails('P001'); // Uncomment to auto-select first patient on load
+
+         // Note: This response focuses on the UI structure and presentation based on the requirements analysis.
+         // It does not provide guidance on the machine learning model itself (e.g., choice of algorithm, handling imbalanced data),
+         // as that falls outside the scope of UI engineering expertise.
+         // Common interpretable models for this type of problem might include Logistic Regression, Decision Trees,
+         // or tree-based ensembles like Gradient Boosting Machines with SHAP/LIME for post-hoc explanation.
+         // Handling imbalanced data typically involves techniques like oversampling (SMOTE), undersampling,
+         // using appropriate evaluation metrics (Precision, Recall, F1-score, AUC-PR), or adjusting class weights during training.
+    </script>
+</body>
+</html>

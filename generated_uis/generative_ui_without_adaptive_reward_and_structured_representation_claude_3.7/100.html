@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding Transfer Learning</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
+    <style>
+        :root {
+            --primary-color: #009688; /* Vibrant Teal */
+            --secondary-color: #757575; /* Neutral Grey */
+            --accent-color: #ff9800; /* Vibrant Orange */
+            --background-color: #ffffff; /* White */
+            --text-color: #212121; /* Dark Grey */
+            --heading-color: #0a0a0a; /* Very Dark Grey */
+            --border-color: #e0e0e0; /* Light Grey */
+            --card-background: #f5f5f5; /* Very Light Grey */
+            --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); /* Enhanced subtle shadow */
+            --callout-background: #fff3e0; /* Light Orange */
+            --callout-border: #ffcc80; /* Slightly darker light Orange */
+            --callout-text: var(--text-color); /* Dark Grey */
+            --spacing-unit: 1rem; /* 16px */
+            --border-radius: 8px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.7; /* Slightly increased line height */
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            font-display: swap; /* Added font-display */
+        }
+
+        /* Enhanced Focus States */
+        *:focus-visible {
+            outline: 3px solid var(--accent-color);
+            outline-offset: 2px;
+            border-radius: var(--border-radius); /* Apply to elements with border-radius */
+        }
+
+         a:focus-visible {
+             outline-offset: 4px; /* Adjust offset for links */
+         }
+
+        header {
+            background-color: var(--primary-color);
+            color: #fff;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        nav ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+
+        nav ul li {
+            margin-left: calc(var(--spacing-unit) * 1.5);
+        }
+
+        nav ul li a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease, opacity 0.3s ease;
+            padding: 0.5rem 0; /* Added padding for larger click area */
+            display: block;
+        }
+
+        nav ul li a:hover,
+        nav ul li a:focus {
+            color: #e0e0e0; /* Lighter white on hover */
+            opacity: 1;
+            outline: none; /* Outline handled by focus-visible */
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: calc(var(--spacing-unit) * 3) calc(var(--spacing-unit) * 2); /* Increased vertical padding */
+        }
+
+        .hero {
+            background-color: var(--primary-color); /* Solid color */
+            color: #fff;
+            padding: calc(var(--spacing-unit) * 5) calc(var(--spacing-unit) * 2); /* Increased padding */
+            text-align: center;
+            margin-bottom: calc(var(--spacing-unit) * 4); /* Increased margin */
+        }
+
+        .hero .container {
+             padding: 0 calc(var(--spacing-unit) * 2); /* Adjust container padding within hero */
+        }
+
+        .hero h2 {
+            font-size: 3rem; /* Larger heading */
+            margin-bottom: var(--spacing-unit);
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+
+        .hero p {
+            font-size: 1.3rem; /* Larger text */
+            opacity: 0.95; /* Slightly less transparent */
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+
+        section {
+            margin-bottom: calc(var(--spacing-unit) * 5); /* Increased margin between sections */
+        }
+
+        h2, h3 {
+            color: var(--heading-color);
+            margin-bottom: calc(var(--spacing-unit) * 1.5);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        h2 {
+            font-size: 2.5rem; /* Larger section headings */
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: var(--spacing-unit);
+            margin-top: 0;
+        }
+
+        h3 {
+            font-size: 1.8rem; /* Larger subheadings */
+            margin-top: calc(var(--spacing-unit) * 2.5); /* Increased top margin */
+        }
+
+        p {
+            margin-bottom: var(--spacing-unit) * 1.2; /* Increased paragraph spacing */
+            font-size: 1.1rem; /* Slightly larger body text */
+        }
+
+        ul {
+            margin-bottom: var(--spacing-unit) * 1.2;
+            padding-left: calc(var(--spacing-unit) * 1.5);
+        }
+
+        li {
+            margin-bottom: var(--spacing-unit) * 0.5;
+        }
+
+
+        .card {
+            background-color: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: calc(var(--spacing-unit) * 2.5); /* Increased padding */
+            box-shadow: var(--card-shadow);
+            margin-bottom: calc(var(--spacing-unit) * 2.5); /* Increased margin */
+            transition: transform 0.3s ease, box-shadow 0.3s ease; /* Added transition */
+        }
+
+        .card:hover {
+             transform: translateY(-5px); /* Subtle lift effect */
+             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+
+        .card h3 {
+            margin-top: 0;
+            margin-bottom: var(--spacing-unit);
+            color: var(--primary-color); /* Card headings use primary color */
+        }
+
+        .diagram-container {
+            margin: calc(var(--spacing-unit) * 3) 0; /* Increased margin */
+            text-align: center;
+        }
+
+        .diagram-container h3 {
+            margin-top: 0;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+        }
+
+        .diagram-container svg {
+            max-width: 100%;
+            height: auto;
+            background-color: #fff;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            padding: calc(var(--spacing-unit) * 1.5); /* Increased padding */
+        }
+
+        /* SVG Specific Styles */
+        .diagram-container svg .box { fill: var(--card-background); stroke: var(--border-color); stroke-width: 2; rx: var(--border-radius); ry: var(--border-radius); }
+        .diagram-container svg .text { font-family: 'Inter', sans-serif; font-size: 16px; fill: var(--text-color); text-anchor: middle; dominant-baseline: central; } /* Increased font size */
+        .diagram-container svg .label { font-weight: 700; font-size: 18px; fill: var(--heading-color); } /* Increased font size and weight */
+        .diagram-container svg .line { stroke: var(--secondary-color); stroke-width: 2; fill: none; }
+        .diagram-container svg .dashed-line { stroke: var(--secondary-color); stroke-width: 2; fill: none; stroke-dasharray: 5,5; }
+        .diagram-container svg .accent-box { fill: var(--accent-color); stroke: var(--accent-color); stroke-width: 2; rx: var(--border-radius); ry: var(--border-radius); opacity: 0.1; }
+        .diagram-container svg marker polygon { fill: var(--secondary-color); } /* Style marker fill */
+
+
+        .accordion-container {
+            margin-top: calc(var(--spacing-unit) * 3);
+        }
+
+        .accordion-container h3 {
+             margin-top: 0;
+             margin-bottom: calc(var(--spacing-unit) * 2);
+        }
+
+        .accordion-item {
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin-bottom: var(--spacing-unit);
+            overflow: hidden;
+            background-color: var(--background-color);
+        }
+
+        .accordion-header {
+            background-color: var(--card-background); /* Use card background for header */
+            padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 2); /* Increased padding */
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: var(--heading-color);
+            transition: background-color 0.3s ease, color 0.3s ease;
+            font-size: 1.2rem; /* Larger header text */
+            border: none; /* Remove default button border */
+            width: 100%; /* Make button fill container */
+            text-align: left; /* Align text left */
+        }
+
+        .accordion-header:hover,
+        .accordion-header:focus {
+            background-color: #e9ecef; /* Lighter background on hover/focus */
+            color: var(--primary-color); /* Primary color on hover/focus */
+            outline: none; /* Outline handled by focus-visible */
+        }
+
+        .accordion-header .icon {
+            transition: transform 0.3s ease;
+            font-size: 1rem; /* Icon size */
+            margin-left: var(--spacing-unit);
+        }
+
+        .accordion-header[aria-expanded="true"] .icon {
+            transform: rotate(180deg);
+        }
+
+        .accordion-content {
+            padding: 0 calc(var(--spacing-unit) * 2); /* Match header horizontal padding */
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out, padding 0.5s ease-in-out;
+        }
+
+        .accordion-item.active .accordion-content {
+            max-height: 1000px; /* Sufficiently large value */
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2); /* Apply padding when active */
+        }
+
+        .accordion-content p {
+            padding: var(--spacing-unit) 0;
+            margin: 0;
+        }
+
+
+        .callout {
+            background-color: var(--callout-background);
+            color: var(--callout-text);
+            border: 1px solid var(--callout-border);
+            border-left: 5px solid var(--accent-color);
+            border-radius: var(--border-radius);
+            padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 2); /* Increased padding */
+            margin: calc(var(--spacing-unit) * 3) 0; /* Increased margin */
+            font-size: 1.1rem;
+        }
+
+        .callout strong {
+            color: var(--accent-color); /* Strong text in accent color */
+        }
+
+
+        footer {
+            background-color: var(--heading-color); /* Darker footer */
+            color: #e0e0e0; /* Light grey text */
+            text-align: center;
+            padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 2); /* Increased padding */
+            margin-top: auto;
+        }
+
+        footer p {
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 1024px) {
+            .container {
+                padding: calc(var(--spacing-unit) * 2) var(--spacing-unit);
+            }
+
+             .hero {
+                 padding: calc(var(--spacing-unit) * 4) var(--spacing-unit);
+             }
+
+             .hero .container {
+                 padding: 0 var(--spacing-unit);
+             }
+
+            h2 {
+                font-size: 2.2rem;
+            }
+
+            h3 {
+                font-size: 1.6rem;
+            }
+
+            p, .callout, .accordion-header {
+                font-size: 1rem;
+            }
+
+             .card {
+                 padding: calc(var(--spacing-unit) * 2);
+             }
+
+             .accordion-header {
+                 padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+             }
+
+             .accordion-content {
+                 padding: 0 calc(var(--spacing-unit) * 1.5);
+             }
+
+             .accordion-item.active .accordion-content {
+                 padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+             }
+        }
+
+
+        @media (max-width: 768px) {
+            header .container {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            header h1 {
+                margin-bottom: var(--spacing-unit);
+                font-size: 1.5rem;
+            }
+
+            nav ul {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            nav ul li {
+                margin: var(--spacing-unit) 0 0 0;
+            }
+
+            nav ul li a {
+                 padding: 0.3rem 0;
+            }
+
+            .hero {
+                padding: calc(var(--spacing-unit) * 3) var(--spacing-unit);
+            }
+
+            .hero h2 {
+                font-size: 2rem;
+            }
+
+            .hero p {
+                font-size: 1.1rem;
+            }
+
+            .container {
+                padding: calc(var(--spacing-unit) * 1.5) var(--spacing-unit);
+            }
+
+            section {
+                 margin-bottom: calc(var(--spacing-unit) * 3);
+            }
+
+            h2 {
+                font-size: 1.8rem;
+            }
+
+            h3 {
+                font-size: 1.4rem;
+            }
+
+            p, .callout, .accordion-header {
+                font-size: 1rem;
+            }
+
+            .card {
+                 padding: calc(var(--spacing-unit) * 1.5);
+                 margin-bottom: calc(var(--spacing-unit) * 2);
+            }
+
+            .diagram-container {
+                 margin: calc(var(--spacing-unit) * 2) 0;
+            }
+
+            .diagram-container h3 {
+                 margin-bottom: var(--spacing-unit);
+            }
+
+            .diagram-container svg {
+                 padding: var(--spacing-unit);
+            }
+
+            .accordion-container {
+                 margin-top: calc(var(--spacing-unit) * 2);
+            }
+
+             .accordion-container h3 {
+                 margin-bottom: var(--spacing-unit);
+            }
+
+            .accordion-header {
+                 padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.2);
+                 font-size: 1rem;
+            }
+
+             .accordion-content {
+                 padding: 0 calc(var(--spacing-unit) * 1.2);
+             }
+
+             .accordion-item.active .accordion-content {
+                 padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.2);
+             }
+
+            .callout {
+                padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+                margin: calc(var(--spacing-unit) * 2) 0;
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+             header h1 {
+                font-size: 1.3rem;
+             }
+            .hero h2 {
+                font-size: 1.8rem;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .container {
+                padding: var(--spacing-unit);
+            }
+
+            section {
+                 margin-bottom: calc(var(--spacing-unit) * 2);
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            h3 {
+                font-size: 1.3rem;
+            }
+
+            p, .callout, .accordion-header {
+                font-size: 0.95rem;
+            }
+
+            .card {
+                 padding: var(--spacing-unit);
+                 margin-bottom: var(--spacing-unit);
+            }
+
+            .diagram-container {
+                 margin: var(--spacing-unit) 0;
+            }
+
+            .diagram-container svg {
+                 padding: var(--spacing-unit) * 0.8;
+            }
+
+             .accordion-header {
+                 padding: var(--spacing-unit);
+             }
+
+             .accordion-content {
+                 padding: 0 var(--spacing-unit);
+             }
+
+             .accordion-item.active .accordion-content {
+                 padding: var(--spacing-unit);
+             }
+
+            .callout {
+                padding: var(--spacing-unit);
+                margin: calc(var(--spacing-unit) * 1.5) 0;
+            }
+
+            footer {
+                padding: var(--spacing-unit);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <h1>Transfer Learning Explained</h1>
+            <nav aria-label="Main navigation">
+                <ul>
+                    <li><a href="#what-is-it">What is it?</a></li>
+                    <li><a href="#how-it-works">How it Works</a></li>
+                    <li><a href="#benefits">Benefits</a></li>
+                    <li><a href="#comparison">Comparison</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <h2>Unlock the Power of Pre-trained Models</h2>
+                <p>Discover how transfer learning allows AI models to leverage existing knowledge, accelerating development and improving performance on new tasks.</p>
+            </div>
+        </section>
+
+        <section id="what-is-it" class="container">
+            <h2>What is Transfer Learning?</h2>
+            <p>Transfer learning is a machine learning technique where a model trained on one task is repurposed or used as a starting point for a related task. Instead of training a model from scratch on a new dataset, you "transfer" the knowledge gained from a previous, often larger, dataset and task.</p>
+
+            <div class="callout">
+                <strong>Simply put:</strong> It's like learning to ride a bicycle and then using that core skill to quickly learn how to ride a motorcycle. You don't start from zero; you build upon existing foundational knowledge.
+            </div>
+
+            <p>This is particularly useful in situations where the new task has limited data available. By using a model pre-trained on a massive dataset (like ImageNet for image recognition), the model has already learned to detect general features (edges, shapes, textures) that are useful across many different image-related tasks.</p>
+        </section>
+
+        <section id="how-it-works" class="container">
+            <h2>How Transfer Learning Works</h2>
+            <p>The typical process involves two main steps:</p>
+
+            <h3>1. Pre-training</h3>
+            <p>A model (often a deep neural network) is trained on a large, general-purpose dataset for a related task. For example, a convolutional neural network (CNN) might be trained on millions of images from the ImageNet dataset to classify objects into 1000 categories. During this phase, the network learns a hierarchy of features, from simple edges in early layers to complex patterns and object parts in later layers.</p>
+
+            <h3>2. Fine-tuning</h3>
+            <p>The pre-trained model is then adapted to the new task. This usually involves:</p>
+            <ul>
+                <li>Removing the original output layer (which was specific to the pre-training task).</li>
+                <li>Adding a new output layer tailored to the new task (e.g., classifying images into 10 categories instead of 1000).</li>
+                <li>Optionally, freezing the weights of some of the initial layers (since they've already learned general features) and only training the weights of the later layers and the new output layer on the new, smaller dataset.</li>
+                <li>Alternatively, training all layers on the new dataset, but often with a much lower learning rate than used during pre-training, to avoid disrupting the learned features too drastically.</li>
+            </ul>
+
+            <div class="diagram-container">
+                <h3>Transfer Learning Process Diagram</h3>
+                <svg width="800" height="300" viewBox="0 0 800 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="diagram-title diagram-desc">
+                    <title id="diagram-title">Transfer Learning Process Diagram</title>
+                    <desc id="diagram-desc">Diagram showing the process of transfer learning, from a pre-trained model to fine-tuning for a new specific task.</desc>
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" />
+                        </marker>
+                    </defs>
+
+                    <!-- Pre-trained Model -->
+                    <rect x="50" y="80" width="200" height="140" class="box"/>
+                    <text x="150" y="100" class="label">Pre-trained Model</text>
+                    <text x="150" y="130" class="text">Learned Features</text>
+                    <text x="150" y="150" class="text">(Edges, Shapes, Patterns)</text>
+                    <text x="150" y="180" class="text">on Large Dataset</text>
+                    <text x="150" y="200" class="text">(e.g., ImageNet)</text>
+
+                    <!-- Arrow to Fine-tuning -->
+                    <line x1="250" y1="150" x2="350" y2="150" class="line arrow"/>
+
+                    <!-- Fine-tuning Process -->
+                    <rect x="350" y="80" width="200" height="140" class="box"/>
+                    <text x="450" y="100" class="label">Fine-tuning</text>
+                    <text x="450" y="130" class="text">Adapt Model to</text>
+                    <text x="450" y="150" class="text">New Task & Data</text>
+                    <text x="450" y="170" class="text">(Smaller Dataset)</text>
+                    <text x="450" y="190" class="text">Replace/Retrain Layers</text>
+
+                    <!-- Optional: Indicate Frozen Layers -->
+                    <rect x="355" y="85" width="190" height="50" class="accent-box"/>
+                    <text x="450" y="110" class="text" fill="var(--accent-color)">Frozen/Lower LR Layers</text>
+
+                    <!-- Arrow to New Model -->
+                    <line x1="550" y1="150" x2="650" y2="150" class="line arrow"/>
+
+                    <!-- New Model -->
+                    <rect x="650" y="80" width="100" height="140" class="box"/>
+                    <text x="700" y="150" class="label">New Model</text>
+                    <text x="700" y="170" class="text">for Specific Task</text>
+
+                </svg>
+            </div>
+
+            <div class="accordion-container">
+                <h3>Examples of Fine-tuning</h3>
+                <div class="accordion-item">
+                    <button class="accordion-header" role="button" aria-expanded="false" aria-controls="content1" id="header1" tabindex="0">
+                        Image Classification
+                        <span class="icon">&#9660;</span>
+                    </button>
+                    <div id="content1" class="accordion-content" aria-hidden="true" aria-labelledby="header1">
+                        <p>A model pre-trained on ImageNet (1000 object classes) can be fine-tuned to classify specific types of images, like different breeds of dogs or types of medical scans, using a much smaller dataset of the target images.</p>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                     <button class="accordion-header" role="button" aria-expanded="false" aria-controls="content2" id="header2" tabindex="0">
+                        Natural Language Processing (NLP)
+                        <span class="icon">&#9660;</span>
+                    </button>
+                    <div id="content2" class="accordion-content" aria-hidden="true" aria-labelledby="header2">
+                        <p>Large language models (LLMs) like BERT or GPT are pre-trained on massive text corpora to understand language structure and context. They can then be fine-tuned for specific NLP tasks like sentiment analysis, question answering, or text summarization with relatively small task-specific datasets.</p>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                     <button class="accordion-header" role="button" aria-expanded="false" aria-controls="content3" id="header3" tabindex="0">
+                        Speech Recognition
+                        <span class="icon">&#9660;</span>
+                    </button>
+                    <div id="content3" class="accordion-content" aria-hidden="true" aria-labelledby="header3">
+                        <p>A model pre-trained on a large dataset of general speech can be fine-tuned to recognize speech in a specific domain (e.g., medical terminology) or for a particular accent or language variant using a smaller, domain-specific dataset.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="benefits" class="container">
+            <h2>Benefits of Transfer Learning</h2>
+            <div class="card">
+                <h3>Reduced Training Time</h3>
+                <p>Starting with a pre-trained model means you don't need to train the initial layers from scratch. This significantly reduces the computational resources and time required for training.</p>
+            </div>
+            <div class="card">
+                <h3>Requires Less Data</h3>
+                <p>Since the model has already learned general features, it needs much less task-specific data to achieve good performance compared to training a model from scratch.</p>
+            </div>
+            <div class="card">
+                <h3>Improved Performance</h3>
+                <p>Pre-trained models often capture complex patterns from large datasets that might be difficult to learn from a smaller dataset alone. This can lead to better accuracy and generalization on the new task.</p>
+            </div>
+            <div class="card">
+                <h3>Lower Computational Cost</h3>
+                <p>Less training time and data mean lower costs associated with computing power (GPUs/TPUs).</p>
+            </div>
+        </section>
+
+        <section id="comparison" class="container">
+            <h2>Transfer Learning vs. Training from Scratch</h2>
+            <p>Here's a quick comparison:</p>
+
+            <div class="card">
+                <h3>Training from Scratch</h3>
+                <ul>
+                    <li>Requires a large amount of labeled data for the specific task.</li>
+                    <li>Training starts with randomly initialized weights.</li>
+                    <li>Can be computationally expensive and time-consuming.</li>
+                    <li>May perform better if you have a massive, highly specific dataset and unique task requirements.</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>Transfer Learning</h3>
+                <ul>
+                    <li>Requires significantly less labeled data for the specific task.</li>
+                    <li>Starts with weights learned from a related task/dataset.</li>
+                    <li>Much faster and computationally cheaper to train.</li>
+                    <li>Ideal when data is limited or computational resources are constrained.</li>
+                    <li>Leverages knowledge from large, general datasets.</li>
+                </ul>
+            </div>
+
+            <div class="callout">
+                <strong>Key Takeaway:</strong> Transfer learning is often the preferred approach, especially in domains with limited data, as it provides a strong head start by utilizing knowledge from existing models.
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2023 Transfer Learning Explained. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const accordionHeaders = document.querySelectorAll('.accordion-header');
+
+            accordionHeaders.forEach(header => {
+                header.addEventListener('click', () => {
+                    const accordionItem = header.parentElement;
+                    const content = header.nextElementSibling;
+                    const isExpanded = header.getAttribute('aria-expanded') === 'true';
+
+                    // Toggle the clicked accordion
+                    if (isExpanded) {
+                        header.setAttribute('aria-expanded', 'false');
+                        accordionItem.classList.remove('active');
+                        content.style.maxHeight = '0';
+                        content.setAttribute('aria-hidden', 'true');
+                    } else {
+                        header.setAttribute('aria-expanded', 'true');
+                        accordionItem.classList.add('active');
+                        // Set max-height based on scrollHeight for smooth transition
+                        content.style.maxHeight = content.scrollHeight + 'px';
+                        content.setAttribute('aria-hidden', 'false');
+                    }
+                });
+
+                // Add keyboard support for accordion headers
+                header.addEventListener('keypress', (event) => {
+                    // Check if the event key is Enter or Space
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault(); // Prevent default space/enter behavior (like scrolling)
+                        header.click(); // Trigger the click event handler
+                    }
+                });
+
+                 // Ensure max-height is recalculated on window resize for open accordions
+                 window.addEventListener('resize', () => {
+                     accordionHeaders.forEach(header => {
+                         if (header.getAttribute('aria-expanded') === 'true') {
+                              const content = header.nextElementSibling;
+                              // Temporarily remove transition to avoid animation during resize
+                              content.style.transition = 'none';
+                              content.style.maxHeight = content.scrollHeight + 'px';
+                              // Restore transition after a small delay
+                              setTimeout(() => {
+                                 content.style.transition = 'max-height 0.5s ease-in-out, padding 0.5s ease-in-out';
+                              }, 10); // Small delay to allow reflow
+                         }
+                     });
+                 });
+            });
+        });
+    </script>
+
+</body>
+</html>

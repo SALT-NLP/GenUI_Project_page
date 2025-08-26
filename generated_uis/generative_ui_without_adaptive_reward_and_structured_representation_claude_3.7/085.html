@@ -1,0 +1,1797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevOps for Solo Devs</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet" />
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --primary-color-dark: #0056b3;
+            --secondary-color: #6c757d;
+            --background-color: #f8f9fa;
+            --surface-color: #ffffff;
+            --text-color: #343a40;
+            --text-light-color: #6c757d;
+            --border-color: #dee2e6;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --in-progress-color: #007bff; /* Using primary for in-progress */
+            --spacing-unit: 8px;
+            --sidebar-width: 240px;
+            --header-height: 60px;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            --transition-speed: 0.3s;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: flex;
+            min-height: 100vh;
+            overflow-y: hidden; /* Prevent main body scroll, content areas will scroll */
+        }
+
+        .layout-container {
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr;
+            grid-template-rows: 1fr;
+            width: 100%;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background-color: var(--surface-color);
+            padding: calc(var(--spacing-unit) * 3) 0;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--box-shadow);
+            overflow-y: auto; /* Allow sidebar to scroll if needed */
+            flex-shrink: 0; /* Prevent shrinking on smaller screens */
+        }
+
+        .sidebar-header {
+            padding: 0 calc(var(--spacing-unit) * 3);
+            margin-bottom: calc(var(--spacing-unit) * 4);
+        }
+
+        .sidebar-header h2 {
+            margin: 0;
+            font-size: 1.2em;
+            color: var(--primary-color);
+        }
+
+        .sidebar-nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-nav li {
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 3);
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: background-color var(--transition-speed), color var(--transition-speed);
+            border-left: 4px solid transparent;
+            outline-offset: -4px; /* Keep focus outline inside border */
+        }
+
+        .sidebar-nav a .material-symbols-rounded {
+            margin-right: var(--spacing-unit);
+            font-size: 20px;
+            transition: color var(--transition-speed);
+        }
+
+        .sidebar-nav a:hover {
+            background-color: rgba(0, 123, 255, 0.1);
+            color: var(--primary-color-dark);
+        }
+
+        .sidebar-nav a:focus {
+             outline: 2px solid var(--primary-color);
+             outline-offset: 2px;
+        }
+
+        .sidebar-nav a.active {
+            background-color: rgba(0, 123, 255, 0.2);
+            color: var(--primary-color-dark);
+            border-left-color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .sidebar-nav a.active .material-symbols-rounded {
+             color: var(--primary-color-dark);
+        }
+
+        /* Main Content Area */
+        .main-content {
+            padding: calc(var(--spacing-unit) * 4);
+            overflow-y: auto; /* Allow main content to scroll */
+            height: 100vh; /* Ensure it takes full height for scrolling */
+            box-sizing: border-box; /* Include padding in height */
+            width: 100%; /* Ensure it takes full width */
+        }
+
+        .content-section {
+            display: none; /* Hidden by default */
+            animation: fadeIn var(--transition-speed) ease-out;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .content-section h1 {
+            margin-top: 0;
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            color: var(--text-color);
+        }
+
+        .card {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            padding: calc(var(--spacing-unit) * 3);
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            box-shadow: var(--box-shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        .card-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-top: 0;
+            margin-bottom: var(--spacing-unit);
+            color: var(--text-color);
+        }
+
+        .form-group {
+            margin-bottom: calc(var(--spacing-unit) * 2);
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: var(--spacing-unit);
+            font-weight: 500;
+            color: var(--text-light-color);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            box-sizing: border-box; /* Include padding and border in element's total width and height */
+            transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        .form-group input.invalid,
+        .form-group textarea.invalid {
+             border-color: var(--danger-color);
+        }
+
+        .form-group .validation-feedback {
+            color: var(--danger-color);
+            font-size: 0.85em;
+            margin-top: var(--spacing-unit);
+            display: none; /* Hidden by default */
+        }
+
+         .form-group input.invalid + .validation-feedback,
+         .form-group textarea.invalid + .validation-feedback {
+             display: block;
+         }
+
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+            font-family: 'Inter', sans-serif; /* Ensure consistent font */
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+            font-size: 1em;
+            font-weight: 600;
+            text-align: center;
+            text-decoration: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: background-color var(--transition-speed), border-color var(--transition-speed), color var(--transition-speed), opacity var(--transition-speed), box-shadow var(--transition-speed);
+            border: 1px solid transparent;
+            user-select: none; /* Prevent text selection */
+            min-width: 120px; /* Ensure minimum click target size */
+            box-sizing: border-box;
+        }
+
+        .button-primary {
+            background-color: var(--primary-color);
+            color: var(--surface-color);
+            border-color: var(--primary-color);
+        }
+
+        .button-primary:hover {
+            background-color: var(--primary-color-dark);
+            border-color: var(--primary-color-dark);
+            box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+        }
+
+         .button-primary:focus {
+             outline: 2px solid var(--primary-color-dark);
+             outline-offset: 2px;
+         }
+
+
+        .button-secondary {
+            background-color: transparent;
+            color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .button-secondary:hover {
+            color: var(--text-color);
+            border-color: var(--text-color);
+             box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2);
+        }
+
+         .button-secondary:focus {
+             outline: 2px solid var(--secondary-color);
+             outline-offset: 2px;
+         }
+
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .button .material-symbols-rounded {
+            margin-right: var(--spacing-unit);
+            font-size: 18px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: var(--spacing-unit);
+            vertical-align: middle;
+        }
+
+        .status-indicator.pending { background-color: var(--secondary-color); }
+        .status-indicator.in-progress { background-color: var(--in-progress-color); }
+        .status-indicator.complete { background-color: var(--success-color); }
+        .status-indicator.failed { background-color: var(--danger-color); }
+        .status-indicator.warning { background-color: var(--warning-color); }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: var(--spacing-unit) * 2;
+        }
+
+        .table th, .table td {
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table th {
+            background-color: var(--background-color);
+            font-weight: 600;
+            color: var(--text-light-color);
+            text-transform: uppercase;
+            font-size: 0.9em;
+        }
+
+        .table tbody tr:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        .table td .button-link {
+            background: none;
+            border: none;
+            padding: 0;
+            color: var(--primary-color);
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 1em;
+            transition: color var(--transition-speed);
+        }
+
+        .table td .button-link:hover {
+            color: var(--primary-color-dark);
+        }
+         .table td .button-link:focus {
+             outline: 2px solid var(--primary-color);
+             outline-offset: 2px;
+         }
+
+
+        .infrastructure-diagram-container {
+            width: 100%;
+            height: 400px;
+            margin-top: var(--spacing-unit) * 2;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: var(--surface-color); /* Diagram background */
+             display: flex;
+             align-items: center;
+             justify-content: center;
+             overflow: hidden; /* Ensure SVG stays within bounds */
+        }
+
+        .infrastructure-diagram-container svg {
+            width: 95%;
+            height: 95%;
+            max-width: 800px; /* Limit max size */
+            max-height: 380px;
+            overflow: visible; /* Allow elements to draw slightly outside */
+        }
+
+        .diagram-node {
+            fill: var(--primary-color);
+            stroke: var(--primary-color-dark);
+            stroke-width: 2;
+            transition: fill var(--transition-speed), stroke var(--transition-speed);
+        }
+         .diagram-node:hover {
+             fill: var(--primary-color-dark);
+         }
+
+        .diagram-node-text {
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            fill: var(--surface-color);
+            pointer-events: none; /* Don't block clicks */
+        }
+
+        .diagram-arrow {
+            stroke: var(--text-light-color);
+            stroke-width: 2;
+            fill: none;
+            marker-end: url(#arrowhead);
+            transition: stroke var(--transition-speed);
+        }
+         .diagram-arrow:hover {
+             stroke: var(--text-color);
+         }
+
+        .diagram-arrow-text {
+            font-family: 'Inter', sans-serif;
+            font-size: 10px;
+            fill: var(--text-light-color);
+            text-anchor: middle;
+            pointer-events: none;
+        }
+
+        .monitoring-charts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: calc(var(--spacing-unit) * 3);
+            margin-top: var(--spacing-unit) * 2;
+        }
+
+        .chart-panel {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            padding: calc(var(--spacing-unit) * 2);
+            box-shadow: var(--box-shadow);
+            border: 1px solid var(--border-color);
+            position: relative; /* For floating controls */
+        }
+
+        .chart-panel h3 {
+            margin-top: 0;
+            margin-bottom: var(--spacing-unit) * 2;
+            font-size: 1.1em;
+            color: var(--text-color);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 250px; /* Fixed height for charts */
+            width: 100%;
+            cursor: pointer; /* Indicate interactivity */
+        }
+
+         /* Floating controls for charts */
+        .floating-controls {
+            position: absolute;
+            top: var(--spacing-unit);
+            right: var(--spacing-unit);
+            background: rgba(255, 255, 255, 0.95);
+            padding: var(--spacing-unit) * 2;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all var(--transition-speed) ease;
+            pointer-events: none;
+            z-index: 10;
+            min-width: 180px;
+            border: 1px solid var(--border-color);
+        }
+        .floating-controls.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+        .control-group {
+            margin-bottom: var(--spacing-unit) * 1.5;
+            display: flex;
+            align-items: flex-start;
+            gap: var(--spacing-unit);
+            flex-direction: column;
+        }
+         .control-group:last-child {
+             margin-bottom: 0;
+         }
+        .control-group label {
+            font-family: 'Inter', sans-serif;
+            color: var(--text-light-color);
+            font-size: 0.9em;
+            margin-bottom: 0; /* Adjusted for gap */
+            font-weight: 500;
+        }
+        .control-group input[type="color"],
+        .control-group select {
+            padding: var(--spacing-unit);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            width: 100%;
+            font-size: 0.9em;
+            box-sizing: border-box;
+        }
+         .control-group input[type="color"] {
+             padding: var(--spacing-unit) * 0.5; /* Adjust padding for color input */
+             height: calc(var(--spacing-unit) * 4 + 2px); /* Match height of select */
+         }
+         .control-group input:focus,
+         .control-group select:focus {
+             outline: none;
+             border-color: var(--primary-color);
+             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+         }
+
+
+        .log-viewer {
+            background-color: #212529; /* Dark background for logs */
+            color: #e9ecef; /* Light text for logs */
+            font-family: 'Consolas', 'Monaco', 'Andale Mono', 'Ubuntu Mono', monospace;
+            font-size: 0.9em;
+            padding: var(--spacing-unit) * 2;
+            border-radius: var(--border-radius);
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap; /* Wrap long lines */
+            word-break: break-all;
+            margin-top: var(--spacing-unit) * 2;
+            line-height: 1.4;
+        }
+
+        .log-viewer pre {
+            margin: 0;
+        }
+
+        .help-info {
+            display: inline-flex;
+            align-items: center;
+            margin-left: var(--spacing-unit);
+            color: var(--info-color);
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 500;
+             transition: color var(--transition-speed);
+        }
+         .help-info:hover {
+             color: var(--info-color); /* Keep color, maybe subtle underline */
+             text-decoration: underline;
+         }
+         .help-info:focus {
+             outline: 2px solid var(--info-color);
+             outline-offset: 2px;
+         }
+
+        .help-info .material-symbols-rounded {
+            font-size: 1em;
+            margin-right: var(--spacing-unit) * 0.5;
+        }
+
+        .help-content {
+            margin-top: var(--spacing-unit);
+            padding: var(--spacing-unit) * 1.5;
+            background-color: rgba(23, 162, 184, 0.1);
+            border: 1px solid var(--info-color);
+            border-radius: var(--border-radius);
+            color: var(--text-color);
+            font-size: 0.9em;
+            display: none;
+            animation: fadeIn var(--transition-speed) ease-out;
+        }
+
+        .help-content.active {
+            display: block;
+        }
+
+        /* Progress Indicator (Optional - Top Bar) */
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background-color: var(--border-color);
+            margin-bottom: calc(var(--spacing-unit) * 4);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%; /* Will be updated by JS */
+            background-color: var(--success-color);
+            transition: width var(--transition-speed) ease-in-out;
+            border-radius: 4px;
+        }
+
+        /* Log Modal */
+        .log-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: var(--spacing-unit) * 2;
+            box-sizing: border-box;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--transition-speed) ease, visibility var(--transition-speed) ease;
+        }
+
+        .log-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .log-modal .card {
+            background-color: var(--surface-color);
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .log-modal .card-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-unit) * 2;
+        }
+
+        .log-modal .log-viewer {
+            flex-grow: 1;
+            min-height: 150px;
+            max-height: none; /* Allow modal log viewer to take available height */
+        }
+
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .layout-container {
+                grid-template-columns: 1fr; /* Stack layout */
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto; /* Allow height to be determined by content */
+                padding: var(--spacing-unit) * 2;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                flex-direction: row; /* Horizontal layout */
+                overflow-x: auto; /* Allow horizontal scroll */
+                overflow-y: hidden;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+                -webkit-overflow-scrolling: touch; /* Improve scrolling on iOS */
+            }
+
+             .sidebar::-webkit-scrollbar {
+                 display: none; /* Hide scrollbar for Chrome, Safari and Opera */
+             }
+             .sidebar {
+                 -ms-overflow-style: none;  /* IE and Edge */
+                 scrollbar-width: none;  /* Firefox */
+             }
+
+
+            .sidebar-header {
+                display: none; /* Hide header on small screens */
+            }
+
+            .sidebar-nav ul {
+                display: flex; /* Horizontal list */
+                gap: var(--spacing-unit) * 2;
+            }
+
+            .sidebar-nav li {
+                margin-bottom: 0;
+                flex-shrink: 0; /* Prevent shrinking */
+            }
+
+             .sidebar-nav a {
+                 padding: var(--spacing-unit);
+                 border-left: none;
+                 border-bottom: 4px solid transparent;
+                 flex-direction: column; /* Stack icon and text */
+                 text-align: center;
+             }
+
+              .sidebar-nav a .material-symbols-rounded {
+                  margin-right: 0;
+                  margin-bottom: var(--spacing-unit) * 0.5;
+              }
+
+             .sidebar-nav a.active {
+                 border-left-color: transparent;
+                 border-bottom-color: var(--primary-color);
+             }
+
+            .main-content {
+                padding: var(--spacing-unit) * 2;
+                height: auto; /* Allow content to define height */
+                overflow-y: visible; /* Allow normal scroll */
+            }
+
+            .monitoring-charts {
+                grid-template-columns: 1fr; /* Stack charts */
+            }
+
+             /* Floating controls become static on small screens */
+             .floating-controls {
+                 position: static;
+                 margin-top: var(--spacing-unit) * 2;
+                 opacity: 1; /* Always visible */
+                 transform: translateY(0);
+                 pointer-events: all;
+                 box-shadow: none;
+                 background: none;
+                 padding: 0;
+                 border: none;
+                 min-width: auto;
+             }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="layout-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>DevOps Guide</h2>
+            </div>
+            <nav class="sidebar-nav" aria-label="Main Navigation">
+                <ul role="menu">
+                    <li role="presentation"><a href="#plan" class="nav-link active" data-step="0" role="menuitem" aria-current="step">
+                        <span class="material-symbols-rounded" aria-hidden="true">lightbulb</span>
+                        Plan
+                    </a></li>
+                    <li role="presentation"><a href="#containerize" class="nav-link" data-step="1" role="menuitem">
+                         <span class="material-symbols-rounded" aria-hidden="true">deployed_code</span>
+                        Containerize
+                    </a></li>
+                    <li role="presentation"><a href="#cicd-setup" class="nav-link" data-step="2" role="menuitem">
+                        <span class="material-symbols-rounded" aria-hidden="true">build_circle</span>
+                        CI/CD Setup
+                    </a></li>
+                     <li role="presentation"><a href="#deploy" class="nav-link" data-step="3" role="menuitem">
+                        <span class="material-symbols-rounded" aria-hidden="true">cloud_upload</span>
+                        Deployment
+                    </a></li>
+                    <li role="presentation"><a href="#monitor" class="nav-link" data-step="4" role="menuitem">
+                        <span class="material-symbols-rounded" aria-hidden="true">monitoring</span>
+                        Monitoring
+                    </a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content" role="main" tabindex="-1">
+             <div class="progress-bar-container" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="progressBarContainer">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+
+            <section id="plan" class="content-section active" role="region" aria-labelledby="plan-heading">
+                <h1 id="plan-heading">Plan Your Infrastructure</h1>
+                <div class="card">
+                    <h2 class="card-title">Understanding the Goal</h2>
+                    <p>Your educational platform needs a modern infrastructure to handle growth, improve reliability, and automate updates. We will guide you through setting up automated testing, deployment, and scaling.</p>
+                    <p>The target state involves using containers for consistent environments, a CI/CD pipeline for automated builds, tests, and deployments, and monitoring tools to keep an eye on performance.</p>
+                </div>
+
+                <div class="card">
+                     <h2 class="card-title">Planned Infrastructure Overview</h2>
+                     <p>A typical setup includes:</p>
+                     <ul>
+                         <li><strong>Code Repository:</strong> Your application code (e.g., GitHub, GitLab).</li>
+                         <li><strong>CI/CD Server:</strong> Automates build, test, and deploy (e.g., Jenkins, GitHub Actions, GitLab CI).</li>
+                         <li><strong>Container Registry:</strong> Stores your application containers (e.g., Docker Hub, AWS ECR).</li>
+                         <li><strong>Production Environment:</strong> Where your application runs (e.g., servers, cloud VMs, container orchestration like Docker Swarm or Kubernetes).</li>
+                         <li><strong>Monitoring System:</strong> Collects metrics and logs (e.g., Prometheus, Grafana, ELK stack).</li>
+                     </ul>
+                     <div class="infrastructure-diagram-container" aria-label="Diagram of planned infrastructure">
+                          <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">
+                              <defs>
+                                  <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                      <polygon points="0 0, 10 3.5, 0 7" fill="var(--text-light-color)" />
+                                  </marker>
+                              </defs>
+
+                              <!-- Nodes -->
+                              <rect class="diagram-node" x="50" y="125" width="100" height="50" rx="5" ry="5"/>
+                              <text class="diagram-node-text" x="100" y="155" text-anchor="middle">Code Repo</text>
+
+                              <rect class="diagram-node" x="200" y="125" width="100" height="50" rx="5" ry="5"/>
+                              <text class="diagram-node-text" x="250" y="155" text-anchor="middle">CI/CD Server</text>
+
+                              <rect class="diagram-node" x="350" y="125" width="100" height="50" rx="5" ry="5"/>
+                              <text class="diagram-node-text" x="400" y="155" text-anchor="middle">Container Registry</text>
+
+                              <rect class="diagram-node" x="500" y="125" width="100" height="50" rx="5" ry="5"/>
+                              <text class="diagram-node-text" x="550" y="155" text-anchor="middle">Production</text>
+
+                              <rect class="diagram-node" x="500" y="225" width="100" height="50" rx="5" ry="5"/>
+                              <text class="diagram-node-text" x="550" y="255" text-anchor="middle">Monitoring</text>
+
+                              <!-- Arrows -->
+                              <line class="diagram-arrow" x1="150" y1="150" x2="200" y2="150" />
+                              <text class="diagram-arrow-text" x="175" y="145">Push Code</text>
+
+                              <line class="diagram-arrow" x1="300" y1="150" x2="350" y2="150" />
+                              <text class="diagram-arrow-text" x="325" y="145">Push Image</text>
+
+                              <line class="diagram-arrow" x1="300" y1="160" x2="500" y2="160" />
+                              <text class="diagram-arrow-text" x="400" y="155">Deploy</text>
+
+                              <line class="diagram-arrow" x1="550" y1="175" x2="550" y2="225" />
+                              <text class="diagram-arrow-text" x="555" y="200" dominant-baseline="middle">Metrics/Logs</text>
+
+                          </svg>
+                     </div>
+                </div>
+
+                 <button class="button button-primary next-step" data-next="#containerize" aria-controls="containerize">
+                     <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span>
+                     Next: Containerize Application
+                 </button>
+            </section>
+
+            <section id="containerize" class="content-section" role="region" aria-labelledby="containerize-heading">
+                <h1 id="containerize-heading">Containerize Application</h1>
+                 <div class="card">
+                    <h2 class="card-title">Why Containerize? <button class="help-info" aria-expanded="false" aria-controls="containerize-help">
+                        <span class="material-symbols-rounded" aria-hidden="true">info</span>Learn More
+                    </button></h2>
+                     <div id="containerize-help" class="help-content" aria-hidden="true">
+                        Containerization packages your application and all its dependencies (libraries, frameworks, configuration files) into a single, isolated unit called a container. This ensures that your application runs reliably and consistently regardless of the environment it's deployed in (development, testing, production). Docker is a popular tool for creating and managing containers.
+                     </div>
+                    <p>Packaging your application into a container ensures it runs consistently everywhere. We'll use a Dockerfile to define how your application is built into an image.</p>
+                </div>
+
+                 <div class="card">
+                    <h2 class="card-title">Create Your Dockerfile</h2>
+                    <p>Below is a basic example. You'll need to adapt this based on your application's language and structure.</p>
+                    <div class="form-group">
+                        <label for="dockerfile-content">Dockerfile Content:</label>
+                        <textarea id="dockerfile-content" placeholder="e.g.,
+FROM python:3.9-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+CMD [&#34;python&#34;, &#34;app.py&#34;]" aria-describedby="dockerfile-feedback" aria-invalid="false"></textarea>
+                         <div id="dockerfile-feedback" class="validation-feedback" aria-live="polite">Dockerfile content is required.</div>
+                    </div>
+                     <button class="button button-secondary" id="saveDockerfile">
+                         <span class="material-symbols-rounded" aria-hidden="true">save</span>
+                         Save Dockerfile
+                     </button>
+                </div>
+
+                 <button class="button button-primary next-step" data-next="#cicd-setup" aria-controls="cicd-setup">
+                     <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span>
+                     Next: Setup CI/CD Pipeline
+                 </button>
+            </section>
+
+            <section id="cicd-setup" class="content-section" role="region" aria-labelledby="cicd-heading">
+                <h1 id="cicd-heading">Setup CI/CD Pipeline</h1>
+                <div class="card">
+                     <h2 class="card-title">What is CI/CD? <button class="help-info" aria-expanded="false" aria-controls="cicd-help">
+                         <span class="material-symbols-rounded" aria-hidden="true">info</span>Learn More
+                     </button></h2>
+                     <div id="cicd-help" class="help-content" aria-hidden="true">
+                         CI/CD stands for Continuous Integration / Continuous Deployment (or Delivery).
+                         <ul>
+                             <li><strong>Continuous Integration (CI):</strong> Developers frequently merge code changes into a central repository. Automated builds and tests are run to detect errors early.</li>
+                             <li><strong>Continuous Deployment (CD):</strong> Every code change that passes all tests is automatically deployed to production.</li>
+                             <li><strong>Continuous Delivery:</strong> Similar to CD, but deployment to production requires a manual approval step.</li>
+                         </ul>
+                         This process automates the steps from code commit to production, reducing manual effort and risk.
+                     </div>
+                    <p>Automate the process from code commit to deployment. Define the steps your code will go through: Build, Test, and Deploy.</p>
+                </div>
+
+                <div class="card">
+                     <h2 class="card-title">Pipeline Configuration</h2>
+                     <p>Define your pipeline steps. This could be a configuration file (like <code>.github/workflows/main.yml</code> for GitHub Actions or <code>.gitlab-ci.yml</code> for GitLab CI) or steps configured in a CI server UI.</p>
+                     <div class="form-group">
+                        <label for="pipeline-config">Pipeline Configuration (YAML example):</label>
+                        <textarea id="pipeline-config" placeholder="e.g.,
+name: CI/CD Pipeline
+on:
+  push:
+    branches: [ main ]
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+    - name: Run tests
+      run: python -m unittest discover
+    - name: Build Docker Image
+      run: docker build -t myapp:latest .
+    - name: Push Docker Image
+      run: |
+        echo &#34;Login to registry...&#34;
+        # docker login ...
+        echo &#34;Pushing image...&#34;
+        # docker push myapp:latest
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Deploy to Production
+      run: |
+        echo &#34;Connecting to server...&#34;
+        # ssh user@your_server &#34;docker pull myapp:latest && docker stop myapp || true && docker run -d --name myapp -p 80:80 myapp:latest&#34;
+" aria-describedby="pipeline-feedback" aria-invalid="false"></textarea>
+                         <div id="pipeline-feedback" class="validation-feedback" aria-live="polite">Pipeline configuration is required.</div>
+                    </div>
+                     <button class="button button-secondary" id="savePipelineConfig">
+                         <span class="material-symbols-rounded" aria-hidden="true">save</span>
+                         Save Pipeline Config
+                     </button>
+                </div>
+
+                 <button class="button button-primary next-step" data-next="#deploy" aria-controls="deploy">
+                     <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span>
+                     Next: Automated Deployment
+                 </button>
+            </section>
+
+             <section id="deploy" class="content-section" role="region" aria-labelledby="deploy-heading">
+                <h1 id="deploy-heading">Automated Deployment</h1>
+                 <div class="card">
+                     <h2 class="card-title">Triggering Deployments <button class="help-info" aria-expanded="false" aria-controls="deploy-help">
+                         <span class="material-symbols-rounded" aria-hidden="true">info</span>Learn More
+                     </button></h2>
+                     <div id="deploy-help" class="help-content" aria-hidden="true">
+                         With a CI/CD pipeline, deployments can be triggered automatically on code pushes (Continuous Deployment) or manually after successful builds (Continuous Delivery). This eliminates manual steps, reduces errors, and ensures that the latest tested code is running in production.
+                     </div>
+                    <p>Your CI/CD pipeline is configured to deploy automatically after successful tests. You can also trigger a manual deployment here if needed.</p>
+                </div>
+
+                <div class="card">
+                     <h2 class="card-title">Deployment Status</h2>
+                     <table class="table" role="grid" aria-label="Deployment Status">
+                         <thead>
+                             <tr>
+                                 <th scope="col">ID</th>
+                                 <th scope="col">Status</th>
+                                 <th scope="col">Timestamp</th>
+                                 <th scope="col">Branch</th>
+                                 <th scope="col">Commit</th>
+                                 <th scope="col">Actions</th>
+                             </tr>
+                         </thead>
+                         <tbody>
+                             <tr>
+                                 <td role="gridcell">#005</td>
+                                 <td role="gridcell"><span class="status-indicator complete" aria-label="Status: Complete"></span> Complete</td>
+                                 <td role="gridcell">2023-10-27 10:30</td>
+                                 <td role="gridcell">main</td>
+                                 <td role="gridcell">a1b2c3d4</td>
+                                 <td role="gridcell"><button class="button-link view-logs" aria-label="View logs for deployment #005">View Logs</button></td>
+                             </tr>
+                             <tr>
+                                 <td role="gridcell">#004</td>
+                                 <td role="gridcell"><span class="status-indicator failed" aria-label="Status: Failed"></span> Failed</td>
+                                 <td role="gridcell">2023-10-27 09:15</td>
+                                 <td role="gridcell">feature/new-ui</td>
+                                 <td role="gridcell"><button class="button-link view-logs" aria-label="View logs for deployment #004">View Logs</button></td>
+                             </tr>
+                             <tr>
+                                 <td role="gridcell">#003</td>
+                                 <td role="gridcell"><span class="status-indicator in-progress" aria-label="Status: In Progress"></span> In Progress</td>
+                                 <td role="gridcell">2023-10-27 08:00</td>
+                                 <td role="gridcell">main</td>
+                                 <td role="gridcell">i9j0k1l2</td>
+                                 <td role="gridcell"><button class="button-link view-logs" aria-label="View logs for deployment #003">View Logs</button></td>
+                             </tr>
+                             <!-- More rows will be added dynamically -->
+                         </tbody>
+                     </table>
+                     <button class="button button-primary" style="margin-top: calc(var(--spacing-unit) * 2);" id="triggerDeployment" aria-label="Trigger New Deployment">
+                         <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>
+                         Trigger New Deployment
+                     </button>
+                </div>
+
+                 <div class="log-modal" role="dialog" aria-modal="true" aria-labelledby="log-modal-title" aria-hidden="true">
+                     <div class="card">
+                         <h2 class="card-title" id="log-modal-title">Deployment Logs <button class="button-link close-logs" style="float: right; text-decoration: none;" aria-label="Close logs">Close</button></h2>
+                         <div class="log-viewer" tabindex="0" aria-label="Deployment Logs Content">
+                             <pre aria-live="polite">Select a deployment to view logs.</pre>
+                         </div>
+                     </div>
+                 </div>
+
+                 <button class="button button-primary next-step" data-next="#monitor" aria-controls="monitor">
+                     <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span>
+                     Next: Monitoring & Logs
+                 </button>
+            </section>
+
+             <section id="monitor" class="content-section" role="region" aria-labelledby="monitor-heading">
+                <h1 id="monitor-heading">Monitoring & Logs</h1>
+                 <div class="card">
+                     <h2 class="card-title">Why Monitor? <button class="help-info" aria-expanded="false" aria-controls="monitor-help">
+                         <span class="material-symbols-rounded" aria-hidden="true">info</span>Learn More
+                     </button></h2>
+                     <div id="monitor-help" class="help-content" aria-hidden="true">
+                        Monitoring allows you to observe the health and performance of your application and infrastructure in real-time. Key metrics like CPU usage, memory consumption, request latency, and error rates can alert you to potential issues before they impact users. Logs provide detailed information for debugging problems.
+                     </div>
+                    <p>Keep track of your application's performance and health. View key metrics and access deployment and application logs.</p>
+                </div>
+
+                <div class="monitoring-charts">
+                    <div class="chart-panel">
+                        <h3>CPU Usage (%)</h3>
+                        <div class="chart-container" role="img" aria-label="CPU Usage Chart">
+                            <canvas id="cpuChart"></canvas>
+                            <div class="floating-controls" id="cpuChartControls" aria-hidden="true" aria-label="CPU Chart Controls">
+                                <div class="control-group">
+                                    <label for="cpuChartType">Chart Type</label>
+                                    <select id="cpuChartType" aria-controls="cpuChart">
+                                        <option value="line">Line</option>
+                                        <option value="bar">Bar</option>
+                                    </select>
+                                </div>
+                                <div class="control-group">
+                                    <label for="cpuChartColor">Line Color</label>
+                                    <input type="color" id="cpuChartColor" value="#007bff" aria-controls="cpuChart">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                     <div class="chart-panel">
+                        <h3>Memory Usage (MB)</h3>
+                        <div class="chart-container" role="img" aria-label="Memory Usage Chart">
+                            <canvas id="memoryChart"></canvas>
+                             <div class="floating-controls" id="memoryChartControls" aria-hidden="true" aria-label="Memory Chart Controls">
+                                <div class="control-group">
+                                    <label for="memoryChartType">Chart Type</label>
+                                    <select id="memoryChartType" aria-controls="memoryChart">
+                                        <option value="line">Line</option>
+                                        <option value="bar">Bar</option>
+                                    </select>
+                                </div>
+                                <div class="control-group">
+                                    <label for="memoryChartColor">Line Color</label>
+                                    <input type="color" id="memoryChartColor" value="#28a745" aria-controls="memoryChart">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                     <div class="chart-panel">
+                        <h3>Request Latency (ms)</h3>
+                        <div class="chart-container" role="img" aria-label="Request Latency Chart">
+                            <canvas id="latencyChart"></canvas>
+                             <div class="floating-controls" id="latencyChartControls" aria-hidden="true" aria-label="Request Latency Chart Controls">
+                                <div class="control-group">
+                                    <label for="latencyChartType">Chart Type</label>
+                                    <select id="latencyChartType" aria-controls="latencyChart">
+                                        <option value="line">Line</option>
+                                        <option value="bar">Bar</option>
+                                    </select>
+                                </div>
+                                <div class="control-group">
+                                    <label for="latencyChartColor">Line Color</label>
+                                    <input type="color" id="latencyChartColor" value="#ffc107" aria-controls="latencyChart">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                 <div class="card" style="margin-top: calc(var(--spacing-unit) * 3);">
+                     <h2 class="card-title">Application Logs</h2>
+                      <div class="log-viewer" tabindex="0" aria-label="Application Logs">
+                         <pre aria-live="polite">[INFO] 2023-10-27 10:35:01 - Application started successfully.
+[INFO] 2023-10-27 10:35:15 - User 'solo_dev' logged in.
+[WARN] 2023-10-27 10:36:05 - High memory usage detected, current: 85%
+[ERROR] 2023-10-27 10:37:10 - Database connection failed. Retrying...
+[INFO] 2023-10-27 10:37:25 - Database connection re-established.
+[INFO] 2023-10-27 10:38:00 - Processing user request for course 'DevOps Basics'.
+</pre>
+                     </div>
+                 </div>
+
+                 <button class="button button-primary next-step" data-next="#plan" disabled aria-controls="plan">
+                     <span class="material-symbols-rounded" aria-hidden="true">check_circle</span>
+                     Finish & Review
+                 </button>
+            </section>
+
+        </main>
+    </div>
+
+    <script type="module">
+        import { Chart } from "https://esm.sh/chart.js/auto";
+
+        const layoutContainer = document.querySelector('.layout-container');
+        const sidebarLinks = document.querySelectorAll('.sidebar-nav .nav-link');
+        const contentSections = document.querySelectorAll('.main-content .content-section');
+        const progressBar = document.getElementById('progressBar');
+        const progressBarContainer = document.getElementById('progressBarContainer');
+        const totalSteps = contentSections.length;
+        let currentStep = 0;
+
+        // --- Navigation and Step Management ---
+        function updateActiveState() {
+            sidebarLinks.forEach(link => {
+                const targetId = link.getAttribute('href').substring(1);
+                const section = document.getElementById(targetId);
+                if (section && section.classList.contains('active')) {
+                    link.classList.add('active');
+                    link.setAttribute('aria-current', 'step');
+                    currentStep = parseInt(link.dataset.step);
+                } else {
+                    link.classList.remove('active');
+                    link.removeAttribute('aria-current');
+                }
+            });
+             updateProgressBar();
+        }
+
+        function updateProgressBar() {
+            // Progress is based on completed steps, not just the current step index
+            // For simplicity here, we'll use the current step index relative to total steps
+            // A more complex version would track completion status of each step
+            const progress = (currentStep / (totalSteps - 1)) * 100;
+            progressBar.style.width = `${progress}%`;
+            progressBarContainer.setAttribute('aria-valuenow', Math.round(progress));
+        }
+
+        function navigateTo(targetId) {
+            // Perform validation before navigating away from steps 1 and 2
+            if (currentStep === 1 && targetId !== 'containerize' && targetId !== 'plan') { // Allow navigating back to plan
+                if (!validateStep1()) {
+                    // Focus the first invalid element
+                    document.getElementById('dockerfile-content').focus();
+                    return; // Stop navigation if validation fails
+                }
+            }
+             if (currentStep === 2 && targetId !== 'cicd-setup' && targetId !== 'containerize') { // Allow navigating back to containerize
+                if (!validateStep2()) {
+                    // Focus the first invalid element
+                    document.getElementById('pipeline-config').focus();
+                    return; // Stop navigation if validation fails
+                }
+            }
+
+            contentSections.forEach(section => {
+                section.classList.remove('active');
+            });
+            const targetSection = document.getElementById(targetId);
+            if (targetSection) {
+                targetSection.classList.add('active');
+                 // Scroll main content to top
+                document.querySelector('.main-content').scrollTop = 0;
+                // Announce new section for screen readers
+                // Temporarily set aria-live to polite on main content for screen reader announcement
+                const mainContent = document.querySelector('.main-content');
+                mainContent.setAttribute('aria-live', 'polite');
+                 // Set focus to the main content area or its heading
+                 const heading = targetSection.querySelector('h1');
+                 if (heading) {
+                     heading.setAttribute('tabindex', '-1'); // Make heading focusable
+                     heading.focus();
+                     heading.removeAttribute('tabindex'); // Remove tabindex after focusing
+                 } else {
+                    mainContent.focus(); // Fallback focus
+                 }
+
+                // Remove aria-live after a short delay to prevent excessive announcements
+                setTimeout(() => {
+                    mainContent.removeAttribute('aria-live');
+                }, 1000); // Adjust delay as needed
+
+            }
+            updateActiveState();
+        }
+
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = link.getAttribute('href').substring(1);
+                navigateTo(targetId);
+            });
+             link.addEventListener('keydown', (e) => {
+                 if (e.key === 'Enter' || e.key === ' ') {
+                     e.preventDefault();
+                     const targetId = link.getAttribute('href').substring(1);
+                    navigateTo(targetId);
+                 }
+             });
+        });
+
+        document.querySelectorAll('.next-step').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const nextTargetId = button.dataset.next.substring(1);
+                navigateTo(nextTargetId);
+            });
+             button.addEventListener('keydown', (e) => {
+                 if (e.key === 'Enter' || e.key === ' ') {
+                     e.preventDefault();
+                     const nextTargetId = button.dataset.next.substring(1);
+                    navigateTo(nextTargetId);
+                 }
+             });
+        });
+
+        // Initial state
+        updateActiveState();
+
+        // --- Form Validation (Basic) ---
+        function validateStep1() {
+            const dockerfileContent = document.getElementById('dockerfile-content');
+            const feedback = document.getElementById('dockerfile-feedback');
+            if (dockerfileContent.value.trim() === '') {
+                dockerfileContent.classList.add('invalid');
+                feedback.style.display = 'block';
+                dockerfileContent.setAttribute('aria-invalid', 'true');
+                return false;
+            } else {
+                dockerfileContent.classList.remove('invalid');
+                feedback.style.display = 'none';
+                 dockerfileContent.setAttribute('aria-invalid', 'false');
+                return true;
+            }
+        }
+
+         function validateStep2() {
+            const pipelineConfig = document.getElementById('pipeline-config');
+            const feedback = document.getElementById('pipeline-feedback');
+            if (pipelineConfig.value.trim() === '') {
+                pipelineConfig.classList.add('invalid');
+                feedback.style.display = 'block';
+                 pipelineConfig.setAttribute('aria-invalid', 'true');
+                return false;
+            } else {
+                pipelineConfig.classList.remove('invalid');
+                feedback.style.display = 'none';
+                 pipelineConfig.setAttribute('aria-invalid', 'false');
+                return true;
+            }
+        }
+
+        // Add blur listeners for validation feedback
+        document.getElementById('dockerfile-content').addEventListener('blur', validateStep1);
+        document.getElementById('pipeline-config').addEventListener('blur', validateStep2);
+
+        // Add input listeners to clear validation on typing
+        document.getElementById('dockerfile-content').addEventListener('input', () => {
+            const dockerfileContent = document.getElementById('dockerfile-content');
+            const feedback = document.getElementById('dockerfile-feedback');
+            if (dockerfileContent.value.trim() !== '') {
+                dockerfileContent.classList.remove('invalid');
+                feedback.style.display = 'none';
+                dockerfileContent.setAttribute('aria-invalid', 'false');
+            }
+        });
+         document.getElementById('pipeline-config').addEventListener('input', () => {
+            const pipelineConfig = document.getElementById('pipeline-config');
+            const feedback = document.getElementById('pipeline-feedback');
+            if (pipelineConfig.value.trim() !== '') {
+                pipelineConfig.classList.remove('invalid');
+                feedback.style.display = 'none';
+                pipelineConfig.setAttribute('aria-invalid', 'false');
+            }
+        });
+
+
+        // --- Help Info Toggle ---
+        document.querySelectorAll('.help-info').forEach(infoButton => {
+            infoButton.addEventListener('click', () => {
+                const helpContent = infoButton.nextElementSibling;
+                if (helpContent && helpContent.classList.contains('help-content')) {
+                    const isExpanded = helpContent.classList.toggle('active');
+                    infoButton.setAttribute('aria-expanded', isExpanded);
+                    helpContent.setAttribute('aria-hidden', !isExpanded);
+                }
+            });
+             infoButton.addEventListener('keydown', (e) => {
+                 if (e.key === 'Enter' || e.key === ' ') {
+                     e.preventDefault();
+                     infoButton.click(); // Trigger click event for consistency
+                 }
+             });
+        });
+
+        // --- Deployment Logs Modal/Panel ---
+        const logModal = document.querySelector('.log-modal');
+        const logViewerPre = logModal ? logModal.querySelector('.log-viewer pre') : null;
+        let lastFocusedElement = null; // To store the element that opened the modal
+
+        document.querySelectorAll('.view-logs').forEach(button => {
+            button.addEventListener('click', (e) => {
+                 if (logModal && logViewerPre) {
+                    lastFocusedElement = e.target; // Store the button
+                    logModal.classList.add('active');
+                    logModal.setAttribute('aria-hidden', 'false');
+
+                    // In a real app, fetch and display logs based on the row's deployment ID
+                    // For now, just show dummy logs
+                    const row = button.closest('tr');
+                    const deployId = row ? row.querySelector('td:first-child').textContent : '#N/A';
+                    const logModalTitle = logModal.querySelector('.card-title');
+                    if (logModalTitle) {
+                         logModalTitle.innerHTML = `Deployment Logs for ${deployId} <button class="button-link close-logs" style="float: right; text-decoration: none;" aria-label="Close logs">Close</button>`;
+                         // Re-attach close listener as title is re-rendered
+                         logModalTitle.querySelector('.close-logs').addEventListener('click', closeLogsModal);
+                         logModalTitle.querySelector('.close-logs').addEventListener('keydown', (e) => {
+                             if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); closeLogsModal(); }
+                             // Basic focus trap logic for close button inside title
+                             if (e.key === 'Tab' && !e.shiftKey) {
+                                 e.preventDefault();
+                                 trapModalFocus(logModal, true); // Move focus forward from close button
+                             } else if (e.key === 'Tab' && e.shiftKey) {
+                                 e.preventDefault();
+                                 trapModalFocus(logModal, false); // Move focus backward from close button
+                             }
+                         });
+                    }
+                    logViewerPre.textContent = `Fetching logs for deployment ${deployId}...\n[SIMULATED LOGS]\n` +
+                                             `[INFO] Build started...\n` +
+                                             `[INFO] Tests passed...\n` +
+                                             `[INFO] Deploying...\n` +
+                                             `[INFO] Deployment complete.\n`;
+
+                    // Trap focus inside modal
+                    trapModalFocus(logModal);
+                 }
+            });
+        });
+
+        function closeLogsModal() {
+             if (logModal) {
+                logModal.classList.remove('active');
+                logModal.setAttribute('aria-hidden', 'true');
+                // Restore focus to the button that opened the modal
+                if (lastFocusedElement) {
+                    lastFocusedElement.focus();
+                    lastFocusedElement = null; // Clear reference
+                }
+             }
+        }
+
+        // Add click listener to the modal overlay to close it
+        logModal?.addEventListener('click', (e) => {
+            // Check if the click was directly on the modal background, not inside the card
+            if (e.target === logModal) {
+                closeLogsModal();
+            }
+        });
+
+        // Add keydown listener to the modal for Escape key
+        logModal?.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeLogsModal();
+            }
+        });
+
+
+        // Basic Modal Focus Trap
+        function trapModalFocus(modal, forward = true) {
+            if (!modal) return;
+            // Get all focusable elements within the modal
+            const focusableElements = modal.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+            const firstFocusableElement = focusableElements[0];
+            const lastFocusableElement = focusableElements[focusableElements.length - 1];
+
+            if (!firstFocusableElement) return; // No focusable elements in modal
+
+            if (forward === true && document.activeElement === lastFocusableElement) {
+                firstFocusableElement.focus();
+                return;
+            } else if (forward === false && document.activeElement === firstFocusableElement) {
+                 lastFocusableElement.focus();
+                 return;
+            }
+
+
+            // If called without forward/backward context (e.g., initial open), focus the first element
+            if (!modal.contains(document.activeElement)) {
+                 firstFocusableElement.focus();
+            }
+        }
+
+
+        // --- Chart Initialization and Interaction ---
+
+        const chartConfigs = {
+            cpuChart: {
+                type: 'line',
+                data: {
+                    labels: ['10:00', '10:05', '10:10', '10:15', '10:20', '10:25', '10:30'],
+                    datasets: [{
+                        label: 'CPU (%)',
+                        data: [25, 30, 35, 40, 38, 45, 50],
+                        backgroundColor: "var('--primary-color') + '80'", /* Use CSS variable */
+                        borderColor: "var('--primary-color')", /* Use CSS variable */
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onClick: (e, elements, chart) => toggleControls(chart.canvas.id),
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                         tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                             title: {
+                                display: true,
+                                text: 'Usage (%)' // Use 'text' instead of 'content'
+                             }
+                        },
+                        x: {
+                             title: {
+                                display: true,
+                                text: 'Time' // Use 'text' instead of 'content'
+                             }
+                        }
+                    }
+                }
+            },
+             memoryChart: {
+                type: 'line',
+                data: {
+                    labels: ['10:00', '10:05', '10:10', '10:15', '10:20', '10:25', '10:30'],
+                    datasets: [{
+                        label: 'Memory (MB)',
+                        data: [150, 160, 175, 190, 185, 200, 210],
+                         backgroundColor: "var('--success-color') + '80'", /* Use CSS variable */
+                        borderColor: "var('--success-color')", /* Use CSS variable */
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                     onClick: (e, elements, chart) => toggleControls(chart.canvas.id),
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                         tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                             title: {
+                                display: true,
+                                text: 'Usage (MB)' // Use 'text' instead of 'content'
+                             }
+                        },
+                         x: {
+                             title: {
+                                display: true,
+                                text: 'Time' // Use 'text' instead of 'content'
+                             }
+                        }
+                    }
+                }
+            },
+             latencyChart: {
+                type: 'line',
+                data: {
+                    labels: ['10:00', '10:05', '10:10', '10:15', '10:20', '10:25', '10:30'],
+                    datasets: [{
+                        label: 'Latency (ms)',
+                        data: [50, 55, 60, 70, 65, 80, 90],
+                        backgroundColor: "var('--warning-color') + '80'", /* Use CSS variable */
+                        borderColor: "var('--warning-color')", /* Use CSS variable */
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                     onClick: (e, elements, chart) => toggleControls(chart.canvas.id),
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                         tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                             title: {
+                                display: true,
+                                text: 'Latency (ms)' // Use 'text' instead of 'content'
+                             }
+                        },
+                         x: {
+                             title: {
+                                display: true,
+                                text: 'Time' // Use 'text' instead of 'content'
+                             }
+                        }
+                    }
+                }
+            }
+        };
+
+        const charts = {};
+
+        function initializeCharts() {
+            Object.keys(chartConfigs).forEach(chartId => {
+                const ctx = document.getElementById(chartId);
+                if (ctx && !charts[chartId]) { // Only initialize if canvas exists and chart doesn't exist
+                    // Replace CSS variable strings with actual computed styles
+                    const computedStyle = getComputedStyle(document.documentElement);
+                    const config = JSON.parse(JSON.stringify(chartConfigs[chartId])); // Deep copy
+                    config.data.datasets.forEach(dataset => {
+                         if (typeof dataset.borderColor === 'string' && dataset.borderColor.startsWith("var(")) {
+                             dataset.borderColor = computedStyle.getPropertyValue(dataset.borderColor.match(/var\(([^)]+)\)/)[1]).trim();
+                         }
+                         if (typeof dataset.backgroundColor === 'string' && dataset.backgroundColor.startsWith("var(")) {
+                             const varName = dataset.backgroundColor.match(/var\(([^)]+)\)/)[1];
+                             const alpha = dataset.backgroundColor.endsWith("80'") ? '80' : ''; // Check for alpha suffix
+                             dataset.backgroundColor = computedStyle.getPropertyValue(varName).trim() + alpha;
+                         }
+                    });
+
+                    charts[chartId] = new Chart(ctx, config);
+                    setupChartControls(chartId);
+                } else if (ctx && charts[chartId]) {
+                    // If chart already exists, ensure it's updated/rendered
+                     charts[chartId].update();
+                }
+            });
+        }
+
+        function setupChartControls(chartId) {
+             const controls = document.getElementById(`${chartId}Controls`);
+             if (!controls) return;
+
+             const chartInstance = charts[chartId];
+
+             // Toggle controls on chart container click
+             chartInstance.canvas.closest('.chart-container').addEventListener('click', (e) => {
+                 // Only toggle if the click is directly on the canvas or container, not the controls themselves
+                 if (!controls.contains(e.target)) {
+                    toggleControls(chartId);
+                 }
+             });
+
+             // Close controls when clicking outside
+             document.addEventListener('click', (e) => {
+                 // Check if the click is outside any floating controls and outside any chart container
+                 let clickedInsideControls = false;
+                 document.querySelectorAll('.floating-controls').forEach(ctrl => {
+                     if (ctrl.contains(e.target)) {
+                         clickedInsideControls = true;
+                     }
+                 });
+
+                 let clickedInsideChartContainer = false;
+                 document.querySelectorAll('.chart-container').forEach(container => {
+                     if (container.contains(e.target)) {
+                         clickedInsideChartContainer = true;
+                     }
+                 });
+
+                 // If the click is outside controls AND outside chart containers, hide all controls
+                 if (!clickedInsideControls && !clickedInsideChartContainer) {
+                     document.querySelectorAll('.floating-controls').forEach(ctrl => {
+                          ctrl.classList.remove('active');
+                          ctrl.setAttribute('aria-hidden', 'true');
+                     });
+                 }
+             });
+
+
+             // Control event listeners
+             const typeSelect = controls.querySelector(`#${chartId}Type`);
+             if (typeSelect) {
+                 typeSelect.value = chartInstance.config.type; // Set initial value
+                 typeSelect.addEventListener('change', (e) => {
+                     chartInstance.config.type = e.target.value;
+                     chartInstance.update();
+                 });
+             }
+
+             const colorInput = controls.querySelector(`#${chartId}Color`);
+              if (colorInput) {
+                 // Assuming only one dataset for simplicity
+                 const initialColor = chartInstance.config.data.datasets[0].borderColor;
+                 colorInput.value = initialColor; // Set initial value
+                 colorInput.addEventListener('input', (e) => {
+                     const newColor = e.target.value;
+                     chartInstance.config.data.datasets[0].borderColor = newColor;
+                     // Update background color with transparency
+                     chartInstance.config.data.datasets[0].backgroundColor = newColor + '80';
+                     chartInstance.update();
+                 });
+             }
+        }
+
+        function toggleControls(chartId) {
+             const controls = document.getElementById(`${chartId}Controls`);
+             if (controls) {
+                 const isCurrentlyActive = controls.classList.contains('active');
+
+                 // Hide other controls first
+                 document.querySelectorAll('.floating-controls').forEach(ctrl => {
+                     if (ctrl.id !== `${chartId}Controls`) {
+                         ctrl.classList.remove('active');
+                         ctrl.setAttribute('aria-hidden', 'true');
+                     }
+                 });
+
+                 // Toggle the clicked chart's controls
+                 if (!isCurrentlyActive) {
+                     controls.classList.add('active');
+                     controls.setAttribute('aria-hidden', 'false');
+                     // Focus the first control element when controls become active
+                     const firstControl = controls.querySelector('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+                     if(firstControl) firstControl.focus();
+                 } else {
+                      controls.classList.remove('active');
+                      controls.setAttribute('aria-hidden', 'true');
+                 }
+             }
+        }
+
+        // Initialize charts when the monitoring section becomes active
+        document.getElementById('monitor').addEventListener('transitionend', (event) => {
+            // Check if the monitor section is the one transitioning and is now active
+            if (event.target.id === 'monitor' && event.propertyName === 'opacity' && event.target.classList.contains('active')) {
+                 initializeCharts();
+            }
+        });
+
+         // Also initialize charts on page load if monitor is the initial active section (unlikely but safe)
+         if (document.getElementById('monitor').classList.contains('active')) {
+              initializeCharts();
+         }
+
+        // --- Dummy Save and Trigger Actions ---
+        document.getElementById('saveDockerfile')?.addEventListener('click', () => {
+            if (validateStep1()) {
+                // Simulate saving
+                const saveButton = document.getElementById('saveDockerfile');
+                const originalContent = saveButton.innerHTML;
+                saveButton.disabled = true;
+                saveButton.innerHTML = '<span class="material-symbols-rounded" aria-hidden="true">progress_activity</span> Saving...';
+                 saveButton.setAttribute('aria-busy', 'true');
+
+                setTimeout(() => {
+                    saveButton.disabled = false;
+                    saveButton.innerHTML = originalContent;
+                    saveButton.removeAttribute('aria-busy');
+                    alert('Dockerfile content saved! (Simulated)');
+                }, 1500); // Simulate save time
+
+            } else {
+                alert('Please fix validation errors before saving.');
+            }
+        });
+
+        document.getElementById('savePipelineConfig')?.addEventListener('click', () => {
+             if (validateStep2()) {
+                // Simulate saving
+                const saveButton = document.getElementById('savePipelineConfig');
+                const originalContent = saveButton.innerHTML;
+                saveButton.disabled = true;
+                saveButton.innerHTML = '<span class="material-symbols-rounded" aria-hidden="true">progress_activity</span> Saving...';
+                 saveButton.setAttribute('aria-busy', 'true');
+
+                setTimeout(() => {
+                    saveButton.disabled = false;
+                    saveButton.innerHTML = originalContent;
+                     saveButton.removeAttribute('aria-busy');
+                    alert('Pipeline configuration saved! (Simulated)');
+                }, 1500); // Simulate save time
+            } else {
+                alert('Please fix validation errors before saving.');
+            }
+        });
+
+        document.getElementById('triggerDeployment')?.addEventListener('click', (e) => {
+            const button = e.target;
+            button.disabled = true;
+            button.innerHTML = '<span class="material-symbols-rounded" aria-hidden="true">progress_activity</span> Triggering...';
+             button.setAttribute('aria-busy', 'true');
+
+            // Simulate a deployment process
+            setTimeout(() => {
+                button.disabled = false;
+                button.innerHTML = '<span class="material-symbols-rounded" aria-hidden="true">play_arrow</span> Trigger New Deployment';
+                 button.removeAttribute('aria-busy');
+
+                // Add a new dummy deployment row
+                const tableBody = document.querySelector('#deploy .table tbody');
+                const newRowHTML = `
+                    <tr>
+                        <td role="gridcell">#006</td>
+                        <td role="gridcell"><span class="status-indicator in-progress" aria-label="Status: In Progress"></span> In Progress</td>
+                        <td role="gridcell">${new Date().toLocaleString()}</td>
+                        <td role="gridcell">main</td>
+                        <td role="gridcell">m3n4o5p6</td>
+                        <td role="gridcell"><button class="button-link view-logs" aria-label="View logs for deployment #006">View Logs</button></td>
+                    </tr>
+                `;
+                tableBody.insertAdjacentHTML('afterbegin', newRowHTML); // Add to top
+
+                // Find the newly added row and its 'View Logs' button
+                const newRow = tableBody.querySelector('tr:first-child');
+                const newViewLogsButton = newRow ? newRow.querySelector('.view-logs') : null;
+
+                if (newViewLogsButton) {
+                     // Re-attach event listener to the new view logs button
+                     newViewLogsButton.addEventListener('click', (e) => {
+                         if (logModal && logViewerPre) {
+                             lastFocusedElement = e.target; // Store the button
+                             logModal.classList.add('active');
+                             logModal.setAttribute('aria-hidden', 'false');
+
+                             const deployId = '#006'; // Hardcoded for the simulated row
+                             const logModalTitle = logModal.querySelector('.card-title');
+                             if (logModalTitle) {
+                                 logModalTitle.innerHTML = `Deployment Logs for ${deployId} <button class="button-link close-logs" style="float: right; text-decoration: none;" aria-label="Close logs">Close</button>`;
+                                 // Re-attach close listener
+                                 logModalTitle.querySelector('.close-logs').addEventListener('click', closeLogsModal);
+                                  logModalTitle.querySelector('.close-logs').addEventListener('keydown', (e) => {
+                                     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); closeLogsModal(); }
+                                      if (e.key === 'Tab' && !e.shiftKey) { e.preventDefault(); trapModalFocus(logModal, true); }
+                                      else if (e.key === 'Tab' && e.shiftKey) { e.preventDefault(); trapModalFocus(logModal, false); }
+                                 });
+                             }
+                             logViewerPre.textContent = `Fetching logs for deployment ${deployId}...\n[SIMULATED LOGS]\nDeployment process started...\n`;
+                             trapModalFocus(logModal); // Trap focus
+                         }
+                     });
+                }
+
+
+                // Simulate completion after a delay
+                setTimeout(() => {
+                     const statusCell = tableBody.querySelector('tr:first-child td:nth-child(2)');
+                     if (statusCell) {
+                         statusCell.innerHTML = `<span class="status-indicator complete" aria-label="Status: Complete"></span> Complete`;
+                     }
+                     // Append completion logs to the log viewer if it's currently showing logs for #006
+                     if (logViewerPre && logViewerPre.textContent.includes('#006') && logModal.classList.contains('active')) {
+                          logViewerPre.textContent += `\n[INFO] Build complete.\n[INFO] Tests passed.\n[INFO] Deployment successful!`;
+                     }
+                }, 5000);
+
+            }, 1000); // Simulate trigger delay
+        });
+
+        // Add keyboard navigation for buttons (already present, keeping)
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    button.click();
+                }
+            });
+        });
+
+        // Add keyboard navigation for sidebar links (already present, keeping)
+        document.querySelectorAll('.sidebar-nav a').forEach(link => {
+             link.addEventListener('keydown', (e) => {
+                 if (e.key === 'ArrowDown') {
+                     e.preventDefault();
+                     const nextItem = link.parentElement.nextElementSibling?.querySelector('a');
+                     if (nextItem) nextItem.focus();
+                 } else if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                     const prevItem = link.parentElement.previousElementSibling?.querySelector('a');
+                     if (prevItem) prevItem.focus();
+                 }
+             });
+        });
+
+
+    </script>
+</body>
+</html>
